@@ -8,5 +8,5 @@
       
     - qinfer
       Best Match inference tool
-      (https://github.com/david-schaller/qinfer)
+      (https://github.com/david-schaller/asymmetree/qinfer)
 """
