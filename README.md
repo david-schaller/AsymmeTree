@@ -11,5 +11,5 @@ Framework for the realistic simulation of species and gene tree scenarios with a
 ### Best Match Inference
 
 Inference of the best match relation either directly from the gene tree or from a distance matrix (several methods).
-* `asymmetree.best_match`_inference (Python implementation)
+* `asymmetree.best_match_inference` (Python implementation)
 * `qinfer` (C++ implementation, inference from distance matrix only)

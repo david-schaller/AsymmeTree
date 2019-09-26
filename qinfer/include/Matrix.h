@@ -3,25 +3,47 @@
 
 #include <vector>
 
+/**
+ * Template class for square matrices.
+ *
+ * This template class is an implementation of a 2-dimensional square matrix with arbitrary elements.
+ */
 template<typename T>
 class Matrix {
 public:
+  /**
+   * Initializes a matrix with a default value.
+   * @param dim dimension of the quare matrix (number of rows/columns).
+   * @param value default value to fill the matrix with.
+   */
   void
   initMatrix(size_t dim, T value);
 
+  /**
+   * Returns the dimension of the matrix.
+   */
   size_t
   getDim() const { return m_dim; };
 
+  /**
+   * Returns the value at a specific position.
+   * @param row number of the row.
+   * @param col number of the column.
+   */
   T&
   at(size_t row, size_t col);
 
-  // for const best match distance matrices
+  /**
+   * Returns the value at a specific position (for const matrices).
+   * @param row number of the row.
+   * @param col number of the column.
+   */
   const T&
   at(size_t row, size_t col) const;
-  
+
 private:
-  size_t m_dim;
-  std::vector<std::vector<T>> m_matrix;
+  size_t m_dim;                             /*!< dimension of the square matrix */
+  std::vector<std::vector<T>> m_matrix;     /*!< matrix */
 };
 
 template<typename T>

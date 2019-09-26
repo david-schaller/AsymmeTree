@@ -10,26 +10,61 @@
 // function std::min()
 #include <algorithm>
 
+/**
+ * Template class for directed graphs.
+ *
+ * This template class contains functions that are useful for directed graphs like the computation of strongly
+ * connected components.
+ */
 template<typename T>
 class DiGraph {
 public:
+  /**
+  * Add a node v to the digraph.
+  * @param v node to be added.
+  */
   void addNode(T v);
+
+  /**
+  * Add an edge (u,v) to the digraph and the nodes u and v if they do not exist yet.
+  * @param u initial node of the edge.
+  * @param v terminal node of the edge.
+  */
   void addEdge(T u, T v);
 
+
+  /**
+  * Returns the strongly connected components of the digraph.
+  * @return strongly connected components.
+  */
   std::vector<std::set<T>>
   stronglyConnectedComponents() const;
 
+  /**
+  * Returns the first strongly connected components without out-edges to other s.c.c. that is found or an empty
+  * list if no such s.c.c. is found.
+  * @return strongly connected component without out-edges.
+  */
   std::vector<T>
   getSccWithoutOutedges() const;
 
+  /**
+  * Returns the adjecency list of the digraph.
+  * @return adjecency list.
+  */
   const std::unordered_map<T, std::vector<T>>&
   getAdjacency() const { return m_adjList; };
-
+  
+  /**
+  * Returns the (out-)neighbors of a node v.
+  * @param v node
+  * @return (out-)neighbors of v.
+  */
   const std::vector<T>&
-  getNeighbors(T u) const { return m_adjList.at(u); };
+  getNeighbors(T v) const { return m_adjList.at(v); };
 
 private:
-  std::unordered_map<T, std::vector<T>> m_adjList;
+  std::unordered_map<T, std::vector<T>> m_adjList; /*!< the adjacency list of the digraph */
 };
 
 template<typename T>

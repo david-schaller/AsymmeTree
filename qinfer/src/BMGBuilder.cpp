@@ -35,12 +35,12 @@ BMGBuilder::buildBMG(){
   // main algorithms
   if(!m_ptrParam->relativeOutgroups()){
     if(m_benchmark) m_benchmark->startBuildBMG();
-    buildRootOutgroups();
+    buildWithRootOutgroups();
     if(m_benchmark) m_benchmark->endBuildBMG();
   } else {
     m_outgroupChoice.initialize();
     if(m_benchmark) m_benchmark->startBuildBMG();
-    buildRelativeOutgroups();
+    buildWithRelativeOutgroups();
     if(m_benchmark) m_benchmark->endBuildBMG();
   }
 
@@ -162,7 +162,7 @@ BMGBuilder::chooseOutgroups(const std::vector<Gene*>& outgroupCandidates){
 }
 
 void
-BMGBuilder::buildRootOutgroups(){
+BMGBuilder::buildWithRootOutgroups(){
 
   for(Gene& x : m_ptrS->getGenes()){
     const std::vector<Gene*>& outgroupCandidates = m_ptrS->getOutgroups(&x);
@@ -216,7 +216,7 @@ BMGBuilder::buildRootOutgroups(){
           (relative outgroups corrected with incongruent quartets)
 ******************************************************************************/
 void
-BMGBuilder::buildRelativeOutgroups(){
+BMGBuilder::buildWithRelativeOutgroups(){
 
   for(Gene& x : m_ptrS->getGenes()){
     // const std::vector<Gene*>& outgroupCandidates = m_ptrS->getOutgroups(&x);
