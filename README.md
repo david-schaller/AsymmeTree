@@ -3,7 +3,7 @@
 ### Simulator for species and gene trees
 
 Framework for the realistic simulation of species and gene tree scenarios with asymmetric evolution rates. The following steps are implemented in the Python package `asymmetree.simulator`:
-* species tree simulation ('innovations model')
+* species tree simulation ('innovation model')
 * gene tree simulation (Gillespie algorithm)
 * gene tree imbalancing (asymmetric evolution rates of paralogous genes)
 * computation of a (noisy) distance matrix from the gene tree

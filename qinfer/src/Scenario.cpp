@@ -237,6 +237,10 @@ Scenario::checkSpeciesAvailability(){
     }
   }
 
+  if(necessarySpecies.size() > 0){
+    throw std::runtime_error("Not all species are in the tree file!");
+  }
+
 }
 
 void
