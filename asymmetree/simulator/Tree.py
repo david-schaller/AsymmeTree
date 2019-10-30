@@ -354,15 +354,12 @@ class Tree:
             raise ValueError("Invalid Newick-String!")
     
     
-    def reconstruct_data(self):
-        """Reconstruct IDs and time stamps."""
-        self.root.tstamp = 1.0
+    def reconstruct_IDs(self):
+        """Reconstruct the (leaf) IDs."""
         self.number_of_species = 0
         IDs = set()
         
         for v in self.preorder():
-            if v.parent:
-                v.tstamp = v.parent.tstamp - v.dist
             if not v.children:
                 self.number_of_species += 1
             if v.label.isdigit():
@@ -377,6 +374,14 @@ class Tree:
                     current_ID += 1
                 v.ID = current_ID
                 IDs.add(current_ID)
+                
+                
+    def reconstruct_timestamps(self):
+        """Reconstruct the timestamps."""
+        self.root.tstamp = 1.0
+        for v in self.preorder():
+            if v.parent:
+                v.tstamp = v.parent.tstamp - v.dist
     
 # --------------------------------------------------------------------------
 #                         TREE  <--->  NETWORKX
