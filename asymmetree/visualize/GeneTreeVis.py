@@ -17,11 +17,12 @@ class GeneTreeVis:
         self.symbolsize = 0.03
         self.symbollw = 0.04
         self.leafs_per_vertical_unit = 15
-        
+        self.symbol_zorder = 3        
         
         print(tree.to_newick())
         
         self.distance_dict = {}
+        self.colors = {}
         #self.divtime_dict {}
         self.leaf_counter = 0
         self.node_positions = {}
@@ -35,9 +36,16 @@ class GeneTreeVis:
         self.ax.invert_yaxis()
         
         self.initial_traversal()
+        self.assign_colors()
         self.assign_positions()
         self.draw_edges()
         self.draw_nodes()
+        
+        self.ax.axvline(x=0, linewidth=1, color='grey', linestyle='--')
+        self.ax.set_yticks([])
+        self.ax.spines["top"].set_visible(False)
+        self.ax.spines["left"].set_visible(False)
+        self.ax.spines["right"].set_visible(False)
         
         plt.tight_layout()
         plt.show()
@@ -56,14 +64,25 @@ class GeneTreeVis:
                     xmax = self.distance_dict[v]
             if not v.children:
                 self.leaf_counter += 1
+                if v.label != '*' and v.color not in self.colors:
+                    self.colors[v.color] = len(self.colors)
                 
         self.ax.set_xlim(-0.1,xmax+0.5)
-                
+        
+    
+    def assign_colors(self):
+        if len(self.colors) <= 10:
+            cmap = plt.get_cmap('tab10')(np.arange(len(self.colors), dtype=int))
+        else:
+            cmap = plt.get_cmap('jet')(np.linspace(0, 1.0, len(self.colors)))
+        for color_label, color in zip(self.colors.keys(), cmap):
+            self.colors[color_label] = color
+        print(self.colors)
     
     def assign_positions(self):
         
         ymax = (self.leaf_counter-1)/self.leafs_per_vertical_unit
-        self.ax.set_ylim(ymax+0.1, -0.1)
+        self.ax.set_ylim(ymax+0.1, -self.symbolsize*0.6)
         
         yposition = 0
         for v in self.tree.postorder():
@@ -110,51 +129,62 @@ class GeneTreeVis:
             else:
                 if v.label == '*':
                     self.draw_loss(*self.node_positions[v])
-                    print(self.node_positions[v])
                 else:
-                    self.draw_leaf(*self.node_positions[v])
+                    x, y = self.node_positions[v]
+                    self.draw_leaf(x, y,
+                                   color=self.colors[v.color])
+                    self.write_label(x+self.symbolsize+0.02, y,
+                                     str(v.label))
                 
     
     def draw_leaf(self, x, y, color='white', leftalign=True):
         if leftalign:
             x += self.symbolsize/2
         fill = mpatches.Circle((x, y), self.symbolsize/2,
-                               color=color, fill=True)
+                               color=color, fill=True,
+                               zorder=self.symbol_zorder)
         self.ax.add_patch(fill)
         outer = mpatches.Circle((x, y), self.symbolsize/2,
                                 color='black', fill=False,
-                                lw=self.symbolsize/self.symbollw)
+                                lw=self.symbolsize/self.symbollw,
+                                zorder=self.symbol_zorder)
         self.ax.add_patch(outer)
         little = mpatches.Circle((x, y), self.symbolsize/8,
-                                 color='black', fill=True)
+                                 color='black', fill=True,
+                                 zorder=self.symbol_zorder)
         self.ax.add_patch(little)
         
     
     def draw_loss(self, x, y):
-        print(x,y)
         self.ax.plot([x,x],
                      [y-self.symbolsize/2, y+self.symbolsize/2],
                      color='black',
                      linestyle='-', linewidth=1)
     
     
-    def draw_root(self, x, y):
+    def draw_root(self, x, y, rightalign=True):
+        if rightalign:
+            x -= self.symbolsize/2
         fill = mpatches.Circle((x, y), self.symbolsize/2,
-                               color='yellow', fill=True)
+                               color='white', fill=True,
+                               zorder=self.symbol_zorder)
         self.ax.add_patch(fill)
         outer = mpatches.Circle((x, y), self.symbolsize/2,
                                 color='black', fill=False,
-                                lw=self.symbolsize/self.symbollw)
+                                lw=self.symbolsize/self.symbollw,
+                                zorder=self.symbol_zorder)
         self.ax.add_patch(outer)
         little = mpatches.Circle((x, y), self.symbolsize/5,
                                  color='black', fill=False,
-                                 lw=self.symbolsize/self.symbollw)
+                                 lw=self.symbolsize/self.symbollw,
+                                 zorder=self.symbol_zorder)
         self.ax.add_patch(little)
     
     
     def draw_spec(self, x, y):
         fill = mpatches.Circle((x, y), self.symbolsize/2,
-                               color='black', fill=True)
+                               color='black', fill=True,
+                               zorder=self.symbol_zorder)
         self.ax.add_patch(fill)
         
     
@@ -163,14 +193,16 @@ class GeneTreeVis:
                                      y-self.symbolsize/2),
                                     width=self.symbolsize,
                                     height=self.symbolsize,
-                                    color='white', fill=True)
+                                    color='white', fill=True,
+                                    zorder=self.symbol_zorder)
         self.ax.add_patch(square)
         border = mpatches.Rectangle((x-self.symbolsize/2,
                                      y-self.symbolsize/2),
                                     width=self.symbolsize,
                                     height=self.symbolsize,
                                     color='black', fill=False,
-                                    lw=self.symbolsize/self.symbollw)
+                                    lw=self.symbolsize/self.symbollw,
+                                    zorder=self.symbol_zorder)
         self.ax.add_patch(border)
     
     
@@ -180,12 +212,20 @@ class GeneTreeVis:
                             [x-self.symbolsize/2,y+self.symbolsize/2]])
 
         inner = mpatches.Polygon(coord, closed=True,
-                                 color='white', fill=True)
+                                 color='white', fill=True,
+                                 zorder=self.symbol_zorder)
         self.ax.add_patch(inner)
         outer = mpatches.Polygon(coord, closed=True,
                                  color='black', fill=False,
-                                 lw=self.symbolsize/self.symbollw)
+                                 lw=self.symbolsize/self.symbollw,
+                                 zorder=self.symbol_zorder)
         self.ax.add_patch(outer)
+    
+    
+    def write_label(self, x, y, text):
+        self.ax.text(x, y, text,
+                     horizontalalignment='left',
+                     verticalalignment='center')
 
 
 if __name__ == "__main__":
@@ -193,7 +233,7 @@ if __name__ == "__main__":
     import simulator.TreeSimulator as ts
     import simulator.TreeImbalancer as tm
     
-    S = ts.build_species_tree(3, planted=True)
+    S = ts.build_species_tree(4, planted=True)
     
     TGT = ts.build_gene_tree(S, (1.0,1.0,1.0))
     TGT = tm.imbalance_tree(TGT, S, baseline_rate=1,
