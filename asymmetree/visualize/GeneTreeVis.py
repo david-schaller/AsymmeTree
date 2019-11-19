@@ -47,21 +47,29 @@ class GeneTreeVis:
         self.ax.spines["left"].set_visible(False)
         self.ax.spines["right"].set_visible(False)
         
+        xmin, xmax = self.ax.get_xlim()
+        ymin, ymax = self.ax.get_ylim()
+        self.fig.set_size_inches(5*abs(xmax-xmin), 5*abs(ymax-ymin)+0.4)
         plt.tight_layout()
         plt.show()
         
     
-    def initial_traversal(self):
+    def initial_traversal(self, distance="evolutionary"):
         
         xmax = 0.0
         
         for v in self.tree.preorder():
-            if not v.parent:
-                self.distance_dict[v] = 0.0
+            if distance == "evolutionary":
+                if not v.parent:
+                    self.distance_dict[v] = 0.0
+                else:
+                    self.distance_dict[v] = self.distance_dict[v.parent] + v.dist
+                    if self.distance_dict[v] > xmax:
+                        xmax = self.distance_dict[v]
+            elif distance == "divtime":
+                raise ValueError("Divergence time not yet implemented!")
             else:
-                self.distance_dict[v] = self.distance_dict[v.parent] + v.dist
-                if self.distance_dict[v] > xmax:
-                    xmax = self.distance_dict[v]
+                raise ValueError("Distance mode not known: " + str(distance))
             if not v.children:
                 self.leaf_counter += 1
                 if v.label != '*' and v.color not in self.colors:
@@ -79,6 +87,7 @@ class GeneTreeVis:
             self.colors[color_label] = color
         print(self.colors)
     
+    
     def assign_positions(self):
         
         ymax = (self.leaf_counter-1)/self.leafs_per_vertical_unit
@@ -95,6 +104,7 @@ class GeneTreeVis:
                          self.node_positions[v.children[-1]][1])/2
                 self.node_positions[v] = (self.distance_dict[v],
                                           ymean)
+    
     
     def draw_edges(self):
         
