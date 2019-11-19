@@ -6,7 +6,7 @@ Linear cograph detector.
 Implementation of:
     D. G. Corneil, Y. Perl, and L. K. Stewart.
     A Linear Recognition Algorithm for Cographs.
-    SIAM J. Comput., 14(4), 926–934.
+    SIAM J. Comput., 14(4), 926–934 (1985).
     DOI: 10.1137/0214065
 """
 
