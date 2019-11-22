@@ -9,9 +9,9 @@ Implementation the O(n^2) algorithm in:
     Preprint published 2019.
 """
 
-from collections import deque
-
-import tools.DoublyLinkedList as dll
+#from collections import deque
+#
+#import tools.DoublyLinkedList as dll
 
 try:
     from .Cograph import Cotree, CotreeNode
@@ -71,6 +71,8 @@ class CographEditor:
             self.already_in_T.add(x)
             self.total_cost += cost
             print(x, self.T.to_newick())
+#            for v in self.T.preorder():
+#                print("leaf_number", x, cost)
             
         return self.T
         
@@ -325,16 +327,19 @@ class CographEditor:
                                 diff = 2 * Nx_number[v] - v.leaf_number      # = Nx_number[v] - (v.leaf_number - Nx_number[v])
                                 if diff < current_min:
                                     current_min, current_min_node = diff, v
-                            red.remove(current_min_node)
-                            blue.add(current_min_node)
+                            print(x, u, nb_hollowed, red, blue)
+                            if current_min_node:
+                                red.remove(current_min_node)
+                                blue.add(current_min_node)
                     
                 cost = cost_above[u]
                 for v in red:
                     cost += (v.leaf_number - Nx_number[v])
                 for v in blue:
                     cost += Nx_number[v]
+                print("cost", x, cost)
                     
-                mincost[u] = (cost, C_full[u] + list(red[u]))
+                mincost[u] = (cost, C_full[u] + list(red))
         
         # determine a minimum cost settling
         insertion_mincost, settling_node = float("inf"), None
@@ -352,7 +357,7 @@ class CographEditor:
         if u.label == "parallel" and len(filled) == 1:
             w = filled[0]
             if w.label == "leaf":
-                new_node = CENode(None, label="series", parent=u, leaf_number=2)  # leaves w and x
+                new_node = CENode(None, label="series", parent=u, leaf_number=1)  # leaves w and x (x added later)
                 u.children.remove(w)
                 u.children.append(new_node)
                 w.parent = new_node
@@ -374,7 +379,7 @@ class CographEditor:
                     w = child
                     break
             if w.label == "leaf":
-                new_node = CENode(None, label="parallel", parent=u, leaf_number=2)  # leaves w and x
+                new_node = CENode(None, label="parallel", parent=u, leaf_number=1)  # leaves w and x (x added later)
                 u.children.remove(w)
                 u.children.append(new_node)
                 w.parent = new_node
@@ -434,8 +439,8 @@ if __name__ == "__main__":
 #    print(cograph.adj_list)
     
     from cograph.Cograph import SimpleGraph
-    print("(1,2,(4,5,6)<0>)<1>;")
-    cograph = SimpleGraph(initial={1: {2, 4, 5, 6}, 2: {1, 4, 5, 6}, 4: {1, 2}, 5: {1, 2}, 6: {1, 2}})
+    print("(1,(3,(5,(7,8)<0>)<1>)<0>)<1>;")
+    cograph = SimpleGraph(initial={1: {8, 3, 5, 7}, 3: {1}, 5: {8, 1, 7}, 7: {1, 5}, 8: {1, 5}})
     print(cograph.adj_list)
     
     CE = CographEditor(cograph)
