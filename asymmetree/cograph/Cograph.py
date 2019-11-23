@@ -90,6 +90,29 @@ class SimpleGraph:
         return True
     
     
+    def symmetric_diff(self, other):
+        """Returns the number of edges in the symmetric difference."""
+        
+        set1 = set(self.adj_list.keys())
+        set2 = set(other.adj_list.keys())
+        
+        if set1 != set2:
+            raise ValueError("Graphs do not have the same vertex set")
+            return
+        
+        V = list(set1)
+        sym_diff_number = 0
+        
+        for i in range(0, len(V)-1):
+            for j in range(i+1, len(V)):
+                if self.has_edge(V[i], V[j]) and not other.has_edge(V[i], V[j]):
+                    sym_diff_number += 1
+                elif not self.has_edge(V[i], V[j]) and other.has_edge(V[i], V[j]):
+                    sym_diff_number += 1
+        
+        return sym_diff_number
+    
+    
     def get_complement(self):
         
         compl_graph = SimpleGraph(initial=self.adj_list.keys())
