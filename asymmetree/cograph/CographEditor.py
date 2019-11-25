@@ -9,9 +9,7 @@ Implementation the O(n^2) algorithm in:
     Preprint published 2019.
 """
 
-#from collections import deque
-#
-#import tools.DoublyLinkedList as dll
+import tools.DoublyLinkedList as dll
 
 try:
     from .Cograph import Cotree, CotreeNode
@@ -26,12 +24,29 @@ __copyright__ = "Copyright (C) 2019, David Schaller"
 class CENode(CotreeNode):
     """Treenode for cograph editing."""
     
+    __slots__ = ['parent_dll_element', 'leaf_number']
+    
+    
     def __init__(self, ID, label=None, parent=None, leaf_number=0):
         super().__init__(ID, label=label, parent=parent)
-#        self.children = dll.DLList()
-#        self.parent_dll_element = None      # reference to doubly-linked list element
-#                                            # in the parents' children
+        self.children = dll.DLList()
+        self.parent_dll_element = None      # reference to doubly-linked list element
+                                            # in the parents' children
         self.leaf_number = leaf_number
+        
+    
+    def add_child(self, child_node):
+        child_node.parent = self
+        child_node.parent_dll_element = self.children.append(child_node)
+    
+    
+    def remove_child(self, child_node):
+        if child_node.parent is self:
+            self.children.remove_element(child_node.parent_dll_element)
+            child_node.parent = None
+            child_node.parent_dll_element = None
+        else:
+            raise ValueError("Not a child of this node!")
 
 
 class CographEditor:
@@ -91,17 +106,17 @@ class CographEditor:
         self.T.root = R
         
         if self.G.has_edge(v1, v2):
-            v1_node = CENode(v1, label="leaf", parent=R, leaf_number=1)
-            v2_node = CENode(v2, label="leaf", parent=R, leaf_number=1)
-            R.children.append(v1_node)
-            R.children.append(v2_node)
+            v1_node = CENode(v1, label="leaf", leaf_number=1)
+            v2_node = CENode(v2, label="leaf", leaf_number=1)
+            R.add_child(v1_node)
+            R.add_child(v2_node)
         else:
-            N = CENode(None, label="parallel", parent=R, leaf_number=2)
-            R.children.append(N)
-            v1_node = CENode(v1, label="leaf", parent=N, leaf_number=1)
-            v2_node = CENode(v2, label="leaf", parent=N, leaf_number=1)
-            N.children.append(v1_node)
-            N.children.append(v2_node)
+            N = CENode(None, label="parallel", leaf_number=2)
+            R.add_child(N)
+            v1_node = CENode(v1, label="leaf", leaf_number=1)
+            v2_node = CENode(v2, label="leaf", leaf_number=1)
+            N.add_child(v1_node)
+            N.add_child(v2_node)
             
         self.leaf_map[v1] = v1_node
         self.leaf_map[v2] = v2_node
@@ -149,8 +164,8 @@ class CographEditor:
         # all nodes in T are adjacent to x
         if self.T.root.leaf_number == Nx_counter:
             R = self.T.root
-            x_node = CENode(x, label="leaf", parent=R, leaf_number=1)
-            R.children.append(x_node)
+            x_node = CENode(x, label="leaf", leaf_number=1)
+            R.add_child(x_node)
             self.leaf_map[x] = x_node
             return 0, x_node                            # cost is 0
         # no nodes in T are adjacent to x
@@ -158,19 +173,18 @@ class CographEditor:
             # d(R)=1
             if len(self.T.root.children) == 1:
                 N = self.T.root.children[0]
-                x_node = CENode(x, label="leaf", parent=N, leaf_number=1)
-                N.children.append(x_node)
+                x_node = CENode(x, label="leaf", leaf_number=1)
+                N.add_child(x_node)
             else:
                 R_old = self.T.root
                 R_new = CENode(None, label="series", leaf_number=R_old.leaf_number)
-                N = CENode(None, label="parallel", parent=R_new, leaf_number=R_old.leaf_number)
-                R_new.children.append(N)
-                R_old.parent = N
-                N.children.append(R_old)
+                N = CENode(None, label="parallel", leaf_number=R_old.leaf_number)
+                R_new.add_child(N)
+                N.add_child(R_old)
                 self.T.root = R_new
                 
-                x_node = CENode(x, label="leaf", parent=N, leaf_number=1)
-                N.children.append(x_node)
+                x_node = CENode(x, label="leaf", leaf_number=1)
+                N.add_child(x_node)
             return 0, x_node                            # cost is 0
                 
         # second traversal, postorder
@@ -355,7 +369,6 @@ class CographEditor:
                     cost += (v.leaf_number - Nx_number[v])
                 for v in blue:
                     cost += Nx_number[v]
-#                print("cost", x, cost)
                     
                 mincost[u] = (cost, C_full[u] + list(red))
         
@@ -373,17 +386,16 @@ class CographEditor:
         if u.label == "parallel" and len(filled) == 1:
             w = filled[0]
             if w.label == "leaf":
-                new_node = CENode(None, label="series", parent=u, leaf_number=1)  # leaves w and x (x added later)
-                u.children.remove(w)
-                u.children.append(new_node)
-                w.parent = new_node
-                new_node.children.append(w)
+                new_node = CENode(None, label="series", leaf_number=1)  # leaves w and x (x added later)
+                u.remove_child(w)
+                u.add_child(new_node)
+                new_node.add_child(w)
                 
-                x_node = CENode(x, label="leaf", parent=new_node, leaf_number=1)
-                new_node.children.append(x_node)
+                x_node = CENode(x, label="leaf", leaf_number=1)
+                new_node.add_child(x_node)
             else:
-                x_node = CENode(x, label="leaf", parent=w, leaf_number=1)
-                w.children.append(x_node)
+                x_node = CENode(x, label="leaf", leaf_number=1)
+                w.add_child(x_node)
         
         # series node and only one child is not to be filled
         elif (u.label == "series" and 
@@ -395,51 +407,46 @@ class CographEditor:
                     w = child
                     break
             if w.label == "leaf":
-                new_node = CENode(None, label="parallel", parent=u, leaf_number=1)  # leaves w and x (x added later)
-                u.children.remove(w)
-                u.children.append(new_node)
-                w.parent = new_node
-                new_node.children.append(w)
+                new_node = CENode(None, label="parallel", leaf_number=1)  # leaves w and x (x added later)
+                u.remove_child(w)
+                u.add_child(new_node)
+                new_node.add_child(w)
                 
-                x_node = CENode(x, label="leaf", parent=new_node, leaf_number=1)
-                new_node.children.append(x_node)
+                x_node = CENode(x, label="leaf", leaf_number=1)
+                new_node.add_child(x_node)
             else:
-                x_node = CENode(x, label="leaf", parent=w, leaf_number=1)
-                w.children.append(x_node)
+                x_node = CENode(x, label="leaf", leaf_number=1)
+                w.add_child(x_node)
         
         else:
             filled_leaf_number = 0
             y = CENode(None, label=u.label)
             for a in filled:
-                u.children.remove(a)
-                a.parent = y
-                y.children.append(a)
+                u.remove_child(a)
+                y.add_child(a)
                 filled_leaf_number += a.leaf_number
             y.leaf_number = filled_leaf_number
                 
             if u.label == "parallel":
-                new_node = CENode(None, label="series", parent=u, leaf_number=filled_leaf_number)
-                u.children.append(new_node)
+                new_node = CENode(None, label="series", leaf_number=filled_leaf_number)
+                u.add_child(new_node)
                 
-                y.parent = new_node
-                new_node.children.append(y)
-                x_node = CENode(x, label="leaf", parent=new_node, leaf_number=1)
-                new_node.children.append(x_node)
+                new_node.add_child(y)
+                x_node = CENode(x, label="leaf", leaf_number=1)
+                new_node.add_child(x_node)
             else:
                 par = u.parent
                 if par is not None:             # u was the root of T
-                    par.children.remove(u)
-                    par.children.append(y)
+                    par.remove_child(u)
+                    par.add_child(y)
                 else:
                     self.T.root = y             # y becomes the new root
-                y.parent = par
                 
-                new_node = CENode(None, label="parallel", parent=y)
-                y.children.append(new_node)
-                u.parent = new_node
-                new_node.children.append(u)
-                x_node = CENode(x, label="leaf", parent=new_node, leaf_number=1)
-                new_node.children.append(x_node)
+                new_node = CENode(None, label="parallel")
+                y.add_child(new_node)
+                new_node.add_child(u)
+                x_node = CENode(x, label="leaf", leaf_number=1)
+                new_node.add_child(x_node)
                 
                 # update the leaf numbers
                 y.leaf_number = u.leaf_number
@@ -452,18 +459,22 @@ class CographEditor:
     
 if __name__ == "__main__":
     
-#    cotree = Cotree.random_cotree(10)
-#    print(cotree.to_newick())
-#    cograph = cotree.to_cograph()
-#    print(cograph.adj_list)
+    from cograph.Cograph import SimpleGraph
+    
+#    while(True):
+        
+    cotree = Cotree.random_cotree(100)
+    print(cotree.to_newick())
+    cograph = cotree.to_cograph()
+    print(cograph.adj_list)
     
 #    from cograph.Cograph import SimpleGraph
 #    print("((7,8)<1>,((9,(12,13)<1>,11)<0>,5,14)<1>,3,6)<0>;")
 #    cograph = SimpleGraph(initial={7: {8}, 8: {7}, 9: {5, 14}, 12: {13, 5, 14}, 13: {12, 5, 14}, 11: {5, 14}, 5: {9, 11, 12, 13, 14}, 14: {5, 9, 11, 12, 13}, 3: set(), 6: set()})
 #    print(cograph.adj_list)
     
-    from cograph.Cograph import SimpleGraph
-    cograph = SimpleGraph.random_graph(10)
+    
+#    cograph = SimpleGraph.random_graph(100)
     
     CE = CographEditor(cograph)
     new_cotree = CE.cograph_edit()
@@ -472,7 +483,10 @@ if __name__ == "__main__":
         print(new_cotree.to_newick())
         new_cograph = new_cotree.to_cograph()
         print(new_cograph.adj_list)
-        print(cograph.graphs_equal(new_cograph))
+        if not cograph.graphs_equal(new_cograph):
+            raise Exception("Cographs not equal")
+        else:
+            print(True)
         print(CE.total_cost, cograph.symmetric_diff(new_cograph))
     else:
         print("Not a cograph!")

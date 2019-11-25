@@ -26,12 +26,29 @@ __copyright__ = "Copyright (C) 2019, David Schaller"
 
 class LCDNode(CotreeNode):
     
+    __slots__ = ['parent_dll_element', 'md']
+    
+    
     def __init__(self, ID, label=None, parent=None):
         super().__init__(ID, label=label, parent=parent)
         self.children = dll.DLList()
         self.parent_dll_element = None      # reference to doubly-linked list element
                                             # in the parents' children
         self.md = 0                         # number of marked and unmarked children
+        
+        
+    def add_child(self, child_node):
+        child_node.parent = self
+        child_node.parent_dll_element = self.children.append(child_node)
+    
+    
+    def remove_child(self, child_node):
+        if child_node.parent is self:
+            self.children.remove_element(child_node.parent_dll_element)
+            child_node.parent = None
+            child_node.parent_dll_element = None
+        else:
+            raise ValueError("Not a child of this node!")
 
 
 class LCD:
@@ -71,18 +88,18 @@ class LCD:
         self.T.root = R
         
         if self.G.has_edge(v1, v2):
-            v1_node = LCDNode(v1, label="leaf", parent=R)
-            v2_node = LCDNode(v2, label="leaf", parent=R)
-            v1_node.parent_dll_element = R.children.append(v1_node)
-            v2_node.parent_dll_element = R.children.append(v2_node)
+            v1_node = LCDNode(v1, label="leaf")
+            v2_node = LCDNode(v2, label="leaf")
+            R.add_child(v1_node)
+            R.add_child(v2_node)
             self.node_counter = 3
         else:
-            N = LCDNode(None, label="parallel", parent=R)
-            N.parent_dll_element = R.children.append(N)
-            v1_node = LCDNode(v1, label="leaf", parent=N)
-            v2_node = LCDNode(v2, label="leaf", parent=N)
-            v1_node.parent_dll_element = N.children.append(v1_node)
-            v2_node.parent_dll_element = N.children.append(v2_node)
+            N = LCDNode(None, label="parallel")
+            R.add_child(N)
+            v1_node = LCDNode(v1, label="leaf")
+            v2_node = LCDNode(v2, label="leaf")
+            N.add_child(v1_node)
+            N.add_child(v2_node)
             self.node_counter = 4
             
         self.leaf_map[v1] = v1_node
@@ -104,42 +121,35 @@ class LCD:
             
             # call procedure _MARK(x)
             self._MARK(x)
-#            print(self.marked)
-#            print(self.node_counter)
-#            print(self.mark_counter)
-#            print(self.unmark_counter)
             
             # all nodes in T were marked and unmarked
             if self.node_counter == self.unmark_counter:
                 R = self.T.root
-                x_node = LCDNode(x, label="leaf", parent=R)
-                x_node.parent_dll_element = R.children.append(x_node)
+                x_node = LCDNode(x, label="leaf")
+                R.add_child(x_node)
                 self.node_counter += 1
                 self.leaf_map[x] = x_node
-#                print(str(x)+" after "+self.T.to_newick())
                 continue
             # no nodes in T were marked and unmarked
             elif self.mark_counter == 0:
                 # d(R)=1
                 if len(self.T.root.children) == 1:
                     N = self.T.root.children[0]
-                    x_node = LCDNode(x, label="leaf", parent=N)
-                    x_node.parent_dll_element = N.children.append(x_node)
+                    x_node = LCDNode(x, label="leaf")
+                    N.add_child(x_node)
                     self.node_counter += 1
                 else:
                     R_old = self.T.root
                     R_new = LCDNode(None, label="series")
-                    N = LCDNode(None, label="parallel", parent=R_new)
-                    N.parent_dll_element = R_new.children.append(N)
-                    R_old.parent = N
-                    R_old.parent_dll_element = N.children.append(R_old)
+                    N = LCDNode(None, label="parallel")
+                    R_new.add_child(N)
+                    N.add_child(R_old)
                     self.T.root = R_new
                     
-                    x_node = LCDNode(x, label="leaf", parent=N)
-                    x_node.parent_dll_element = N.children.append(x_node)
+                    x_node = LCDNode(x, label="leaf")
+                    N.add_child(x_node)
                     self.node_counter += 3
                 self.leaf_map[x] = x_node
-#                print(str(x)+" after "+self.T.to_newick())
                 continue
             
             u = self._find_lowest()
@@ -151,18 +161,17 @@ class LCD:
             if u.label == "parallel" and len(self.m_u_children[u]) == 1:
                 w = self.m_u_children[u][0]
                 if w.label == "leaf":
-                    new_node = LCDNode(None, label="series", parent=u)
-                    u.children.remove_element(w.parent_dll_element)
-                    new_node.parent_dll_element = u.children.append(new_node)
-                    w.parent = new_node
-                    w.parent_dll_element = new_node.children.append(w)
+                    new_node = LCDNode(None, label="series")
+                    u.remove_child(w)
+                    u.add_child(new_node)
+                    new_node.add_child(w)
                     
-                    x_node = LCDNode(x, label="leaf", parent=new_node)
-                    x_node.parent_dll_element = new_node.children.append(x_node)
+                    x_node = LCDNode(x, label="leaf")
+                    new_node.add_child(x_node)
                     self.node_counter += 2
                 else:
-                    x_node = LCDNode(x, label="leaf", parent=w)
-                    x_node.parent_dll_element = w.children.append(x_node)
+                    x_node = LCDNode(x, label="leaf")
+                    w.add_child(x_node)
                     self.node_counter += 1 
             
             # label(u)=1 and |B|=1
@@ -175,54 +184,48 @@ class LCD:
                         w = child
                         break
                 if w.label == "leaf":
-                    new_node = LCDNode(None, label="parallel", parent=u)
-                    u.children.remove_element(w.parent_dll_element)
-                    new_node.parent_dll_element = u.children.append(new_node)
-                    w.parent = new_node
-                    w.parent_dll_element = new_node.children.append(w)
+                    new_node = LCDNode(None, label="parallel")
+                    u.remove_child(w)
+                    u.add_child(new_node)
+                    new_node.add_child(w)
                     
-                    x_node = LCDNode(x, label="leaf", parent=new_node)
-                    x_node.parent_dll_element = new_node.children.append(x_node)
+                    x_node = LCDNode(x, label="leaf")
+                    new_node.add_child(x_node)
                     self.node_counter += 2
                 else:
-                    x_node = LCDNode(x, label="leaf", parent=w)
-                    x_node.parent_dll_element = w.children.append(x_node)
+                    x_node = LCDNode(x, label="leaf")
+                    w.add_child(x_node)
                     self.node_counter += 1
             
             else:
                 y = LCDNode(None, label=u.label)
                 for a in self.m_u_children[u]:
-                    u.children.remove_element(a.parent_dll_element)
-                    a.parent = y
-                    a.parent_dll_element = y.children.append(a)
+                    u.remove_child(a)
+                    y.add_child(a)
                     
                 if u.label == "parallel":
-                    new_node = LCDNode(None, label="series", parent=u)
-                    new_node.parent_dll_element = u.children.append(new_node)
+                    new_node = LCDNode(None, label="series")
+                    u.add_child(new_node)
                     
-                    y.parent = new_node
-                    y.parent_dll_element = new_node.children.append(y)
-                    x_node = LCDNode(x, label="leaf", parent=new_node)
-                    x_node.parent_dll_element = new_node.children.append(x_node)
+                    new_node.add_child(y)
+                    x_node = LCDNode(x, label="leaf")
+                    new_node.add_child(x_node)
                 else:
                     par = u.parent
                     if par is not None:             # u was the root of T
-                        par.children.remove_element(u.parent_dll_element)
-                        y.parent_dll_element = par.children.append(y)
+                        par.remove_child(u)
+                        par.add_child(y)
                     else:
                         self.T.root = y             # y becomes the new root
-                    y.parent = par
                     
-                    new_node = LCDNode(None, label="parallel", parent=y)
-                    new_node.parent_dll_element = y.children.append(new_node)
-                    u.parent = new_node
-                    u.parent_dll_element = new_node.children.append(u)
-                    x_node = LCDNode(x, label="leaf", parent=new_node)
-                    x_node.parent_dll_element = new_node.children.append(x_node)
+                    new_node = LCDNode(None, label="parallel")
+                    y.add_child(new_node)
+                    new_node.add_child(u)
+                    x_node = LCDNode(x, label="leaf")
+                    new_node.add_child(x_node)
                 self.node_counter += 3
                 
             self.leaf_map[x] = x_node
-#            print(str(x)+" after "+self.T.to_newick())
         
         return self.T
     
@@ -328,7 +331,7 @@ class LCD:
 if __name__ == "__main__":
     
     from cograph.Cograph import SimpleGraph
-    cotree = Cotree.random_cotree(1000)
+    cotree = Cotree.random_cotree(100)
 #    print(cotree.to_newick())
     cograph = cotree.to_cograph()
     

@@ -3,6 +3,10 @@
 
 class SimpleTreeNode:
     
+    __slots__ = ['ID', 'label', 'parent', 'children',
+                 'leaves']
+    
+    
     def __init__(self, ID, label=None, parent=None):
         self.ID = ID
         self.label = label

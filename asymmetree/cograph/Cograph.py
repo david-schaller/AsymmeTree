@@ -147,6 +147,9 @@ class SimpleGraph:
 
 class CotreeNode(SimpleTree.SimpleTreeNode):
     
+    __slots__ = []
+    
+    
     def __init__(self, ID, label=None, parent=None):
         super().__init__(ID, label=label, parent=parent)
     
