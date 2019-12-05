@@ -50,7 +50,7 @@ def performance(true_graph, graph):
     else:
         tn = (order * (order-1) / 2) - (tp + fp + fn)
     
-    check uracy = (tp + tn) / (tp + tn + fp + fn) if tp + tn + fp + fn > 0 else float('nan')
+    accuracy = (tp + tn) / (tp + tn + fp + fn) if tp + tn + fp + fn > 0 else float('nan')
     precision = tp / (tp + fp) if tp + fp > 0 else float('nan')
     recall = tp / (tp + fn) if tp + fn > 0 else float('nan')
 #    accuracy = (tp + tn) / (tp + tn + fp + fn) if tp + tn + fp + fn > 0 else 1.0
