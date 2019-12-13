@@ -13,9 +13,13 @@ from simulator.Tree import Tree, TreeNode
 class TreeReconstructor:
     
     
-    def __init__(self):
+    def __init__(self, edit_runs_per_cc=5):
+        
         self.R = {}             # (weighted) species triples
         self.L = set()          # set of species leaves
+        
+        self.edit_runs_per_cc = edit_runs_per_cc    # runs of cograph editing heuristic
+                                                    # per connected component
         
         
     def add_ortho_graph(self, ortho_graph):
@@ -35,7 +39,7 @@ class TreeReconstructor:
                 
             # apply minimal cograph editing (heuristic)
             ce = CographEditor(G)
-            cotree = ce.cograph_edit()
+            cotree = ce.cograph_edit(run_number=self.edit_runs_per_cc)
             
             # add the informative triples (root is a speciation)
             self._informative_triples(cotree, color_dict)
@@ -75,10 +79,16 @@ class TreeReconstructor:
             self.R[triple] = weight
             
             
-    def build_species_tree(self):
+    def build_species_tree(self, mode='mincut', weighted=True):
         """Build a species tree from the informative triples."""
         
-        root = self._BUILD(self.L, self.R)
+        if mode.lower() in ('mincut', 'min-cut'):
+            root = self._BUILD(self.L, self.R)
+        elif mode.lower() == 'bpmf':
+            root = self._BPMF(weighted=weighted)
+        else:
+            raise ValueError("Mode {} is not valid!".format(mode))
+            
         if not root:
             raise Exception("Could not build a species tree!")
         
@@ -148,3 +158,73 @@ class TreeReconstructor:
             cut = nx.stoer_wagner(G)                    # Stoer–Wagner algorithm
                                                         # for minimal weighted edge cut
             return cut[1]
+        
+    
+    def _BPMF(self, weighted=True):
+        """Wu’s Best-Pair-Merge-First heuristic.
+        
+        Modified version by Byrka et al. 2010 and added weights."""
+        
+        # initialization
+        nodes = {TreeNode(leaf, label=leaf): {leaf} for leaf in self.L}
+        leaf_to_node = {}
+        
+        for node in nodes:
+            leaf_to_node[node.label] = node
+        
+        # merging
+        for i in range(len(self.L)-1):
+            
+            score = {(S_i, S_j): 0
+                     for S_i, S_j in itertools.combinations(nodes.keys(), 2)}
+            
+            for x, y, z in self.R.keys():
+                
+                w = self.R[(x,y,z)]
+                
+                S_i, S_j, S_k = (leaf_to_node[x],
+                                 leaf_to_node[y],
+                                 leaf_to_node[z])
+                
+                if (S_i is not S_j) and (S_i is not S_k) and (S_j is not S_k):
+                    
+                    if (S_i, S_j) in score:
+                        score[(S_i, S_j)] += 2 * w if weighted else 2
+                    else:
+                        score[(S_j, S_i)] += 2 * w if weighted else 2
+                        
+                    if (S_i, S_k) in score:
+                        score[(S_i, S_k)] -= 1 * w if weighted else 1
+                    else:
+                        score[(S_k, S_i)] -= 1 * w if weighted else 1
+                        
+                    if (S_j, S_k) in score:
+                        score[(S_j, S_k)] -= 1 * w if weighted else 1
+                    else:
+                        score[(S_k, S_j)] -= 1 * w if weighted else 1
+            
+            current_max = float('-inf')
+            S_i, S_j = None, None
+            
+            for pair, pair_score in score.items():
+                
+                if pair_score > current_max:
+                    current_max = pair_score
+                    S_i, S_j = pair
+            
+            # create new node S_k connecting S_i and S_j
+            S_k = TreeNode(0, label="")
+            S_k.children.extend([S_i, S_j])
+            S_i.parent = S_k
+            S_j.parent = S_k
+            
+            nodes[S_k] = nodes[S_i] | nodes[S_j]    # set union
+            for leaf in nodes[S_k]:
+                leaf_to_node[leaf] = S_k
+            
+            del nodes[S_i]
+            del nodes[S_j]
+            
+        assert len(nodes) == 1, "More than 1 node left!"
+        
+        return next(iter(nodes))

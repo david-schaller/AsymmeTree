@@ -19,7 +19,7 @@ print(S.to_newick())
 
 tr = TreeReconstructor()
 
-for i in range(100):
+for i in range(1000):
     
     TGT = ts.build_gene_tree(S, (1,1,0))
     TGT = tm.imbalance_tree(TGT, S, baseline_rate=1,
@@ -36,6 +36,10 @@ for i in range(100):
     tr.add_ortho_graph(RBMG)
     
     
-S_estimate = tr.build_species_tree()
+S_estimate = tr.build_species_tree(mode="mincut")
 
 print(S_estimate.to_newick())
+
+S_estimate2 = tr.build_species_tree(mode="BPMF")
+
+print(S_estimate2.to_newick())

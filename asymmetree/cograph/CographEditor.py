@@ -9,9 +9,11 @@ Implementation the O(n^2) algorithm in:
     Preprint published 2019.
 """
 
+import random
+
 import tools.DoublyLinkedList as dll
 
-try:
+try:                
     from .Cograph import Cotree, CotreeNode
 except ModuleNotFoundError:
     from cograph.Cograph import Cotree, CotreeNode
@@ -56,54 +58,70 @@ class CographEditor:
         self.G = G
         self.V = list(G.adj_list.keys())
         
-        self.T = Cotree(None)
-        self.already_in_T = set()
-        self.leaf_map = {}
-        
-        self.total_cost = 0
+        self.best_T = None
+        self.best_cost = float('inf')
         
     
-    def cograph_edit(self):
+    def cograph_edit(self, run_number=5):
         
-        # build starting tree for the first two vertices
-        self._start_tree()
-        
-        if len(self.V) <= 2:
-            return self.T
-        
-        # incrementally insert vertices while updating total cost
-        for x in self.V[2:]:
-            cost, x_node = self._insert(x)
+        for i in range(run_number):
             
-            # update the number of leaves on the path to the root
-            current = x_node.parent
-            while current:
-                current.leaf_number += 1
-                current = current.parent
+            T = Cotree(None)
+            already_in_T = set()
+            leaf_map = {}
             
-            self.leaf_map[x] = x_node
-            self.already_in_T.add(x)
-            self.total_cost += cost
-#            print(x, self.T.to_newick())
+            # shuffle the vertex list (beginning from second run)
+            if i > 0:
+                random.shuffle(self.V)
             
-        return self.T
+            # build starting tree for the first two vertices
+            self._start_tree(T, already_in_T, leaf_map)
+            
+            if len(self.V) <= 2:
+                return T
+            
+            # incrementally insert vertices while updating total cost
+            total_cost = 0
+            for x in self.V[2:]:
+                cost, x_node = self._insert(x, T, already_in_T, leaf_map)
+                
+                # update the number of leaves on the path to the root
+                current = x_node.parent
+                while current:
+                    current.leaf_number += 1
+                    current = current.parent
+                
+                leaf_map[x] = x_node
+                already_in_T.add(x)
+                total_cost += cost
+            
+            # update the best cost
+            if total_cost < self.best_cost:
+                self.best_T = T
+                self.best_cost = total_cost
+            
+            # stop if orginal graph was a cograph, i.e. cost is 0
+            if self.best_cost <= 0:
+                break
+            
+        return self.best_T
         
     
-    def _start_tree(self):
+    def _start_tree(self, T, already_in_T, leaf_map):
         
         if len(self.V) == 0:
             print("Empty graph in Cograph Recognition!")
-            return self.T
+            return
         
         elif len(self.V) == 1:
-            self.T.root = CENode(self.V[0], label="leaf", leaf_number=1)
-            return self.T
+            T.root = CENode(self.V[0], label="leaf", leaf_number=1)
+            return
         
         v1, v2 = self.V[0], self.V[1]
-        self.already_in_T.update([v1, v2])
+        already_in_T.update([v1, v2])
         
         R = CENode(None, label="series", leaf_number=2)
-        self.T.root = R
+        T.root = R
         
         if self.G.has_edge(v1, v2):
             v1_node = CENode(v1, label="leaf", leaf_number=1)
@@ -118,11 +136,11 @@ class CographEditor:
             N.add_child(v1_node)
             N.add_child(v2_node)
             
-        self.leaf_map[v1] = v1_node
-        self.leaf_map[v2] = v2_node
+        leaf_map[v1] = v1_node
+        leaf_map[v2] = v2_node
     
         
-    def _insert(self, x):
+    def _insert(self, x, T, already_in_T, leaf_map):
         
         # information for non-hollow nodes
         C_nh = {}                   # node u: list of non-hollow children
@@ -139,12 +157,12 @@ class CographEditor:
         
         # first traversal (C_nh)
         for v in self.G.neighbors(x):
-            if v not in self.already_in_T:
+            if v not in already_in_T:
                 continue
             
             Nx_counter += 1
             
-            v = self.leaf_map[v]
+            v = leaf_map[v]
             C_nh[v]                = []
             C_nh_number[v]         = 0
             Nx_number[v]           = 1
@@ -162,26 +180,26 @@ class CographEditor:
                 current = current.parent                # continue path to root
                 
         # all nodes in T are adjacent to x
-        if self.T.root.leaf_number == Nx_counter:
-            R = self.T.root
+        if T.root.leaf_number == Nx_counter:
+            R = T.root
             x_node = CENode(x, label="leaf", leaf_number=1)
             R.add_child(x_node)
-            self.leaf_map[x] = x_node
+            leaf_map[x] = x_node
             return 0, x_node                            # cost is 0
         # no nodes in T are adjacent to x
         elif Nx_counter == 0:
             # d(R)=1
-            if len(self.T.root.children) == 1:
-                N = self.T.root.children[0]
+            if len(T.root.children) == 1:
+                N = T.root.children[0]
                 x_node = CENode(x, label="leaf", leaf_number=1)
                 N.add_child(x_node)
             else:
-                R_old = self.T.root
+                R_old = T.root
                 R_new = CENode(None, label="series", leaf_number=R_old.leaf_number)
                 N = CENode(None, label="parallel", leaf_number=R_old.leaf_number)
                 R_new.add_child(N)
                 N.add_child(R_old)
-                self.T.root = R_new
+                T.root = R_new
                 
                 x_node = CENode(x, label="leaf", leaf_number=1)
                 N.add_child(x_node)
@@ -189,7 +207,7 @@ class CographEditor:
                 
         # second traversal, postorder
         # (C_nh_number, Nx_number, completion_forced, mixed, deletion_forced)
-        stack = [self.T.root]
+        stack = [T.root]
         while stack:
             u = stack.pop()
             if not u.children:
@@ -234,7 +252,7 @@ class CographEditor:
         C_mixed = {}                        # node u: mixed children of u
         C_full = {}                         # node u: full children of u
         
-        stack = [self.T.root]
+        stack = [T.root]
         while stack:        
             u = stack.pop()
             C_mixed[u] = []
@@ -440,7 +458,7 @@ class CographEditor:
                     par.remove_child(u)
                     par.add_child(y)
                 else:
-                    self.T.root = y             # y becomes the new root
+                    T.root = y             # y becomes the new root
                 
                 new_node = CENode(None, label="parallel")
                 y.add_child(new_node)
@@ -463,10 +481,10 @@ if __name__ == "__main__":
     
 #    while(True):
         
-    cotree = Cotree.random_cotree(100)
-    print(cotree.to_newick())
-    cograph = cotree.to_cograph()
-    print(cograph.adj_list)
+#    cotree = Cotree.random_cotree(100)
+#    print(cotree.to_newick())
+#    cograph = cotree.to_cograph()
+#    print(cograph.adj_list)
     
 #    from cograph.Cograph import SimpleGraph
 #    print("((7,8)<1>,((9,(12,13)<1>,11)<0>,5,14)<1>,3,6)<0>;")
@@ -474,19 +492,19 @@ if __name__ == "__main__":
 #    print(cograph.adj_list)
     
     
-#    cograph = SimpleGraph.random_graph(100)
+    cograph = SimpleGraph.random_graph(100)
     
     CE = CographEditor(cograph)
-    new_cotree = CE.cograph_edit()
+    new_cotree = CE.cograph_edit(run_number=5)
     print("done")
     if new_cotree:
         print(new_cotree.to_newick())
         new_cograph = new_cotree.to_cograph()
-        print(new_cograph.adj_list)
-        if not cograph.graphs_equal(new_cograph):
-            raise Exception("Cographs not equal")
-        else:
-            print(True)
-        print(CE.total_cost, cograph.symmetric_diff(new_cograph))
+#        print(new_cograph.adj_list)
+#        if not cograph.graphs_equal(new_cograph):
+#            raise Exception("Cographs not equal")
+#        else:
+#            print(True)
+        print(CE.best_cost, cograph.symmetric_diff(new_cograph))
     else:
         print("Not a cograph!")
