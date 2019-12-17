@@ -13,6 +13,8 @@ References:
       in large-scale analysis. BMC Bioinformatics 2011, 12:124
 """
 
+import re
+
 import networkx as nx
 
 
@@ -34,13 +36,15 @@ def parse_po_graph(filename):
         
         while line:
             
+            line = line.strip()
+            
             # new color pair begins
-            if line.startswith("#") and not line.startswith("# Scores:"):
+            if line and line.startswith("#") and not line.startswith("# Scores:"):
                 colors = line.split()
                 if len(colors) == 3:
                     col_a, col_b = colors[1], colors[2]
                 
-            elif not line.startswith("#"):
+            elif line and not line.startswith("#"):
                 edge = line.split()
                 id1 = "{}_{}".format(col_a, edge[0])
                 id2 = "{}_{}".format(col_b, edge[1])
@@ -70,9 +74,54 @@ def parse_po_graph(filename):
                     print("Check file format!", edge)
                     continue
                 
-            line = f.readline().strip()
+            line = f.readline()
             
     return G
+
+
+def parse_best_match_candidates(filename):
+    
+    candidates = {}
+    
+#    # extract the species from filename
+#    species_match = re.search(r"([^/]+)\.bm_candidates$", filename)
+#    if species_match:
+#        species = species_match.group(1)
+#    else:
+#        raise ValueError("Could not extract species from filename '{}'.".format(filename))
+    
+    with open(filename, "r") as f:
+        
+        line = f.readline()
+        
+        while line:
+            
+            line = line.strip()
+            if not line:
+                line = f.readline()
+                continue
+            
+            data = line.split()
+            
+            if len(data) != 5:
+                print("Check file format: {}, line {}".format(filename, line))
+                continue
+                
+            color      = data[0]
+            query_id   = data[1]
+            subject_id = data[2]
+            e_value    = float(data[3])
+            bitscore   = float(data[4])
+            
+            if subject_id not in candidates:
+                candidates[subject_id] = {}
+            if color not in candidates[subject_id]:
+                candidates[subject_id][color] = []
+            candidates[subject_id][color].append( (color, query_id, e_value, bitscore) )
+                
+            line = f.readline()
+            
+    return candidates
 
 
 if __name__ == "__main__":

@@ -20,6 +20,19 @@ def to_newick_pyvolve(tree, node=None):
         for child in node.children:
             s += to_newick_pyvolve(tree, node=child) + ","
         return "({}):{}".format(s[:-1], node.dist)
+    
+    
+def to_newick_faa(tree, node=None):
+    
+    if node is None:
+        return to_newick_faa(tree, node=tree.root) + ";"
+    elif not node.children:
+        return "{}.faa".format(node.label)
+    else:
+        s = ''
+        for child in node.children:
+            s += to_newick_faa(tree, node=child) + ","
+        return "({})".format(s[:-1])
 
 
 def simulate_gene_families(S, N, seq_length=(200,800)):
@@ -78,8 +91,10 @@ def write_species_fastas(seq_dict, dirname, pickle_scenario=None):
     if pickle_scenario:
         pickle_file = os.path.join(dirname, "scenario.pickle")
         pickle.dump(pickle_scenario, open(pickle_file , "wb" ))
-        
-        
+   
+     
+directory = "test_files_3"
+
 
 S = Tree.parse_newick("(((((16:0.38786287055727103,(18:0.2071277923445058,19:0.2071277923445058)17:0.18073507821276524)12:0.10075553853805931,(14:0.13224182895383052,15:0.13224182895383052)13:0.3563765801414998)4:0.07517286794939665,(6:0.5373882998574596,(8:0.4434182448023457,(10:0.04929450217312242,11:0.04929450217312242)9:0.3941237426292233)7:0.0939700550551139)5:0.02640297718726732)2:0.2512472266526016,3:0.8150385036973286)1:0.18496149630267142)0:0.0;")
 S.reconstruct_IDs()
@@ -88,4 +103,7 @@ S.reconstruct_timestamps()
 seqs, gene_trees = simulate_gene_families(S, 1000, seq_length=(200,800))
 print(seqs)
 
-write_species_fastas(seqs, "test_files_2", pickle_scenario=(S, gene_trees))
+write_species_fastas(seqs, directory, pickle_scenario=(S, gene_trees))
+
+with open(os.path.join(directory, "true_species_tree"), "w") as f:
+    f.write(to_newick_faa(S))
