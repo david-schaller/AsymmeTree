@@ -103,7 +103,7 @@ def parse_best_match_candidates(filename):
             
             data = line.split()
             
-            if len(data) != 5:
+            if len(data) != 6:
                 print("Check file format: {}, line {}".format(filename, line))
                 continue
                 
@@ -112,12 +112,13 @@ def parse_best_match_candidates(filename):
             subject_id = data[2]
             e_value    = float(data[3])
             bitscore   = float(data[4])
+            identity   = float(data[5]) / 100
             
             if subject_id not in candidates:
                 candidates[subject_id] = {}
             if color not in candidates[subject_id]:
                 candidates[subject_id][color] = []
-            candidates[subject_id][color].append( (color, query_id, e_value, bitscore) )
+            candidates[subject_id][color].append( (color, query_id, e_value, bitscore, identity) )
                 
             line = f.readline()
             

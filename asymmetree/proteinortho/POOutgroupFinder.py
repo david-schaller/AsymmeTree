@@ -68,7 +68,7 @@ class OutgroupFinder:
                 self.lca_to_outgroups[c1].update(self.subtree_species[c2])
                 
     
-    def __call__(self, spec_x, spec_Y, candidates, limit=20):
+    def __call__(self, spec_x, spec_Y, candidates, limit=10):
         
         # set of candidates might be empty (?)
         if not candidates:
@@ -83,18 +83,18 @@ class OutgroupFinder:
         
         available_outgroup_spec = outgroup_spec.intersection(candidates)
         
-        total_outgroups = 0
+        total_outgroup_nr = 0
         for spec in available_outgroup_spec:
-            total_outgroups += len(candidates[spec])
+            total_outgroup_nr += len(candidates[spec])
             
         # set of actual outgroup genes can be empty
-        if total_outgroups == 0:
+        if total_outgroup_nr == 0:
             return False
         
         outgroups = []
         
         # pick one outgroup from each species in each round
-        i, outgroup_counter, stop = 0, 0, min(limit, total_outgroups)
+        i, outgroup_counter, stop = 0, 0, min(limit, total_outgroup_nr)
         while outgroup_counter < stop:
             
             for spec in available_outgroup_spec:

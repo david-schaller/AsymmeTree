@@ -222,7 +222,7 @@ class Quartets:
                             for i in range(20):
                                 a, b = random.sample(genes_c1, 2)
                                 c, d = random.sample(genes_c2, 2)
-                                quartet, _ = self.supported_quarted(a, b, c, d)
+                                quartet, _ = self.supported_quartet(a, b, c, d)
                                 if quartet == 0:                                    # ab | cd
                                     votes[0] += 1                                   # (congruent)
                                 else:                                               # ac | bd or ad | bc or star
@@ -303,7 +303,7 @@ class Quartets:
         return outgroups
     
     
-    def supported_quarted(self, x, y1, y2, z):
+    def supported_quartet(self, x, y1, y2, z):
         
         x, y1, y2, z = (self.gene_index[x], self.gene_index[y1],
                         self.gene_index[y2], self.gene_index[z])
@@ -335,7 +335,7 @@ class Quartets:
         for y1, y2 in itertools.combinations(Y, 2):
             votes = [0, 0, 0, 0]
             for z in Z:
-                q, weight = self.supported_quarted(x, y1, y2, z)
+                q, weight = self.supported_quartet(x, y1, y2, z)
                 if self.voting_mode == "weighted sum":
                     votes[q] += weight                          # use the weight
                 else:
