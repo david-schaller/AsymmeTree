@@ -38,6 +38,3 @@ bin/
 *.exe
 *.out
 *.app
-
-# Results and Benchmarking
-benchmark.txt
