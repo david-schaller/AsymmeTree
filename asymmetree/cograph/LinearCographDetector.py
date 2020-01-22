@@ -12,8 +12,6 @@ Implementation of:
 
 from collections import deque
 
-import tools.DoublyLinkedList as dll
-
 try:
     from .Cograph import Cotree, CotreeNode
 except ModuleNotFoundError:
@@ -22,33 +20,6 @@ except ModuleNotFoundError:
 
 __author__ = "David Schaller"
 __copyright__ = "Copyright (C) 2019, David Schaller"
-
-
-class LCDNode(CotreeNode):
-    
-    __slots__ = ['parent_dll_element', 'md']
-    
-    
-    def __init__(self, ID, label=None, parent=None):
-        super().__init__(ID, label=label, parent=parent)
-        self.children = dll.DLList()
-        self.parent_dll_element = None      # reference to doubly-linked list element
-                                            # in the parents' children
-        self.md = 0                         # number of marked and unmarked children
-        
-        
-    def add_child(self, child_node):
-        child_node.parent = self
-        child_node.parent_dll_element = self.children.append(child_node)
-    
-    
-    def remove_child(self, child_node):
-        if child_node.parent is self:
-            self.children.remove_element(child_node.parent_dll_element)
-            child_node.parent = None
-            child_node.parent_dll_element = None
-        else:
-            raise ValueError("Not a child of this node!")
 
 
 class LCD:
@@ -78,26 +49,26 @@ class LCD:
             return self.T
         
         elif len(self.V) == 1:
-            self.T.root = LCDNode(self.V[0], label="leaf")
+            self.T.root = CotreeNode(self.V[0], label="leaf")
             return self.T
         
         v1, v2 = self.V[0], self.V[1]
         self.already_in_T.update([v1, v2])
         
-        R = LCDNode(None, label="series")
+        R = CotreeNode(None, label="series")
         self.T.root = R
         
         if self.G.has_edge(v1, v2):
-            v1_node = LCDNode(v1, label="leaf")
-            v2_node = LCDNode(v2, label="leaf")
+            v1_node = CotreeNode(v1, label="leaf")
+            v2_node = CotreeNode(v2, label="leaf")
             R.add_child(v1_node)
             R.add_child(v2_node)
             self.node_counter = 3
         else:
-            N = LCDNode(None, label="parallel")
+            N = CotreeNode(None, label="parallel")
             R.add_child(N)
-            v1_node = LCDNode(v1, label="leaf")
-            v2_node = LCDNode(v2, label="leaf")
+            v1_node = CotreeNode(v1, label="leaf")
+            v2_node = CotreeNode(v2, label="leaf")
             N.add_child(v1_node)
             N.add_child(v2_node)
             self.node_counter = 4
@@ -125,7 +96,7 @@ class LCD:
             # all nodes in T were marked and unmarked
             if self.node_counter == self.unmark_counter:
                 R = self.T.root
-                x_node = LCDNode(x, label="leaf")
+                x_node = CotreeNode(x, label="leaf")
                 R.add_child(x_node)
                 self.node_counter += 1
                 self.leaf_map[x] = x_node
@@ -135,18 +106,18 @@ class LCD:
                 # d(R)=1
                 if len(self.T.root.children) == 1:
                     N = self.T.root.children[0]
-                    x_node = LCDNode(x, label="leaf")
+                    x_node = CotreeNode(x, label="leaf")
                     N.add_child(x_node)
                     self.node_counter += 1
                 else:
                     R_old = self.T.root
-                    R_new = LCDNode(None, label="series")
-                    N = LCDNode(None, label="parallel")
+                    R_new = CotreeNode(None, label="series")
+                    N = CotreeNode(None, label="parallel")
                     R_new.add_child(N)
                     N.add_child(R_old)
                     self.T.root = R_new
                     
-                    x_node = LCDNode(x, label="leaf")
+                    x_node = CotreeNode(x, label="leaf")
                     N.add_child(x_node)
                     self.node_counter += 3
                 self.leaf_map[x] = x_node
@@ -161,16 +132,16 @@ class LCD:
             if u.label == "parallel" and len(self.m_u_children[u]) == 1:
                 w = self.m_u_children[u][0]
                 if w.label == "leaf":
-                    new_node = LCDNode(None, label="series")
+                    new_node = CotreeNode(None, label="series")
                     u.remove_child(w)
                     u.add_child(new_node)
                     new_node.add_child(w)
                     
-                    x_node = LCDNode(x, label="leaf")
+                    x_node = CotreeNode(x, label="leaf")
                     new_node.add_child(x_node)
                     self.node_counter += 2
                 else:
-                    x_node = LCDNode(x, label="leaf")
+                    x_node = CotreeNode(x, label="leaf")
                     w.add_child(x_node)
                     self.node_counter += 1 
             
@@ -184,31 +155,31 @@ class LCD:
                         w = child
                         break
                 if w.label == "leaf":
-                    new_node = LCDNode(None, label="parallel")
+                    new_node = CotreeNode(None, label="parallel")
                     u.remove_child(w)
                     u.add_child(new_node)
                     new_node.add_child(w)
                     
-                    x_node = LCDNode(x, label="leaf")
+                    x_node = CotreeNode(x, label="leaf")
                     new_node.add_child(x_node)
                     self.node_counter += 2
                 else:
-                    x_node = LCDNode(x, label="leaf")
+                    x_node = CotreeNode(x, label="leaf")
                     w.add_child(x_node)
                     self.node_counter += 1
             
             else:
-                y = LCDNode(None, label=u.label)
+                y = CotreeNode(None, label=u.label)
                 for a in self.m_u_children[u]:
                     u.remove_child(a)
                     y.add_child(a)
                     
                 if u.label == "parallel":
-                    new_node = LCDNode(None, label="series")
+                    new_node = CotreeNode(None, label="series")
                     u.add_child(new_node)
                     
                     new_node.add_child(y)
-                    x_node = LCDNode(x, label="leaf")
+                    x_node = CotreeNode(x, label="leaf")
                     new_node.add_child(x_node)
                 else:
                     par = u.parent
@@ -218,10 +189,10 @@ class LCD:
                     else:
                         self.T.root = y             # y becomes the new root
                     
-                    new_node = LCDNode(None, label="parallel")
+                    new_node = CotreeNode(None, label="parallel")
                     y.add_child(new_node)
                     new_node.add_child(u)
-                    x_node = LCDNode(x, label="leaf")
+                    x_node = CotreeNode(x, label="leaf")
                     new_node.add_child(x_node)
                 self.node_counter += 3
                 
@@ -243,14 +214,14 @@ class LCD:
             u = queue.popleft()
             self.marked.remove(u)           # unmark u
             self.unmark_counter += 1
-            u.md = 0                        # md(u) <- 0
+            u.aux_counter = 0               # md(u) <- 0
             if u is not self.T.root:
                 w = u.parent                # w <- parent(u)
                 if w not in self.marked:
                     self.marked.add(w)      # mark w
                     self.mark_counter += 1
-                w.md += 1
-                if w.md == len(w.children):
+                w.aux_counter += 1
+                if w.aux_counter == len(w.children):
                     queue.append(w)
                     
                 if w in self.m_u_children:              # append u to list of
@@ -275,10 +246,10 @@ class LCD:
             self.error_message = "(iii): R=" + str(R)
             return False                # G+x is not a cograph (iii)
         else:
-            if R.md != len(R.children) - 1:
+            if R.aux_counter != len(R.children) - 1:
                 y = R
             self.marked.remove(R)
-            R.md = 0
+            R.aux_counter = 0
             u = w = R
         
         while self.marked:              # while there are mark vertices
@@ -289,7 +260,7 @@ class LCD:
                 return False            # G+x is not a cograph (i) or (ii)
             
             if u.label == "series":
-                if u.md != len(u.children) - 1:
+                if u.aux_counter != len(u.children) - 1:
                     y = u
                 if u.parent in self.marked:
                     self.error_message = "(i) and (vi): u=" + str(u)
@@ -299,7 +270,7 @@ class LCD:
             else:
                 y = u
                 t = u.parent
-            u.md = 0                    # u was already unmarked above
+            u.aux_counter = 0           # u was already unmarked above
             
             # check if the u-w path is part of the legitimate alternating path
             while t is not w:
@@ -311,7 +282,7 @@ class LCD:
                     self.error_message = "(iii), (v) or (vi): t=" + str(t)
                     return False        # G+x is not a cograph (iii), (v) or (vi)
                 
-                if t.md != len(t.children) - 1:
+                if t.aux_counter != len(t.children) - 1:
                     self.error_message = "(ii): t=" + str(t)
                     return False        # G+x is not a cograph (ii)
                 
@@ -320,7 +291,7 @@ class LCD:
                     return False        # G+x is not a cograph (i)
                 
                 self.marked.remove(t)   # unmark t
-                t.md = 0                # reset md(t)
+                t.aux_counter = 0       # reset md(t)
                 t = t.parent.parent
                 
             w = u                       # rest w for next choice of marked vertex

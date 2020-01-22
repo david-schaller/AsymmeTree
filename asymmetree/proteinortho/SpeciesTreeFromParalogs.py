@@ -13,13 +13,21 @@ from simulator.Tree import Tree, TreeNode
 class TreeReconstructor:
     
     
-    def __init__(self, edit_runs_per_cc=5):
+    def __init__(self, edit_runs_per_cc=10, cotree_mode="best"):
         
         self.R = {}             # (weighted) species triples
         self.L = set()          # set of species leaves
         
-        self.edit_runs_per_cc = edit_runs_per_cc    # runs of cograph editing heuristic
+        self._edit_runs_per_cc = edit_runs_per_cc   # runs of cograph editing heuristic
                                                     # per connected component
+        self.S = None           # the reconstructed species tree
+        
+        if cotree_mode == "best":                   # only use the best cotree
+            self._cotree_mode = "best"
+        elif cotree_mode == "all":                  # use all cotrees
+            self._cotree_mode = "all"
+        else:
+            raise ValueError(f"Invalid argument for cotree usage: '{cotree_mode}'.")
         
         
     def add_ortho_graph(self, ortho_graph):
@@ -39,13 +47,20 @@ class TreeReconstructor:
                 
             # apply minimal cograph editing (heuristic)
             ce = CographEditor(G)
-            cotree = ce.cograph_edit(run_number=self.edit_runs_per_cc)
+            cotree = ce.cograph_edit(run_number=self._edit_runs_per_cc)
             
             # add the informative triples (root is a speciation)
-            self._informative_triples(cotree, color_dict)
+            if self._cotree_mode == "best":
+                self._informative_triples(cotree, color_dict)
+                
+            elif self._cotree_mode == "all":
+                weight_per_tree = 1 / len(ce.cotrees)
+                for cotree in ce.cotrees:
+                    self._informative_triples(cotree, color_dict,
+                                              weight=weight_per_tree)
             
             
-    def _informative_triples(self, cotree, color_dict):
+    def _informative_triples(self, cotree, color_dict, weight=1.0):
         """Add informative species triples from a (co)tree to R."""
         
         cotree.supply_leaves()
@@ -62,10 +77,10 @@ class TreeReconstructor:
                                    color_dict[z.ID])
                         
                         if X != Y and X != Z and Y != Z:
-                            self._add_triple(X, Y, Z)
+                            self._add_triple(X, Y, Z, weight)
                             
         
-    def _add_triple(self, a, b, c, weight=1):
+    def _add_triple(self, a, b, c, weight):
         """Add a triple ab|c (= ba|c)."""
         
         if a <= b:
@@ -87,12 +102,14 @@ class TreeReconstructor:
         elif mode.lower() == 'bpmf':
             root = self._BPMF(weighted=weighted)
         else:
-            raise ValueError("Mode {} is not valid!".format(mode))
+            raise ValueError(f"Mode '{mode}' is not valid!")
             
         if not root:
             raise Exception("Could not build a species tree!")
         
-        return Tree(root)
+        self.S = Tree(root)
+        
+        return self.S
     
     
     def _BUILD(self, L, R):
@@ -228,3 +245,149 @@ class TreeReconstructor:
         assert len(nodes) == 1, "More than 1 node left!"
         
         return next(iter(nodes))
+    
+    
+    def _max_consistent_triple_set(self):
+        
+        if self.S is None:
+            raise Exception("Species tree has not been built yet!")
+            
+        R_total = self.S.get_triples()      # all triples of the tree
+        R_max_cons = {}                     # max. consistent subset of R (i.e. heuristic)
+        
+        for l1, l2, l3 in R_total:
+            a = l1.label
+            b = l2.label
+            c = l3.label
+            
+            if a <= b:
+                triple = (a, b, c)
+            else:
+                triple = (b, a, c)
+                
+            if triple in self.R:
+                R_max_cons[triple] = self.R[triple]
+        
+        return R_max_cons
+    
+    
+    def _total_support(self, R_max_cons):
+        """Compute the total support s of the tree as in ParaPhylo."""
+        
+        numerator = 0
+        denominator = 0
+        
+        for triple, weight in R_max_cons.items():
+            
+            numerator += weight
+            denominator += weight
+            
+            a, b, c = triple
+            triple2 = (a, c, b) if a <= c else (c, a, b)
+            triple3 = (b, c, a) if b <= c else (c, b, a)
+            
+            if triple2 in self.R:
+                denominator += self.R[triple2]
+            if triple3 in self.R:
+                denominator += self.R[triple3]
+        
+        support = numerator / denominator if denominator > 0 else 0
+        return support
+    
+    
+    def _subtree_support(self):
+        """Compute the subtree support s_v for the inner nodes as in ParaPhylo."""
+        
+        support = {}                        # internal node v --> support for T(v)
+        
+        self.S.supply_leaves()
+        all_leaves = set(self.S.root.leaves)
+        
+        for v in self.S.preorder():
+            if not v.children or v is self.S.root:
+                continue
+            
+            numerator = 0
+            denominator = 0
+            outspecies = all_leaves.difference(v.leaves)
+            
+            for l1, l2 in itertools.combinations(v.leaves, 2):
+                for l3 in outspecies:
+                    a = l1.label
+                    b = l2.label
+                    c = l3.label
+                    triple1 = (a, b, c) if a <= b else (b, a, c)
+                    triple2 = (a, c, b) if a <= c else (c, a, b)
+                    triple3 = (b, c, a) if b <= c else (c, b, a)
+                    
+                    if triple1 in self.R:
+                        numerator += self.R[triple1]
+                        denominator += self.R[triple1]
+                    if triple2 in self.R:
+                        denominator += self.R[triple2]
+                    if triple3 in self.R:
+                        denominator += self.R[triple3]
+                        
+            support[v] = numerator / denominator if denominator > 0 else 0
+        
+        return support
+    
+    
+    def newick_with_support(self, v=None, supports=None):
+        """Recursive Tree --> Newick (str) function."""
+        
+        if v is None:
+            supports = self._subtree_support()
+            supports[self.S.root] = self._total_support(self._max_consistent_triple_set())
+            return self.newick_with_support(v=self.S.root, supports=supports) + ";"
+        
+        elif not v.children:
+            return str(v.label)
+        
+        else:
+            s = ''
+            for child in v.children:
+                s += self.newick_with_support(v=child, supports=supports) + ","
+            return f"({s[:-1]}){supports[v]}"
+        
+
+if __name__ == "__main__":
+    
+    # ----- TESTING THIS MODULE -----
+    
+    import simulator.TreeSimulator as ts
+    import simulator.TreeImbalancer as tm
+    from best_match_infer import TrueBMG
+    
+    # SPECIES TREE:
+    #S = ts.build_species_tree(10)
+    S = Tree.parse_newick("(((((16:0.38786287055727103,(18:0.2071277923445058,19:0.2071277923445058)17:0.18073507821276524)12:0.10075553853805931,(14:0.13224182895383052,15:0.13224182895383052)13:0.3563765801414998)4:0.07517286794939665,(6:0.5373882998574596,(8:0.4434182448023457,(10:0.04929450217312242,11:0.04929450217312242)9:0.3941237426292233)7:0.0939700550551139)5:0.02640297718726732)2:0.2512472266526016,3:0.8150385036973286)1:0.18496149630267142)0:0.0;")
+    S.reconstruct_IDs()
+    S.reconstruct_timestamps()
+    
+    print(S.to_newick())
+    
+    tr = TreeReconstructor(cotree_mode="best")
+    
+    # GENE FAMILIES:
+    for i in range(100):
+        TGT = ts.build_gene_tree(S, (1,1,0))
+        TGT = tm.imbalance_tree(TGT, S, baseline_rate=1,
+                                lognormal_v=0.2,
+                                gamma_param=(0.5, 1.0, 2.2),
+                                weights=(1, 1, 1),
+                                copy_tree=False)
+        OGT = ts.observable_tree(TGT)
+        
+    #    ortho_graph = TrueBMG.true_orthology_graph(OGT)
+    #    tr.add_ortho_graph(ortho_graph)
+        
+        _, RBMG = TrueBMG.best_match_graphs(OGT)
+        tr.add_ortho_graph(RBMG)
+        
+        
+    S_estimate = tr.build_species_tree(mode="mincut")
+    print(tr.newick_with_support())
+    
+    S_estimate2 = tr.build_species_tree(mode="BPMF")
+    print(tr.newick_with_support())

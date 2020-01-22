@@ -11,8 +11,6 @@ Implementation the O(n^2) algorithm in:
 
 import random
 
-import tools.DoublyLinkedList as dll
-
 try:                
     from .Cograph import Cotree, CotreeNode
 except ModuleNotFoundError:
@@ -23,34 +21,6 @@ __author__ = "David Schaller"
 __copyright__ = "Copyright (C) 2019, David Schaller"
 
 
-class CENode(CotreeNode):
-    """Treenode for cograph editing."""
-    
-    __slots__ = ['parent_dll_element', 'leaf_number']
-    
-    
-    def __init__(self, ID, label=None, parent=None, leaf_number=0):
-        super().__init__(ID, label=label, parent=parent)
-        self.children = dll.DLList()
-        self.parent_dll_element = None      # reference to doubly-linked list element
-                                            # in the parents' children
-        self.leaf_number = leaf_number
-        
-    
-    def add_child(self, child_node):
-        child_node.parent = self
-        child_node.parent_dll_element = self.children.append(child_node)
-    
-    
-    def remove_child(self, child_node):
-        if child_node.parent is self:
-            self.children.remove_element(child_node.parent_dll_element)
-            child_node.parent = None
-            child_node.parent_dll_element = None
-        else:
-            raise ValueError("Not a child of this node!")
-
-
 class CographEditor:
     
     def __init__(self, G):
@@ -58,17 +28,21 @@ class CographEditor:
         self.G = G
         self.V = list(G.adj_list.keys())
         
+        self.cotrees = []
+        self.costs = []
+        
         self.best_T = None
         self.best_cost = float('inf')
         
     
-    def cograph_edit(self, run_number=5):
+    def cograph_edit(self, run_number=10):
         
         for i in range(run_number):
             
             T = Cotree(None)
             already_in_T = set()
             leaf_map = {}
+            total_cost = 0
             
             # shuffle the vertex list (beginning from second run)
             if i > 0:
@@ -77,23 +51,23 @@ class CographEditor:
             # build starting tree for the first two vertices
             self._start_tree(T, already_in_T, leaf_map)
             
-            if len(self.V) <= 2:
-                return T
-            
             # incrementally insert vertices while updating total cost
-            total_cost = 0
-            for x in self.V[2:]:
-                cost, x_node = self._insert(x, T, already_in_T, leaf_map)
+            if len(self.V) > 2:
+                for x in self.V[2:]:
+                    cost, x_node = self._insert(x, T, already_in_T, leaf_map)
+                    
+                    # update the number of leaves on the path to the root
+                    current = x_node.parent
+                    while current:
+                        current.aux_counter += 1
+                        current = current.parent
+                    
+                    leaf_map[x] = x_node
+                    already_in_T.add(x)
+                    total_cost += cost
                 
-                # update the number of leaves on the path to the root
-                current = x_node.parent
-                while current:
-                    current.leaf_number += 1
-                    current = current.parent
-                
-                leaf_map[x] = x_node
-                already_in_T.add(x)
-                total_cost += cost
+            self.cotrees.append(T)
+            self.costs.append(total_cost)
             
             # update the best cost
             if total_cost < self.best_cost:
@@ -114,25 +88,25 @@ class CographEditor:
             return
         
         elif len(self.V) == 1:
-            T.root = CENode(self.V[0], label="leaf", leaf_number=1)
+            T.root = CotreeNode(self.V[0], label="leaf", aux_counter=1)
             return
         
         v1, v2 = self.V[0], self.V[1]
         already_in_T.update([v1, v2])
         
-        R = CENode(None, label="series", leaf_number=2)
+        R = CotreeNode(None, label="series", aux_counter=2)
         T.root = R
         
         if self.G.has_edge(v1, v2):
-            v1_node = CENode(v1, label="leaf", leaf_number=1)
-            v2_node = CENode(v2, label="leaf", leaf_number=1)
+            v1_node = CotreeNode(v1, label="leaf", aux_counter=1)
+            v2_node = CotreeNode(v2, label="leaf", aux_counter=1)
             R.add_child(v1_node)
             R.add_child(v2_node)
         else:
-            N = CENode(None, label="parallel", leaf_number=2)
+            N = CotreeNode(None, label="parallel", aux_counter=2)
             R.add_child(N)
-            v1_node = CENode(v1, label="leaf", leaf_number=1)
-            v2_node = CENode(v2, label="leaf", leaf_number=1)
+            v1_node = CotreeNode(v1, label="leaf", aux_counter=1)
+            v2_node = CotreeNode(v2, label="leaf", aux_counter=1)
             N.add_child(v1_node)
             N.add_child(v2_node)
             
@@ -180,9 +154,9 @@ class CographEditor:
                 current = current.parent                # continue path to root
                 
         # all nodes in T are adjacent to x
-        if T.root.leaf_number == Nx_counter:
+        if T.root.aux_counter == Nx_counter:
             R = T.root
-            x_node = CENode(x, label="leaf", leaf_number=1)
+            x_node = CotreeNode(x, label="leaf", aux_counter=1)
             R.add_child(x_node)
             leaf_map[x] = x_node
             return 0, x_node                            # cost is 0
@@ -191,17 +165,17 @@ class CographEditor:
             # d(R)=1
             if len(T.root.children) == 1:
                 N = T.root.children[0]
-                x_node = CENode(x, label="leaf", leaf_number=1)
+                x_node = CotreeNode(x, label="leaf", aux_counter=1)
                 N.add_child(x_node)
             else:
                 R_old = T.root
-                R_new = CENode(None, label="series", leaf_number=R_old.leaf_number)
-                N = CENode(None, label="parallel", leaf_number=R_old.leaf_number)
+                R_new = CotreeNode(None, label="series", aux_counter=R_old.aux_counter)
+                N = CotreeNode(None, label="parallel", aux_counter=R_old.aux_counter)
                 R_new.add_child(N)
                 N.add_child(R_old)
                 T.root = R_new
                 
-                x_node = CENode(x, label="leaf", leaf_number=1)
+                x_node = CotreeNode(x, label="leaf", aux_counter=1)
                 N.add_child(x_node)
             return 0, x_node                            # cost is 0
                 
@@ -230,7 +204,7 @@ class CographEditor:
                         deletion_forced_counter += 1
                     if full[nh_child]:
                         full_counter += 1
-                full[u] = True if Nx_number[u] == u.leaf_number else False
+                full[u] = True if Nx_number[u] == u.aux_counter else False
                 
                 # u completion-forced?
                 if (full[u] or
@@ -269,8 +243,8 @@ class CographEditor:
             elif u.parent.label == "parallel":
                 cost_above[u] = cost_above[v] + Nx_number[v] - Nx_number[u]
             else:
-                cost_above[u] = cost_above[v] + ((v.leaf_number - Nx_number[v]) - 
-                                                 (u.leaf_number - Nx_number[u]))
+                cost_above[u] = cost_above[v] + ((v.aux_counter - Nx_number[v]) - 
+                                                 (u.aux_counter - Nx_number[u]))
         
         mincost = {}
         
@@ -282,7 +256,7 @@ class CographEditor:
                     v, v2 = u.children[i], u.children[-1-i]
                     if v in completion_forced and completion_forced[v]:
                         Nx_v2 = Nx_number[v2] if (v2 in Nx_number) else 0
-                        cost = cost_above[u] + (v.leaf_number - Nx_number[v]) + Nx_v2
+                        cost = cost_above[u] + (v.aux_counter - Nx_number[v]) + Nx_v2
                         if (u not in mincost) or (cost < mincost[u][0]):
                             mincost[u] = (cost, [v])
             elif len(u.children) == 2 and u.label == "series":
@@ -291,7 +265,7 @@ class CographEditor:
                     if v not in deletion_forced or deletion_forced[v]:
                         Nx_v = Nx_number[v] if (v in Nx_number) else 0
                         Nx_v2 = Nx_number[v2] if (v2 in Nx_number) else 0
-                        cost = cost_above[u] + Nx_v + (v2.leaf_number - Nx_v2)
+                        cost = cost_above[u] + Nx_v + (v2.aux_counter - Nx_v2)
                         if (u not in mincost) or (cost < mincost[u][0]):
                             mincost[u] = (cost, [v2])
             
@@ -305,14 +279,14 @@ class CographEditor:
                     if C_nh_number[u] == 1:                                 # clean child (single non-hollow)
                         v = C_nh[u][0]                                      # v is the single nh child of u
                         if completion_forced[v]:
-                            cost = cost_above[u] + (v.leaf_number - Nx_number[v])
+                            cost = cost_above[u] + (v.aux_counter - Nx_number[v])
                             mincost[u] = (cost, [v])
                         continue                                            # otherwise u is not a minimal
                                                                             # insertion node (Lemma 8)
                     
                     # first step
                     for v in C_mixed[u]:
-                        if Nx_number[v] >= v.leaf_number - Nx_number[v]:
+                        if Nx_number[v] >= v.aux_counter - Nx_number[v]:
                             red.add(v)
                         else:
                             blue.add(v)
@@ -321,7 +295,7 @@ class CographEditor:
                     if C_nh_number[u] == len(u.children) and not blue:
                         current_min, current_min_node = float("inf"), None
                         for v in red:
-                            diff = 2 * Nx_number[v] - v.leaf_number         # = Nx_number[v] - (v.leaf_number - Nx_number[v])
+                            diff = 2 * Nx_number[v] - v.aux_counter         # = Nx_number[v] - (v.aux_counter - Nx_number[v])
                             if diff < current_min:
                                 current_min, current_min_node = diff, v
                         red.remove(current_min_node)
@@ -333,7 +307,7 @@ class CographEditor:
                         for i in range(2 - nb_filled):
                             current_min, current_min_node = float("inf"), None
                             for v in blue:
-                                diff = v.leaf_number - 2 * Nx_number[v]     # = (v.leaf_number - Nx_number[v]) - Nx_number[v]
+                                diff = v.aux_counter - 2 * Nx_number[v]     # = (v.aux_counter - Nx_number[v]) - Nx_number[v]
                                 if diff < current_min:
                                     current_min, current_min_node = diff, v
                             blue.remove(current_min_node)
@@ -355,7 +329,7 @@ class CographEditor:
                                                                             
                     # first step
                     for v in C_mixed[u]:
-                        if v.leaf_number - Nx_number[v] >= Nx_number[v]:
+                        if v.aux_counter - Nx_number[v] >= Nx_number[v]:
                             blue.add(v)
                         else:
                             red.add(v)
@@ -364,7 +338,7 @@ class CographEditor:
                     if not C_full[u] and not red:
                         current_min, current_min_node = float("inf"), None
                         for v in blue:
-                            diff = v.leaf_number - 2 * Nx_number[v]             # = (v.leaf_number - Nx_number[v]) - Nx_number[v]
+                            diff = v.aux_counter - 2 * Nx_number[v]             # = (v.aux_counter - Nx_number[v]) - Nx_number[v]
                             if diff < current_min:
                                 current_min, current_min_node = diff, v
                         blue.remove(current_min_node)
@@ -376,7 +350,7 @@ class CographEditor:
                         for i in range(2 - nb_hollowed):
                             current_min, current_min_node = float("inf"), None
                             for v in red:
-                                diff = 2 * Nx_number[v] - v.leaf_number         # = Nx_number[v] - (v.leaf_number - Nx_number[v])
+                                diff = 2 * Nx_number[v] - v.aux_counter         # = Nx_number[v] - (v.aux_counter - Nx_number[v])
                                 if diff < current_min:
                                     current_min, current_min_node = diff, v
                             red.remove(current_min_node)
@@ -384,7 +358,7 @@ class CographEditor:
                     
                 cost = cost_above[u]
                 for v in red:
-                    cost += (v.leaf_number - Nx_number[v])
+                    cost += (v.aux_counter - Nx_number[v])
                 for v in blue:
                     cost += Nx_number[v]
                     
@@ -404,15 +378,15 @@ class CographEditor:
         if u.label == "parallel" and len(filled) == 1:
             w = filled[0]
             if w.label == "leaf":
-                new_node = CENode(None, label="series", leaf_number=1)  # leaves w and x (x added later)
+                new_node = CotreeNode(None, label="series", aux_counter=1)  # leaves w and x (x added later)
                 u.remove_child(w)
                 u.add_child(new_node)
                 new_node.add_child(w)
                 
-                x_node = CENode(x, label="leaf", leaf_number=1)
+                x_node = CotreeNode(x, label="leaf", aux_counter=1)
                 new_node.add_child(x_node)
             else:
-                x_node = CENode(x, label="leaf", leaf_number=1)
+                x_node = CotreeNode(x, label="leaf", aux_counter=1)
                 w.add_child(x_node)
         
         # series node and only one child is not to be filled
@@ -425,32 +399,32 @@ class CographEditor:
                     w = child
                     break
             if w.label == "leaf":
-                new_node = CENode(None, label="parallel", leaf_number=1)  # leaves w and x (x added later)
+                new_node = CotreeNode(None, label="parallel", aux_counter=1)  # leaves w and x (x added later)
                 u.remove_child(w)
                 u.add_child(new_node)
                 new_node.add_child(w)
                 
-                x_node = CENode(x, label="leaf", leaf_number=1)
+                x_node = CotreeNode(x, label="leaf", aux_counter=1)
                 new_node.add_child(x_node)
             else:
-                x_node = CENode(x, label="leaf", leaf_number=1)
+                x_node = CotreeNode(x, label="leaf", aux_counter=1)
                 w.add_child(x_node)
         
         else:
-            filled_leaf_number = 0
-            y = CENode(None, label=u.label)
+            filled_aux_counter = 0
+            y = CotreeNode(None, label=u.label)
             for a in filled:
                 u.remove_child(a)
                 y.add_child(a)
-                filled_leaf_number += a.leaf_number
-            y.leaf_number = filled_leaf_number
+                filled_aux_counter += a.aux_counter
+            y.aux_counter = filled_aux_counter
                 
             if u.label == "parallel":
-                new_node = CENode(None, label="series", leaf_number=filled_leaf_number)
+                new_node = CotreeNode(None, label="series", aux_counter=filled_aux_counter)
                 u.add_child(new_node)
                 
                 new_node.add_child(y)
-                x_node = CENode(x, label="leaf", leaf_number=1)
+                x_node = CotreeNode(x, label="leaf", aux_counter=1)
                 new_node.add_child(x_node)
             else:
                 par = u.parent
@@ -460,16 +434,16 @@ class CographEditor:
                 else:
                     T.root = y             # y becomes the new root
                 
-                new_node = CENode(None, label="parallel")
+                new_node = CotreeNode(None, label="parallel")
                 y.add_child(new_node)
                 new_node.add_child(u)
-                x_node = CENode(x, label="leaf", leaf_number=1)
+                x_node = CotreeNode(x, label="leaf", aux_counter=1)
                 new_node.add_child(x_node)
                 
                 # update the leaf numbers
-                y.leaf_number = u.leaf_number
-                u.leaf_number -= filled_leaf_number
-                new_node.leaf_number = u.leaf_number
+                y.aux_counter = u.aux_counter
+                u.aux_counter -= filled_aux_counter
+                new_node.aux_counter = u.aux_counter
 
         return insertion_mincost, x_node
                 
@@ -495,7 +469,7 @@ if __name__ == "__main__":
     cograph = SimpleGraph.random_graph(100)
     
     CE = CographEditor(cograph)
-    new_cotree = CE.cograph_edit(run_number=5)
+    new_cotree = CE.cograph_edit(run_number=10)
     print("done")
     if new_cotree:
         print(new_cotree.to_newick())

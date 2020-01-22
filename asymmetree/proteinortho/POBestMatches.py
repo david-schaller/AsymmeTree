@@ -35,7 +35,7 @@ class POBestMatches:
         if voting_mode in ("majority", "weighted"):
             self.voting_mode = voting_mode
         else:
-            raise ValueError("Invalid voting mode for quartets '{}'".format(voting_mode))
+            raise ValueError(f"Invalid voting mode for quartets '{voting_mode}'")
         
     
     def __call__(self):
@@ -65,7 +65,7 @@ class POBestMatches:
             if os.path.isfile(filename):
                 self.species[os.path.basename(filename)] = filename
             else:
-                raise FileNotFoundError("Could not find file '{}'.".format(filename))
+                raise FileNotFoundError(f"Could not find file '{filename}'.")
         
         # check if the best match candidate files exist
         for spec in self.species.keys():
@@ -74,11 +74,11 @@ class POBestMatches:
             if os.path.isfile(filename):
                 self.candidate_files[spec] = filename
             else:
-                raise FileNotFoundError("Could not find file '{}'.".format(filename))
+                raise FileNotFoundError(f"Could not find file '{filename}'.")
                 
         # check if the tree file exists
         if self.tree_file is not None and not os.path.isfile(self.tree_file):
-            raise FileNotFoundError("Could not find tree file '{}'.".format(self.tree_file))
+            raise FileNotFoundError(f"Could not find tree file '{self.tree_file}'.")
     
     
     def _build_fasta_index(self):
@@ -145,9 +145,9 @@ class POBestMatches:
         if identifier in self.distance_cache:
             return self.distance_cache[identifier]
         else:
-#            distance = distance_2seqs(self.fasta_index[spec_a][a].seq,
-#                                      self.fasta_index[spec_b][b].seq)
-            distance = random.random()
+            distance = distance_2seqs(self.fasta_index[spec_a][a].seq,
+                                      self.fasta_index[spec_b][b].seq)
+#            distance = random.random()
             self.distance_cache[identifier] = distance
             return distance
         
@@ -157,7 +157,7 @@ class POBestMatches:
         best_matches = []
         
         distances, min_distance = [], float("inf")
-        for _, y, _, _ in Y:
+        for _, y, _, _, _ in Y:
             distance_to_y = self._get_distance(x, spec_x, y, spec_Y)
             distances.append(distance_to_y)
             if distance_to_y < min_distance:
@@ -180,7 +180,7 @@ class POBestMatches:
             y1, y2 = y1[1], y2[1]
             
             votes = [0, 0, 0, 0]
-            for spec_z, z, _, _ in Z:
+            for spec_z, z, _, _, _ in Z:
                 q, weight = self._supported_quartet(x,      spec_x,
                                                     y1, y2, spec_Y,
                                                     z,      spec_z)

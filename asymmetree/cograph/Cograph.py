@@ -3,6 +3,7 @@
 import collections, itertools, random
 
 from tools import SimpleTree
+import tools.DoublyLinkedList as dll
 
 
 __author__ = "David Schaller"
@@ -147,12 +148,17 @@ class SimpleGraph:
 
 class CotreeNode(SimpleTree.SimpleTreeNode):
     
-    __slots__ = []
+    __slots__ = ['parent_dll_element', 'aux_counter']
     
     
-    def __init__(self, ID, label=None, parent=None):
+    def __init__(self, ID, label=None, parent=None,
+                 aux_counter=0):
         super().__init__(ID, label=label, parent=parent)
-    
+        self.children = dll.DLList()
+        self.parent_dll_element = None      # reference to doubly-linked list element
+                                            # in the parents' children
+        self.aux_counter = aux_counter      # auxiliary counting variable
+        
     
     def __str__(self):
         if not self.children:
@@ -163,6 +169,20 @@ class CotreeNode(SimpleTree.SimpleTreeNode):
             return "<0>"
         else:
             return "<>"
+        
+    
+    def add_child(self, child_node):
+        child_node.parent = self
+        child_node.parent_dll_element = self.children.append(child_node)
+    
+    
+    def remove_child(self, child_node):
+        if child_node.parent is self:
+            self.children.remove_element(child_node.parent_dll_element)
+            child_node.parent = None
+            child_node.parent_dll_element = None
+        else:
+            raise ValueError("Not a child of this node!")
         
 
 class Cotree(SimpleTree.SimpleTree):
