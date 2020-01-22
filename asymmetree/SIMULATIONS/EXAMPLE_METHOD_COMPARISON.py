@@ -125,7 +125,7 @@ class CustomAnalysis:
 
 # ---- simulation parameters ----
 
-S_min, S_max = 3, 50            # range number of species
+S_min, S_max = 3, 20            # range number of species
 D_min, D_max = 0.5, 1.0         # range of dupl. rate
 L_min, L_max = 0.5, 1.0         # range of loss rate
 H_min, H_max = 0.0, 0.0         # range of HGT rate
@@ -134,7 +134,7 @@ repeats = 10
 epsilon = 0.5
 
 noise_sds = [0.0, 0.05, 0.1, 0.2, 0.3, 0.5, 0.75, 1.0, 1.5]
-noise_alphas = [0.0, 0.02, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
+noise_alphas = []#[0.0, 0.02, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
 
 sim_ID = 0
 

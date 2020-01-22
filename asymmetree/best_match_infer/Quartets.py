@@ -24,100 +24,6 @@ __copyright__ = "Copyright (C) 2019, David Schaller"
 
 
 # --------------------------------------------------------------------------
-#                            EXTERNAL C++ PROGRAM
-#
-# --------------------------------------------------------------------------
-
-def quartet_qinfer(scenario,
-                   matrix_filename, species_filename, tree_filename,
-                   epsilon=-1,
-                   closest_outgroups=False,
-                   incongruence_threshold=0.2,
-                   benchmark_file=None):
-    """Compute BMG and RBMG from a distances matrix D using 'qinfer'.
-    
-    Keyword arguments:
-        epsilon -- epsilon for relative BM candidate threshold:
-                   y in Y if D(x,y) <= (1+epsilon) * min d(x,y'),
-                   default=10E-8 (for limited float precision).
-        closest_outgroups -- use the closest outgroups corrected
-                             for ancient duplications
-        incongruence_threshold -- threshold for discarding
-                                  outgroup species
-        benchmark_file -- activate benchmarking in 'qinfer' and
-                          specify the filename
-    """
-    
-    bin_path = os.path.dirname(__file__) + "/binaries/qinfer"
-    
-    output = -1
-    if not os.path.exists(bin_path):
-        raise FileNotFoundError(bin_path)
-    
-    command = [bin_path, matrix_filename, species_filename, tree_filename]
-    if epsilon != -1:
-        command.append( "--epsilon=" + str(epsilon) )
-    if closest_outgroups:
-        command.append( "--all-outgroups=" + str(incongruence_threshold) )
-    if benchmark_file is not None:
-        command.append( "--benchmark=" + benchmark_file )
-    
-    # call 'qinfer' and measure execution time
-    start = time.time()
-    output = subprocess.run(command, stdout=subprocess.PIPE)
-    exec_time = time.time() - start
-    
-    if output == -1:
-        raise Exception("No output from qinfer!")
-    
-    BMG = FileIO.parse_BMG_edges(output.stdout.decode(), scenario)
-    RBMG = TrueBMG.RBMG_from_BMG(BMG)
-    
-    return BMG, RBMG, exec_time
-
-
-def quartet_from_scenario(scenario, epsilon=-1,
-                          closest_outgroups=False,
-                          incongruence_threshold=0.2,
-                          benchmark_file=None):
-    """Compute BMG and RBMG from a distances matrix D using 'qinfer'.
-    
-    Keyword arguments:
-        epsilon -- epsilon for relative BM candidate threshold:
-                   y in Y if D(x,y) <= (1+epsilon) * min d(x,y'),
-                   default=10E-8 (for limited float precision).
-        closest_outgroups -- use the closest outgroups corrected
-                             for ancient duplications
-        incongruence_threshold -- threshold for discarding
-                                  outgroup species
-        benchmark_file -- activate benchmarking in 'qinfer' and
-                          specify the filename
-    """
-
-    matrix_filename = "temp.phylip"
-    species_filename = "temp_species.txt"
-    tree_filename = "temp_tree.txt"
-    
-    matrix = scenario.get_distance_matrix()
-    FileIO.matrix_to_phylip(matrix_filename, scenario.genes, matrix)
-    FileIO.species_to_genes(species_filename, scenario)
-    FileIO.write_newick(tree_filename, scenario.S)
-    
-    BMG, RBMG, exec_time = quartet_qinfer(scenario,
-                                          matrix_filename, species_filename, tree_filename,
-                                          epsilon=epsilon,
-                                          closest_outgroups=closest_outgroups,
-                                          incongruence_threshold=incongruence_threshold,
-                                          benchmark_file=benchmark_file)
-    
-    os.remove(matrix_filename)
-    os.remove(species_filename)
-    os.remove(tree_filename)
-    
-    return BMG, RBMG, exec_time
-
-
-# --------------------------------------------------------------------------
 #                           PYTHON IMPLEMENTATION
 #
 # --------------------------------------------------------------------------
@@ -487,3 +393,110 @@ class Quartets:
             self.build_graphs_root_only()
         else:
             self.build_graphs_closest_outgroups()
+            
+
+
+# --------------------------------------------------------------------------
+#                            EXTERNAL C++ PROGRAM
+#
+# --------------------------------------------------------------------------
+
+def quartet_qinfer(scenario,
+                   matrix_filename, species_filename, tree_filename,
+                   epsilon=-1,
+                   closest_outgroups=False,
+                   incongruence_threshold=0.2,
+                   benchmark_file=None,
+                   binary_path=None):
+    """Compute BMG and RBMG from a distances matrix D using 'qinfer'.
+    
+    Keyword arguments:
+        epsilon -- epsilon for relative BM candidate threshold:
+                   y in Y if D(x,y) <= (1+epsilon) * min d(x,y'),
+                   default=10E-8 (for limited float precision).
+        closest_outgroups -- use the closest outgroups corrected
+                             for ancient duplications
+        incongruence_threshold -- threshold for discarding
+                                  outgroup species
+        benchmark_file -- activate benchmarking in 'qinfer' and
+                          specify the filename
+        binary_path -- path to 'qinfer' binary (if not available
+                       within path)
+    """
+    
+    if not binary_path:
+        qinfer_command = "qinfer"
+    elif os.path.exists(binary_path):
+        qinfer_command = binary_path
+    else:
+        raise FileNotFoundError(f"Path to qinfer binary file '{binary_path}' does not exist!")
+    
+    output = -1
+    
+    command = [qinfer_command, matrix_filename, species_filename, tree_filename]
+    
+    if epsilon != -1:
+        command.append( "--epsilon=" + str(epsilon) )
+    if closest_outgroups:
+        command.append( "--all-outgroups=" + str(incongruence_threshold) )
+    if benchmark_file is not None:
+        command.append( "--benchmark=" + benchmark_file )
+    
+    # call 'qinfer' and measure execution time
+    start = time.time()
+    
+    try:
+        output = subprocess.run(command, stdout=subprocess.PIPE)
+    except:
+        raise FileNotFoundError("Calling qinfer failed!")
+        
+    exec_time = time.time() - start
+    
+    if output == -1:
+        raise Exception("No output from qinfer!")
+    
+    BMG = FileIO.parse_BMG_edges(output.stdout.decode(), scenario)
+    RBMG = TrueBMG.RBMG_from_BMG(BMG)
+    
+    return BMG, RBMG, exec_time
+
+
+def quartet_from_scenario(scenario, epsilon=-1,
+                          closest_outgroups=False,
+                          incongruence_threshold=0.2,
+                          benchmark_file=None):
+    """Compute BMG and RBMG from a distances matrix D using 'qinfer'.
+    
+    Keyword arguments:
+        epsilon -- epsilon for relative BM candidate threshold:
+                   y in Y if D(x,y) <= (1+epsilon) * min d(x,y'),
+                   default=10E-8 (for limited float precision).
+        closest_outgroups -- use the closest outgroups corrected
+                             for ancient duplications
+        incongruence_threshold -- threshold for discarding
+                                  outgroup species
+        benchmark_file -- activate benchmarking in 'qinfer' and
+                          specify the filename
+    """
+
+    matrix_filename = "temp.phylip"
+    species_filename = "temp_species.txt"
+    tree_filename = "temp_tree.txt"
+    
+    matrix = scenario.get_distance_matrix()
+    FileIO.matrix_to_phylip(matrix_filename, scenario.genes, matrix)
+    FileIO.species_to_genes(species_filename, scenario)
+    FileIO.write_newick(tree_filename, scenario.S)
+    
+    BMG, RBMG, exec_time = quartet_qinfer(scenario,
+                                          matrix_filename, species_filename, tree_filename,
+                                          epsilon=epsilon,
+                                          closest_outgroups=closest_outgroups,
+                                          incongruence_threshold=incongruence_threshold,
+                                          benchmark_file=benchmark_file)
+    
+    os.remove(matrix_filename)
+    os.remove(species_filename)
+    os.remove(tree_filename)
+    
+    return BMG, RBMG, exec_time

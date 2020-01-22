@@ -16,16 +16,30 @@ __copyright__ = "Copyright (C) 2019, David Schaller"
 # --------------------------------------------------------------------------
 
 def neighbor_joining(leaves, leaf_index, matrix_filename,
-                     return_calltime=False):
+                     return_calltime=False,
+                     binary_path=None):
+    """
+    Keyword argument:
+        return_calltime -- return the time needed for RapidNJ call
+        binary_path -- path to 'qinfer' binary (if not available
+                       within path)
+    """
     
-    bin_path = os.path.dirname(__file__) + "/binaries/rapidnj"
-
-    if not os.path.exists(bin_path):
-        raise FileNotFoundError(bin_path)
+    if not binary_path:
+        nj_command = "rapidnj"
+    elif os.path.exists(binary_path):
+         nj_command = binary_path
+    else:
+        raise FileNotFoundError(f"Path to RapidNJ binary file '{binary_path}' does not exist!")
             
     start_time = time.time()
-    output = subprocess.run([bin_path, matrix_filename, "-i", "pd"],
-                            stdout=subprocess.PIPE)
+    
+    try:
+        output = subprocess.run([nj_command, matrix_filename, "-i", "pd"],
+                                stdout=subprocess.PIPE)
+    except:
+        raise FileNotFoundError("Calling RapidNJ failed!")
+        
     calltime = time.time() - start_time
     
     newick = output.stdout.decode()

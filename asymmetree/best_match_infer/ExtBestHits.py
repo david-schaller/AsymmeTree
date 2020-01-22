@@ -22,79 +22,6 @@ __author__ = "David Schaller"
 __copyright__ = "Copyright (C) 2019, David Schaller"
 
 
-# --------------------------------------------------------------------------
-#                            EXTERNAL C++ PROGRAM
-#
-# --------------------------------------------------------------------------
- 
-def ebh_qinfer(scenario,
-               matrix_filename, species_filename,
-               epsilon=0.5,
-               benchmark_file=None):
-    """Compute BMG and RBMG from a distances matrix D using 'qinfer'.
-    
-    Keyword arguments:
-        epsilon -- epsilon for relative BM threshold: (x,y) in BMG if
-                   D(x,y) <= (1+epsilon) * min d(x,y'),
-                   default=10E-8 (for limited float precision).
-        benchmark_file -- activate benchmarking in 'qinfer' and
-                          specify the filename
-    """
-    
-    bin_path = os.path.dirname(__file__) + "/binaries/qinfer"
-    
-    output = -1
-    if not os.path.exists(bin_path):
-        raise FileNotFoundError(bin_path)
-    
-    command = [bin_path, matrix_filename, species_filename,
-               "--disable-quartet", "--epsilon=" + str(epsilon)]
-
-    if benchmark_file is not None:
-        command.append( "--benchmark=" + benchmark_file )
-    
-    # call 'qinfer' and measure execution time
-    start = time.time()
-    output = subprocess.run(command, stdout=subprocess.PIPE)
-    exec_time = time.time() - start
-    
-    if output == -1:
-        raise Exception("No output from qinfer!")
-    
-    BMG = FileIO.parse_BMG_edges(output.stdout.decode(), scenario)
-    RBMG = TrueBMG.RBMG_from_BMG(BMG)
-    
-    return BMG, RBMG, exec_time
-
-
-def ebh_from_scenario(scenario, epsilon=0.5):
-    """Compute BMG and RBMG from a scenario using 'qinfer'.
-    
-    Keyword arguments:
-        epsilon -- epsilon for relative BM threshold: (x,y) in BMG if
-                   D(x,y) <= (1+epsilon) * min d(x,y'),
-                   default=10E-8 (for limited float precision).
-    """
-    
-    bin_path = os.path.dirname(__file__) + "/binaries/qinfer"
-
-    matrix_filename = "temp.phylip"
-    species_filename = "temp_species.txt"
-    
-    matrix = scenario.get_distance_matrix()
-    FileIO.matrix_to_phylip(matrix_filename, scenario.genes, matrix)
-    FileIO.species_to_genes(species_filename, scenario)
-    
-    BMG, RBMG, exec_time = ebh_qinfer(scenario,
-                                      matrix_filename, species_filename,
-                                      epsilon=epsilon,
-                                      bin_path=bin_path)
-    
-    os.remove(matrix_filename)
-    os.remove(species_filename)
-    
-    return BMG, RBMG, exec_time
-
 
 # --------------------------------------------------------------------------
 #                           PYTHON IMPLEMENTATION
@@ -136,3 +63,84 @@ def ebh(leaves, D, epsilon=0.000_000_01):
                 RBMG.add_edge(x,y)
     
     return BMG, RBMG
+
+
+# --------------------------------------------------------------------------
+#                            EXTERNAL C++ PROGRAM
+#
+# --------------------------------------------------------------------------
+ 
+def ebh_qinfer(scenario,
+               matrix_filename, species_filename,
+               epsilon=0.5,
+               benchmark_file=None,
+               binary_path=None):
+    """Compute BMG and RBMG from a distances matrix D using 'qinfer'.
+    
+    Keyword arguments:
+        epsilon -- epsilon for relative BM threshold: (x,y) in BMG if
+                   D(x,y) <= (1+epsilon) * min d(x,y'),
+                   default=10E-8 (for limited float precision).
+        benchmark_file -- activate benchmarking in 'qinfer' and
+                          specify the filename
+        binary_path -- path to 'qinfer' binary (if not available
+                       within path)
+    """
+    
+    if not binary_path:
+        qinfer_command = "qinfer"
+    elif os.path.exists(binary_path):
+        qinfer_command = binary_path
+    else:
+        raise FileNotFoundError(f"Path to qinfer binary file '{binary_path}' does not exist!")
+    
+    output = -1
+    command = [qinfer_command, matrix_filename, species_filename,
+               "--disable-quartet", "--epsilon=" + str(epsilon)]
+
+    if benchmark_file is not None:
+        command.append( "--benchmark=" + benchmark_file )
+    
+    # call 'qinfer' and measure execution time
+    start = time.time()
+    
+    try:
+        output = subprocess.run(command, stdout=subprocess.PIPE)
+    except:
+        raise FileNotFoundError("Calling qinfer failed!")
+    
+    exec_time = time.time() - start
+    
+    if output == -1:
+        raise Exception("No output from qinfer!")
+    
+    BMG = FileIO.parse_BMG_edges(output.stdout.decode(), scenario)
+    RBMG = TrueBMG.RBMG_from_BMG(BMG)
+    
+    return BMG, RBMG, exec_time
+
+
+def ebh_from_scenario(scenario, epsilon=0.5):
+    """Compute BMG and RBMG from a scenario using 'qinfer'.
+    
+    Keyword arguments:
+        epsilon -- epsilon for relative BM threshold: (x,y) in BMG if
+                   D(x,y) <= (1+epsilon) * min d(x,y'),
+                   default=10E-8 (for limited float precision).
+    """
+
+    matrix_filename = "temp.phylip"
+    species_filename = "temp_species.txt"
+    
+    matrix = scenario.get_distance_matrix()
+    FileIO.matrix_to_phylip(matrix_filename, scenario.genes, matrix)
+    FileIO.species_to_genes(species_filename, scenario)
+    
+    BMG, RBMG, exec_time = ebh_qinfer(scenario,
+                                      matrix_filename, species_filename,
+                                      epsilon=epsilon)
+    
+    os.remove(matrix_filename)
+    os.remove(species_filename)
+    
+    return BMG, RBMG, exec_time

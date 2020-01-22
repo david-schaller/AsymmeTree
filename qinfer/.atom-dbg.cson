@@ -1,3 +1,0 @@
-"bin/qinfer":
-	path: "bin/qinfer"
-	args: ["test_data/matrix.phylip test_data/spec_genes.txt test_data/species_tree.txt -a"]
