@@ -1,180 +1,89 @@
 # -*- coding: utf-8 -*-
 
 """
-Tree data structure for phylogentic trees.
+PhyloTree data structure for phylogentic trees.
 
 Classes in this module:
-    - TreeNode
-    - Tree
+    - PhyloTreeNode
+    - PhyloTree
 """
 
-import collections, itertools, random, re
+import collections, random, re
 import networkx as nx
 
+from tools.Tree import Tree, TreeNode
+
 __author__ = "David Schaller"
-__copyright__ = "Copyright (C) 2019, David Schaller"
+__copyright__ = "Copyright (C) 2020, David Schaller"
 
 
-class TreeNode():
-    """Class 'TreeNode'.
+class PhyloTreeNode(TreeNode):
+    """Class 'PhyloTreeNode'.
     
-    Components for class 'Tree'. Contains a list of children as well as a 
-    reference to the parent node.
+    Components for class 'PhyloTree'.
     """
     
-    __slots__ = ('ID', 'label', 'color', 'dist', 'tstamp', 'transferred',
-                 'parent', 'children', 'leaves')
+    __slots__ = ('color', 'dist', 'tstamp', 'transferred')
+    
     
     def __init__(self, ID, label="", color=None,
-                 dist = 1.0, tstamp=None, transferred=0, parent = None):
-        self.ID = ID
-        self.label = label
+                 dist = 1.0, tstamp=None, transferred=0):
+        
+        super().__init__(ID, label=label)
         self.color = color
         self.dist = dist
         self.tstamp = tstamp
         self.transferred = transferred
-        self.parent = parent
-        self.children = []
+
     
     def __repr__(self):
-        return "tn" + str(self.ID)
+        
+        return "pn" + str(self.ID)
     
     
     def __str__(self):
+        
         if isinstance(self.color, tuple):
             return "{}<{}-{}>:{}".format(self.label, *self.color, self.dist)
         elif self.color:
             return "{}<{}>:{}".format(self.label, self.color, self.dist)
         else:
             return "{}:{}".format(self.label, self.dist)    
-    
-    
-    def __eq__(self, other):
-        return self.ID == other.ID
-    
-    
-    def __lt__(self, other):
-        return self.ID < other.ID
 
 
-    def __hash__(self):
-        return hash(id(self))
-
-
-class Tree:
+class PhyloTree(Tree):
     
     def __init__(self, root):
-        if not isinstance(root, TreeNode):
-            raise TypeError("root must be of type 'TreeNode'.")
-        self.root = root
-    
-    
-    def preorder(self, node=None):
-        """Generator for preorder traversal of the tree."""
-        if not node:
-            yield from self.preorder(node=self.root)
-        else:
-            yield node
-            for child in node.children:
-                yield from self.preorder(node=child)
-    
-    
-    def postorder(self, node=None):
-        """Generator for postorder traversal of the tree."""
-        if not node:
-            yield from self.postorder(node=self.root)
-        else:
-            for child in node.children:
-                yield from self.postorder(node=child)
-            yield node
-    
-    
-    def edges(self, node=None):
-        """Generator for all edges of the tree."""
-        if not node:
-            yield from self.edges(node=self.root)
-        else:
-            for child in node.children:
-                yield (node, child)
-                yield from self.edges(node=child)
+        
+        if not isinstance(root, PhyloTreeNode):
+            raise TypeError("root must be of type 'PhyloTreeNode'.")
+        super().__init__(root)
     
     
     def sorted_nodes(self):
         """Return list of sorted nodes by timestamp."""
-    
-        def quicksort(L, l, r):
-            if r <= l:
-                return
-            i, j = l, r
-            piv = L[(l+r)//2]
-            while i <= j:
-                while L[i].tstamp > piv.tstamp:
-                    i += 1
-                while L[j].tstamp < piv.tstamp:
-                    j -= 1
-                if i <= j:
-                    L[i], L[j] = L[j], L[i]
-                    i += 1
-                    j -= 1
-            quicksort(L, l, j)
-            quicksort(L, i, r)
         
-        nodes = [node for node in self.preorder()]
-        quicksort(nodes, 0, len(nodes)-1)
-        return nodes
+        return sorted(self.preorder(),
+                      key=lambda node: node.tstamp,
+                      reverse=True)
     
     
     def sorted_edges(self):
         """Return list of sorted edges (u,v) by timestamp of u."""
     
-        def quicksort(L, l, r):
-            if r <= l:
-                return
-            i, j = l, r
-            piv = L[(l+r)//2]
-            while i <= j:
-                while (L[i][0].tstamp > piv[0].tstamp or
-                       (L[i][0].tstamp == piv[0].tstamp and
-                        L[i][1].tstamp > piv[1].tstamp)):
-                    i += 1
-                while (L[j][0].tstamp < piv[0].tstamp or
-                       (L[j][0].tstamp == piv[0].tstamp and
-                        L[j][1].tstamp < piv[1].tstamp)):
-                    j -= 1
-                if i <= j:
-                    L[i], L[j] = L[j], L[i]
-                    i += 1
-                    j -= 1
-            quicksort(L, l, j)
-            quicksort(L, i, r)
-        
-        edges = [edge for edge in self.edges()]
-        quicksort(edges, 0, len(edges)-1)
-        return edges
-    
-    
-    def euler_generator(self, node=None, id_only=False):
-        """Generator for an Euler tour of the tree."""
-        if not node:
-            yield from self.euler_generator(node=self.root, id_only=id_only)
-        else:
-            if id_only: yield node.ID
-            else: yield node
-            
-            for child in node.children:
-                yield from self.euler_generator(node=child, id_only=id_only)
-                
-                if id_only: yield node.ID
-                else: yield node
+        return sorted(self.edges(),
+                      key=lambda e: (e[0].tstamp, e[1].tstamp),
+                      reverse=True)
     
     
     def delete_and_reconnect(self, node):
         """Delete a node from the tree and reconnect its parent and children."""
+        
         parent = node.parent
         if not parent:
             if node is self.root and len(node.children) == 1:
                 self.root = node.children[0]
-                self.root.parent = None
+                self.root.detach()
                 self.root.dist = 0.0
                 node.children.clear()
                 return self.root
@@ -182,20 +91,23 @@ class Tree:
                 print("Cannot delete and reconnect node", node)
                 return False
         else:
-            parent.children.remove(node)
-            parent.children.extend(node.children)
-            for child in node.children:
-                child.parent = parent
+            parent.remove_child(node)
+            
+            # copy list of children to edit edges
+            children = [child for child in node.children]
+            for child in children:
+                parent.add_child(child)
                 child.dist += node.dist
                 if node.transferred == 1:
                     child.transferred = 1
-            node.parent = None
+                    
             node.children.clear()
             return parent
     
     
     def supply_leaves(self, node=None, exclude_losses=True):
         """Add the leaves to all nodes that are in the subtree of a specific node."""
+        
         if not node:
             self.supply_leaves(self.root, exclude_losses=exclude_losses)
             return self.root.leaves
@@ -213,6 +125,7 @@ class Tree:
     
     
     def distances_from_root(self):
+        
         leaf_distances = []
         distance_dict = {}
         for v in self.preorder():
@@ -225,34 +138,14 @@ class Tree:
                 leaf_distances.append( (str(v), distance_dict[v]) )
         return distance_dict, leaf_distances
     
-    
-    def get_triples(self):
-        """Retrieve a list of all triples of the tree.
-        
-        Warning: Algorithm works recursively and can produce extremely 
-        large lists.
-        """
-        def all_triples(node, triples):
-            for child1 in node.children:
-                for child2 in node.children:
-                    if child1 is not child2:
-                        for t3 in child1.leaves:
-                            if len(child2.leaves) > 1:
-                                for t1, t2 in itertools.combinations(child2.leaves, 2):
-                                    triples.append( (t1, t2, t3) )
-                all_triples(child1, triples=triples)
-                
-        self.supply_leaves()
-        triples = []
-        all_triples(self.root, triples)
-        return triples
 
 # --------------------------------------------------------------------------
 #                          TREE  <--->  NEWICK
 # --------------------------------------------------------------------------
         
     def to_newick(self, node=None, distance_only=False):
-        """Recursive Tree --> Newick (str) function."""
+        """Recursive PhyloTree --> Newick (str) function."""
+        
         if node is None:
             return self.to_newick(self.root, distance_only=distance_only) + ";"
         elif not node.children:
@@ -272,7 +165,7 @@ class Tree:
     
     @staticmethod
     def parse_newick(newick):
-        """Parses trees in Newick format into object of type 'Tree'."""
+        """Parses trees in Newick format into object of type 'PhyloTree'."""
         
         label_col_dist_regex = re.compile(r"'?([a-zA-Z0-9_]*)'?<(.*)>:(-?[0-9]*\.?[0-9]*[Ee]?-?[0-9]+)")  # label<color>:distance
         label_col_regex = re.compile(r"'?([a-zA-Z0-9_]*)'?<(.*)>")                                        # label<color>
@@ -285,9 +178,9 @@ class Tree:
             nonlocal id_counter
             children = split_children(subtree_string)
             for child in children:
-                node = TreeNode(id_counter, parent=subroot)
+                node = PhyloTreeNode(id_counter)
+                subroot.add_child(node)
                 id_counter += 1
-                subroot.children.append(node)
                 end = -1
                 if child[0] == '(':                                 # the child has subtrees
                     end = child.rfind(')')
@@ -317,6 +210,7 @@ class Tree:
                         
         def split_children(child_string):
             """Splits a given string by all ',' that are not enclosed by parentheses."""
+            
             stack = 0
             children = []
             current = ""
@@ -342,20 +236,21 @@ class Tree:
         end = newick.find(";")
         if end != -1:
             newick = newick[:end]
-        temp_root = TreeNode(-1)
+        temp_root = PhyloTreeNode(-1)
         parse_subtree(temp_root, newick)
         if temp_root.children:
             root = temp_root.children[0]
             root.dist = 0.0                 # set distance of the root to 0
-            root.parent = None              # remove the parent temp_root
+            root.detach()                   # remove the parent temp_root
                                             # (important for non-recursive to_newick2)
-            return Tree(root)
+            return PhyloTree(root)
         else:
             raise ValueError("Invalid Newick-String!")
     
     
     def reconstruct_IDs(self):
         """Reconstruct the (leaf) IDs."""
+        
         self.number_of_species = 0
         IDs = set()
         
@@ -378,6 +273,7 @@ class Tree:
                 
     def reconstruct_timestamps(self):
         """Reconstruct the timestamps."""
+        
         self.root.tstamp = 1.0
         for v in self.preorder():
             if v.parent:
@@ -388,6 +284,7 @@ class Tree:
 # --------------------------------------------------------------------------
             
     def to_nx(self):
+        
         self.check_integrity()
         G = nx.DiGraph()
         
@@ -410,10 +307,9 @@ class Tree:
     
         def build_tree(ID, parent=None):
             nonlocal number_of_leaves
-            treenode = TreeNode(ID, label=G.nodes[ID]['label'],
-                                parent=parent)
+            treenode = PhyloTreeNode(ID, label=G.nodes[ID]['label'])
             if parent:
-                parent.children.append(treenode)
+                parent.add_child(treenode)
                 if 'dist' in G.edges[parent.ID, ID]:
                     treenode.dist = G.edges[parent.ID, ID]['dist']
                 if 'transferred' in G.edges[parent.ID, ID]:
@@ -432,7 +328,7 @@ class Tree:
                 number_of_leaves += 1
             
             return treenode
-        tree = Tree(build_tree(root))
+        tree = PhyloTree(build_tree(root))
         tree.number_of_species = number_of_leaves
         
         return tree
@@ -445,15 +341,15 @@ class Tree:
         orig_to_new = {}
         
         for orig in tree.preorder():
-            new = TreeNode(orig.ID, label=orig.label, 
-                           color=orig.color, dist=orig.dist,
-                           tstamp=orig.tstamp, transferred=orig.transferred)
+            new = PhyloTreeNode(orig.ID, label=orig.label, 
+                                color=orig.color, dist=orig.dist,
+                                tstamp=orig.tstamp,
+                                transferred=orig.transferred)
             orig_to_new[orig] = new
             if orig.parent:
-                new.parent = orig_to_new[orig.parent]
-                new.parent.children.append(new)
+                orig_to_new[orig.parent].add_child(new)
         
-        return Tree(orig_to_new[tree.root])
+        return PhyloTree(orig_to_new[tree.root])
     
     
     @staticmethod
@@ -465,22 +361,22 @@ class Tree:
         resulting tree will have at least children (property of phylogenetic
         trees).
         """
+        
         if not (isinstance(N, int) and isinstance(colors, collections.Iterable)):
             raise TypeError("N must be of type 'int' and colors must be iterable!")
-        root = TreeNode(0, label="0")
-        tree = Tree(root)
+        root = PhyloTreeNode(0, label="0")
+        tree = PhyloTree(root)
         node_list = [root]
         break_prob = [0.5, 0.5]
         nr, leaf_count = 1, 1
+        
         while leaf_count < N:
             node = random.choice(node_list)
             if not node.children:                               # to be phylogenetic at least two children must be added
-                new_child1 = TreeNode(nr, label=str(nr))
-                new_child2 = TreeNode(nr+1, label=str(nr+1))
-                new_child1.parent = node
-                new_child2.parent = node
-                node.children.append(new_child1)
-                node.children.append(new_child2)
+                new_child1 = PhyloTreeNode(nr, label=str(nr))
+                new_child2 = PhyloTreeNode(nr+1, label=str(nr+1))
+                node.add_child(new_child1)
+                node.add_child(new_child2)
                 node_list.extend(node.children)
                 nr += 2
                 leaf_count += 1
@@ -489,26 +385,28 @@ class Tree:
                 break_prob[1] = 1 - break_prob[0]               # probability to choose another node
                 if random.choices( (0,1), weights=break_prob )[0] == 1:
                     continue
-                new_child = TreeNode(nr, label=str(nr))
-                new_child.parent = node
-                node.children.append(new_child)
+                new_child = PhyloTreeNode(nr, label=str(nr))
+                node.add_child(new_child)
                 node_list.append(new_child)
                 nr += 1
                 leaf_count += 1
+                
         for node in node_list:                          # assign colors
             if not node.children:                       # to leaves randomly
                 node.color = random.choice(colors)
+                
         return tree
     
     
     def check_integrity(self):
+        
         for v in self.preorder():
             for child in v.children:
                 if child is v:
                     print("Loop at " + str(v))
                     raise KeyboardInterrupt
                 if child.parent is not v:
-                    print("Tree invalid for " + str(v) + " and " + str(child))
+                    print("PhyloTree invalid for " + str(v) + " and " + str(child))
                     raise KeyboardInterrupt
 
     
@@ -516,15 +414,15 @@ if __name__ == "__main__":
     colors = ("s", "t", "v", "w")
     N = 20
     
-    t = Tree.random_colored_tree(N, colors)
+    t = PhyloTree.random_colored_tree(N, colors)
     print("------------- Random tree test -------------")
     print( t.to_newick() )
     print("--------------------------------------------")
     
-    t2 = Tree.parse_newick(t.to_newick())
+    t2 = PhyloTree.parse_newick(t.to_newick())
     print( t2.to_newick() )
     
     nx_tree, nx_root = t.to_nx()
-    t3 = Tree.parse_nx(nx_tree, nx_root)
+    t3 = PhyloTree.parse_nx(nx_tree, nx_root)
     print("--------------------------------------------")
     print( t3.to_newick() )

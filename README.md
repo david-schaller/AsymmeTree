@@ -1,5 +1,7 @@
 # Gene Tree Simulator and Best Match Inference
 
+## Overview
+
 ### Simulator for species and gene trees
 
 Framework for the realistic simulation of species and gene tree scenarios with asymmetric evolution rates. The following steps are implemented in the Python package `asymmetree.simulator`:
@@ -12,6 +14,8 @@ Framework for the realistic simulation of species and gene tree scenarios with a
 
 Inference of the best match relation either directly from the gene tree or from a distance matrix (several methods).
 * `asymmetree.best_match_inference`
+
+## Dependencies
 
 AssymmeTree has several dependencies:
 * [NetworkX](https://networkx.github.io/)

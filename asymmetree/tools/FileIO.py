@@ -116,7 +116,7 @@ if __name__ == "__main__":
     import simulator.TreeImbalancer as tm
     
     from simulator.Scenario import Scenario
-    from simulator.Tree import Tree
+    from tools.PhyloTree import PhyloTree
     
     matrix_file = "test_data/matrix.phylip"
     species_file = "test_data/spec_genes.txt"
@@ -125,16 +125,17 @@ if __name__ == "__main__":
     bmg_file = "test_data/bmg.txt"
     tree_file = "test_data/species_tree.txt"
     
-    DLH_rates = (2,2,0)
+    DLH_rates = (1,1,0)
     
     #S = ts.build_species_tree(10, planted=True)
-    S = Tree.parse_newick("(((8:0.08603999468839801,(10:0.06055381385164242,(12:0.02750356935270675,(14:0.0071494825768602215,15:0.0071494825768602215)13:0.02035408677584653)11:0.03305024449893567)9:0.025486180836755596)2:0.34305906001624026,(((16:0.036223587639635554,(18:0.032127988304223636,19:0.032127988304223636)17:0.0040955993354119214)6:0.1114990457717915,7:0.14772263341142705)4:0.03331012904283408,5:0.18103276245426114)3:0.24806629225037713)1:0.5709009452953617)0:0.0")
+    S = PhyloTree.parse_newick("(((8:0.08603999468839801,(10:0.06055381385164242,(12:0.02750356935270675,(14:0.0071494825768602215,15:0.0071494825768602215)13:0.02035408677584653)11:0.03305024449893567)9:0.025486180836755596)2:0.34305906001624026,(((16:0.036223587639635554,(18:0.032127988304223636,19:0.032127988304223636)17:0.0040955993354119214)6:0.1114990457717915,7:0.14772263341142705)4:0.03331012904283408,5:0.18103276245426114)3:0.24806629225037713)1:0.5709009452953617)0:0.0")
     S.reconstruct_IDs()
     S.reconstruct_timestamps()
     print("------------- S -------------")
     print(S.to_newick())
     
     TGT = ts.build_gene_tree(S, DLH_rates)
+    print("done")
     TGT = tm.imbalance_tree(TGT, S, baseline_rate=1,
                                   lognormal_v=0.2,
                                   gamma_param=(0.5, 1.0, 2.2),

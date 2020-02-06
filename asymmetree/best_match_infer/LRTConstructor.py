@@ -10,8 +10,8 @@ import itertools
 
 import networkx as nx
 
-from . import TrueBMG
-from simulator.Tree import Tree, TreeNode
+from best_match_infer import TrueBMG
+from tools.PhyloTree import PhyloTree, PhyloTreeNode
 
 
 __author__ = "David Schaller"
@@ -65,15 +65,17 @@ class LRTConstructor:
             print("No such tree exists!")
             return None
         else:
-            return Tree(root)
+            return PhyloTree(root)
     
     
     def aho(self, L, R):
         """Recursive Aho-algorithm."""
+        
         if len(L) == 1:                                 # trivial case: only one leaf left in L
             leaf = L.pop()
-            return TreeNode(leaf, label=self.G.nodes[leaf]["label"],
+            return PhyloTreeNode(leaf, label=self.G.nodes[leaf]["label"],
                             color=self.G.nodes[leaf]["color"])
+            
         help_graph_A = HelpGraph(L, R, self)            # construct the help graph A(R)
                                                         # determine connected components A1, ..., Ak
         conn_comps = help_graph_A.connected_comp(mincut=self.mincut)
@@ -94,10 +96,10 @@ class LRTConstructor:
             else:
                 child_nodes.append(Ti)
                 
-        subtree_root = TreeNode(0, label="inner")       # place new inner node
+        subtree_root = PhyloTreeNode(0, label="inner")  # place new inner node
         for Ti in child_nodes:
-            Ti.parent = subtree_root                    # set the parent
-            subtree_root.children.append(Ti)            # add roots of the subtrees to the new node
+            subtree_root.add_child(Ti)                  # add roots of the subtrees to the new node
+   
         return subtree_root                             # return the new node
     
     
@@ -117,10 +119,9 @@ class LRTConstructor:
         elif len(subtrees) == 1:
             tree = subtrees[0]
         else:
-            tree = Tree(TreeNode(0))
+            tree = PhyloTree(PhyloTreeNode(0))
             for subtree in subtrees:
-                tree.root.children.append(subtree.root)
-                subtree.root.parent = tree.root
+                tree.root.add_child(subtree.root)
         
         return TrueBMG.best_match_graphs(tree)
 
@@ -139,6 +140,7 @@ class HelpGraph:
         Edges (a,b) are weighted by the number of occurrences in triples
         of the form ab|x or ba|x.
         """
+        
         self.G = nx.Graph()
         self.G.add_nodes_from(L)
         self.aho = aho
@@ -160,6 +162,7 @@ class HelpGraph:
                       minimal edge cut is applied first, function then
                       always return > 1 components (default=False).
         """
+        
         if (not mincut) or nx.number_connected_components(self.G) > 1:
             return list(nx.connected_components(self.G))
         else:

@@ -4,7 +4,7 @@ import itertools
 
 import numpy as np
 
-from simulator.Tree import Tree, TreeNode
+from tools.PhyloTree import PhyloTree, PhyloTreeNode
 
 
 class OutgroupFinder:
@@ -29,7 +29,7 @@ class OutgroupFinder:
         with open(self.tree_file, "r") as f:
             newick = f.readline()
         
-        self.S = Tree.parse_newick(newick)
+        self.S = PhyloTree.parse_newick(newick)
         
         
     def _compute_lcas_in_S(self):
@@ -38,7 +38,7 @@ class OutgroupFinder:
         N = len(self.S.root.leaves)
         self.leaf_index = {leaf.label: i for i, leaf in enumerate(self.S.root.leaves)}
         
-        self.lca = np.zeros((N,N), dtype=TreeNode)
+        self.lca = np.zeros((N,N), dtype=PhyloTreeNode)
         self.subtree_species = {}
         
         for v in self.S.preorder():

@@ -2,8 +2,7 @@
 
 import collections, itertools, random
 
-from tools import SimpleTree
-import tools.DoublyLinkedList as dll
+from tools import Tree
 
 
 __author__ = "David Schaller"
@@ -146,7 +145,7 @@ class SimpleGraph:
         return G
     
 
-class CotreeNode(SimpleTree.SimpleTreeNode):
+class CotreeNode(Tree.TreeNode):
     
     __slots__ = ['aux_counter']
     
@@ -170,7 +169,7 @@ class CotreeNode(SimpleTree.SimpleTreeNode):
             return "<>"
         
 
-class Cotree(SimpleTree.SimpleTree):
+class Cotree(Tree.Tree):
     
     def __init__(self, root):
         super().__init__(root)

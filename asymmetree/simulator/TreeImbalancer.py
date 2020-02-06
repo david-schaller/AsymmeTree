@@ -11,7 +11,7 @@ Methods in this module:
 
 import numpy as np
 
-from .Tree import Tree
+from tools.PhyloTree import PhyloTree
 
 
 __author__ = "David Schaller"
@@ -40,7 +40,7 @@ def imbalance_tree(T, S, baseline_rate=1,
     """
     
     if copy_tree:
-        T = Tree.copy_tree(T)
+        T = PhyloTree.copy_tree(T)
     weights = np.asarray(weights) / sum(weights)
         
     _divergent_rates(T, S, gamma_param, weights)

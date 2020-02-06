@@ -15,8 +15,8 @@ Methods in this module:
 import random
 import numpy as np
 
-from .Tree import Tree, TreeNode
-from . import DistanceMatrix
+from tools.PhyloTree import PhyloTree, PhyloTreeNode
+from simulator import DistanceMatrix
 
 
 __author__ = "David Schaller"
@@ -208,16 +208,17 @@ def wrong_topology_matrix(OGT):
         return                                          # hence |E| should be even
     random.shuffle(distances)
     
-    random_tree = Tree(TreeNode(0, dist=0.0))
+    random_tree = PhyloTree(PhyloTreeNode(0, dist=0.0))
     id_counter = 1
     current_leaves = [random_tree.root]
     
     while distances:
         v = current_leaves.pop(random.randint(0, len(current_leaves)-1))
         dist1, dist2 = distances.pop(), distances.pop()
-        new_child1 = TreeNode(id_counter, dist=dist1, parent=v)
-        new_child2 = TreeNode(id_counter+1, dist=dist2, parent=v)
-        v.children = [new_child1, new_child2]
+        new_child1 = PhyloTreeNode(id_counter, dist=dist1)
+        new_child2 = PhyloTreeNode(id_counter+1, dist=dist2)
+        v.add_child(new_child1)
+        v.add_child(new_child2)
         current_leaves.extend(v.children)
         id_counter += 1
     

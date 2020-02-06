@@ -12,6 +12,7 @@ __copyright__ = "Copyright (C) 2019, David Schaller"
 class GeneTreeVis:
     
     def __init__(self, tree):
+        
         self.tree = tree
         
         self.symbolsize = 0.03
@@ -31,6 +32,7 @@ class GeneTreeVis:
         
     
     def draw(self):
+        
         self.fig, self.ax = plt.subplots()
         self.ax.set_aspect('equal')
         self.ax.invert_yaxis()
@@ -79,6 +81,7 @@ class GeneTreeVis:
         
     
     def assign_colors(self):
+        
         if len(self.colors) <= 10:
             cmap = plt.get_cmap('tab10')(np.arange(len(self.colors), dtype=int))
         else:
@@ -126,6 +129,7 @@ class GeneTreeVis:
     
     
     def draw_nodes(self):
+        
         for v in self.tree.preorder():
             if not v.parent:
                 self.draw_root(*self.node_positions[v])
@@ -148,6 +152,7 @@ class GeneTreeVis:
                 
     
     def draw_leaf(self, x, y, color='white', leftalign=True):
+        
         if leftalign:
             x += self.symbolsize/2
         fill = mpatches.Circle((x, y), self.symbolsize/2,
@@ -166,6 +171,7 @@ class GeneTreeVis:
         
     
     def draw_loss(self, x, y):
+        
         self.ax.plot([x,x],
                      [y-self.symbolsize/2, y+self.symbolsize/2],
                      color='black',
@@ -173,6 +179,7 @@ class GeneTreeVis:
     
     
     def draw_root(self, x, y, rightalign=True):
+        
         if rightalign:
             x -= self.symbolsize/2
         fill = mpatches.Circle((x, y), self.symbolsize/2,
@@ -192,6 +199,7 @@ class GeneTreeVis:
     
     
     def draw_spec(self, x, y):
+        
         fill = mpatches.Circle((x, y), self.symbolsize/2,
                                color='black', fill=True,
                                zorder=self.symbol_zorder)
@@ -199,6 +207,7 @@ class GeneTreeVis:
         
     
     def draw_dupl(self, x, y):
+        
         square = mpatches.Rectangle((x-self.symbolsize/2,
                                      y-self.symbolsize/2),
                                     width=self.symbolsize,
@@ -217,6 +226,7 @@ class GeneTreeVis:
     
     
     def draw_hgt(self, x, y):
+        
         coord = np.asarray([[x,y-self.symbolsize/2],
                             [x+self.symbolsize/2,y+self.symbolsize/2],
                             [x-self.symbolsize/2,y+self.symbolsize/2]])
@@ -233,6 +243,7 @@ class GeneTreeVis:
     
     
     def write_label(self, x, y, text):
+        
         self.ax.text(x, y, text,
                      horizontalalignment='left',
                      verticalalignment='center')

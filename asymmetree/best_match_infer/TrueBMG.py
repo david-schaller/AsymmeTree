@@ -1,11 +1,10 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 """
 Orthology graph, cBMG, cRBMG.
 
 This module provides classes concerning colored graphs and colored
-(phylogentic) trees, including a cBMG(Tree)-function.
+(phylogentic) trees, including a cBMG(PhyloTree)-function.
 
 Methods in this module:
     - true_orthology_graph(tree)
@@ -32,6 +31,7 @@ __copyright__ = "Copyright (C) 2019, David Schaller"
 
 def true_orthology_graph(tree):
     """Constructs the true orthology graph from an event-labeled tree."""
+    
     tree.supply_leaves()                                # assign list of leaves to each node
     G = nx.Graph()
     
@@ -51,6 +51,7 @@ def best_match_graphs(tree):
     """Create an n-colored BMG and RBMG from a given tree.
     
     Own algorithm."""
+    
     tree.supply_leaves()                                # assign list of leaves to each node
     BMG, RBMG = nx.DiGraph(), nx.Graph()
     colors = set()
@@ -86,6 +87,7 @@ def build_cBMG_alternative(tree):
     """Create an n-colored BMG from a given tree.
     
     Algorithm presented in the cobmg paper."""
+    
     V = []
     L = []
     colors = set()
@@ -129,6 +131,7 @@ def build_cBMG_alternative(tree):
 
 
 def RBMG_from_BMG(cBMG):
+    
     G = nx.Graph()
     G.add_nodes_from(cBMG.nodes(data=True))
     

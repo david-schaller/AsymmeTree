@@ -3,7 +3,7 @@
 import os, subprocess, itertools, time
 
 from tools import FileIO
-from simulator.Tree import Tree, TreeNode
+from tools.PhyloTree import PhyloTree, PhyloTreeNode
 
 
 __author__ = "David Schaller"
@@ -44,7 +44,7 @@ def neighbor_joining(leaves, leaf_index, matrix_filename,
     
     newick = output.stdout.decode()
     
-    tree = Tree.parse_newick(newick)
+    tree = PhyloTree.parse_newick(newick)
     
     # restore (leaf) indeces and colors
     leaf_dict = {leaf.ID: leaf for leaf in leaves}
@@ -75,12 +75,12 @@ def reroot(tree, node):
     old_root = pos
     
     for u, v, dist in reversed(edges):      # change direction of edges
-        u.parent = v
-        u.children.remove(v)
+        u.remove_child(v)
+        v.add_child(u)
         u.dist = dist
-        v.children.append(u)
     
-    node.parent, node.dist = None, 0.0
+    node.detach()
+    node.dist = 0.0
     tree.root = node
     
     if len(old_root.children) <= 1:         # delete old root if its out-degree is 1
@@ -128,11 +128,10 @@ def midpoint_rooting(tree):
     # rerooting
     if edge:
         u, v = edge
-        new_root = TreeNode(max_ID+1, dist=cut_at, parent=u)
-        u.children.remove(v)
-        u.children.append(new_root)
-        v.parent = new_root
-        new_root.children = [v]
+        u.remove_child(v)
+        new_root = PhyloTreeNode(max_ID+1, dist=cut_at)
+        u.add_child(new_root)
+        new_root.add_child(v)
         v.dist -= new_root.dist
         reroot(tree, new_root)
     else:

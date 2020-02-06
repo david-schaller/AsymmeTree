@@ -7,7 +7,7 @@ import networkx as nx
 from cograph.Cograph import SimpleGraph
 from cograph.CographEditor import CographEditor
 
-from simulator.Tree import Tree, TreeNode
+from tools.PhyloTree import PhyloTree, PhyloTreeNode
 
 
 class TreeReconstructor:
@@ -109,7 +109,7 @@ class TreeReconstructor:
         if not root:
             raise Exception("Could not build a species tree!")
         
-        self.S = Tree(root)
+        self.S = PhyloTree(root)
         
         return self.S
     
@@ -119,7 +119,7 @@ class TreeReconstructor:
         
         if len(L) == 1:                                 # trivial case: only one leaf left in L
             leaf = L.pop()
-            return TreeNode(leaf, label=leaf)
+            return PhyloTreeNode(leaf, label=leaf)
         
         aho_graph = self._aho_graph(L, R)               # construct the Aho-graph
                                                         # determine connected components A1, ..., Ak
@@ -142,10 +142,10 @@ class TreeReconstructor:
             else:
                 child_nodes.append(Ti)
                 
-        subtree_root = TreeNode(0, label="")            # place new inner node
+        subtree_root = PhyloTreeNode(0, label="")       # place new inner node
         for Ti in child_nodes:
-            Ti.parent = subtree_root                    # set the parent
-            subtree_root.children.append(Ti)            # add roots of the subtrees to the new node
+            subtree_root.add_child(Ti)                  # add roots of the subtrees to the new node
+        
         return subtree_root                             # return the new node
     
     
@@ -184,7 +184,7 @@ class TreeReconstructor:
         Modified version by Byrka et al. 2010 and added weights."""
         
         # initialization
-        nodes = {TreeNode(leaf, label=leaf): {leaf} for leaf in self.L}
+        nodes = {PhyloTreeNode(leaf, label=leaf): {leaf} for leaf in self.L}
         leaf_to_node = {}
         
         for node in nodes:
@@ -231,10 +231,9 @@ class TreeReconstructor:
                     S_i, S_j = pair
             
             # create new node S_k connecting S_i and S_j
-            S_k = TreeNode(0, label="")
-            S_k.children.extend([S_i, S_j])
-            S_i.parent = S_k
-            S_j.parent = S_k
+            S_k = PhyloTreeNode(0, label="")
+            S_k.add_child(S_i)
+            S_k.add_child(S_j)
             
             nodes[S_k] = nodes[S_i] | nodes[S_j]    # set union
             for leaf in nodes[S_k]:
@@ -359,7 +358,7 @@ class TreeReconstructor:
     
     
     def newick_with_support(self, v=None, supports=None):
-        """Recursive Tree --> Newick (str) function."""
+        """Recursive PhyloTree --> Newick (str) function."""
         
         if v is None:
             supports = self._subtree_support()
@@ -386,7 +385,7 @@ if __name__ == "__main__":
     
     # SPECIES TREE:
     #S = ts.build_species_tree(10)
-    S = Tree.parse_newick("(((((16:0.38786287055727103,(18:0.2071277923445058,19:0.2071277923445058)17:0.18073507821276524)12:0.10075553853805931,(14:0.13224182895383052,15:0.13224182895383052)13:0.3563765801414998)4:0.07517286794939665,(6:0.5373882998574596,(8:0.4434182448023457,(10:0.04929450217312242,11:0.04929450217312242)9:0.3941237426292233)7:0.0939700550551139)5:0.02640297718726732)2:0.2512472266526016,3:0.8150385036973286)1:0.18496149630267142)0:0.0;")
+    S = PhyloTree.parse_newick("(((((16:0.38786287055727103,(18:0.2071277923445058,19:0.2071277923445058)17:0.18073507821276524)12:0.10075553853805931,(14:0.13224182895383052,15:0.13224182895383052)13:0.3563765801414998)4:0.07517286794939665,(6:0.5373882998574596,(8:0.4434182448023457,(10:0.04929450217312242,11:0.04929450217312242)9:0.3941237426292233)7:0.0939700550551139)5:0.02640297718726732)2:0.2512472266526016,3:0.8150385036973286)1:0.18496149630267142)0:0.0;")
     S.reconstruct_IDs()
     S.reconstruct_timestamps()
     
