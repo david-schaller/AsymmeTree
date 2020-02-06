@@ -148,15 +148,14 @@ class SimpleGraph:
 
 class CotreeNode(SimpleTree.SimpleTreeNode):
     
-    __slots__ = ['parent_dll_element', 'aux_counter']
+    __slots__ = ['aux_counter']
     
     
     def __init__(self, ID, label=None, parent=None,
                  aux_counter=0):
-        super().__init__(ID, label=label, parent=parent)
-        self.children = dll.DLList()
-        self.parent_dll_element = None      # reference to doubly-linked list element
-                                            # in the parents' children
+        
+        super().__init__(ID, label=label)
+        
         self.aux_counter = aux_counter      # auxiliary counting variable
         
     
@@ -169,20 +168,6 @@ class CotreeNode(SimpleTree.SimpleTreeNode):
             return "<0>"
         else:
             return "<>"
-        
-    
-    def add_child(self, child_node):
-        child_node.parent = self
-        child_node.parent_dll_element = self.children.append(child_node)
-    
-    
-    def remove_child(self, child_node):
-        if child_node.parent is self:
-            self.children.remove_element(child_node.parent_dll_element)
-            child_node.parent = None
-            child_node.parent_dll_element = None
-        else:
-            raise ValueError("Not a child of this node!")
         
 
 class Cotree(SimpleTree.SimpleTree):
@@ -296,16 +281,14 @@ class Cotree(SimpleTree.SimpleTree):
             if not node.children:                       # avoid nodes with outdegree 1
                 new_child1 = CotreeNode(nr)
                 new_child2 = CotreeNode(nr+1)
-                new_child1.parent = node
-                new_child2.parent = node
-                node.children.extend([new_child1, new_child2])
+                node.add_child(new_child1)
+                node.add_child(new_child2)
                 node_list.extend(node.children)
                 nr += 2
                 leaf_count += 1
             elif node.children:                         # add only one child if there are already children
                 new_child = CotreeNode(nr)
-                new_child.parent = node
-                node.children.append(new_child)
+                node.add_child(new_child)
                 node_list.append(new_child)
                 nr += 1
                 leaf_count += 1

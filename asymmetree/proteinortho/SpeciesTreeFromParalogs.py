@@ -94,13 +94,15 @@ class TreeReconstructor:
             self.R[triple] = weight
             
             
-    def build_species_tree(self, mode='mincut', weighted=True):
+    def build_species_tree(self, mode='bpmf', weighted=True):
         """Build a species tree from the informative triples."""
         
-        if mode.lower() in ('mincut', 'min-cut'):
-            root = self._BUILD(self.L, self.R)
-        elif mode.lower() == 'bpmf':
+        if mode.lower() == 'bpmf':
             root = self._BPMF(weighted=weighted)
+        elif mode.lower() in ('mincut', 'min-cut'):
+            root = self._BUILD(self.L, self.R, mincut=True)
+        elif mode.lower() == 'greedy':
+            root = self._GREEDY(weighted=weighted)
         else:
             raise ValueError(f"Mode '{mode}' is not valid!")
             
@@ -112,7 +114,7 @@ class TreeReconstructor:
         return self.S
     
     
-    def _BUILD(self, L, R):
+    def _BUILD(self, L, R, mincut=True):
         """Aho's BUILD-algorithm with minimal edge cut."""
         
         if len(L) == 1:                                 # trivial case: only one leaf left in L
@@ -121,11 +123,10 @@ class TreeReconstructor:
         
         aho_graph = self._aho_graph(L, R)               # construct the Aho-graph
                                                         # determine connected components A1, ..., Ak
-        conn_comps = self._connected_comp(aho_graph)
+        conn_comps = self._connected_comp(aho_graph,
+                                          mincut=mincut)
         
         if len(conn_comps) <= 1:                        # return False if less than 2 connected components
-            print("Connected component:\n", conn_comps)
-            print(R)
             return False
         
         child_nodes = []
@@ -167,9 +168,9 @@ class TreeReconstructor:
         return G
                 
                 
-    def _connected_comp(self, G):
-#        return list(nx.connected_components(G))
-        if nx.number_connected_components(G) > 1:
+    def _connected_comp(self, G, mincut=True):
+        
+        if nx.number_connected_components(G) > 1 or not mincut:
             return list(nx.connected_components(G))
         else:
             cut = nx.stoer_wagner(G)                    # Stoer–Wagner algorithm
@@ -245,6 +246,30 @@ class TreeReconstructor:
         assert len(nodes) == 1, "More than 1 node left!"
         
         return next(iter(nodes))
+    
+    
+    def _GREEDY(self, weighted=True):
+        
+        if weighted:
+            triples = sorted(self.R.keys(),
+                             key=lambda triple: self.R[triple],
+                             reverse=True)
+        else:
+            triples = self.R.keys()
+                
+        consistent_triples = {}
+        root = self._BUILD(self.L, consistent_triples, mincut=False)
+        
+        for t in triples:
+            consistent_triples[t] = self.R[t]
+            
+            build_tree = self._BUILD(self.L, consistent_triples, mincut=False)
+            if build_tree:
+                root = build_tree
+            else:
+                del consistent_triples[t]
+        
+        return root
     
     
     def _max_consistent_triple_set(self):

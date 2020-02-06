@@ -3,6 +3,7 @@ __pycache__/
 .idea/
 .spyproject/
 asymmetree/SIMULATIONS/results/*
+asymmetree/SIMULATIONS/scripts/
 *~
 
 # Prerequisites

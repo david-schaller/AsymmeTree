@@ -1,17 +1,46 @@
 # -*- coding: utf-8 -*-
 
 
+import tools.DoublyLinkedList as dll
+
+
 class SimpleTreeNode:
     
-    __slots__ = ['ID', 'label', 'parent', 'children',
-                 'leaves']
+    __slots__ = ['ID', 'label', 'parent', 'parent_dll_element',
+                 'children', 'leaves']
     
     
-    def __init__(self, ID, label=None, parent=None):
+    def __init__(self, ID, label=None):
+        
         self.ID = ID
         self.label = label
-        self.parent = parent
-        self.children = []
+        self.parent = None
+        self.children = dll.DLList()
+        self.parent_dll_element = None      # reference to doubly-linked list element
+                                            # in the parents' children
+                                            
+    def add_child(self, child_node):
+        
+        # do nothing if child_node is already a child of self
+        
+        if child_node.parent is None:
+            child_node.parent = self
+            child_node.parent_dll_element = self.children.append(child_node)
+        
+        elif child_node.parent is not self:
+            child_node.parent.remove_child(child_node)
+            child_node.parent = self
+            child_node.parent_dll_element = self.children.append(child_node)  
+    
+    
+    def remove_child(self, child_node):
+        
+        if child_node.parent is self:
+            self.children.remove_element(child_node.parent_dll_element)
+            child_node.parent = None
+            child_node.parent_dll_element = None
+        else:
+            raise ValueError("Not a child of this node!")
         
 
 class SimpleTree:
@@ -65,5 +94,5 @@ class SimpleTree:
             s = ''
             for child in node.children:
                 s += self.to_newick(node=child) + ","
-            return "({}){}".format(s[:-1], str(node))
+            return f"({s[:-1]}){node}"
         

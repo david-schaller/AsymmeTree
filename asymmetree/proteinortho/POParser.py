@@ -207,7 +207,7 @@ if __name__ == "__main__":
     outfile = os.path.join(directory, "species_trees_heuristic")
     
     cotree_modes = ["best", "all"]
-    triple_modes = ["Mincut", "BPMF"]
+    triple_modes = ["Mincut", "BPMF", "Greedy"]
     
     reconstruct_trees_and_write(infile, outfile,
                                 cotree_modes, triple_modes,

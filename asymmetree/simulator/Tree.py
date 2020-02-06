@@ -22,8 +22,8 @@ class TreeNode():
     reference to the parent node.
     """
     
-    slots = ('ID', 'label', 'color', 'dist', 'tstamp', 'transferred',
-             'parent', 'children', 'leaves')
+    __slots__ = ('ID', 'label', 'color', 'dist', 'tstamp', 'transferred',
+                 'parent', 'children', 'leaves')
     
     def __init__(self, ID, label="", color=None,
                  dist = 1.0, tstamp=None, transferred=0, parent = None):
