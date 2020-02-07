@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import networkx as nx
-
 import simulator.TreeSimulator as ts
 import simulator.TreeImbalancer as tm
 from simulator.Scenario import Scenario
-from best_match_infer.Quartets import Quartets
+from best_matches.Quartets import Quartets
+import best_matches.LRTConstructor as lrt
 
 # --------------------------------------------------------------------------
 #                            RATES FOR
@@ -18,7 +17,7 @@ DLH_rates = (1,1,0)
 #                            SPECIES TREE
 # --------------------------------------------------------------------------
 
-S = ts.build_species_tree(10, planted=True)
+S = ts.build_species_tree(10, planted=True, non_binary=0.2)
 print("------------- S -------------")
 print(S.to_newick())
 
@@ -42,6 +41,14 @@ print(TGT.to_newick(distance_only=False))
 OGT = ts.observable_tree(TGT)
 print("------------- OGT -------------")
 print(OGT.to_newick(distance_only=False))
+
+# --------------------------------------------------------------------------
+#                       LEAST RESOLVED TREE
+# --------------------------------------------------------------------------
+
+LRT = lrt.LRT_from_observable_tree(OGT)
+print("------------- LRT -------------")
+print(LRT.to_newick(distance_only=False))
 
 # --------------------------------------------------------------------------
 #                              SCENARIO

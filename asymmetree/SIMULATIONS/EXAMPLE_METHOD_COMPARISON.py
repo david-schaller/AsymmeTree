@@ -9,10 +9,10 @@ import simulator.TreeImbalancer as tm
 from simulator.Scenario import Scenario
 from simulator import NoisyMatrix
 
-from best_match_infer import TrueBMG
-import best_match_infer.ExtBestHits as ebh
-import best_match_infer.TreeReconstruction as tr
-import best_match_infer.Quartets as qd
+from best_matches import TrueBMG
+import best_matches.ExtBestHits as ebh
+import best_matches.TreeReconstruction as tr
+import best_matches.Quartets as qd
 
 
 class CustomAnalysis:

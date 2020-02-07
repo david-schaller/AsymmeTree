@@ -15,7 +15,7 @@ import os, subprocess, time
 import networkx as nx
 
 from tools import FileIO
-from . import TrueBMG
+from best_matches import TrueBMG
 
 
 __author__ = "David Schaller"

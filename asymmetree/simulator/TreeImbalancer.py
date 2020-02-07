@@ -40,7 +40,7 @@ def imbalance_tree(T, S, baseline_rate=1,
     """
     
     if copy_tree:
-        T = PhyloTree.copy_tree(T)
+        T = T.copy()
     weights = np.asarray(weights) / sum(weights)
         
     _divergent_rates(T, S, gamma_param, weights)

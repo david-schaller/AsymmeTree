@@ -15,7 +15,7 @@ import collections
 
 
 __author__ = "David Schaller"
-__copyright__ = "Copyright (C) 2018, David Schaller"
+__copyright__ = "Copyright (C) 2020, David Schaller"
 
 
 class DLListElement:
@@ -60,18 +60,12 @@ class DLList:
     
     def __iter__(self):
         
-        self.current = self._first
-        return self
+        return DLListIterator(self)
 
 
     def __next__(self):
         
-        if self.current:
-            x = self.current
-            self.current = self.current.next_el
-            return x.value
-        else:
-            raise StopIteration
+        pass
     
     
     def __getitem__(self, index):
@@ -194,6 +188,25 @@ class DLList:
         self._first = None
         self._last = None
         self.count = 0
+        
+
+class DLListIterator:
+    """Iterator class for doubly-linked list."""
+    
+    def __init__(self, dllist):
+        
+        self.dllist = dllist
+        self._current = dllist._first
+        
+    
+    def __next__(self):
+        
+        if self._current:
+            x = self._current
+            self._current = self._current.next_el
+            return x.value
+        else:
+            raise StopIteration
         
 
 if __name__ == "__main__":

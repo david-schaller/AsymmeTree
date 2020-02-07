@@ -83,7 +83,8 @@ class Tree:
     
     def preorder(self, node=None):
         """Generator for preorder traversal of the tree."""
-        if not node:
+        
+        if node is None:
             yield from self.preorder(node=self.root)
         else:
             yield node
@@ -93,7 +94,8 @@ class Tree:
     
     def postorder(self, node=None):
         """Generator for postorder traversal of the tree."""
-        if not node:
+        
+        if node is None:
             yield from self.postorder(node=self.root)
         else:
             for child in node.children:
@@ -101,10 +103,22 @@ class Tree:
             yield node
             
     
-    def edges(self, node=None):
+    def inner_vertices(self, node=None):
+        """Generator for inner vertices in preorder."""
         
+        if node is None:
+            yield from self.inner_vertices(node=self.root)
+        else:
+            if node.children:
+                yield node
+                for child in node.children:
+                    yield from self.inner_vertices(node=child)
+            
+    
+    def edges(self, node=None):
         """Generator for all edges of the tree."""
-        if not node:
+        
+        if node is None:
             yield from self.edges(node=self.root)
         else:
             for child in node.children:
@@ -112,9 +126,22 @@ class Tree:
                 yield from self.edges(node=child)
                 
     
+    def inner_edges(self, node=None):
+        """Generator for all inner edges of the tree."""
+        
+        if node is None:
+            yield from self.inner_edges(node=self.root)
+        else:
+            for child in node.children:
+                if child.children:
+                    yield (node, child)
+                    yield from self.inner_edges(node=child)
+                
+    
     def euler_generator(self, node=None, id_only=False):
         """Generator for an Euler tour of the tree."""
-        if not node:
+        
+        if node is None:
             yield from self.euler_generator(node=self.root, id_only=id_only)
         else:
             if id_only: yield node.ID
@@ -129,7 +156,8 @@ class Tree:
     
     def supply_leaves(self, node=None):
         """Add the leaves to all nodes that are in the subtree of a specific node."""
-        if not node:
+        
+        if node is None:
             self.supply_leaves(self.root)
             return self.root.leaves
         else:
@@ -164,6 +192,7 @@ class Tree:
     
     def to_newick(self, node=None):
         """Recursive Tree --> Newick (str) function."""
+        
         if node is None:
             return self.to_newick(self.root) + ";"
         elif not node.children:
@@ -173,4 +202,45 @@ class Tree:
             for child in node.children:
                 s += self.to_newick(node=child) + ","
             return f"({s[:-1]}){node}"
+      
+    
+    def get_hierarchy(self):
+        """Return the hierarchy set on the leaf labels defined by the tree."""
         
+        self.supply_leaves()
+        
+        hierarchy = set()
+        
+        for v in self.preorder():
+            
+            A = [leaf.label for leaf in v.leaves]
+            A.sort()
+            A = tuple(A)
+            hierarchy.add(A)
+            
+        return hierarchy
+    
+    
+    def compare_topology(self, other):
+        """Compare the tree topology based on the hierarchies.
+        
+        Only works for binary trees."""
+        
+        hierarchy1 = sorted(self.get_hierarchy())
+        hierarchy2 = sorted(other.get_hierarchy())
+        
+        if len(hierarchy1) != len(hierarchy2):
+            print(f"Unequal sizes of the hierarchy sets: {len(hierarchy1)} and {len(hierarchy2)}")
+            return False
+        
+        for i in range(len(hierarchy1)):
+            
+#            if len(hierarchy1[i]) > 1:
+#                print(hierarchy1[i])
+#                print(hierarchy2[i])
+            
+            if hierarchy1[i] != hierarchy2[i]:
+                print(f"Hierarchies not equal:\n{hierarchy1[i]}\n{hierarchy2[i]}")
+                return False
+        
+        return True

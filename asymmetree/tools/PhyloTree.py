@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-PhyloTree data structure for phylogentic trees.
+Tree data structure for phylogentic trees.
 
 Classes in this module:
     - PhyloTreeNode
@@ -48,7 +48,7 @@ class PhyloTreeNode(TreeNode):
         elif self.color:
             return "{}<{}>:{}".format(self.label, self.color, self.dist)
         else:
-            return "{}:{}".format(self.label, self.dist)    
+            return "{}:{}".format(self.label, self.dist)
 
 
 class PhyloTree(Tree):
@@ -103,7 +103,20 @@ class PhyloTree(Tree):
                     
             node.children.clear()
             return parent
+        
     
+    def contract(self, edges):
+        
+        contracted = set()
+        
+        for u, v in edges:
+            
+            # avoid trying to contract the same edge multiple times
+            if v not in contracted:
+                self.delete_and_reconnect(v)
+            
+            contracted.add(v)
+            
     
     def supply_leaves(self, node=None, exclude_losses=True):
         """Add the leaves to all nodes that are in the subtree of a specific node."""
@@ -137,6 +150,25 @@ class PhyloTree(Tree):
             if not v.children:
                 leaf_distances.append( (str(v), distance_dict[v]) )
         return distance_dict, leaf_distances
+    
+    
+    def topology_only(self, copy=False):
+        """Reset distances, time stamps, transfer status and inner labels."""
+        
+        if copy:
+            T = self.copy()
+        else:
+            T = self
+        
+        for v in T.preorder():
+            if v.children:
+                v.label = ""
+                v.color = None
+            v.dist = 1.0
+            v.tstamp = None
+            v.transferred = 0
+        
+        return T
     
 
 # --------------------------------------------------------------------------
@@ -335,12 +367,11 @@ class PhyloTree(Tree):
 # --------------------------------------------------------------------------
 
     
-    @staticmethod
-    def copy_tree(tree):
+    def copy(self):
         
         orig_to_new = {}
         
-        for orig in tree.preorder():
+        for orig in self.preorder():
             new = PhyloTreeNode(orig.ID, label=orig.label, 
                                 color=orig.color, dist=orig.dist,
                                 tstamp=orig.tstamp,
@@ -349,7 +380,7 @@ class PhyloTree(Tree):
             if orig.parent:
                 orig_to_new[orig.parent].add_child(new)
         
-        return PhyloTree(orig_to_new[tree.root])
+        return PhyloTree(orig_to_new[self.root])
     
     
     @staticmethod

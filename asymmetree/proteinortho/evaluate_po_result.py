@@ -3,7 +3,7 @@
 import pickle, re
 import networkx as nx
 
-from best_match_infer.TrueBMG import true_orthology_graph, RBMG_from_BMG
+from best_matches.TrueBMG import true_orthology_graph, RBMG_from_BMG
 
 from tools.GraphTools import performance
 

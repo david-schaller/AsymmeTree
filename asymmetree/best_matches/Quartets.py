@@ -15,7 +15,7 @@ import itertools, random,  subprocess, time, os
 import numpy as np
 import networkx as nx
 
-from . import TrueBMG
+from best_matches import TrueBMG
 from tools import FileIO
 
 

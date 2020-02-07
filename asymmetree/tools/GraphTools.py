@@ -62,6 +62,7 @@ def performance(true_graph, graph):
 
 def build_adjacency_matrix(G):
     """Return an adjacency matrix."""
+    
     index = {node: i for i, node in enumerate(G.nodes())}   # maps node --> row/column index
     M = np.zeros( (len(index), len(index)), dtype=np.int8)
     for x, neighbors in G.adjacency():
@@ -141,6 +142,7 @@ def remove_all_P4(RBMG, BMG, P4_list=None):
 # --------------------------------------------------------------------------
 
 def validate_C6(G, C6_path):
+    
     C6 = G.subgraph(C6_path)
     if C6.size() != 6:
         print(C6_path)
@@ -197,6 +199,7 @@ def find_all_C6(G, P4_list=None):
 
 
 def graph_type(G):
+    
     P4_list = find_all_P4(G)
     C6_list = find_all_C6(G, P4_list=P4_list)
     

@@ -21,7 +21,7 @@ from tools.PhyloTree import PhyloTree, PhyloTreeNode
 
 
 __author__ = "David Schaller"
-__copyright__ = "Copyright (C) 2019, David Schaller"
+__copyright__ = "Copyright (C) 2020, David Schaller"
 
 
 # --------------------------------------------------------------------------
@@ -30,7 +30,35 @@ __copyright__ = "Copyright (C) 2019, David Schaller"
 #                       with the innovations model
 # --------------------------------------------------------------------------
 
-def build_species_tree(N, planted=True):
+def build_species_tree(N, planted=True, model="innovations",
+                       non_binary=0.0):
+    """Builds a species tree S with N leaves.
+    
+    Keyword parameters:
+        planted -- add a planted root that has the canonical root as its
+                   single neighbor; default is True
+        model -- simulation model to be applied; default is 'innovations'
+        non_binary -- probality that an inner edge is contracted;
+                      results in non-binary tree; default is 0.0
+    """
+    
+    if isinstance(model, str) and model.lower() in ('innovation', 'innovations'):
+        tree = _innovations_model(N, planted=planted)
+    else:
+        raise ValueError(f"Model '{model}' is not available!")
+        
+    if non_binary > 0.0:
+         edges = _select_edges_for_contraction(tree,
+                                               min(non_binary, 1.0),
+                                               exclude_planted_edge=True)
+         tree.contract(edges)
+         
+    make_ultrametric(tree)
+        
+    return tree
+        
+
+def _innovations_model(N, planted=True):
     """Builds a species tree S with N leaves with the innovations model."""
     
     tree = PhyloTree(PhyloTreeNode(0, label="0"))
@@ -98,8 +126,6 @@ def build_species_tree(N, planted=True):
                 species[new_s] = child2
                 t += 1
     
-    make_ultrametric(tree)
-    
     return tree
 
 
@@ -122,6 +148,21 @@ def make_ultrametric(tree):
                 pos = pos.children[np.random.randint(len(pos.children))]
             v.dist = (v.parent.tstamp) * 2 * np.random.uniform() / (length+1)
             v.tstamp = v.parent.tstamp - v.dist
+            
+            
+def _select_edges_for_contraction(tree, p, exclude_planted_edge=True):
+    
+    edges = []
+    
+    for u, v in tree.inner_edges():
+        
+        if exclude_planted_edge and (u is tree.root) and len(u.children) == 1:
+            continue
+        
+        if random.random() < p:
+            edges.append((u,v))
+    
+    return edges
 
 
 # --------------------------------------------------------------------------
@@ -364,7 +405,7 @@ def _gillespie_direct(S, DLH_rates):
 # --------------------------------------------------------------------------
     
 def observable_tree(tree):
-    obs_tree = PhyloTree.copy_tree(tree)
+    obs_tree = tree.copy()
     
     loss_nodes = []
     for node in obs_tree.postorder():

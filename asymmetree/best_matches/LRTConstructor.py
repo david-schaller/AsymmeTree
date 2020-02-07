@@ -3,20 +3,101 @@
 """
 Construction of Least Resolved Trees (LRT).
 
-Computes an LRT from a not necessarily valid BMG.
+Computes an LRT from a (not necessarily valid) cBMG or
+from an observable gene tree.
 """
 
 import itertools
 
 import networkx as nx
 
-from best_match_infer import TrueBMG
+from best_matches import TrueBMG
 from tools.PhyloTree import PhyloTree, PhyloTreeNode
 
 
 __author__ = "David Schaller"
-__copyright__ = "Copyright (C) 2019, David Schaller"
+__copyright__ = "Copyright (C) 2020, David Schaller"
 
+
+# --------------------------------------------------------------------------
+#                      LRT FROM OBSERVABLE GENE TREE
+#
+#        WARNING: seems to work, but not (yet) mathmatically proven
+# --------------------------------------------------------------------------
+
+
+def _rho_colors(T, subtree_colors):
+    """Computes the colors s for which each v is the root of some thinness class."""
+    
+    colors = subtree_colors[T.root]                   # full color set
+    
+    rho_colors = {v: set() for v in T.preorder()}     # colors s for which v is the root of some thinness class
+    
+    for u in T.root.leaves:
+        remaining = colors - {u.color}                  # colors to which no best match has yet been found
+        current = u.parent                              # start with direct parent of each node
+        while remaining and current:
+            colors_here = set()
+            for v in current.leaves:
+                if v.color in remaining:                # best match found
+                    colors_here.add(v.color)
+            
+            rho_colors[current] |= colors_here          # update thinness class root colors
+            remaining -= colors_here                    # update remaining colors
+            current = current.parent
+    
+    return rho_colors
+
+
+def _redundant_edges(T, subtree_colors, rho_colors):
+    
+    redundant_edges = []
+    
+    for u, v in T.inner_edges():
+        
+        aux_set = set()                                 # colors s in sigma( L(T(u) \ T(v)) )
+        for v2 in u.children:
+            if v2 is not v:
+                aux_set.update(subtree_colors[v2])
+        
+        if not rho_colors[v].intersection(aux_set):
+            redundant_edges.append((u, v))
+    
+    return redundant_edges
+
+
+def LRT_from_observable_tree(T):
+    """Computes the Least Resolved Tree from a tree.
+    
+    The unique Least Resolved Tree from a leaf-colored (observable)
+    gene tree is computed by contraction of all redundant edges.
+    
+    WARNING: seems to work, but not (yet) mathmatically proven!
+    """
+    
+    LRT = T.copy()
+    
+    # remove planted root
+    if len(LRT.root.children) == 1:
+        LRT.delete_and_reconnect(LRT.root)
+    
+    LRT.supply_leaves()                                 # assign list of leaves to each node
+    
+    subtree_colors = {}
+    for v in LRT.preorder():
+        subtree_colors[v] = {leaf.color for leaf in v.leaves}
+        
+    rho_colors = _rho_colors(LRT, subtree_colors)
+    redundant_edges = _redundant_edges(LRT, subtree_colors, rho_colors)
+    LRT.contract(redundant_edges)
+    LRT = LRT.topology_only()
+    
+    return LRT
+
+
+# --------------------------------------------------------------------------
+#                               LRT FROM BMG
+# --------------------------------------------------------------------------
 
 class LRTConstructor:
     
@@ -96,7 +177,7 @@ class LRTConstructor:
             else:
                 child_nodes.append(Ti)
                 
-        subtree_root = PhyloTreeNode(0, label="inner")  # place new inner node
+        subtree_root = PhyloTreeNode(0, label="")       # place new inner node
         for Ti in child_nodes:
             subtree_root.add_child(Ti)                  # add roots of the subtrees to the new node
    
@@ -177,3 +258,22 @@ class HelpGraph:
                     (edge[1] in smaller_comp and edge[0] not in smaller_comp)):
                     self.aho.cut_list.append(edge)
             return cut[1]
+        
+        
+if __name__ == "__main__":
+    
+    colors = [i+1 for i in range(5)]
+    T = PhyloTree.random_colored_tree(30, colors)
+    print("--- T ---\n", T.to_newick())
+    
+    BMG, _ = TrueBMG.best_match_graphs(T)
+    
+    lrt_constr = LRTConstructor(BMG, mincut=False)
+    LRT1 = lrt_constr.build_tree()
+    
+    LRT2 = LRT_from_observable_tree(T)
+    
+    print("--- LRT1 ---\n", LRT1.to_newick())
+    print("--- LRT2 ---\n", LRT2.to_newick())
+    
+    print(f"LRTs equal: {LRT1.compare_topology(LRT2)}")

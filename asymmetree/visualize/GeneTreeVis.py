@@ -254,7 +254,7 @@ if __name__ == "__main__":
     import simulator.TreeSimulator as ts
     import simulator.TreeImbalancer as tm
     
-    S = ts.build_species_tree(4, planted=True)
+    S = ts.build_species_tree(6, planted=True, non_binary=0.2)
     
     TGT = ts.build_gene_tree(S, (1.0,1.0,1.0))
     TGT = tm.imbalance_tree(TGT, S, baseline_rate=1,

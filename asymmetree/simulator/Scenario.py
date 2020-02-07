@@ -10,7 +10,7 @@ import networkx as nx
 
 from simulator import TreeSimulator as ts
 from simulator.DistanceMatrix import distance_matrix
-from best_match_infer import TrueBMG
+from best_matches import TrueBMG
 
 
 __author__ = "David Schaller"
