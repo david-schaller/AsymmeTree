@@ -251,8 +251,8 @@ class GeneTreeVis:
 
 if __name__ == "__main__":
     
-    import simulator.TreeSimulator as ts
-    import simulator.TreeImbalancer as tm
+    import asymmetree.simulator.TreeSimulator as ts
+    import asymmetree.simulator.TreeImbalancer as tm
     
     S = ts.build_species_tree(6, planted=True, non_binary=0.2)
     

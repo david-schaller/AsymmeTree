@@ -112,11 +112,11 @@ if __name__ == "__main__":
     
     # generate new files in folder "test_data"
     
-    import simulator.TreeSimulator as ts
-    import simulator.TreeImbalancer as tm
+    import asymmetree.simulator.TreeSimulator as ts
+    import asymmetree.simulator.TreeImbalancer as tm
     
-    from simulator.Scenario import Scenario
-    from tools.PhyloTree import PhyloTree
+    from asymmetree.simulator.Scenario import Scenario
+    from asymmetree.tools.PhyloTree import PhyloTree
     
     matrix_file = "test_data/matrix.phylip"
     species_file = "test_data/spec_genes.txt"

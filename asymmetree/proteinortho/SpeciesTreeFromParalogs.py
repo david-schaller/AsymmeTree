@@ -4,10 +4,10 @@ import itertools
 
 import networkx as nx
 
-from cograph.Cograph import SimpleGraph
-from cograph.CographEditor import CographEditor
+from asymmetree.cograph.Cograph import SimpleGraph
+from asymmetree.cograph.CographEditor import CographEditor
 
-from tools.PhyloTree import PhyloTree, PhyloTreeNode
+from asymmetree.tools.PhyloTree import PhyloTree, PhyloTreeNode
 
 
 class TreeReconstructor:
@@ -379,9 +379,9 @@ if __name__ == "__main__":
     
     # ----- TESTING THIS MODULE -----
     
-    import simulator.TreeSimulator as ts
-    import simulator.TreeImbalancer as tm
-    from best_match_infer import TrueBMG
+    import asymmetree.simulator.TreeSimulator as ts
+    import asymmetree.simulator.TreeImbalancer as tm
+    from asymmetree.best_matches import TrueBMG
     
     # SPECIES TREE:
     #S = ts.build_species_tree(10)

@@ -2,7 +2,7 @@
 
 import collections, itertools, random
 
-from tools import Tree
+from asymmetree.tools import Tree
 
 
 __author__ = "David Schaller"

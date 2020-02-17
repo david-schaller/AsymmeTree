@@ -4,7 +4,7 @@ import itertools
 
 import numpy as np
 
-from tools.PhyloTree import PhyloTree, PhyloTreeNode
+from asymmetree.tools.PhyloTree import PhyloTree, PhyloTreeNode
 
 
 class OutgroupFinder:
@@ -106,17 +106,3 @@ class OutgroupFinder:
             i += 1
         
         return outgroups
-    
-        
-if __name__ == "__main__":
-    
-    import os
-    
-    directory = "test_files_2"
-    tree_file = os.path.join(directory, "true_species_tree")
-    
-    of = OutgroupFinder(tree_file)
-    
-    print(of.S.to_newick())
-    print(of.lca)
-    print(of.lca_to_outgroups)

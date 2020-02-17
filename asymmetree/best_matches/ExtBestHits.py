@@ -14,8 +14,8 @@ Methods in this module:
 import os, subprocess, time
 import networkx as nx
 
-from tools import FileIO
-from best_matches import TrueBMG
+from asymmetree.tools import FileIO
+from asymmetree.best_matches import TrueBMG
 
 
 __author__ = "David Schaller"

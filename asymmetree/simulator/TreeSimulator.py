@@ -17,7 +17,7 @@ from collections import deque
 
 import numpy as np
 
-from tools.PhyloTree import PhyloTree, PhyloTreeNode
+from asymmetree.tools.PhyloTree import PhyloTree, PhyloTreeNode
 
 
 __author__ = "David Schaller"

@@ -11,10 +11,7 @@ Implementation the O(n^2) algorithm in:
 
 import random
 
-try:                
-    from .Cograph import Cotree, CotreeNode
-except ModuleNotFoundError:
-    from cograph.Cograph import Cotree, CotreeNode
+from asymmetree.cograph.Cograph import Cotree, CotreeNode
 
 
 __author__ = "David Schaller"
@@ -451,7 +448,7 @@ class CographEditor:
     
 if __name__ == "__main__":
     
-    from cograph.Cograph import SimpleGraph
+    from asymmetree.cograph.Cograph import SimpleGraph
     
 #    while(True):
         

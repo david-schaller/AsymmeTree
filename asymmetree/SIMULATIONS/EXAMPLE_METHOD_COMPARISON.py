@@ -3,16 +3,16 @@
 import time, os
 import numpy as np
 
-from tools import FileIO, GraphTools
-import simulator.TreeSimulator as ts
-import simulator.TreeImbalancer as tm
-from simulator.Scenario import Scenario
-from simulator import NoisyMatrix
+from asymmetree.tools import FileIO, GraphTools
+import asymmetree.simulator.TreeSimulator as ts
+import asymmetree.simulator.TreeImbalancer as tm
+from asymmetree.simulator.Scenario import Scenario
+from asymmetree.simulator import NoisyMatrix
 
-from best_matches import TrueBMG
-import best_matches.ExtBestHits as ebh
-import best_matches.TreeReconstruction as tr
-import best_matches.Quartets as qd
+from asymmetree.best_matches import TrueBMG
+import asymmetree.best_matches.ExtBestHits as ebh
+import asymmetree.best_matches.TreeReconstruction as tr
+import asymmetree.best_matches.Quartets as qd
 
 
 class CustomAnalysis:

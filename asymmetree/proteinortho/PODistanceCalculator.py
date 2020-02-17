@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from Bio import SeqIO, pairwise2
+from Bio import pairwise2
 from Bio.SubsMat import MatrixInfo
 
 from Bio.Seq import Seq
@@ -25,15 +25,3 @@ def distance_2seqs(seq1, seq2, matrix=MatrixInfo.blosum62,
     dm = calculator.get_distance(msa)
     
     return dm.matrix[1][0]
-    
-
-if __name__ == "__main__":
-    
-    record_dict_C = SeqIO.index("test/C.faa", "fasta")
-    C_10 = record_dict_C["C_10"].seq
-    
-    record_dict_E = SeqIO.index("test/E.faa", "fasta")
-    E_10 = record_dict_E["E_10"].seq
-    
-    distance = distance_2seqs(C_10, E_10)
-    print(distance)

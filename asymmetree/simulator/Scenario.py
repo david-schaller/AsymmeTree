@@ -8,9 +8,9 @@ Wrapper class for species and gene tree. Compute statistics, BMG/RBMG.
 
 import networkx as nx
 
-from simulator import TreeSimulator as ts
-from simulator.DistanceMatrix import distance_matrix
-from best_matches import TrueBMG
+from asymmetree.simulator import TreeSimulator as ts
+from asymmetree.simulator.DistanceMatrix import distance_matrix
+from asymmetree.best_matches import TrueBMG
 
 
 __author__ = "David Schaller"

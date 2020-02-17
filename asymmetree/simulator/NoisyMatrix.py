@@ -15,8 +15,8 @@ Methods in this module:
 import random
 import numpy as np
 
-from tools.PhyloTree import PhyloTree, PhyloTreeNode
-from simulator import DistanceMatrix
+from asymmetree.tools.PhyloTree import PhyloTree, PhyloTreeNode
+from asymmetree.simulator import DistanceMatrix
 
 
 __author__ = "David Schaller"

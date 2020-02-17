@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="asymmetree",
-    version="0.0.1",
+    version="0.0.2",
     author="David Schaller",
     author_email="david@0x002A.com",
     description="Simulation of species and gene tree scenarios with asymmetric evolution rates.",

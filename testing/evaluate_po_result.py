@@ -3,9 +3,9 @@
 import pickle, re
 import networkx as nx
 
-from best_matches.TrueBMG import true_orthology_graph, RBMG_from_BMG
-
-from tools.GraphTools import performance
+from asymmetree.best_matches.TrueBMG import true_orthology_graph, RBMG_from_BMG
+from asymmetree.tools.GraphTools import performance
+from asymmetree.proteinortho.POParser import parse_po_graph, parse_best_matches
 
 
 def merge_ortho_graphs(gene_trees):
@@ -81,13 +81,31 @@ def F1(recall, precision):
     return 2 * recall * precision / (recall + precision)
 
 
-from POParser import parse_po_graph, parse_best_matches
 
 if __name__ == "__main__":
     
     folder = "test_files_2/"
     
-    S, gene_trees = pickle.load(open(folder + "scenario.pickle", "rb"))
+    import io
+    
+    class RenameUnpickler(pickle.Unpickler):
+        def find_class(self, module, name):
+            renamed_module = module
+            if module == "simulator.Tree":
+                renamed_module = "testing.LegacyTree"
+    
+            return super(RenameUnpickler, self).find_class(renamed_module, name)
+    
+    
+    def renamed_load(file_obj):
+        return RenameUnpickler(file_obj).load()
+    
+    
+    def renamed_loads(pickled_bytes):
+        file_obj = io.BytesIO(pickled_bytes)
+        return renamed_load(file_obj)
+    
+    S, gene_trees = renamed_load(open(folder + "scenario.pickle", "rb"))
     print(S.to_newick())
     
     po_graph = parse_po_graph(folder + "test.proteinortho-graph")

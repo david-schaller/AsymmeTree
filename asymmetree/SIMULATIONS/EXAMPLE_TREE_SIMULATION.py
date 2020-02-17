@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import simulator.TreeSimulator as ts
-import simulator.TreeImbalancer as tm
-from simulator.Scenario import Scenario
-from best_matches.Quartets import Quartets
-import best_matches.LRTConstructor as lrt
+import asymmetree.simulator.TreeSimulator as ts
+import asymmetree.simulator.TreeImbalancer as tm
+from asymmetree.simulator.Scenario import Scenario
+from asymmetree.best_matches.Quartets import Quartets
+import asymmetree.best_matches.LRTConstructor as lrt
 
 # --------------------------------------------------------------------------
 #                            RATES FOR

@@ -18,11 +18,7 @@ from multiprocessing import Pool
 
 import networkx as nx
 
-try:
-    from SpeciesTreeFromParalogs import TreeReconstructor                
-except ModuleNotFoundError:
-    from proteinortho.SpeciesTreeFromParalogs import TreeReconstructor   
-
+from asymmetree.proteinortho.SpeciesTreeFromParalogs import TreeReconstructor   
 
 
 __author__ = "David Schaller"
@@ -201,7 +197,7 @@ if __name__ == "__main__":
     
     import os
     
-    directory = "test_files_2"
+    directory = "../../testing/test_files_2"
     
     infile = os.path.join(directory, "test.proteinortho-graph")
     outfile = os.path.join(directory, "species_trees_heuristic")

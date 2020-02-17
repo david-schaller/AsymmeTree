@@ -15,8 +15,8 @@ import itertools, random,  subprocess, time, os
 import numpy as np
 import networkx as nx
 
-from best_matches import TrueBMG
-from tools import FileIO
+from asymmetree.best_matches import TrueBMG
+from asymmetree.tools import FileIO
 
 
 __author__ = "David Schaller"

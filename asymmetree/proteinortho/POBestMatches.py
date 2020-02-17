@@ -6,16 +6,10 @@ import numpy as np
 import networkx as nx
 from Bio import SeqIO
 
-try:
-    from .POParser import parse_best_match_candidates
-    from .POOutgroupFinder import OutgroupFinder
-    from .PODistanceCalculator import distance_2seqs
-    
-except ModuleNotFoundError:     # if __name__ == "__main__"
-    from proteinortho.POParser import parse_best_match_candidates
-    from proteinortho.POOutgroupFinder import OutgroupFinder
-    from proteinortho.PODistanceCalculator import distance_2seqs
 
+from asymmetree.POParser import parse_best_match_candidates
+from asymmetree.POOutgroupFinder import OutgroupFinder
+from asymmetree.PODistanceCalculator import distance_2seqs
 
 class POBestMatches:
     
@@ -261,19 +255,3 @@ def print_BMG(BMG, filename):
                                               BMG.nodes[v]["gene_specifier"],
                                               BMG.nodes[u]["color"],
                                               BMG.nodes[v]["color"],))
-            
-
-if __name__ == "__main__":
-    
-    import glob
-    
-    directory = "test_files_2"
-    
-    fasta_files = glob.glob(os.path.join(directory, "*.faa"))
-    candidate_dir = os.path.join(directory, "test.bm_candidates")
-    tree_file = os.path.join(directory, "true_species_tree")
-    
-    po_bm = POBestMatches(fasta_files, candidate_dir, tree_file)
-    BMG = po_bm()
-    
-    print_BMG(BMG, os.path.join(directory, "bmg"))
