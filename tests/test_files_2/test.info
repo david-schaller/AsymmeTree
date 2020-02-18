@@ -1,4 +1,0 @@
-SYSTEMCALL of Wed Dec 11 15:09:19 2019:
-proteinortho -project=test test_files_2/10.faa test_files_2/11.faa test_files_2/14.faa test_files_2/15.faa test_files_2/16.faa test_files_2/18.faa test_files_2/19.faa test_files_2/3.faa test_files_2/6.faa test_files_2/8.faa
-Parameter-vector : (version=6.0.11,step=0,verbose=1,debug=0,exactstep3=0,synteny=0,duplication=2,cs=3,alpha=0.5,connectivity=0.1,cpus=0,evalue=1e-05,purity=1e-07,coverage=50,identity=25,blastmode=diamond,sim=0.95,report=3,keep=0,force=0,selfblast=0,twilight=0,singles=0,clean=0,blastOptions=,nograph=0,xml=0,desc=0,tmp_path=./proteinortho_cache_test/,blastversion=unknown,binpath=,makedb=,blast=,jobs_todo=0,project=test,po_path=.//src/BUILD/Linux_x86_64,run_id=,threads_per_process=1,useMcl=0,freemem=-1)
---------
