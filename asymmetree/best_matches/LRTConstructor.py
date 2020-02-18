@@ -79,7 +79,7 @@ def LRT_from_observable_tree(T):
     
     # remove planted root
     if len(LRT.root.children) == 1:
-        LRT.delete_and_reconnect(LRT.root)
+        LRT.delete_and_reconnect(LRT.root.children[0])
     
     LRT.supply_leaves()                                 # assign list of leaves to each node
     

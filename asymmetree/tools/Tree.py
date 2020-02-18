@@ -61,18 +61,6 @@ class TreeNode:
         else:
             self.parent = None
             self.parent_dll_element = None
-            
-    
-#    def __eq__(self, other):
-#        return self.ID == other.ID
-#    
-#    
-#    def __lt__(self, other):
-#        return self.ID < other.ID
-#
-#
-#    def __hash__(self):
-#        return hash(id(self))
         
 
 class Tree:
@@ -188,6 +176,26 @@ class Tree:
                             triples.append( (t1, t2, t3) )
         
         return triples
+    
+    
+    def delete_and_reconnect(self, node):
+        """Delete a node from the tree and reconnect its parent and children."""
+        
+        parent = node.parent
+        if not parent:
+            print(f"Cannot delete and reconnect root '{node}'!")
+            return False
+        else:
+            parent.remove_child(node)
+            
+            # copy list of children to edit edges
+            children = [child for child in node.children]
+            for child in children:
+                parent.add_child(child)
+                    
+            node.children.clear()
+        
+        return parent
         
     
     def to_newick(self, node=None):

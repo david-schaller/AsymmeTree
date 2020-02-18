@@ -411,15 +411,23 @@ def observable_tree(tree):
     for node in obs_tree.postorder():
         if not node.children and node.label == "*":
             loss_nodes.append(node)
-            
-    for loss_node in loss_nodes:
-        current = obs_tree.delete_and_reconnect(loss_node)      # traverse from loss
-                                                                # node to root
-        while len(current.children) < 2 and current.parent:     # delete if deg. <= 1
-            current = obs_tree.delete_and_reconnect(current)
     
-    if len(obs_tree.root.children) == 1:                        # delete the root if
-        obs_tree.delete_and_reconnect(obs_tree.root)            # the tree is planted
+    # traverse from loss node to root delete if degree <= 1
+    for loss_node in loss_nodes:
+        current = obs_tree.delete_and_reconnect(loss_node,
+                                                add_distances=True,
+                                                keep_transferred=True)
+        
+        while len(current.children) < 2 and current.parent:
+            current = obs_tree.delete_and_reconnect(current,
+                                                    add_distances=True,
+                                                    keep_transferred=True)
+    
+    # delete the root if the tree is planted
+    if len(obs_tree.root.children) == 1:
+        obs_tree.delete_and_reconnect(obs_tree.root.children[0],
+                                      add_distances=False,
+                                      keep_transferred=False)
     
     return obs_tree
     
