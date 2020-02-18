@@ -25,7 +25,8 @@ print(S.to_newick())
 #                             GENE TREE
 # --------------------------------------------------------------------------
 
-TGT = ts.build_gene_tree(S, DLH_rates)
+TGT_simulator = ts.GeneTreeSimulator(S)
+TGT = TGT_simulator.simulate(DLH_rates)
 TGT = tm.imbalance_tree(TGT, S, baseline_rate=1,
                         lognormal_v=0.2,
                         gamma_param=(0.5, 1.0, 2.2),

@@ -134,7 +134,8 @@ if __name__ == "__main__":
     print("------------- S -------------")
     print(S.to_newick())
     
-    TGT = ts.build_gene_tree(S, DLH_rates)
+    TGT_simulator = ts.GeneTreeSimulator(S)
+    TGT = TGT_simulator.simulate(DLH_rates)
     print("done")
     TGT = tm.imbalance_tree(TGT, S, baseline_rate=1,
                                   lognormal_v=0.2,

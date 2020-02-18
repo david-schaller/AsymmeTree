@@ -191,33 +191,3 @@ def reconstruct_trees_and_write(infile, outfile, cotree_modes, triple_modes,
                     f"Max. Consistent Triple Set heuristic: {triple_mode}, "\
                     f"Time: {time_needed}\n")
             f.write(newick + "\n")
-
-
-if __name__ == "__main__":
-    
-    import os
-    
-    directory = "../../testing/test_files_2"
-    
-    infile = os.path.join(directory, "test.proteinortho-graph")
-    outfile = os.path.join(directory, "species_trees_heuristic")
-    
-    cotree_modes = ["best", "all"]
-    triple_modes = ["Mincut", "BPMF", "Greedy"]
-    
-    reconstruct_trees_and_write(infile, outfile,
-                                cotree_modes, triple_modes,
-                                parallel_processing=True)
-
-    with open(outfile, "r") as f:
-        print(f.read())
-    
-#    tr = TreeReconstructor(cotree_mode="all")
-#    tr.add_ortho_graph(G)
-#    spec_tree = tr.build_species_tree(mode="BPMF")
-#    
-#    print(spec_tree.to_newick())
-#    print(tr.newick_with_support())
-#    
-#    G = parse_best_matches("test_files_2/bmg")
-#    print(G.order(), G.size())

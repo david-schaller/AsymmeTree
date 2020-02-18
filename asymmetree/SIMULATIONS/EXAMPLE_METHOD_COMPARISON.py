@@ -152,14 +152,15 @@ for rep in range(repeats):
     
     S = ts.build_species_tree(np.random.randint(S_min, S_max+1), planted=True)
     
-    TGT1 = ts.build_gene_tree(S, (D,L,H))
+    TGT_simulator = ts.GeneTreeSimulator(S)
+    TGT1 = TGT_simulator.simulate((D,L,H))
     TGT1 = tm.imbalance_tree(TGT1, S, baseline_rate=1,
                             lognormal_v=0.2,
                             gamma_param=(0.5, 1.0, 2.2),
                             weights=(1/3, 1/3, 1/3),
                             copy_tree=False)
     
-    TGT2 = ts.build_gene_tree(S, (D,L,H))
+    TGT2 = TGT_simulator.simulate((D,L,H))
     TGT2 = tm.imbalance_tree(TGT2, S, baseline_rate=1,
                             lognormal_v=0.2,
                             gamma_param=(0.5, 1.0, 2.2),

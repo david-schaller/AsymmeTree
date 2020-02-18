@@ -11,8 +11,6 @@ Methods in this module:
 
 import numpy as np
 
-from asymmetree.tools.PhyloTree import PhyloTree
-
 
 __author__ = "David Schaller"
 __copyright__ = "Copyright (C) 2019, David Schaller"
