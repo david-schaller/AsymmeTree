@@ -1,5 +1,7 @@
 # Gene Tree Simulator and Best Match Inference
 
+[![pypi version](https://img.shields.io/badge/pypi-v0.0.1-blue.svg)](https://pypi.org/project/asymmetree/0.0.1/)
+
 ## Overview
 
 ### Simulator for species and gene trees
