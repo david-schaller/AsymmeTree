@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="asymmetree",
-    version="0.0.3",
+    version="0.0.1",
     author="David Schaller",
     author_email="david@0x002A.com",
     description="Simulation of species and gene tree scenarios with asymmetric evolution rates.",
@@ -18,4 +18,10 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
+    install_requires=[
+        'numpy>=1.16.4',
+        'scipy>=1.3.0',
+        'matplotlib>=3.1.0',
+        'networkx>=2.2',
+   ],
 )

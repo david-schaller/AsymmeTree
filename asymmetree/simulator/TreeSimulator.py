@@ -430,4 +430,3 @@ def observable_tree(tree):
                                       keep_transferred=False)
     
     return obs_tree
-    
