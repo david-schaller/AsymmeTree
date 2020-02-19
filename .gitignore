@@ -2,7 +2,6 @@
 __pycache__/
 .idea/
 .spyproject/
-asymmetree/SIMULATIONS/results/*
 *~
 asymmetree.egg-info/
 build/
@@ -41,3 +40,6 @@ bin/
 *.exe
 *.out
 *.app
+
+# others
+exmples/results/*
