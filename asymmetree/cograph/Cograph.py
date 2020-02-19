@@ -171,6 +171,10 @@ class CotreeNode(Tree.TreeNode):
 
 class Cotree(Tree.Tree):
     
+    # corresponding node type
+    node_type = CotreeNode
+    
+    
     def __init__(self, root):
         super().__init__(root)
         

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import itertools
+import itertools, random
 
 import asymmetree.tools.DoublyLinkedList as dll
 
@@ -16,7 +16,7 @@ class TreeNode:
                  'children', 'leaves']
     
     
-    def __init__(self, ID, label=None):
+    def __init__(self, ID, label=""):
         
         self.ID = ID
         self.label = label
@@ -25,8 +25,13 @@ class TreeNode:
         self.parent_dll_element = None      # reference to doubly-linked list element
                                             # in the parents' children
     
+    def __str__(self):
+        
+        return str(self.label)
+    
     
     def __repr__(self):
+        
         return "tn" + str(self.ID)
     
                                             
@@ -64,6 +69,10 @@ class TreeNode:
         
 
 class Tree:
+    
+    # corresponding node type
+    node_type = TreeNode
+    
     
     def __init__(self, root):
         self.root = root
@@ -252,3 +261,54 @@ class Tree:
                 return False
         
         return True
+    
+    
+    @staticmethod
+    def random_tree(N, binary=False):
+        """Creates a random tree.
+        
+        The number of leaves is specified by the parameter 'N'. Each non-leaf
+        node in the resulting tree will have at least children (property of
+        phylogenetic trees).
+        
+        Keyword arguments:
+            binary - forces the tree to be binary; default is False
+        """
+        
+        if not (isinstance(N, int)):
+            raise TypeError("N must be of type 'int'!")
+        root = TreeNode(0, label="0")
+        tree = Tree(root)
+        node_list = [root]
+        break_prob = [0.5, 0.5]
+        nr, leaf_count = 1, 1
+        
+        while leaf_count < N:
+            node = random.choice(node_list)
+            
+            if not node.children: 
+                # to be phylogenetic at least two children must be added
+                new_child1 = TreeNode(nr, label=str(nr))
+                new_child2 = TreeNode(nr+1, label=str(nr+1))
+                node.add_child(new_child1)
+                node.add_child(new_child2)
+                node_list.extend(node.children)
+                nr += 2
+                leaf_count += 1
+            elif node.children and not binary:
+                # add only one child if there are already children
+                
+                # probability to add another child (decraeses exponentially)
+                break_prob[0] = 1 / 1.4**len(node.children)
+                # probability to choose another node
+                break_prob[1] = 1 - break_prob[0]
+                if random.choices( (0,1), weights=break_prob )[0] == 1:
+                    continue
+                
+                new_child = TreeNode(nr, label=str(nr))
+                node.add_child(new_child)
+                node_list.append(new_child)
+                nr += 1
+                leaf_count += 1
+                
+        return tree

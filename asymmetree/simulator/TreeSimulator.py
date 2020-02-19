@@ -192,15 +192,36 @@ class GeneTreeSimulator:
                                                         # sort (u,v) by tstamp of u
     
     
-    def simulate(self, DLH_rates):
+    def simulate(self, DLH_rates,
+                 dupl_polytomy=0.0):
+        """Simulate a gene tree along the specified species tree.
+        
+        Simulate a gene tree along the specified species tree where the parameter
+        'DLH_rates' contains the rates for duplications, losses and HGTs.
+        
+        Keyword arguments:
+            dupl_polytomy - allows non-binary duplication events by specifying
+                            the lambda parameter for a poisson distribution
+                            (copy number = drawn number + 2); default is 0.0
+        """
         
         self.DLH_rates = DLH_rates
+        self.rate_sum = sum(DLH_rates)
+        self.d = DLH_rates[0]
+        self.l = DLH_rates[1]
+        self.h = DLH_rates[2]
+        
+        self.dupl_polytomy = dupl_polytomy
+        
         self._reset()
         
         return self._gillespie_direct()
     
     
     def _reset(self):
+        
+        self.spec_queue = deque(self.sorted_speciations)    # queue for speciation events
+        self.id_counter = 0
         
         self.total_rate = 0                                 # total event rate (all branches)
         self.branch_rates = []                              # array for branch rates
@@ -239,11 +260,17 @@ class GeneTreeSimulator:
         else:
             event_type = "H"
         
-#        rate_sum = sum(self.branch_rates)
-#        if self.total_rate != rate_sum:
-#            raise KeyboardInterrupt
+#        assert np.isclose(self.total_rate, sum(self.branch_rates)), "Sum of rates and total rate are not equal."
         
         return branch, event_type
+    
+    
+    def _get_copy_number(self):
+        
+        if self.dupl_polytomy <= 0.0:
+            return 2
+        else:
+            return 2 + np.random.poisson(lam=self.dupl_polytomy)
 
 
     def _coexisting_edges(self, tstamp, exclude_edge=None):
@@ -260,172 +287,208 @@ class GeneTreeSimulator:
 
     def _gillespie_direct(self):
         
-        # --------------- initialization -----------------
-        d, l, h = self.DLH_rates
-        S = self.S
-        speciations = deque(self.sorted_speciations)    # queue for speciation events
+        T = self._initiatialize_tree()
+        t = T.root.tstamp                   # start time = 1.0
         
-        if len(S.root.children) > 1:
-            # root is a speciation event
-            T = PhyloTree(PhyloTreeNode(0, label="S",
-                                        color=S.root.ID, 
-                                        dist=0.0, tstamp=1.0))
-        else:                    
-            # planted tree
-            T = PhyloTree(PhyloTreeNode(0, color=S.root.ID,
-                                        dist=0.0, tstamp=1.0))
-        speciations.popleft()
-        
-        id_counter = 1
-        
-        for S_v in S.root.children:
-            new_branch = Branch(id_counter, T.root, S.root, S_v, 0)
-            self.ES_to_b[(S.root, S_v)].append(new_branch)
-            index = len(self.branch_rates)
-            self.branch_rates.append(d+h)
-            self.total_rate += d+h
-            self.i_to_b[index] = new_branch
-            self.b_to_i[new_branch] = index
-            id_counter += 1
-            
-        t = T.root.tstamp                               # start time = 1.0
-        
-        while speciations:
+        while self.spec_queue:
             
             event_tstamp = self._get_tstamp(t)
+            next_spec_tstamp = self.spec_queue[0].tstamp
             
-            # ----------------- SPECIATION -----------------
-            if event_tstamp <= speciations[0].tstamp:
-                S_v = speciations.popleft()
-                S_u = S_v.parent
+            # speciation
+            if event_tstamp <= next_spec_tstamp:
+                self._speciation()      
+                t = next_spec_tstamp
                 
-                for branch in self.ES_to_b[(S_u, S_v)]:
-                    spec_node = PhyloTreeNode(branch.ID, label="S",
-                                         color=S_v.ID, tstamp=S_v.tstamp,
-                                         dist=abs(S_v.tstamp-branch.parent.tstamp),
-                                         transferred=branch.transferred)
-                    branch.parent.add_child(spec_node)
-                    if not S_v.children:
-                        spec_node.label = str(spec_node.ID)
-                    for S_w in S_v.children:
-                        new_branch = Branch(id_counter, spec_node, S_v, S_w, 0)
-                        self.ES_to_b[(S_v, S_w)].append(new_branch)
-                        if S_w is S_v.children[0]:
-                            index = self.b_to_i[branch]
-                        else:
-                            index = len(self.branch_rates)
-                            self.branch_rates.append(self.branch_rates[self.b_to_i[branch]])
-                            self.total_rate += self.branch_rates[-1]
-                        self.i_to_b[index] = new_branch
-                        self.b_to_i[new_branch] = index
-                        id_counter += 1
-                    del self.b_to_i[branch]
-                        
-                t = S_v.tstamp
-                
-            # ----------------- D / L / H ------------------
             else:
                 branch, event_type = self._get_branch_and_type()
-                S_u, S_v = branch.S_u, branch.S_v
                 
-                # ----------------- DUPLICATION -----------------
+                # duplication
                 if event_type == "D":
-                    dupl_node = PhyloTreeNode(branch.ID, label="D",
-                                              color=(S_u.ID,S_v.ID),
-                                              tstamp=event_tstamp,
-                                              dist=abs(event_tstamp-branch.parent.tstamp),
-                                              transferred=branch.transferred)
-                    branch.parent.add_child(dupl_node)
-                    self.ES_to_b[(S_u, S_v)].remove(branch)
-                    for i in range(2):
-                        new_branch = Branch(id_counter, dupl_node, S_u, S_v, 0)
-                        self.ES_to_b[(S_u, S_v)].append(new_branch)
-                        if i == 0:
-                            index = self.b_to_i[branch]
-                            self.branch_rates[index] = d + l + h
-                        else:
-                            index = len(self.branch_rates)
-                            self.branch_rates.append(d+l+h)
-                        self.i_to_b[index] = new_branch
-                        self.b_to_i[new_branch] = index
-                        id_counter += 1
-                    del self.b_to_i[branch]
-                    
-                    if len(self.ES_to_b[(S_u, S_v)]) == 2:
-                        self.total_rate += (d + l + h + l)
-                    else:
-                        self.total_rate += (d + l + h)
+                    self._duplication(event_tstamp, branch, event_type)
                 
-                # -------------------- LOSS ---------------------
+                # loss
                 elif event_type == "L":
-                    loss_node = PhyloTreeNode(branch.ID, label="*",
-                                              color=(S_u.ID,S_v.ID),
-                                              tstamp=event_tstamp,
-                                              dist=abs(event_tstamp-branch.parent.tstamp),
-                                              transferred=branch.transferred)
-                    branch.parent.add_child(loss_node)
-                    self.ES_to_b[(S_u, S_v)].remove(branch)
-                    self.branch_rates[self.b_to_i[branch]] = 0
-                    del self.b_to_i[branch]
+                    self._loss(event_tstamp, branch, event_type)
                     
-                    if len(self.ES_to_b[(S_u, S_v)]) == 1:
-                        self.total_rate -= (d + l + h + l)
-                        self.branch_rates[self.b_to_i[self.ES_to_b[(S_u, S_v)][0]]] -= l
-                    else:
-                        self.total_rate -= (d + l + h)
-                
-                # -------------------- HGT ----------------------
+                # HGT    
                 elif event_type == "H":
-                    valid_edges = self._coexisting_edges(event_tstamp,
-                                                         exclude_edge=(S_u, S_v))
-                    if valid_edges:
-                        trans_edge = random.choice(valid_edges)
-                        hgt_node = PhyloTreeNode(branch.ID, label="H",
-                                                 color=(S_u.ID,S_v.ID),
-                                                 tstamp=event_tstamp,
-                                                 dist=abs(event_tstamp-branch.parent.tstamp),
-                                                 transferred=branch.transferred)
-                        branch.parent.add_child(hgt_node)
-                        self.ES_to_b[(S_u, S_v)].remove(branch)
-                        
-                        # original branch
-                        new_branch = Branch(id_counter, hgt_node, S_u, S_v, 0)        
-                        self.ES_to_b[(S_u, S_v)].append(new_branch)
-                        index = self.b_to_i[branch]
-                        self.i_to_b[index] = new_branch
-                        self.b_to_i[new_branch] = index
-                        id_counter += 1
-                        
-                        # receiving branch
-                        trans_branch = Branch(id_counter, hgt_node, *trans_edge, 1)
-                        self.ES_to_b[trans_edge].append(trans_branch)
-                        index = len(self.branch_rates)
-                        self.branch_rates.append(d+l+h)
-                        self.i_to_b[index] = trans_branch
-                        self.b_to_i[trans_branch] = index
-                        id_counter += 1
-                        
-                        del self.b_to_i[branch]
-                        
-                        if len(self.ES_to_b[trans_edge]) == 2:
-                            self.total_rate += (d + l + h + l)
-                            self.branch_rates[self.b_to_i[self.ES_to_b[trans_edge][0]]] += l
-                        else:
-                            self.total_rate += (d + l + h)
+                    self._hgt(event_tstamp, branch, event_type)
                 
                 t = event_tstamp
-    
-#        # check that there is no extinction in any species
-#        VS_to_VT = {l.ID: [] for l in S.preorder() if not l.children}
-#        for v in T.preorder():
-#            if not v.children and not v.label == "*":
-#                VS_to_VT[v.color].append(v.ID)
-#        for leaf_list in VS_to_VT.values():
-#            if not leaf_list:
-#                raise KeyboardInterrupt
-        
-        return T
 
+        return T
+    
+    
+    def _initiatialize_tree(self):
+        
+        if len(self.S.root.children) > 1:
+            # root is a speciation event
+            T = PhyloTree(PhyloTreeNode(self.id_counter, label="S",
+                                        color=self.S.root.ID, 
+                                        dist=0.0,
+                                        tstamp=self.S.root.tstamp))
+        else:                    
+            # planted species tree
+            T = PhyloTree(PhyloTreeNode(self.id_counter,
+                                        color=self.S.root.ID,
+                                        dist=0.0,
+                                        tstamp=self.S.root.tstamp))
+        self.id_counter += 1
+        self.spec_queue.popleft()
+                
+        for S_v in self.S.root.children:
+            new_branch = Branch(self.id_counter, T.root, self.S.root, S_v, 0)
+            self.ES_to_b[(self.S.root, S_v)].append(new_branch)
+            index = len(self.branch_rates)
+            self.branch_rates.append(self.d + self.h)
+            self.total_rate += self.d + self.h
+            self.i_to_b[index] = new_branch
+            self.b_to_i[new_branch] = index
+            self.id_counter += 1
+            
+        return T
+            
+    
+    def _speciation(self):
+        
+        S_v = self.spec_queue.popleft()
+        S_u = S_v.parent
+        
+        for branch in self.ES_to_b[(S_u, S_v)]:
+            spec_node = PhyloTreeNode(branch.ID, label="S",
+                                 color=S_v.ID, tstamp=S_v.tstamp,
+                                 dist=abs(S_v.tstamp-branch.parent.tstamp),
+                                 transferred=branch.transferred)
+            branch.parent.add_child(spec_node)
+            if not S_v.children:
+                spec_node.label = str(spec_node.ID)
+            for S_w in S_v.children:
+                new_branch = Branch(self.id_counter, spec_node, S_v, S_w, 0)
+                self.ES_to_b[(S_v, S_w)].append(new_branch)
+                if S_w is S_v.children[0]:
+                    index = self.b_to_i[branch]
+                else:
+                    index = len(self.branch_rates)
+                    self.branch_rates.append(self.branch_rates[self.b_to_i[branch]])
+                    self.total_rate += self.branch_rates[index]
+                self.i_to_b[index] = new_branch
+                self.b_to_i[new_branch] = index
+                self.id_counter += 1
+            del self.b_to_i[branch]
+            
+    
+    def _duplication(self, event_tstamp, branch, event_type):
+        
+        S_u, S_v = branch.S_u, branch.S_v
+        
+        dupl_node = PhyloTreeNode(branch.ID, label="D",
+                                  color=(S_u.ID,S_v.ID),
+                                  tstamp=event_tstamp,
+                                  dist=abs(event_tstamp-branch.parent.tstamp),
+                                  transferred=branch.transferred)
+        branch.parent.add_child(dupl_node)
+        self.ES_to_b[(S_u, S_v)].remove(branch)
+        
+        copy_number = self._get_copy_number()
+        
+        for i in range(copy_number):
+            new_branch = Branch(self.id_counter, dupl_node, S_u, S_v, 0)
+            self.ES_to_b[(S_u, S_v)].append(new_branch)
+            if i == 0:
+                index = self.b_to_i[branch]
+                self.branch_rates[index] = self.rate_sum
+            else:
+                index = len(self.branch_rates)
+                self.branch_rates.append(self.rate_sum)
+            self.i_to_b[index] = new_branch
+            self.b_to_i[new_branch] = index
+            self.id_counter += 1
+        del self.b_to_i[branch]
+        
+        self.total_rate += (copy_number - 1) * (self.rate_sum)
+        if len(self.ES_to_b[(S_u, S_v)]) == copy_number:
+            self.total_rate += self.l
+            
+            
+    def _loss(self, event_tstamp, branch, event_type):
+        
+        S_u, S_v = branch.S_u, branch.S_v
+        
+        loss_node = PhyloTreeNode(branch.ID, label="*",
+                                  color=(S_u.ID,S_v.ID),
+                                  tstamp=event_tstamp,
+                                  dist=abs(event_tstamp-branch.parent.tstamp),
+                                  transferred=branch.transferred)
+        branch.parent.add_child(loss_node)
+        self.ES_to_b[(S_u, S_v)].remove(branch)
+        self.branch_rates[self.b_to_i[branch]] = 0
+        del self.b_to_i[branch]
+        
+        if len(self.ES_to_b[(S_u, S_v)]) == 1:
+            self.total_rate -= (self.rate_sum + self.l)
+            self.branch_rates[self.b_to_i[self.ES_to_b[(S_u, S_v)][0]]] -= self.l
+        else:
+            self.total_rate -= self.rate_sum
+    
+    
+    def _hgt(self, event_tstamp, branch, event_type):
+        
+        S_u, S_v = branch.S_u, branch.S_v
+        
+        valid_edges = self._coexisting_edges(event_tstamp,
+                                             exclude_edge=(S_u, S_v))
+        if valid_edges:
+            trans_edge = random.choice(valid_edges)
+            hgt_node = PhyloTreeNode(branch.ID, label="H",
+                                     color=(S_u.ID,S_v.ID),
+                                     tstamp=event_tstamp,
+                                     dist=abs(event_tstamp-branch.parent.tstamp),
+                                     transferred=branch.transferred)
+            branch.parent.add_child(hgt_node)
+            self.ES_to_b[(S_u, S_v)].remove(branch)
+            
+            # original branch
+            new_branch = Branch(self.id_counter, hgt_node, S_u, S_v, 0)        
+            self.ES_to_b[(S_u, S_v)].append(new_branch)
+            index = self.b_to_i[branch]
+            self.i_to_b[index] = new_branch
+            self.b_to_i[new_branch] = index
+            self.id_counter += 1
+            
+            # receiving branch
+            trans_branch = Branch(self.id_counter, hgt_node, *trans_edge, 1)
+            self.ES_to_b[trans_edge].append(trans_branch)
+            index = len(self.branch_rates)
+            self.branch_rates.append(self.rate_sum)
+            self.i_to_b[index] = trans_branch
+            self.b_to_i[trans_branch] = index
+            self.id_counter += 1
+            
+            del self.b_to_i[branch]
+            
+            if len(self.ES_to_b[trans_edge]) == 2:
+                self.total_rate += (self.rate_sum + self.l)
+                self.branch_rates[self.b_to_i[self.ES_to_b[trans_edge][0]]] += self.l
+            else:
+                self.total_rate += self.rate_sum
+                
+    
+    def _assert_no_extinction(self, T):
+        """Returns False if gene family is extinct in some species."""
+        
+        VS_to_VT = {l.ID: [] for l in self.S.preorder() if not l.children}
+        
+        for v in T.preorder():
+            if not v.children and not v.label == "*":
+                VS_to_VT[v.color].append(v.ID)
+                
+        for leaf_list in VS_to_VT.values():
+            if not leaf_list:
+                return False
+        
+        return True
+        
 
 # --------------------------------------------------------------------------
 #                 CONSTRUCTION OF THE OBSERVABLE TREE

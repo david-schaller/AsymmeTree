@@ -257,7 +257,8 @@ if __name__ == "__main__":
     S = ts.build_species_tree(6, planted=True, non_binary=0.2)
     
     TGT_simulator = ts.GeneTreeSimulator(S)
-    TGT = TGT_simulator.simulate((1.0,1.0,1.0))
+    TGT = TGT_simulator.simulate((1.0,1.0,1.0),
+                                 dupl_polytomy=0.5)
     TGT = tm.imbalance_tree(TGT, S, baseline_rate=1,
                             lognormal_v=0.2,
                             gamma_param=(0.5, 1.0, 2.2),

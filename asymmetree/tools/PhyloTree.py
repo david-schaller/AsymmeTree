@@ -53,6 +53,10 @@ class PhyloTreeNode(TreeNode):
 
 class PhyloTree(Tree):
     
+    # corresponding node type
+    node_type = PhyloTreeNode
+    
+    
     def __init__(self, root):
         
         if not isinstance(root, PhyloTreeNode):
@@ -164,33 +168,50 @@ class PhyloTree(Tree):
 #                          TREE  <--->  NEWICK
 # --------------------------------------------------------------------------
         
-    def to_newick(self, node=None, distance_only=False):
+    def to_newick(self, node=None, 
+                  label=True, color=True, distance=True,
+                  label_inner=True, color_inner=False):
         """Recursive PhyloTree --> Newick (str) function."""
         
         if node is None:
-            return self.to_newick(self.root, distance_only=distance_only) + ";"
+            return self.to_newick(self.root,
+                                  label=label, color=color, distance=distance,
+                                  label_inner=label_inner, color_inner=color_inner) + ";"
         elif not node.children:
-            if not distance_only:
-                return str(node)
-            else:
-                return ":{}".format(node.dist)
+            token = ""
+            if label:
+                token += str(node.label)
+            if color and node.color:
+                token += f"<{node.color[0]}-{node.color[1]}>" if isinstance(node.color, tuple) else f"<{node.color}>"
+            if distance:
+                token += f":{node.dist}"
+            return token
         else:
             s = ''
             for child in node.children:
-                s += self.to_newick(node=child, distance_only=distance_only) + ","
-            if not distance_only:
-                return "({}){}".format(s[:-1], node)
-            else:
-                return "({}):{}".format(s[:-1], node.dist)
+                s += self.to_newick(node=child,
+                                    label=label, color=color, distance=distance,
+                                    label_inner=label_inner, color_inner=color_inner) + ","
+            token = ""
+            if label and label_inner:
+                token += str(node.label)
+            if color_inner and node.color:
+                token += f"<{node.color[0]}-{node.color[1]}>" if isinstance(node.color, tuple) else f"<{node.color}>"
+            if distance:
+                token += f":{node.dist}"
+            return "({}){}".format(s[:-1], token)
     
     
     @staticmethod
     def parse_newick(newick):
         """Parses trees in Newick format into object of type 'PhyloTree'."""
         
-        label_col_dist_regex = re.compile(r"'?([a-zA-Z0-9_]*)'?<(.*)>:(-?[0-9]*\.?[0-9]*[Ee]?-?[0-9]+)")  # label<color>:distance
-        label_col_regex = re.compile(r"'?([a-zA-Z0-9_]*)'?<(.*)>")                                        # label<color>
-        label_dist_regex = re.compile(r"'?([a-zA-Z0-9_]*)'?:(-?[0-9]*\.?[0-9]*[Ee]?-?[0-9]+)")            # label:distance
+        # label<color>:distance
+        label_col_dist_regex = re.compile(r"'?([a-zA-Z0-9_]*)'?<(.*)>:(-?[0-9]*\.?[0-9]*[Ee]?-?[0-9]+)")
+        # label<color>
+        label_col_regex = re.compile(r"'?([a-zA-Z0-9_]*)'?<(.*)>")
+        # label:distance
+        label_dist_regex = re.compile(r"'?([a-zA-Z0-9_]*)'?:(-?[0-9]*\.?[0-9]*[Ee]?-?[0-9]+)")
         
         id_counter = 0
         
@@ -373,13 +394,16 @@ class PhyloTree(Tree):
     
     
     @staticmethod
-    def random_colored_tree(N, colors):
+    def random_colored_tree(N, colors, binary=False):
         """Creates a random colored tree.
         
         The number of leaves and the color labels are specified in the
         parameters 'N' and 'colors', respectively. Each non-leaf node in the 
         resulting tree will have at least children (property of phylogenetic
         trees).
+        
+        Keyword arguments:
+            binary - forces the tree to be binary; default is False
         """
         
         if not (isinstance(N, int) and isinstance(colors, collections.Iterable)):
@@ -392,7 +416,9 @@ class PhyloTree(Tree):
         
         while leaf_count < N:
             node = random.choice(node_list)
-            if not node.children:                               # to be phylogenetic at least two children must be added
+            
+            if not node.children: 
+                # to be phylogenetic at least two children must be added
                 new_child1 = PhyloTreeNode(nr, label=str(nr))
                 new_child2 = PhyloTreeNode(nr+1, label=str(nr+1))
                 node.add_child(new_child1)
@@ -400,11 +426,16 @@ class PhyloTree(Tree):
                 node_list.extend(node.children)
                 nr += 2
                 leaf_count += 1
-            elif node.children:                                 # add only one child if there are already children
-                break_prob[0] = 1 / 1.4**len(node.children)     # probability to add another child (decraeses exponentially)
-                break_prob[1] = 1 - break_prob[0]               # probability to choose another node
+            elif node.children and not binary:
+                # add only one child if there are already children
+                
+                # probability to add another child (decraeses exponentially)
+                break_prob[0] = 1 / 1.4**len(node.children)
+                # probability to choose another node
+                break_prob[1] = 1 - break_prob[0]
                 if random.choices( (0,1), weights=break_prob )[0] == 1:
                     continue
+                
                 new_child = PhyloTreeNode(nr, label=str(nr))
                 node.add_child(new_child)
                 node_list.append(new_child)

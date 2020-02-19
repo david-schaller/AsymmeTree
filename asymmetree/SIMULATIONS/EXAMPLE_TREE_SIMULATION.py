@@ -33,7 +33,7 @@ TGT = tm.imbalance_tree(TGT, S, baseline_rate=1,
                         weights=(1, 1, 1),
                         copy_tree=False)
 print("------------- TGT -------------")
-print(TGT.to_newick(distance_only=False))
+print(TGT.to_newick())
 
 # --------------------------------------------------------------------------
 #                       OBSERVABLE GENE TREE
@@ -41,7 +41,7 @@ print(TGT.to_newick(distance_only=False))
 
 OGT = ts.observable_tree(TGT)
 print("------------- OGT -------------")
-print(OGT.to_newick(distance_only=False))
+print(OGT.to_newick())
 
 # --------------------------------------------------------------------------
 #                       LEAST RESOLVED TREE
@@ -49,7 +49,7 @@ print(OGT.to_newick(distance_only=False))
 
 LRT = lrt.LRT_from_observable_tree(OGT)
 print("------------- LRT -------------")
-print(LRT.to_newick(distance_only=False))
+print(LRT.to_newick())
 
 # --------------------------------------------------------------------------
 #                              SCENARIO

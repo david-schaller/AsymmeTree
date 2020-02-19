@@ -144,7 +144,7 @@ if __name__ == "__main__":
                                   copy_tree=False)
     
     print("------------- TGT -------------")
-    print(TGT.to_newick(distance_only=False))
+    print(TGT.to_newick())
     
     scenario = Scenario(S, TGT, DLH_rates)
     print(scenario.subtree_list)
