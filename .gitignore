@@ -42,4 +42,4 @@ bin/
 *.app
 
 # others
-exmples/results/*
+examples/results/*
