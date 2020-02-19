@@ -3,7 +3,7 @@
 [![pypi version](https://img.shields.io/badge/pypi-v0.0.1-blue.svg)](https://pypi.org/project/asymmetree/0.0.1/)
 
 AsymmeTree is Python3 library for the simulation and analysis of phylogenetic scenarios.
-It includes a simulator for species and gene tree scenarios with asymmetric evolution rates and tools for the inference and analysis of best matches (resp. best hits) and orthology.
+It includes a simulator for species and gene tree scenarios with asymmetric evolution rates, tools for the inference and analysis of best matches (resp. best hits) and orthology, as well as an algorithm to compute supertrees.
 
 ## Installation
 
@@ -35,8 +35,8 @@ To use the tree reconstruction method for best match inference and the C++ imple
 
 ### Tree data structures
 
-The two classes `Tree` (in `asymmetree.tools.Tree`) and `PhyloTree` (in `asymmetree.tools.PhyloTree`, inherits from `Tree`) implement tree data structures which are essential for the modules in the package.
-Especially the latter contains converter and parsers for the Newick format and a NetworkX graph format.
+The two classes `Tree` (in `asymmetree.tools.Tree`) and `PhyloTree` (in `asymmetree.tools.PhyloTree`, inherits from `Tree`) implement tree data structures which are essential for most of the modules in the package.
+The latter contains converters and parsers for the Newick format and a NetworkX graph format.
 
 ### Simulator for species and gene trees
 
