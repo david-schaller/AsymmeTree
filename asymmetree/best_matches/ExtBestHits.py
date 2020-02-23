@@ -28,14 +28,15 @@ __copyright__ = "Copyright (C) 2019, David Schaller"
 #
 # --------------------------------------------------------------------------
     
-def ebh(leaves, D, epsilon=0.000_000_01):
+def ebh(leaves, D, epsilon=1e-8):
     """Compute BMG and RBMG from a distances matrix D.
     
     Keyword arguments:
         epsilon -- epsilon for relative BM threshold: (x,y) in BMG if
                    D(x,y) <= (1+epsilon) * min d(x,y'),
-                   default=10E-8 (for limited float precision).
+                   default=1e-8 (for limited float precision).
     """
+    
     BMG, RBMG = nx.DiGraph(), nx.Graph()
     colors = set()
     relative_threshold = 1 + epsilon

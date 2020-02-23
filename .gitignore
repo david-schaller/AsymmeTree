@@ -41,5 +41,15 @@ bin/
 *.out
 *.app
 
+# LaTeX
+*.log
+*.aux
+*.bbl
+*.out
+*.gz
+*.blg
+*.lof
+*.toc
+
 # others
 examples/results/*
