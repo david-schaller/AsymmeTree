@@ -232,6 +232,9 @@ The latter is a reimplementation of \href{http://pacosy.informatik.uni-leipzig.d
 
 \chapter{The Gene Family Simulator}
 
+A first version of this simulator for species trees and gene families was part of my Master's thesis \citep{schaller2019} and has been used by \citet{stadler2020}.
+Parts of the following sections including some images have been reused from my thesis.
+
 \section{Mathematical Preliminaries}
 \label{sec:prelim}
 
@@ -370,7 +373,7 @@ An event labeling that is based on the reconciliation map is defined as follows:
 	\end{equation*}
 \end{definition}
 
-Note that Definition \ref{def:event_labeling} does not capture loss events. As they have shown to be an important cause of problems for inference methods, trees that additionally contain all branches leading to loss events will often be considered. Such complete gene family histories will be referred to as \emph{extended gene trees}. In the examples, as well as in the simulated trees, loss events will be indicated by an asterisk ($*$), whilst the symbols of the event labeling are used for all other event types. In this context, phylogenetic trees in the usual sense correspond to the observable part of the complete gene trees. Observable gene trees are easily constructed from the latter:
+Note that Definition \ref{def:event_labeling} does not capture loss events. As they have shown to be an important cause of problems for inference methods, trees that additionally contain all branches leading to loss events will often be considered. Such complete gene family histories will be referred to as \emph{extended gene trees}. Loss events will be indicated by $\dashv$ (or an asterisk $*$ in the implementation, reps.), whilst the symbols of the event labeling are used for all other event types. In this context, phylogenetic trees in the usual sense correspond to the observable part of the complete gene trees. Observable gene trees are easily constructed from the latter:
 \begin{enumerate}[label=(\roman*), itemsep=0.2cm, topsep=0.2cm, parsep=0cm]
 	\item Remove all branches leading to loss events only.
 	\item Subsequently, contract all nodes of degree 2 (except the root) and the adjacent edges into a single edge.
@@ -383,7 +386,7 @@ An example of an (extended) gene tree $T$ embedding is shown in Figure~\ref{fig:
 	\begin{center}     
 		\includegraphics[width=0.6\columnwidth]{embedded_tree.pdf}
 	\end{center}
-	\caption[Embedding of an extended gene tree into the corresponding species tree]{Embedding of an extended gene tree into the corresponding species tree. The species tree $S$ on the set of extant species $\{A,B,C,D,E\}$ is shown in light blue. The branches of the gene tree $T$ with planted root $0_T$ ($\ROOT$) have different colors that change after duplication ($\DUPL$) and HGT ($\HGT$) events to indicate their lineage. Moreover, the gene family history includes speciation ($\SPEC$) and loss ($*$) events. The colors of the non-loss leaves ($\LEAF$) constitute known information about the extant genes, i.e., the species in which they reside.}
+	\caption[Embedding of an extended gene tree into the corresponding species tree]{Embedding of an extended gene tree into the corresponding species tree. The species tree $S$ on the set of extant species $\{A,B,C,D,E\}$ is shown in light blue. The gene family history includes speciation ($\SPEC$), duplication ($\DUPL$), HGT ($\HGT$) and loss ($\dashv$) events. The colors of the non-loss leaves ($\LEAF$) constitute known information about the extant genes, i.e., the species in which they reside.}
 	\label{fig:embedded_tree}
 \end{figure}
 
@@ -1184,7 +1187,7 @@ For a specific scenario with species tree $S$ and an observable gene tree $T$ gi
 	\hfill
 	\begin{minipage}[t]{0.47\textwidth}
 		$\HGT$ -- horizontal gene transfer (HGT)\\
-		$*$ -- loss\\
+		$\dashv$/$*$ -- loss\\
 		
 		\noindent
 		\textbf{Orthology and Best Matches}
@@ -1237,7 +1240,6 @@ For a specific scenario with species tree $S$ and an observable gene tree $T$ gi
 		$\sigma$ -- standard deviation (normal distribution)\\
 		$\alpha$ -- contribution of the disturbance matrix in a convex combination\\
 		$\mathbf{D'}$ -- disturbed distance matrix\\
-		$\mathfrak{S}$ -- standard simulated data set\\
 		
 	\end{minipage}
 	
