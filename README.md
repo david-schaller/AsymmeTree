@@ -1,3 +1,4 @@
+![AsymmeTree Logo](manual/images/logo.png)
 # AsymmeTree
 
 [![pypi version](https://img.shields.io/badge/pypi-v0.0.1-blue.svg)](https://pypi.org/project/asymmetree/0.0.1/)
