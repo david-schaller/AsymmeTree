@@ -16,7 +16,10 @@
    version="1.1"
    id="svg8"
    inkscape:version="0.92.3 (2405546, 2018-03-11)"
-   sodipodi:docname="logo.svg">
+   sodipodi:docname="logo.svg"
+   inkscape:export-filename="/home/david/Documents/AsymmeTree/manual/images/logo.png"
+   inkscape:export-xdpi="63.700447"
+   inkscape:export-ydpi="63.700447">
   <defs
      id="defs2">
     <linearGradient
@@ -167,9 +170,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.4142136"
-     inkscape:cx="218.01843"
-     inkscape:cy="160.17309"
+     inkscape:zoom="2.0000001"
+     inkscape:cx="7.1926793"
+     inkscape:cy="297.45085"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -214,7 +217,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -297,14 +300,14 @@
        id="path982-6"
        inkscape:connector-curvature="0" />
     <path
-       style="fill:none;stroke:#4d4d4d;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:1.50000004, 0.50000001000000005;stroke-dashoffset:0;stroke-opacity:1"
-       d="M 79.717069,63.606875 V 89.347029"
+       style="fill:none;stroke:#4d4d4d;stroke-width:0.47687215;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:1.4306165, 0.47687216;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 79.717069,63.606875 V 88.1564"
        id="path2446"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="cc" />
     <path
-       style="fill:none;stroke:#4d4d4d;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:1.50000006, 0.50000001999999999;stroke-dashoffset:0;stroke-opacity:1"
-       d="M 88.32315,63.606875 V 89.347031"
+       style="fill:none;stroke:#4d4d4d;stroke-width:0.47687224;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:1.43061674, 0.47687225;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 88.32315,63.606875 V 88.156406"
        id="path2446-0"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="cc" />
