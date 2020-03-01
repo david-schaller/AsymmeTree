@@ -727,15 +727,7 @@ Hence, one obtains
 \mathbb{P}(T \ge \sigma+\Delta\tau' |  T \ge \sigma) = \frac{\exp{\left[-R_1 \sigma \right]}\exp{\left[-R_2 \Delta\tau'\right]}}{ \exp{\left[-R_1 \sigma\right]}} =
 \exp{\left[-R_2\Delta\tau'\right]}  .
 \end{equation}
-The distribution of the waiting time after the speciation event is thus equal to an exponential distribution with rate parameter $R_2$. It is the same that will be used in the following iteration. The respective probability density functions are visualized in Figure~\ref{fig:exponential_dist}.
-\vspace{0.5mm}
-\begin{figure}[ht]
-	\begin{center}     
-		\includegraphics[width=\columnwidth]{exponential_dist.pdf}
-	\end{center}
-	\caption[Visualization of the probability density functions for the waiting times $\Delta\tau$ and~$\Delta\tau'$ until the next event]{Visualization of the probability density functions (or complementary cumulative distribution function, respectively)\ for the waiting times~$\Delta\tau$ and~$\Delta\tau'$ until the next event. A speciation occurs after a time interval of length $\sigma$. Under the condition that no event occurred until the speciation (i.e., $\Delta\tau>\sigma$), a new waiting time $\Delta\tau'$ can be drawn with the time point $\tau_s$ of the speciation as offset.}
-	\label{fig:exponential_dist}
-\end{figure}
+The distribution of the waiting time after the speciation event is thus equal to an exponential distribution with rate parameter $R_2$. It is the same that will be used in the following iteration.
 
 In case there is no speciation event interfering with the time interval $[\tau, \tau - \Delta\tau]$, the time is updated according to $\tau \leftarrow \tau - \Delta\tau$. If $\tau < \tau_{\textrm{stop}}=0$, the iteration is ended. Otherwise, a second random number $x$ is drawn from a uniform distribution on the unit interval and is then used to select the upcoming reaction, i.e., the active gene and event type.
 The probability for each reaction is equal to $r_{\xi}(\tau)/R(\tau)$ and the implementation follows the suggestion in the original algorithm (see  Equation~\ref{eq:reaction_selection}). The iteration proceeds depending on the selected gene $g$ and event type $q$:
