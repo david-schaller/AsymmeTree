@@ -66,17 +66,19 @@ Implementation of the BuildST algorithm described by Deng & Fernández-Baca (201
 The subpackages `asymmetree.cograph` and `asymmetree.proteinortho` contain heuristics for cograph editing and a method to compute rooted species tree from orthology/paralogy relations.
 The latter is a reimplementation of [ParaPhylo](http://pacosy.informatik.uni-leipzig.de/208-0-ParaPhylo.html) which uses heuristics for the NP-hard steps instead of exact ILP solutions.
 
+
 ## REFERENCES
-* Stadler, P. F., Geiß, M., Schaller, D., López Sánchez, A., González Laffitte, M., Valdivia, D., Hellmuth, M., and Hernández Rosales, M. (2019) From Best Hits to Best Matches. Submitted to Algorithms for Molecular Biology.
 
-* Deng, Y. and Fernández-Baca, D. (2016) Fast Compatibility Testing for Rooted Phylogenetic Trees. 27th Annual Symposium on Combinatorial Pattern Matching (CPM 2016). doi: 10.4230/LIPIcs.CPM.2016.12.
+* <small>**Stadler, P. F., Geiß, M., Schaller, D., López Sánchez, A., González Laffitte, M., Valdivia, D., Hellmuth, M., and Hernández Rosales, M. (2019) From Best Hits to Best Matches. Submitted to Algorithms for Molecular Biology.**</small>
 
-* Geiß, M., Chávez, E., González Laffitte, M., López Sánchez, A., Stadler, B. M. R., Valdivia, D. I., Hellmuth, M., Hernández Rosales, M., and Stadler, P. F. (2019) Best match graphs. Journal of Mathematical Biology, 78(7):2015-2057. ISSN 0303-6812, 1432-1416. doi: 10.1007/s00285-019-01332-9.
+* <small>Deng, Y. and Fernández-Baca, D. (2016) Fast Compatibility Testing for Rooted Phylogenetic Trees. 27th Annual Symposium on Combinatorial Pattern Matching (CPM 2016). doi: 10.4230/LIPIcs.CPM.2016.12.</small>
 
-* Hellmuth, M., Wieseke, N., Lechner, M., Lenhof, H.-P., Middendorf, M., and Stadler, P. F. (2015) Phylogenomics with paralogs. PNAS, 112(7):2058-2063. doi: 10.1073/pnas.1412770112.
+* <small>Geiß, M., Chávez, E., González Laffitte, M., López Sánchez, A., Stadler, B. M. R., Valdivia, D. I., Hellmuth, M., Hernández Rosales, M., and Stadler, P. F. (2019) Best match graphs. Journal of Mathematical Biology, 78(7):2015-2057. ISSN 0303-6812, 1432-1416. doi: 10.1007/s00285-019-01332-9.</small>
 
-* Holm, J., de Lichtenberg, K., and Thorup, M. (2001) Poly-logarithmic deterministic fully-dynamic algorithms for connectivity, minimum spanning tree, 2-edge, and biconnectivity. J. ACM, 48(4):723–760. doi: 10.1145/502090.502095.
+* <small>Hellmuth, M., Wieseke, N., Lechner, M., Lenhof, H.-P., Middendorf, M., and Stadler, P. F. (2015) Phylogenomics with paralogs. PNAS, 112(7):2058-2063. doi: 10.1073/pnas.1412770112.</small>
 
-* Lechner, M., Findeiß, S., Steiner, L., Marz, M., Stadler, P. F., and Prohaska, S. J. (2011). Proteinortho: detection of (co-) orthologs in large-scale analysis. BMC bioinformatics, 12(1), 124. ISSN 1471-2105. doi: 10.1186/1471-2105-12-124.
+* <small>Holm, J., de Lichtenberg, K., and Thorup, M. (2001) Poly-logarithmic deterministic fully-dynamic algorithms for connectivity, minimum spanning tree, 2-edge, and biconnectivity. J. ACM, 48(4):723–760. doi: 10.1145/502090.502095.</small>
 
-* Rauch Henzinger, M. and King, V. (1999) Randomized fully dynamic graph algorithms with polylogarithmic time per operation. J. ACM 46(4):502–536. doi: 10.1145/225058.225269.
+* <small>Lechner, M., Findeiß, S., Steiner, L., Marz, M., Stadler, P. F., and Prohaska, S. J. (2011). Proteinortho: detection of (co-) orthologs in large-scale analysis. BMC bioinformatics, 12(1), 124. ISSN 1471-2105. doi: 10.1186/1471-2105-12-124.</small>
+
+* <small>Rauch Henzinger, M. and King, V. (1999) Randomized fully dynamic graph algorithms with polylogarithmic time per operation. J. ACM 46(4):502–536. doi: 10.1145/225058.225269.</small>
