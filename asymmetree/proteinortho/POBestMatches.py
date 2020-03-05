@@ -11,6 +11,11 @@ from asymmetree.POParser import parse_best_match_candidates
 from asymmetree.POOutgroupFinder import OutgroupFinder
 from asymmetree.PODistanceCalculator import distance_2seqs
 
+
+__author__ = "David Schaller"
+__copyright__ = "Copyright (C) 2020, David Schaller"
+
+
 class POBestMatches:
     
     def __init__(self, fasta_files, candidate_dir,

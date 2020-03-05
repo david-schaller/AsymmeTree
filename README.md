@@ -63,7 +63,7 @@ Implementation of the BuildST algorithm described by Deng & Fernández-Baca (201
 
 ### Cograph editing and ParaPhylo
 
-The subpackages `asymmetree.cograph` and `asymmetree.proteinortho` contain heuristics for cograph editing and a method to compute rooted species tree from orthology/paralogy relations.
+The subpackages `asymmetree.cograph` and `asymmetree.paraphylo` contain heuristics for cograph editing and a method to compute rooted species tree from orthology/paralogy relations.
 The latter is a reimplementation of [ParaPhylo](http://pacosy.informatik.uni-leipzig.de/208-0-ParaPhylo.html) which uses heuristics for the NP-hard steps instead of exact ILP solutions.
 
 
