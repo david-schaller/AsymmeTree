@@ -12,12 +12,15 @@
 %\usepackage{sectsty}
 %\allsectionsfont{\nohang}
 
-%\usepackage[titletoc]{appendix}
+\usepackage[titletoc]{appendix}
 
-\usepackage{titlesec}
+%\usepackage{titlesec}
 
-\usepackage{natbib}
-\setcitestyle{aysep={}}
+\usepackage[numbers]{natbib}
+\renewcommand{\refname}{\large References}  % for the article class
+\renewcommand{\bibname}{\large References}  % for the report or book class
+\def\bibfont{\footnotesize}
+
 % line break in bibliography urls
 \usepackage{xurl}
 
@@ -47,10 +50,15 @@
 \SetKw{Input}{Input:}
 \SetKw{Output}{Output:}
 
+%\usepackage{listings}
+\usepackage{pythonhighlight}
+
 
 \DeclareMathOperator{\lca}{lca}
 \DeclareMathOperator*{\argmax}{arg\,max}
 \DeclareMathOperator*{\argmin}{arg\,min}
+\definecolor{darkgrey}{rgb}{0.2,0.2,0.2}
+\newcommand{\COMMANDLINE}[1]{\begingroup\par\vspace{3mm}\color{darkgrey}\begin{adjustwidth}{1cm}{1cm}\texttt{#1}\end{adjustwidth}\vspace{3mm}\endgroup}
 \newcommand{\TODO}[1]{\begingroup\color{red}#1\endgroup}
 \newcommand{\OLD}[1]{\begingroup\tiny   \color{green}#1\endgroup}
 \newtheorem{theorem}{Theorem}
@@ -139,26 +147,51 @@
 
 \chapter{Introduction}
 
-AsymmeTree is Python library for the simulation and analysis of phylogenetic scenarios.
-It includes a simulator for species and gene tree scenarios with asymmetric evolution rates, tools for the inference and analysis of best matches (resp. best hits) and orthology, as well as an algorithm to compute supertrees.
+AsymmeTree is an open-source Python library for the simulation and analysis of phylogenetic scenarios.
+It includes a simulator for species and gene trees with asymmetric evolution rates, tools for the inference and analysis of phylogenetic best matches \citep{geiss2019a,geiss2020c} (resp. best hits) from known gene trees or evolutionary distances. Moreover, it includes an algorithm to compute supertrees \citep{deng2016} and a method to estimate rooted species trees from an ensemble of orthology/paralogy relations \citep{hellmuth2015}.
 
-\chapter{Manual}
+The library, and especially the simulator, was primarily designed to be able to validate mathematical concepts and test inference methods for various steps on the way to more realistically available data, i.e., dated gene trees, additive distances of gene sets, noisy distances and finally sequences.
+At the moment, AsymmeTree does not include a sequence simulator by itself, but third-party software such as \texttt{Pyvolve} \cite{spielman2015} can easily be incorporated into a simulation pipeline based on AsymmeTree.
+
+The software is hosted on \href{https://github.com/david-schaller/AsymmeTree}{GitHub} and also available via The Python Package Index (\href{https://pypi.org/project/asymmetree/}{PyPI}).
+Please feel free to report bugs or make suggestions for improvement in the \href{https://github.com/david-schaller/AsymmeTree/issues}{Issues} section of the GitHUb repository.
+
+If you use AsymmeTree in your project or code from it, please cite:
+
+\vspace{3mm}
+\begin{adjustwidth}{1cm}{1cm}
+	Peter F. Stadler, Manuela Gei{\ss}, David Schaller, Alitzel L{\'o}pez S{\'a}nchez, Marcos Gonz{\'a}lez Laffitte, Dulce I. Valdivia, Marc Hellmuth, Maribel Hern{\'a}ndez Rosales (2020). \textbf{From pairs of most similar sequences to phylogenetic best matches.} \textit{Algorithms for Molecular Biology.}
+\end{adjustwidth}
+\vspace{3mm}
+
+This document is split into two parts. Chapter~\ref{sec:manual} is a manual that describes the installation and usage of the package, whereas Chapter~\ref{sec:doc} contains detailed descriptions of the motivation and implementation of the simulator's main components.
+
+\chapter{Manual}\label{sec:manual}
 
 \section{Installation}
 
-\subsection{Easy Installation with Pip}
+\subsection{Easy Installation with pip}
 
 
-The \texttt{asymmetree} package is available on PyPI:
+The \texttt{asymmetree} package is available on The Python Package Index (PyPI):
 
-pip install asymmetree
+\COMMANDLINE{pip install asymmetree}
 
+\noindent
 For details about how to install Python packages see
 \href{https://packaging.python.org/tutorials/installing-packages/}{here}.
 
+\subsection{Installation with the setup file}
+
+
+Alternatively, you can download or clone the repo, go to the root folder of package and install it using the command:
+
+\COMMANDLINE{python setup.py install}
+
+
 \subsection{Dependencies}
 
-AssymmeTree has several dependencies (which are installed automatically when using \texttt{pip}):
+AssymmeTree has several dependencies (which are installed automatically when using \texttt{pip} or the \texttt{setup.py}):
 
 \begin{itemize}
 	\item \href{https://networkx.github.io}{NetworkX}
@@ -169,36 +202,286 @@ AssymmeTree has several dependencies (which are installed automatically when usi
 Furthermore, to use functions involving sequence simulation and alignment, the following packages must be installed (i.e., they are not installed automatically!):
 
 \begin{itemize}
-	\item \href{http://biopython.org/wiki/Download}{Biopython}
-	\item \href{https://github.com/sjspielman/pyvolve}{Pyvolve}
+	\item \href{http://biopython.org/wiki/Download}{Biopython} \citep{cock2009}
+	\item \href{https://github.com/sjspielman/pyvolve}{Pyvolve} \citep{spielman2015}
 \end{itemize}
 
-To use the tree reconstruction method for best match inference and the C++ implementation of the quartet method, resp., the following software must be installed
+To use the tree reconstruction method for best match inference and the C++ implementation of the quartet method \citep{stadler2020}, resp., the following software must be installed
 (I recommend that you compile these tools on your machine, place the binaries into a persistent location and add this location to your PATH environment variable):
 
 \begin{itemize}
-	\item \href{https://birc.au.dk/software/rapidnj/}{RapidNJ}
+	\item \href{https://birc.au.dk/software/rapidnj/}{RapidNJ} \citep{simonsen2008}
 	\item \href{https://github.com/david-schaller/qinfer}{qinfer}
 \end{itemize}
 
 
 \section{Overview}
 
+Table~\ref{tab:module_overview} is an overview over the subpackages and modules that may be relevant for users.
+
+\begin{table}[H]
+	\footnotesize
+	\setlength{\tabcolsep}{6pt}
+	\renewcommand{\arraystretch}{1.4}
+	%\renewcommand\tabularxcolumn[1]{m{#1}}
+	\begin{tabularx}{\textwidth}{|p{0.26\textwidth}|X|}
+		\hline
+		\textbf{Packages and Modules} & \textbf{Description} \\
+		\hline
+		\multicolumn{2}{|l|}{\textbf{\texttt{simulator}}}\\
+		\hline
+		\texttt{TreeSimulator} & 
+		Simulator for dated species trees and dated gene trees, construction of the observable gene tree. \\
+		\texttt{TreeImbalancer} & 
+		Simulation of evolution rate asymmetries, autocorrelation between ancestors and descendants as well as correlation between genes in the same species. \\
+		\texttt{Scenario} & 
+		Wrapper class for species and gene tree scenarios, computation of the (R)BMG as well as event counts and some statistics. \\
+		\texttt{DistanceMatrix} & 
+		Computation of the distance matrix from an observable gene tree. \\
+		\texttt{NoisyMatrix} & 
+		Generation of a noisy matrix (\emph{random perturbation} or \emph{wrong topology noise}). \\
+		\hline
+		\multicolumn{2}{|l|}{\textbf{\texttt{tools}}}\\
+		\hline
+		\texttt{Tree} & 
+		Includes the basic class \texttt{Tree}, provides functions for traversals, Newick parser, etc. \\
+		\texttt{PhyloTree} & 
+		Includes the class \texttt{PhyloTree} for phylogenetic trees (inherits from \texttt{Tree}), provides a Newick parser, etc. \\
+		\texttt{BuildST} & 
+		Includes the class \texttt{BuildST} that computes a supertree from a given list of tress (with overlapping labels) \citep{deng2016}. \\
+		\hline
+		\multicolumn{2}{|l|}{\textbf{\texttt{best\_match\_infer}}}\\
+		\hline
+		\texttt{TrueBMG} & 
+		Computation of the true (R)BMG from a gene tree as well as the true orthology relation. \\
+		\texttt{ExtBestHits} & 
+		Implementation of the \emph{Extended Best Hits} method, optionally uses \texttt{qinfer}. \\
+		\texttt{TreeReconstruction} & 
+		Reconstruction of the gene tree with \texttt{RapidNJ} \citep{simonsen2008} and midpoint rooting. \\
+		\texttt{Quartets} & 
+		Implementation of \emph{Quartet} approach with two different methods for outgroup selection, optionally uses \texttt{qinfer}. \\
+		\texttt{LRTConstructor} & 
+		Construction of a least resolved tree (LRT) from a BMG via \emph{informative triples}, optionally uses minimal edge cuts. \\
+		\hline
+		\multicolumn{2}{|l|}{\textbf{\texttt{cograph}}}\\
+		\hline
+		\texttt{Cograph} & 
+		Includes the classes \texttt{Cotree} and \texttt{CotreeNode} as well as a generator for random cotrees/cographs. \\
+		\texttt{CographEditor} & 
+		Implements a heuristic for cograph editing \citep{crespelle2019}. \\
+		\texttt{LinearCographDetector} & 
+		Implements an $\mathcal{O}(n+m)$ algorithm for cograph detection \citep{corneil1985}. \\
+		\hline
+		\multicolumn{2}{|l|}{\textbf{\texttt{paraphylo}}}\\
+		\hline
+		\texttt{SpeciesTreeFromParalogs} & 
+		Species tree reconstruction from orthology/paralogy relations. Heuristic version of \texttt{ParaPhylo} \cite{hellmuth2015}. \\
+		\texttt{SpeciesTreeFromPO} & 
+		Species tree reconstruction from \texttt{ProteinOrtho} \cite{lechner2011} output. \\
+		\hline
+		\multicolumn{2}{|l|}{\textbf{\texttt{visualize}}}\\
+		\hline
+		\texttt{GeneTreeVis} & 
+		Visualization of a (simulated) gene tree (of type \texttt{PhyloTree}) \\
+		\hline
+	\end{tabularx}
+	\caption{Overview over the subpackages and modules.}
+	\label{tab:module_overview}
+\end{table}
+
+
 \subsection{Tree Data Structures}
 
-The two classes \texttt{Tree} (in \texttt{asymmetree.tools.Tree}) and \texttt{PhyloTree} (in \texttt{asymmetree.tools.PhyloTree}, inherits from \texttt{Tree}) implement tree data structures which are essential for most of the modules in the package.
+The two classes \texttt{Tree} and \texttt{PhyloTree} (inherits from \texttt{Tree}) implement tree data structures which are essential for most of the modules in the package.
 The latter contains converters and parsers for the Newick format and a NetworkX graph format.
+
+The vertices of a \texttt{PhyloTree} instance are of type \texttt{PhyloTreeNode} and contain the following attributes:
+
+\vspace{3mm}
+\renewcommand{\arraystretch}{1.5}
+\begin{tabularx}{0.95\textwidth} { >{\raggedright\arraybackslash}p{3cm} >{\raggedright\arraybackslash}X }
+	\texttt{ID} & vertex ID (\texttt{int})\\
+	\texttt{label}  & label (\texttt{str}), in gene trees: \texttt{"S"} for speciation, \texttt{"D"} for duplication, \texttt{"H"} for horizontal gene transfer, \texttt{"*"} for loss\\
+	\texttt{color} & only gene trees; species in which the gene resides, i.e., ID of some vertex in a species tree, can be of type \texttt{tuple} (edge) for inner and loss vertices\\
+	\texttt{tstamp} & time stamp of the event (\texttt{double})\\
+	\texttt{dist} & evolutionary distance or divergence time from the parent vertex (\texttt{double})\\
+	\texttt{tranferred} & only gene trees; indicates whether the edge from the parent is the transfer edge from an HGT event; \texttt{1} if yes and \texttt{0} otherwise \\
+\end{tabularx}
+\vspace{3mm}
+
+Both species and gene trees can be converted into Newick format using the function \texttt{to\_newick()} of the \texttt{PhyloTree} class.
+In case of a gene tree, the color is represented in brackets, e.g.
+\COMMANDLINE{>>> "(3<1>:0.534,2<2>:0.762)S<0>:0.273"}
+To suppress this, use \texttt{to\_newick(color=False)}. Likewise, to suppress the distances, you can use \texttt{to\_newick(distance=False)}.
+The function \texttt{PhyloTree.parse\_newick()} can handle this customized format as well as the standard Newick format.
+
+If you intend to serialize species or gene trees, I recommend converting them into NetworkX graphs before applying Python's serialization library \texttt{pickle}.
+Note that the information about the ID of the root should be saved too:
+\vspace{2mm}
+\begin{python}
+import pickle
+
+# tree is of type PhyloTree
+tree_nx, root_id = tree.to_nx()
+
+pickle.dump( (tree_nx, root_id), open("tree.pickle", "wb") )
+\end{python}
+\vspace{2mm}
+To load a tree that was serialized this way use:
+\vspace{2mm}
+\begin{python}
+import pickle
+from asymmetree.tools.PhyloTree import PhyloTree
+
+tree_nx, root_id = pickle.load( open("tree.pickle", "rb") )
+tree = PhyloTree.parse_nx(tree_nx, root_id)
+\end{python}
+\vspace{2mm}
+
 
 \subsection{Simulator for Species and Gene Trees}
 
-The following steps are implemented in the Python package \texttt{asymmetree.simulator}:
-\begin{itemize}
-	\item species tree simulation ('innovation model')
-	\item gene tree simulation (Gillespie algorithm)
-	\item gene tree imbalancing (asymmetric evolution rates of paralogous genes)
-	\item computation of a (noisy) distance matrix from the gene tree
-\end{itemize}
- 
+The subpackage \texttt{asymmetree.simulator} contains modules for the simulation and manipulation of species trees and gene trees.
+
+\subsubsection{Species trees}
+
+The function \texttt{build\_species\_tree(N)} simulates a dated species tree with \texttt{N} leaves (i.e. recent species) using the `innovation model' described by \citet{keller-schmidt2012}.
+The following keyword parameters (with their default value) are available:
+
+\vspace{3mm}
+\renewcommand{\arraystretch}{1.5}
+\begin{tabularx}{0.95\textwidth} { >{\raggedright\arraybackslash}p{4cm} >{\raggedright\arraybackslash}X }
+	\texttt{planted=True} & add a planted root that has the canonical root as its
+	single neighbor, this way duplication (and loss) events can occur before the first speciation event in a subsequent gene tree simulation\\
+	\texttt{model="innovations"}  & model for the species tree simulation, currently only the `innovation model' is available\\
+	\texttt{non\_binary=0.0} & probability that an inner edge is contracted,
+	results in a non-binary tree\\
+\end{tabularx}
+\vspace{3mm}
+
+The time stamps of all vertices are normalized such that the root has time stamp \texttt{1.0} and all leaves have time stamp \texttt{0.0} (see Section~\ref{sec:species_tree}).
+
+Example usage:
+\vspace{2mm}
+\begin{python}
+import asymmetree.simulator.TreeSimulator as ts
+
+S = ts.build_species_tree(10, planted=True, non_binary=0.2)
+print(S.to_newick())
+\end{python}
+\vspace{2mm}
+
+\subsubsection{Gene trees}
+
+Dated gene trees are simulated along a given species tree \texttt{S} with a variant of the Gillespie algorithm \citep{gillespie1976}.
+To this end, an instance of the class \texttt{GeneTreeSimulator} must be initialized with a species tree of type \texttt{PhyloTree}.
+The following parameters are available (keyword arguments are indicated by \texttt{=default}):
+
+\vspace{3mm}
+\renewcommand{\arraystretch}{1.5}
+\begin{tabularx}{0.95\textwidth} { >{\raggedright\arraybackslash}p{4cm} >{\raggedright\arraybackslash}X }
+	\texttt{DLH\_rates} & a \texttt{tuple} of three \texttt{float}s, rates for duplication, loss and HGT events in the Gillespie algorithm\\
+	\texttt{dupl\_polytomy=0.0}  & allows non-binary duplication events by specifying
+	the lambda parameter for a poisson distribution (copy number = drawn number + 2)\\
+\end{tabularx}
+\vspace{3mm}
+
+At the moment, loss events in a branch are suppressed whenever this branch is the last survivor in its species branch (by setting the loss rate in the branch to zero).
+The behaviour is intended to be made optional in future releases.
+
+Example usage:
+\vspace{2mm}
+\begin{python}
+import asymmetree.simulator.TreeSimulator as ts
+
+# S is a species tree of type PhyloTree
+TGT_simulator = ts.GeneTreeSimulator(S)
+TGT = TGT_simulator.simulate(DLH_rates)
+\end{python}
+\vspace{2mm}
+
+The function \texttt{observable\_tree(tree)} returns the observable part of a gene tree, i.e., it copies the tree, removes all branches that lead to loss events only and suppresses all inner nodes with only one child. 
+It also removes the planted root.
+Example usage:
+\vspace{2mm}
+\begin{python}
+# observable gene tree
+OGT = ts.observable_tree(TGT)
+\end{python}
+\vspace{2mm}
+
+
+\subsubsection{Gene tree imbalancing}
+
+The module \texttt{TreeImbalancer} contains a function to model realistic (asymmetric) evolution rates for a given gene tree (see Section~\ref{sec:imbalancing_implementation}).
+Moreover, correlation in the evolution rate between genes of the same (and closely related) species is introduced (autocorrelation).
+The function \texttt{imbalance\_tree(T, S)} takes a gene tree \texttt{T} and the \textbf{corresponding} species tree \texttt{S} as input and manipulated the branch length of the species tree.
+The following keyword parameters (with their default values) are available:
+
+\vspace{3mm}
+\renewcommand{\arraystretch}{1.5}
+\begin{tabularx}{0.95\textwidth} { >{\raggedright\arraybackslash}p{4cm} >{\raggedright\arraybackslash}X }
+	\texttt{baseline\_rate=1.0} & starting value for the substitution rate (per time unit) and expected value for conserved genes\\
+	\texttt{lognormal\_v=0.0}  & variance factor for a lognormal distribution that controls autocorrelation between genes of the same (and closely related) species, the higher the lower the auto\-corre\-la\-tion\\
+	\texttt{gamma\_param=(0.5, 1.0, 2.2)}  & parameter the for Gamma distribution (\texttt{a, loc, scale}) from which rate factors for divergent are drawn, the default values are chosen to fit observed asymmetries between paralogs in yeast data \citep{byrne2007}\\
+	\texttt{weights=(1, 1, 1)}  & weights for choice between conservation,
+	subfunctionalization and neofunctionalization after a duplication event\\
+	\texttt{inplace=True}  & manipulate edge lengths (\texttt{dist}) of the gene tree in-place, otherwise copy the tree\\
+\end{tabularx}
+\vspace{3mm}
+
+In is recommended to apply the imbalancing to the true gene tree that still contains loss events.
+Example usage:
+\vspace{2mm}
+\begin{python}
+import asymmetree.simulator.TreeSimulator as ts
+import asymmetree.simulator.TreeImbalancer as tm
+
+S = ts.build_species_tree(10)
+
+# true gene tree (with losses)
+TGT_simulator = ts.GeneTreeSimulator(S)
+TGT = TGT_simulator.simulate( (0.5, 0.5, 0.5) )    # event rates D, L, H
+
+# imbalancing
+TGT = tm.imbalance_tree(TGT, S, baseline_rate=1,
+                        lognormal_v=0.2,
+                        gamma_param=(0.5, 1.0, 2.2),
+                        weights=(1, 1, 1))
+
+# observable gene tree
+OGT = ts.observable_tree(TGT)
+\end{python}
+\vspace{2mm}
+
+
+\subsubsection{Distance matrix and noise simulation}
+
+The additive distance from an \textbf{observable} gene tree can be computed using the function \texttt{distance\_matrix(tree)} in the \texttt{DistanceMatrix} module.
+It return a tuple containing a list of leaves in the tree, a dictionary mapping leaves to indices and the distance matrix as a 2-dimensional \texttt{numpy} array.
+
+\vspace{2mm}
+\begin{python}
+from asymmetree.simulator.DistanceMatrix import distance_matrix
+
+# T is an observable gene tree
+leaves, leaf_index, D = distance_matrix(T)
+\end{python}
+\vspace{2mm}
+
+In the next step, noise can be introduced into a distance matrix using the \texttt{NoisyMatrix} module.
+Random noise can be simulated with the function \texttt{noisy\_matrix(orig\_matrix, sd)}.
+The following parameters are available (keyword arguments are indicated by their default value):
+
+\vspace{3mm}
+\renewcommand{\arraystretch}{1.5}
+\begin{tabularx}{0.95\textwidth} { >{\raggedright\arraybackslash}p{4.5cm} >{\raggedright\arraybackslash}X }
+	\texttt{orig\_matrix} & original matrix to be disturbed\\
+	\texttt{sd}  & standard deviation of a normal distribution with mean 1 from which noise factors are drawn\\
+	\texttt{metric\_repair="reject"}  & method to ensure that the resulting distance matrix is still a metric, available are \texttt{"reject"}, \texttt{"DOMR"} and \texttt{"general"} (see Section~\ref{sec:measurement_noise})\\
+\end{tabularx}
+\vspace{3mm}
+
 
 \subsection{Best Match Inference}
 
@@ -232,7 +515,7 @@ The latter is a reimplementation of \href{http://pacosy.informatik.uni-leipzig.d
 
 
 
-\chapter{The Gene Family Simulator}
+\chapter{Documentation of the Gene Family Simulator}\label{sec:doc}
 
 A first version of this simulator for species trees and gene families was part of my Master's thesis \citep{schaller2019} and has been used by \citet{stadler2020}.
 Parts of the following sections including some images have been reused from my thesis.
@@ -386,7 +669,7 @@ An example of an (extended) gene tree $T$ embedding is shown in Figure~\ref{fig:
 \vspace{5mm}
 \begin{figure}[ht]
 	\begin{center}     
-		\includegraphics[width=0.6\columnwidth]{embedded_tree.pdf}
+		\includegraphics[width=0.55\columnwidth]{embedded_tree.pdf}
 	\end{center}
 	\caption[Embedding of an extended gene tree into the corresponding species tree]{Embedding of an extended gene tree into the corresponding species tree. The species tree $S$ on the set of extant species $\{A,B,C,D,E\}$ is shown in light blue. The gene family history includes speciation ($\SPEC$), duplication ($\DUPL$), HGT ($\HGT$) and loss ($\dashv$) events. The colors of the non-loss leaves ($\LEAF$) constitute known information about the extant genes, i.e., the species in which they reside.}
 	\label{fig:embedded_tree}
@@ -448,7 +731,7 @@ which has the well-known property of representing a 1-to-1 correspondence betwee
 
 \begin{figure}[ht]
 	\begin{center}     
-		\includegraphics[width=0.7\columnwidth]{ultrametric_tree.pdf}
+		\includegraphics[width=0.65\columnwidth]{ultrametric_tree.pdf}
 	\end{center}
 	\caption[Ultrametric and non-ultrametric tree]{Ultrametric and non-ultrametric tree. The vertical components of the edges represent the distances. In the left tree, they induce an ultrametric on the set of its leaves, whereas they do not in the tree on the right side. This can, e.g., be seen by the violation of condition \textit{(iv*)} in Definition \ref{def:metric} for the leaves $x,y,z$: $d_2(x,y) > \max(d_2(x,z),d_2(z,y))$.}
 	\label{fig:ultrametric_tree}
@@ -514,7 +797,7 @@ Firstly, Defintion~\ref{def:orthology} unambiguously defines two distinct member
 Clearly, $x$ and $y$ are neither orthologs nor paralogs given the definition above. Therefore, \emph{xenology} was introduced as a third variant of homology. There are several definitions of xenologs. \citet{fitch2000} calls two genes xenologs if there is at least one HGT event on the unique path in $T$ connecting them. Thus, it is not necessary that their last common ancestor was an HGT event. As a consequence, two genes can be both xenologs and ortho-/paralogs. They are commonly termed as \emph{xeno-orthologs} and \emph{xeno-paralogs} in this case.
 An alternative definition by \citet{hellmuth2016} avoids this ambiguity by calling two $x,y \in L(T)$ \emph{(lca-)xenologs} if and only if $t(\lca_T(x,y))=\HGT$. Analogously, \emph{(lca-)orthologs} and \emph{(lca-)paralogs} are defined. If not declared otherwise, all three terms will refer to this definition in the following.
 
-Both orthology and paralogy are irreflexive and symmetric binary relations, since $t(\lca_T(x,x))=t(x)=\LEAF$ for any $x\in L(T)$ and $t(\lca_T(x,y)) = t(\lca_T(y,x))$ for any two genes $x,y\in L(T)$. Hence, they can be represented by undirected graphs. However, they are not transitive, as the example in Figure \ref{fig:ortho_para_example} shows (consider, e.g., the three genes $a_1,b_1,c_1$ in the orthology graph $\Theta$).
+Orthology and paralogy are irreflexive and symmetric binary relations, since for any $x\in L(T)$, it holds that $t(\lca_T(x,x))=t(x)=\LEAF$, and for any two genes $x,y\in L(T)$, $t(\lca_T(x,y)) = t(\lca_T(y,x))$. Hence, they can be represented by undirected graphs. However, they are not transitive, as the example in Figure \ref{fig:ortho_para_example} shows (consider, e.g., the three genes $a_1,b_1,c_1$ in the orthology graph $\Theta$).
 \begin{definition}[Orthology Graph {\citep[Def. 5 mod.]{geiss2020c}}]
 	Let $T$ be a gene tree with event labeling $t$. Let $\Theta$ be the undirected graph on $L(T)$ with $xy \in E(\Theta)$ if and only if $\lca_T(x,y)=\SPEC$. Then $\Theta$ is called an \emph{orthology graph} that is explained by the orthology relation of $(T,t)$.
 \end{definition}
@@ -567,7 +850,7 @@ The best match relation can be represented by a directed, vertex-colored graph o
 \vspace{5mm}
 \begin{figure}[ht]
 	\begin{center}     
-		\includegraphics[width=0.85\columnwidth]{Triples.pdf}
+		\includegraphics[width=0.7\columnwidth]{Triples.pdf}
 	\end{center}
 	\caption[Three-vertex induced subgraphs giving an informative triple]{Each of the three-vertex induced subgraphs $X_1$, $X_2$, $X_3$ and $X_4$ gives a triple $ab|c$. If vertex $c$ in the drawing has two colors, then the color $\sigma(c)$ does not matter \citep{geiss2019a}.}
 	\label{fig:triples}
@@ -585,7 +868,7 @@ Figure~\ref{fig:best_match_example} shows the cBMG $\G$, the cRBMG $G$ and the t
 \vspace{5mm}
 \begin{figure}[ht]
 	\begin{center}     
-		\includegraphics[width=0.9\columnwidth]{best_match_example.pdf}
+		\includegraphics[width=0.65\columnwidth]{best_match_example.pdf}
 	\end{center}
 	\caption[Gene tree with corresponding cBMG and cRBMG]{Gene tree with corresponding colored Best Match Graph $(\G,\sigma)$ and Reciprocal Best Match Graph $(G,\sigma)$. The tree is a subtree of the gene tree in Figure~\ref{fig:embedded_tree} restricted to the set of species $\{A,B,C\}$. The true orthology graph $\Theta$ is again depicted for comparison.}
 	\label{fig:best_match_example}
@@ -610,7 +893,19 @@ In the rest of the chapter, the simulation of evolution rate imbalances and meas
 	\label{fig:simulation_framework}
 \end{figure}
 
+Moreover, in Fig.~\ref{fig:simulated_trees}, an example for a simulated scenario is shown including a species tree, an imbalanced gene tree and the corresponding observable gene tree, i.e., the gene tree after removing all branches that lead to loss events only and then suppressing all inner vertices that have only one child.
+
+\vspace{5mm}
+\begin{figure}[ht]
+	\begin{center}     
+		\includegraphics[width=\columnwidth]{simulated_trees.pdf}
+	\end{center}
+	\caption[Example simulated species tree and imbalanced gene tree]{Example simulated species tree and imbalanced gene tree. (A) Planted species tree on four (extant) species. The dating function is represented by the scale below. (B) Extended gene tree, i.e., the complete history of the simulated gene family including speciations ($\SPEC$), duplications ($\DUPL$), losses ($*$)  and an HGT event ($\HGT$; transferred branch in red). The numbers at the speciation events correspond to the numbering in (A), the numbers at the leaves are their unique IDs. The leaf coloring indicates the corresponding species. The scale represents the evolutionary distance from the root $0_T$. The lengths of the horizontal lines are all to scale. (C) Observable gene tree.}
+	\label{fig:simulated_trees}
+\end{figure}
+
 \subsection{Simulation of Species Trees}
+\label{sec:species_tree}
 
 The \emph{innovation model} described by \citet{keller-schmidt2012} produces tree topologies that are comparable with those of real phylogenetic trees considering properties like average leaf depth and tree imbalance. It assumes that that evolutionary branching is driven by innovations, i.e., the generation of novel features or the loss of such features.
 

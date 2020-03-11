@@ -157,15 +157,13 @@ for rep in range(repeats):
     TGT1 = tm.imbalance_tree(TGT1, S, baseline_rate=1,
                             lognormal_v=0.2,
                             gamma_param=(0.5, 1.0, 2.2),
-                            weights=(1/3, 1/3, 1/3),
-                            copy_tree=False)
+                            weights=(1/3, 1/3, 1/3))
     
     TGT2 = TGT_simulator.simulate((D,L,H))
     TGT2 = tm.imbalance_tree(TGT2, S, baseline_rate=1,
                             lognormal_v=0.2,
                             gamma_param=(0.5, 1.0, 2.2),
-                            weights=(1/3, 1/3, 1/3),
-                            copy_tree=False)
+                            weights=(1/3, 1/3, 1/3))
     
     scenario1 = Scenario(S, TGT1, (D,L,H))
     scenario2 = Scenario(S, TGT2, (D,L,H))

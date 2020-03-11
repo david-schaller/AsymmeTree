@@ -22,10 +22,11 @@ __copyright__ = "Copyright (C) 2019, David Schaller"
 # --------------------------------------------------------------------------
 
 
-def imbalance_tree(T, S, baseline_rate=1,
-                   lognormal_v=0,
+def imbalance_tree(T, S, baseline_rate=1.0,
+                   lognormal_v=0.0,
                    gamma_param=(0.5, 1.0, 2.2),
-                   weights=(1/3, 1/3, 1/3), copy_tree=False):
+                   weights=(1, 1, 1),
+                   inplace=True):
     """Imbalances an (ultrametric) TRUE gene tree.
     
     Keyword arguments:
@@ -34,10 +35,10 @@ def imbalance_tree(T, S, baseline_rate=1,
     gamma_param     -- param. for gamma distribution (a, loc, scale)
     weights         -- weights for choice between conservation,
                        subfunctionalization and neofunctionalization
-    copy_tree       -- copy the tree before imbalancing
+    inplace         -- if False, copy the tree before imbalancing
     """
     
-    if copy_tree:
+    if not inplace:
         T = T.copy()
     weights = np.asarray(weights) / sum(weights)
         

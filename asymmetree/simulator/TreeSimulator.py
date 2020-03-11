@@ -38,7 +38,7 @@ def build_species_tree(N, planted=True, model="innovations",
         planted -- add a planted root that has the canonical root as its
                    single neighbor; default is True
         model -- simulation model to be applied; default is 'innovations'
-        non_binary -- probality that an inner edge is contracted;
+        non_binary -- probability that an inner edge is contracted;
                       results in non-binary tree; default is 0.0
     """
     

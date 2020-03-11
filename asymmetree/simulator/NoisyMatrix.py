@@ -28,12 +28,12 @@ __copyright__ = "Copyright (C) 2019, David Schaller"
 #   
 # --------------------------------------------------------------------------
 
-def noisy_matrix(orig_matrix, sd, matrix_repair="reject"):
-    if matrix_repair == "general":
+def noisy_matrix(orig_matrix, sd, metric_repair="reject"):
+    if metric_repair == "general":
         return _noise_general_metric_repair(orig_matrix, sd)
-    elif matrix_repair == "DOMR":
+    elif metric_repair == "DOMR":
         return _noise_metric_repair_DOMR(orig_matrix, sd)
-    elif matrix_repair == "reject":
+    elif metric_repair == "reject":
         return _noise_reject_method(orig_matrix, sd)
     else:
         raise ValueError("Illegal argument!")
