@@ -136,7 +136,7 @@ def _noise_general_metric_repair(orig_matrix, sd):
 #   
 # --------------------------------------------------------------------------
     
-def convex_linear_comb(D1, D2, alpha=0.05, single=False):
+def convex_linear_comb(D1, D2, alpha=0.05, first_only=False):
     """Convex linear combination of distance matrices.
     
     Returns the convex linear combinations of two distance matrices

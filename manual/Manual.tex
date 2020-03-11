@@ -482,21 +482,46 @@ The following parameters are available (keyword arguments are indicated by their
 \end{tabularx}
 \vspace{3mm}
 
+Alternatively, the function \texttt{convex\_linear\_comb(D1, D2)} can be used to simulate systematically biased noise by computing a linear convex combination with a disturbance matrix.
+The function thus takes two distance matrices (\texttt{numpy} arrays) not necessarily of the same size as input and disturbs them with one another.
+The contribution of the respective disturbance matrix is controlled by the keyword parameter \texttt{alpha} (default is \texttt{0.5}).
+If the keyword parameter \texttt{first\_only} is specified as \texttt{True}, only the first disturbed matrix is returned.
+Otherwise both are returned in a tuple.
+
 
 \subsection{Best Match Inference}
 
-Inference of the best match relation either directly from the gene tree or from a distance matrix (several methods).
+Phylogenetic best matches of a gene $x$ of species $X$ are defined as those genes $y$ of another species $Y\ne X$ that share the lowest common ancestor with $x$ in the gene tree among all genes in that species \citep{geiss2019a,geiss2020b,geiss2020c}, see also Section~\ref{sec:homology_and_bm}.
+In contrast, two genes are orthologs if their last common ancestor was a speciation event.
+Orthology and reciprocal best matches are closely related \citep{geiss2020c}.
+
+The subpackage \texttt{asymmetree.best\_matches} contains functions to compute both relations from a given gene tree or to estimate them from distance data on a set of genes \citep{stadler2020}.
+
+If the true (observable) gene tree is known (as e.g.\ the case in simulations), best matches and orthologs can be computed using the module \texttt{TrueBMG}.
+The functions \texttt{best\_match\_ graphs(tree)} and \texttt{true\_orthology\_graph(tree)} return the respective graph representation as NetworkX (di)graphs:
+
+\vspace{2mm}
+\begin{python}
+from asymmetree.best_matches.TrueBMG import true_orthology_graph, best_match_graphs
+
+# T is an observable gene tree
+
+orthology_graph = true_orthology_graph(T)
+BMG, RBMG = best_match_graphs(T)    # Best Match Graph and Reciprocal Best Match Graph as a tuple
+\end{python}
+\vspace{2mm}
+
+If only distance data is available, best matches have to be estimated.
+AsymmeTree currently implements three different methods that are described by \citet{stadler2020}:
 \begin{itemize}
-	\item \texttt{asymmetree.best\_matches}
+	\item Extended Best Hits (module \texttt{ExtBestHits})
+	\item Neighborjoining and midpoint rooting (module \texttt{TreeReconstruction}, requires the installation and accessibility of \texttt{RapidNJ} \citep{simonsen2008})
+	\item Quartet method (module \texttt{Quartets}, Python implementation and wrapper for the C++ tool \texttt{qinfer})
 \end{itemize}
 
-References:
-\begin{itemize}
-	\item \citet{geiss2019a}
-	\item \citet{geiss2020b}
-	\item \citet{geiss2020c}
-	\item \citet{stadler2020}
-\end{itemize}
+Please see the file \texttt{examples/best\_match\_infer.py} in the GitHub repo for an example usage of these modules following the simulation of gene tree scenarios.
+
+
 
 \subsection{Supertree Computation}
 
