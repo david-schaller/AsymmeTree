@@ -1,8 +1,8 @@
-![AsymmeTree Logo](manual/images/logo.png)
+![](manual/images/logo.png)
 # AsymmeTree
 
 [![license](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![pypi version](https://img.shields.io/badge/pypi-v0.0.1-blue.svg)](https://pypi.org/project/asymmetree/0.0.1/)
+[![pypi version](https://img.shields.io/badge/pypi-v0.0.3-blue.svg)](https://pypi.org/project/asymmetree/0.0.1/)
 
 AsymmeTree is Python library for the simulation and analysis of phylogenetic scenarios.
 It includes a simulator for species and gene tree scenarios with asymmetric evolution rates, tools for the inference and analysis of best matches (resp. best hits) and orthology, as well as an algorithm to compute supertrees.
