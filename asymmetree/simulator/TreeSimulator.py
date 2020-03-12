@@ -45,7 +45,7 @@ def build_species_tree(N, planted=True, model="innovations",
     if isinstance(model, str) and model.lower() in ('innovation', 'innovations'):
         tree = _innovations_model(N, planted=planted)
     else:
-        raise ValueError(f"Model '{model}' is not available!")
+        raise ValueError("Model '{}' is not available!".format(model))
         
     if non_binary > 0.0:
          edges = _select_edges_for_contraction(tree,

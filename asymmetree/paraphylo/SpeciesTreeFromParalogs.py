@@ -31,7 +31,7 @@ class TreeReconstructor:
         elif cotree_mode == "all":                  # use all cotrees
             self._cotree_mode = "all"
         else:
-            raise ValueError(f"Invalid argument for cotree usage: '{cotree_mode}'.")
+            raise ValueError("Invalid argument for cotree usage: '{}'.".format(cotree_mode))
         
         
     def add_ortho_graph(self, ortho_graph):
@@ -108,7 +108,7 @@ class TreeReconstructor:
         elif mode.lower() == 'greedy':
             root = self._GREEDY(weighted=weighted)
         else:
-            raise ValueError(f"Mode '{mode}' is not valid!")
+            raise ValueError("Mode '{}' is not valid!".format(mode))
             
         if not root:
             raise Exception("Could not build a species tree!")
@@ -376,7 +376,7 @@ class TreeReconstructor:
             s = ''
             for child in v.children:
                 s += self.newick_with_support(v=child, supports=supports) + ","
-            return f"({s[:-1]}){supports[v]}"
+            return "({}){}".format(s[:-1], supports[v])
         
 
 if __name__ == "__main__":
@@ -404,8 +404,7 @@ if __name__ == "__main__":
         TGT = tm.imbalance_tree(TGT, S, baseline_rate=1,
                                 lognormal_v=0.2,
                                 gamma_param=(0.5, 1.0, 2.2),
-                                weights=(1, 1, 1),
-                                copy_tree=False)
+                                weights=(1, 1, 1))
         OGT = ts.observable_tree(TGT)
         
     #    ortho_graph = TrueBMG.true_orthology_graph(OGT)

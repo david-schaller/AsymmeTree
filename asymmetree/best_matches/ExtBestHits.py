@@ -93,7 +93,7 @@ def ebh_qinfer(scenario,
     elif os.path.exists(binary_path):
         qinfer_command = binary_path
     else:
-        raise FileNotFoundError(f"Path to qinfer binary file '{binary_path}' does not exist!")
+        raise FileNotFoundError("Path to qinfer binary file '{}' does not exist!".format(binary_path))
     
     output = -1
     command = [qinfer_command, matrix_filename, species_filename,

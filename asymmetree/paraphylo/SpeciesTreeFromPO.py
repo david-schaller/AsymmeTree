@@ -42,7 +42,5 @@ def reconstruct_trees_and_write(infile, outfile, cotree_modes, triple_modes,
             
             _, cotree_mode, triple_mode = inputs[i]
             newick, time_needed = results[i]
-            f.write(f"# Cotree usage mode: {cotree_mode}, "\
-                    f"Max. Consistent Triple Set heuristic: {triple_mode}, "\
-                    f"Time: {time_needed}\n")
+            f.write("# Cotree usage mode: {}, Max. Consistent Triple Set heuristic: {}, Time: {}\n".format(cotree_mode, triple_mode, time_needed))
             f.write(newick + "\n")

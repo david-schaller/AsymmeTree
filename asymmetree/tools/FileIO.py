@@ -137,11 +137,7 @@ if __name__ == "__main__":
     TGT_simulator = ts.GeneTreeSimulator(S)
     TGT = TGT_simulator.simulate(DLH_rates)
     print("done")
-    TGT = tm.imbalance_tree(TGT, S, baseline_rate=1,
-                                  lognormal_v=0.2,
-                                  gamma_param=(0.5, 1.0, 2.2),
-                                  weights=(1/3, 1/3, 1/3),
-                                  copy_tree=False)
+    TGT = tm.imbalance_tree(TGT, S)
     
     print("------------- TGT -------------")
     print(TGT.to_newick())

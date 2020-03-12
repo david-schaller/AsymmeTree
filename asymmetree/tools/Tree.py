@@ -192,7 +192,7 @@ class Tree:
         
         parent = node.parent
         if not parent:
-            print(f"Cannot delete and reconnect root '{node}'!")
+            print("Cannot delete and reconnect root '{node}'!".format(node))
             return False
         else:
             parent.remove_child(node)
@@ -218,7 +218,7 @@ class Tree:
             s = ''
             for child in node.children:
                 s += self.to_newick(node=child) + ","
-            return f"({s[:-1]}){node}"
+            return "({}){}".format(s[:-1], node)
       
     
     def get_hierarchy(self):
@@ -247,7 +247,7 @@ class Tree:
         hierarchy2 = sorted(other.get_hierarchy())
         
         if len(hierarchy1) != len(hierarchy2):
-            print(f"Unequal sizes of the hierarchy sets: {len(hierarchy1)} and {len(hierarchy2)}")
+            print("Unequal sizes of the hierarchy sets: {} and {}".format(len(hierarchy1), len(hierarchy2)))
             return False
         
         for i in range(len(hierarchy1)):
@@ -257,7 +257,7 @@ class Tree:
 #                print(hierarchy2[i])
             
             if hierarchy1[i] != hierarchy2[i]:
-                print(f"Hierarchies not equal:\n{hierarchy1[i]}\n{hierarchy2[i]}")
+                print("Hierarchies not equal:\n{}\n{}".format(hierarchy1[i], hierarchy2[i]))
                 return False
         
         return True

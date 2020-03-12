@@ -86,7 +86,7 @@ def parse_best_match_candidates(filename):
 #    if species_match:
 #        species = species_match.group(1)
 #    else:
-#        raise ValueError(f"Could not extract species from filename '{filename}'.")
+#        raise ValueError("Could not extract species from filename '{}'.".format(filename))
     
     with open(filename, "r") as f:
         
@@ -102,7 +102,7 @@ def parse_best_match_candidates(filename):
             data = line.split()
             
             if len(data) != 6:
-                print(f"Check file format: {filename}, line {line}")
+                print("Check file format: {}, line {}".format(filename, line))
                 continue
                 
             color      = data[0]

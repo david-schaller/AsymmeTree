@@ -145,10 +145,10 @@ class PhyloTree(Tree):
         return distance_dict, leaf_distances
     
     
-    def topology_only(self, copy=False):
+    def topology_only(self, inplace=True):
         """Reset distances, time stamps, transfer status and inner labels."""
         
-        if copy:
+        if not inplace:
             T = self.copy()
         else:
             T = self
@@ -182,9 +182,9 @@ class PhyloTree(Tree):
             if label:
                 token += str(node.label)
             if color and node.color:
-                token += f"<{node.color[0]}-{node.color[1]}>" if isinstance(node.color, tuple) else f"<{node.color}>"
+                token += "<{}-{}>".format(*node.color) if isinstance(node.color, tuple) else "<{}>".format(node.color)
             if distance:
-                token += f":{node.dist}"
+                token += ":{}".format(node.dist)
             return token
         else:
             s = ''
@@ -196,9 +196,9 @@ class PhyloTree(Tree):
             if label and label_inner:
                 token += str(node.label)
             if color_inner and node.color:
-                token += f"<{node.color[0]}-{node.color[1]}>" if isinstance(node.color, tuple) else f"<{node.color}>"
+                token += "<{}-{}>".format(*node.color) if isinstance(node.color, tuple) else "<{}>".format(node.color)
             if distance:
-                token += f":{node.dist}"
+                token += ":{}".format(node.dist)
             return "({}){}".format(s[:-1], token)
     
     

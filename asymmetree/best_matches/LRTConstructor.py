@@ -276,4 +276,4 @@ if __name__ == "__main__":
     print("--- LRT1 ---\n", LRT1.to_newick())
     print("--- LRT2 ---\n", LRT2.to_newick())
     
-    print(f"LRTs equal: {LRT1.compare_topology(LRT2)}")
+    print("LRTs equal: {}".format( LRT1.compare_topology(LRT2) ))

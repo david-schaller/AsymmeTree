@@ -50,8 +50,7 @@ def simulate_gene_families(S, N, seq_length=(200,800),
         TGT = tm.imbalance_tree(TGT, S, baseline_rate=1,
                                 lognormal_v=0.2,
                                 gamma_param=(0.5, 1.0, 2.2),
-                                weights=(1, 1, 1),
-                                copy_tree=False)
+                                weights=(1, 1, 1))
         OGT = ts.observable_tree(TGT)
         
         for v in OGT.preorder():

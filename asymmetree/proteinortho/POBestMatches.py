@@ -34,7 +34,7 @@ class POBestMatches:
         if voting_mode in ("majority", "weighted"):
             self.voting_mode = voting_mode
         else:
-            raise ValueError(f"Invalid voting mode for quartets '{voting_mode}'")
+            raise ValueError("Invalid voting mode for quartets '{}'".format(voting_mode))
         
     
     def __call__(self):
@@ -64,7 +64,7 @@ class POBestMatches:
             if os.path.isfile(filename):
                 self.species[os.path.basename(filename)] = filename
             else:
-                raise FileNotFoundError(f"Could not find file '{filename}'.")
+                raise FileNotFoundError("Could not find file '{}'.".format(filename))
         
         # check if the best match candidate files exist
         for spec in self.species.keys():
@@ -73,11 +73,11 @@ class POBestMatches:
             if os.path.isfile(filename):
                 self.candidate_files[spec] = filename
             else:
-                raise FileNotFoundError(f"Could not find file '{filename}'.")
+                raise FileNotFoundError("Could not find file '{}'.".format(filename))
                 
         # check if the tree file exists
         if self.tree_file is not None and not os.path.isfile(self.tree_file):
-            raise FileNotFoundError(f"Could not find tree file '{self.tree_file}'.")
+            raise FileNotFoundError("Could not find tree file '{}'.".format(self.tree_file))
     
     
     def _build_fasta_index(self):
