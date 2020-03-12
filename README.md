@@ -24,7 +24,7 @@ For details about how to install Python packages see [here](https://packaging.py
     
 #### Dependencies
 
-AssymmeTree has several dependencies (which are installed automatically when using `pip`):
+AsymmeTree has several dependencies (which are installed automatically when using `pip`):
 * [NetworkX](https://networkx.github.io/)
 * [Scipy and Numpy](http://www.scipy.org/install.html)
 * [Matplotlib](https://matplotlib.org/)
