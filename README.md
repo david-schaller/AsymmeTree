@@ -1,5 +1,5 @@
-![](manual/images/logo.png)
 # AsymmeTree
+![Logo](manual/images/logo.png)
 
 [![license](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![pypi version](https://img.shields.io/badge/pypi-v0.0.3-blue.svg)](https://pypi.org/project/asymmetree/)
