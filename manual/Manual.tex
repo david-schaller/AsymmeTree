@@ -136,7 +136,6 @@
 		sdavid@bioinf.uni-leipzig.de
 		
 		\vspace{2cm}
-		\TODO{This manual is work in progress!}
 		
 	\end{center}
 \end{titlepage}
@@ -160,7 +159,7 @@ If you use AsymmeTree in your project or code from it, please cite:
 
 \vspace{3mm}
 \begin{adjustwidth}{1cm}{1cm}
-	Peter F. Stadler, Manuela Gei{\ss}, David Schaller, Alitzel L{\'o}pez S{\'a}nchez, Marcos Gonz{\'a}lez Laffitte, Dulce I. Valdivia, Marc Hellmuth, Maribel Hern{\'a}ndez Rosales (2020). \textbf{From pairs of most similar sequences to phylogenetic best matches.} \textit{Algorithms for Molecular Biology.}
+	Peter F. Stadler, Manuela Gei{\ss}, David Schaller, Alitzel L{\'o}pez S{\'a}nchez, Marcos Gonz{\'a}lez Laffitte, Dulce I. Valdivia, Marc Hellmuth, Maribel Hern{\'a}ndez Rosales (2020). \textbf{From pairs of most similar sequences to phylogenetic best matches.} \textit{Submitted to Algorithms for Molecular Biology.}
 \end{adjustwidth}
 \vspace{3mm}
 
@@ -169,6 +168,8 @@ This document is split into two parts. Chapter~\ref{sec:manual} is a manual that
 \chapter{Manual}\label{sec:manual}
 
 \section{Installation}
+
+AsymmeTree requires Python 3.5 or higher. Python 2 is not supported.
 
 \subsection{Easy Installation with pip}
 
@@ -505,7 +506,6 @@ The functions \texttt{best\_match\_ graphs(tree)} and \texttt{true\_orthology\_g
 from asymmetree.best_matches.TrueBMG import true_orthology_graph, best_match_graphs
 
 # T is an observable gene tree
-
 orthology_graph = true_orthology_graph(T)
 BMG, RBMG = best_match_graphs(T)    # Best Match Graph and Reciprocal Best Match Graph as a tuple
 \end{python}
@@ -525,19 +525,63 @@ Please see the file \texttt{examples/best\_match\_infer.py} in the GitHub repo f
 
 \subsection{Supertree Computation}
 
-Implementation of the BuildST algorithm described by \citet{deng2016} to compute a supertree from a given list of tree based on the leaf labels. The algorithm uses the dynamic graph data structure described by \citet{henzinger1995} and \citet{holm2001}.
-\begin{itemize}
-	\item \texttt{asymmetree.tools.BuildST}
-	\item \texttt{asymmetree.tools.hdtgraph.DynamicGraph}
-\end{itemize}
+The module \texttt{BuildST} contains an implementation of the BuildST algorithm described by \citet{deng2016} to compute a supertree from a given list of tree based on the leaf labels.
+The algorithm uses the dynamic graph data structure described by \citet{henzinger1995} and \citet{holm2001}.
+The latter can also be used separately (see module \texttt{asymmetree.tools.hdtgraph.DynamicGraph})
+
+The class \texttt{BuildST} is initialized with a list of trees that are of type \texttt{Tree} (thus also \texttt{PhyloTree} is allowed).
+The method \texttt{run()} then return a supertree if the trees in the list are compatible \emph{and} they overlap in their sets of leaf labels.
+More precisely, the graph on the set of input trees in which two trees are connected by an edge if and only if they have at least one leaf label in common must be connected.
+
+Example usage:
+
+\vspace{2mm}
+\begin{python}
+from asymmetree.tools.BuildST import BuildST
+
+# tree_list is a list of Tree instances
+st_builder = BuildST(tree_list)
+supertree = st_builder.run()
+
+if supertree:
+	print(supertree.to_newick())
+else:
+	print("Could not build a supertree!")
+\end{python}
+\vspace{2mm}
 
 
 \subsection{Cograph Editing and ParaPhylo}
 
 The subpackages \texttt{asymmetree.cograph} and \texttt{asymmetree.proteinortho} contain heuristics for cograph editing and a method to compute rooted species tree from orthology/paralogy relations.
 The latter is a reimplementation of \href{http://pacosy.informatik.uni-leipzig.de/208-0-ParaPhylo.html}{ParaPhylo} \citep{hellmuth2015} which uses heuristics for the NP-hard steps instead of exact ILP solutions.
+For cograph editing, the $\mathcal{O}(n^2)$ algorithm (where $n$ is the number of vertices in a connected graph) by \citet{crespelle2019} is applied.
+For the Maximum Consistent Triple Set problem, tree different heuristics are available:
+\begin{itemize}
+	\item \texttt{BPMF}: Best-Pair-Merge-First \citep{wu2004} (modified for weighted triples)
+	\item \texttt{MINCUT}: Aho's \texttt{BUILD} with weighted MinCut \citep{aho1981,byrka2010}
+	\item \texttt{GREEDY}: a greedy approch based on Aho's \texttt{BUILD}
+\end{itemize}
 
+The class \texttt{TreeReconstructor} in the module \texttt{SpeciesTreeFromParalogs} computes a species tree after it is provides with one or more NetworkX graphs that represent (estimated) orthology relations.
+To this end, the nodes in these graph must have a \texttt{"color"} attribute, since these will be the leaf labels in the reconstructed species tree.
+Example usage:
+\begin{python}
+from asymmetree.paraphylo.SpeciesTreeFromParalogs import TreeReconstructor
 
+tree_reconstr = TreeReconstructor()
+
+# ortho_relations is a list of orthology relations
+for graph in ortho_relations:
+    tree_reconstr.add_ortho_graph(graph)
+    
+# finally the tree can be computed
+S_estimate = tr.build_species_tree(mode="BPMF")
+print(S_estimate.to_newick())
+\end{python}
+\vspace{2mm}
+
+The module \texttt{SpeciesTreeFromPO} contains functions to estimate a species tree from a \texttt{ProteinOrtho} output file. For example, the function \texttt{reconstruct\_from\_PO(filename, triple\_mode="BPMF")} takes the filename to the \texttt{ProteinOrtho} output file and optionally the triple heuristic as input, and returns a tuple consisting of the estimated species tree (\texttt{PhyloTree}) and a Newick representation (\texttt{str}) containing support values for the inner nodes.
 
 
 \chapter{Documentation of the Gene Family Simulator}\label{sec:doc}

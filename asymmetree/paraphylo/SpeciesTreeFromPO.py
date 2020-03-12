@@ -44,3 +44,14 @@ def reconstruct_trees_and_write(infile, outfile, cotree_modes, triple_modes,
             newick, time_needed = results[i]
             f.write("# Cotree usage mode: {}, Max. Consistent Triple Set heuristic: {}, Time: {}\n".format(cotree_mode, triple_mode, time_needed))
             f.write(newick + "\n")
+            
+            
+def reconstruct_from_PO(filename, triple_mode="BPMF"):
+    
+    G = parse_po_graph(filename)
+    tr = TreeReconstructor()
+    tr.add_ortho_graph(G)
+    S = tr.build_species_tree(mode=triple_mode)
+    support_newick = tr.newick_with_support()
+    
+    return S, support_newick
