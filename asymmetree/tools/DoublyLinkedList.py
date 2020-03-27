@@ -21,25 +21,25 @@ __copyright__ = "Copyright (C) 2020, David Schaller"
 class DLListElement:
     """Doubly-linked list element."""
     
-    __slots__ = ['value', 'prev_el', 'next_el']
+    __slots__ = ('_value', '_prev_el', '_next_el')
     
     def __init__(self, value, prev_el=None, next_el=None):
         
-        self.value = value
-        self.prev_el = prev_el
-        self.next_el = next_el
+        self._value = value
+        self._prev_el = prev_el
+        self._next_el = next_el
 
 
 class DLList:
     """Doubly-linked list."""
     
-    __slots__ = ['_first', '_last', 'count', 'current']
+    __slots__ = ('_first', '_last', '_count')
     
     def __init__(self, *args):
         
         self._first = None
         self._last = None
-        self.count = 0
+        self._count = 0
         for arg in args:
             if isinstance(arg, collections.Iterable):
                 for item in arg:
@@ -50,12 +50,12 @@ class DLList:
     
     def __len__(self):
         
-        return self.count
+        return self._count
     
     
     def __nonzero__(self):
         
-        return True if self.count > 0 else False
+        return True if self._count > 0 else False
     
     
     def __iter__(self):
@@ -73,30 +73,30 @@ class DLList:
         if not isinstance(index, int):
             raise TypeError("Index must be of type 'int'!")
         if index >= 0:
-            if index >= self.count:
+            if index >= self._count:
                 raise IndexError("Index " + str(index) + " is out of bounds!")
             element = self._first
             for i in range(index):
-                element = element.next_el
-            return element.value
+                element = element._next_el
+            return element._value
         else:
-            if index < (-self.count):
+            if index < (-self._count):
                 raise IndexError("Index " + str(index) + " is out of bounds!")
             element = self._last
             for i in range(-index - 1):
-                element = element.prev_el
-            return element.value
+                element = element._prev_el
+            return element._value
         raise IndexError("Index " + str(index) + " is out of bounds!")
     
     
     def first(self):
         
-        return self._first.value
+        return self._first._value
     
     
     def last(self):
         
-        return self._last.value
+        return self._last._value
     
     
     def first_element(self):
@@ -108,11 +108,11 @@ class DLList:
         
         new_end = DLListElement(value, prev_el=self._last)
         if self._last:
-            self._last.next_el = new_end
+            self._last._next_el = new_end
         self._last = new_end
         if not self._first:
             self._first = new_end
-        self.count += 1
+        self._count += 1
         return new_end
     
     
@@ -126,27 +126,27 @@ class DLList:
         
         new_start = DLListElement(value, next_el=self._first)
         if self._first:
-            self._first.prev_el = new_start
+            self._first._prev_el = new_start
         self._first = new_start
         if not self._last:
             self._last = new_start
-        self.count += 1
+        self._count += 1
         return new_start
     
     
     def remove_element(self, element):
         """Remove an item by reference to the 'DLListElement' instance in O(1)."""
         
-        if element.prev_el:
-            element.prev_el.next_el = element.next_el
-        if element.next_el:
-            element.next_el.prev_el = element.prev_el
+        if element._prev_el:
+            element._prev_el._next_el = element._next_el
+        if element._next_el:
+            element._next_el._prev_el = element._prev_el
         if self._first is element:
-            self._first = element.next_el
+            self._first = element._next_el
         if self._last is element:
-            self._last = element.prev_el
-        element.prev_el, element.next_el = None, None
-        self.count -= 1
+            self._last = element._prev_el
+        element._prev_el, element._next_el = None, None
+        self._count -= 1
     
     
     def remove(self, value):
@@ -154,18 +154,18 @@ class DLList:
         
         element = self._first
         while element:
-            if element.value == value:
+            if element._value == value:
                 self.remove_element(element)
                 return
-            element = element.next_el
-        raise KeyError("Value", value, "is not in the doubly-linked list!")
+            element = element._next_el
+        raise KeyError("Value {} is not in the doubly-linked list!".format(value))
     
     
     def popright(self):
         """Removes the last element of the list and returns its value."""
         
         if self._last:
-            value = self._last.value
+            value = self._last._value
             self.remove_element(self._last)
             return value
         else:
@@ -176,7 +176,7 @@ class DLList:
         """Removes the first element of the list and returns its value."""
         
         if self._first:
-            value = self._first.value
+            value = self._first._value
             self.remove_element(self._first)
             return value
         else:
@@ -187,7 +187,7 @@ class DLList:
         
         self._first = None
         self._last = None
-        self.count = 0
+        self._count = 0
         
 
 class DLListIterator:
@@ -203,8 +203,8 @@ class DLListIterator:
         
         if self._current:
             x = self._current
-            self._current = self._current.next_el
-            return x.value
+            self._current = self._current._next_el
+            return x._value
         else:
             raise StopIteration
         
