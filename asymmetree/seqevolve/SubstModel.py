@@ -3,7 +3,7 @@
 import Matrices
 
 
-class Model:
+class SubstModel:
     
     
     nuc_models = {"JC69", "K80"}
@@ -22,12 +22,12 @@ class Model:
         model_name = model_name.upper()
         
         if (model_type in ("nuc", "nucleotide") and
-            model_name in Model.nuc_models):
+            model_name in SubstModel.nuc_models):
             
             self.model = ("nuc", model_name)
             
         elif (model_type in ("aa", "amino", "aminoacid", "protein") and
-              model_name in Model.aa_models):
+              model_name in SubstModel.aa_models):
             
             self.model = ("aa", model_name)
                 
@@ -51,9 +51,9 @@ class Model:
     def to_indices(self, sequence):
         
         if self.model[0] == "nuc":
-            alphabet_dict = Model.nuc_dict
+            alphabet_dict = SubstModel.nuc_dict
         else:
-            alphabet_dict = Model.aa_dict
+            alphabet_dict = SubstModel.aa_dict
         
         try:
             result = [alphabet_dict[letter] for letter in sequence]
@@ -66,9 +66,9 @@ class Model:
     def to_sequence(self, evoseq):
         
         if self.model[0] == "nuc":
-            alphabet = Model.nucs
+            alphabet = SubstModel.nucs
         else:
-            alphabet = Model.aas
+            alphabet = SubstModel.aas
         
         return "".join(alphabet[x._value] for x in evoseq)
             

@@ -9,14 +9,16 @@ from Matrices import diagonalize
 
 class Evolver:
     
-    def __init__(self, model):
+    def __init__(self, subst_model, indel_model=None):
         
-        self.model = model
-        self.Q, self.freqs = model.Q, model.freqs
+        self.subst_model = subst_model
+        self.Q, self.freqs = subst_model.Q, subst_model.freqs
         self.dim = self.Q.shape[0]
         
         # compute the eigensystem
         self.eigvals, self.U, self.U_inv = diagonalize(self.Q, self.freqs)
+        
+        self.indel_model = indel_model
         
     
     def evolve_along_tree(self, T, start_length=200, start_seq=None):
@@ -75,7 +77,7 @@ class Evolver:
         
         seq = EvoSeq()
         
-        for x in self.model.to_indices(sequence):
+        for x in self.subst_model.to_indices(sequence):
             seq.append(x, State.ROOT, self.site_counter)
             self.site_counter += 1
         
@@ -86,7 +88,8 @@ class Evolver:
         
         child_seq = parent_seq.clone()
         
-        # indels not yet implemented
+        # indels
+        self._generate_indels(distance)
         
         # substitutions
         self._substitute(child_seq, distance)        
@@ -113,21 +116,29 @@ class Evolver:
                 site._value = self.choose_index(self.freqs, r[pos])
             
             pos += 1
+    
+    
+    def _generate_indels(self, t):
+        """Generates indels by a Gillespie process."""
+        
+        current_time = 0
+        
+        
 
  
 if __name__ == "__main__":
     
-    from Model import Model
+    from SubstModel import SubstModel
     import asymmetree.simulator.TreeSimulator as ts
     
-    model = Model("nucleotide", "JC69")
-    evolver = Evolver(model)
+    subst_model = SubstModel("nucleotide", "JC69")
+    evolver = Evolver(subst_model)
     print(evolver.Q)
     
     T = ts.build_species_tree(5)
     evolver.evolve_along_tree(T, start_length=30)
     
     for node, sequence in evolver.sequences.items():
-        print(node.label, model.to_sequence(sequence))
+        print(node.label, subst_model.to_sequence(sequence))
     
     
