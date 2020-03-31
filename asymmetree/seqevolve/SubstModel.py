@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import Matrices
+import asymmetree.seqevolve.Matrices as Matrices
 
 
 class SubstModel:
@@ -63,12 +63,17 @@ class SubstModel:
         return result
     
     
-    def to_sequence(self, evoseq):
+    def get_alphabet(self):
         
         if self.model[0] == "nuc":
-            alphabet = SubstModel.nucs
+            return SubstModel.nucs
         else:
-            alphabet = SubstModel.aas
+            return SubstModel.aas
+    
+    
+    def to_sequence(self, evoseq):
+        
+        alphabet = self.get_alphabet()
         
         return "".join(alphabet[x._value] for x in evoseq)
             

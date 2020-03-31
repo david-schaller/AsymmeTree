@@ -6,8 +6,11 @@ from scipy.special import zeta
 
 class IndelModel:
     
+    
     def __init__(self, insertion_rate, deletion_rate,
-                 length_model='zipf', params=None):
+                 length_model='zipf',
+                 max_length=False,
+                 params=None):
         
         if insertion_rate < 0.0 or deletion_rate < 0.0:
             raise ValueError("Insertion and deletion rates must be non-negative!")
@@ -21,6 +24,7 @@ class IndelModel:
         else:
             raise ValueError("Indel model '{}' is not available!".format(length_model))
         
+        self._max_length = max_length
         self._params = params
         
         # check the parameter according to length model
@@ -31,21 +35,38 @@ class IndelModel:
         
     
     def get_rates(self, seq_length):
+        """Return the current insertion and deletion rate.
+        
+        Computes the current insertion and deletion rate according to the model
+        and the length of the sequence."""
         
         return ( (seq_length + 1) * self._ins_rate,
                  (seq_length + self._del_mean - 1) * self._del_rate )
         
     
-    def draw_indel_length(self):
+    def draw_length(self):
+        """Draw the length for an indel."""
         
-        if self._length_model == 'zipf':
-            return np.random.zipf( self._params['a'] )
-                
-        elif self._length_model == 'negative_binomial':
-            return 1 + np.random.negative_binomial(self._params['r'], 1 - self._params['q'])
-    
+        while True:
+            
+            if self._length_model == 'zipf':
+                d = np.random.zipf( self._params['a'] )
+                    
+            elif self._length_model == 'negative_binomial':
+                d = 1 + np.random.negative_binomial(self._params['r'], 1 - self._params['q'])
+            
+            if self._max_length is False or d <= self._max_length:
+                break
+            
+        return d
+            
     
     def _check_params(self):
+        
+        if self._max_length is not False:
+            
+            if not isinstance(self._max_length, int) or self._max_length < 1:
+                raise ValueError("Maximal indel length must be an int > 0 !")
         
         if self._length_model == 'zipf':
             

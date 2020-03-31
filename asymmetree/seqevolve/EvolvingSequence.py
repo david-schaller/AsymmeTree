@@ -68,7 +68,7 @@ class EvoSeq(DLList):
                                 prev_el=self._last,
                                 parent_el=parent_el)
         if self._last:
-            self._last._next_el = new_end
+            self._last._next = new_end
         self._last = new_end
         if not self._first:
             self._first = new_end
@@ -82,12 +82,29 @@ class EvoSeq(DLList):
                                   next_el=self._first,
                                   parent_el=parent_el)
         if self._first:
-            self._first._prev_el = new_start
+            self._first._prev = new_start
         self._first = new_start
         if not self._last:
             self._last = new_start
         self._count += 1
         return new_start
+    
+    
+    def insert_right_of(self, element, value, status, site_id, parent_el=None):
+        
+        if element is self._last:
+            new_element = self.append(value, status, site_id, parent_el=parent_el)
+            
+        else:
+            new_element = EvoSeqElement(value, status, site_id,
+                                        prev_el=element,
+                                        next_el=element._next,
+                                        parent_el=parent_el)
+            new_element._next._prev = new_element
+            element._next = new_element
+            self._count += 1
+        
+        return new_element    
         
     
     def clone(self):
@@ -99,9 +116,23 @@ class EvoSeq(DLList):
             child_seq.append(parent_site._value,
                              State.INHERITED, parent_site.site_id,
                              parent_el=parent_site)
-            parent_site = parent_site._next_el
+            parent_site = parent_site._next
             
         return child_seq
+    
+    
+    def element_pairs(self):
+        """Generator for subsequent element pairs."""
+        
+        if self._count >= 2:
+            
+            first = self._first
+            second = self._first._next
+            
+            while second:
+                yield (first, second)
+                first = second
+                second = second._next
     
     
     def count_inherited(self):
@@ -112,7 +143,7 @@ class EvoSeq(DLList):
         while site:
             if site.status == State.INHERITED:
                 counter += 1
-            site = site._next_el
+            site = site._next
                 
         return counter
         
@@ -134,7 +165,7 @@ class EvoSeqIterator(DLListIterator):
         
         if self._current:
             x = self._current
-            self._current = self._current._next_el
+            self._current = self._current._next
             return x
         else:
             raise StopIteration
