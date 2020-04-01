@@ -4,14 +4,28 @@ import numpy as np
 import networkx as nx
 
 
-class AlignmentBuilder:
+class _AlignmentBuilder:
     
     
-    def __init__(self, tree, sequence_dict, include_inner=True):
+    def __init__(self, tree, sequence_dict, alphabet, include_inner):
         
         self.tree = tree
         self.sequence_dict = sequence_dict
-        self.include_inner
+        self.include_inner = include_inner
+        
+        if alphabet[-1] == '-':
+            self.alphabet = alphabet
+        else:
+            self.alphabet = alphabet + '-'
+        
+        
+    def build(self):
+        
+        self._get_preorder()
+        self._sort_sites()
+        self._alignment_matrix()
+        
+        return self._sequences()
         
     
     def _get_preorder(self):
@@ -32,7 +46,7 @@ class AlignmentBuilder:
             
             seq = self.sequence_dict[node]
             
-            for first, second in seq.element_pairs:
+            for first, second in seq.element_pairs():
                 G.add_edge(first.site_id, second.site_id)
                 
         self.sites = list(nx.topological_sort(G))
@@ -40,21 +54,36 @@ class AlignmentBuilder:
     
     def _alignment_matrix(self):
         
-        alignment = np.zeros((len(self.nodes), len(self.sites)),
+        self.alignment = np.zeros((len(self.nodes), len(self.sites)),
                              dtype=np.int8)
         positions = [self.sequence_dict[v]._first for v in self.nodes]
         
         for j in range(len(self.sites)):
             for i in range(len(positions)):
                 
-                if self.sites[j] == positions[i].site_id:
-                    alignment[i, j] = positions[i].site_id._value
+                if positions[i] and self.sites[j] == positions[i].site_id:
+                    self.alignment[i, j] = positions[i]._value
                     positions[i] = positions[i]._next
                 else:
-                    alignment[i, j] = -1
-                    
-        return alignment
+                    self.alignment[i, j] = -1
+    
+    
+    def _sequences(self):
         
+        result = {}
+        
+        for i in range(len(self.nodes)):
+            sequence = "".join(self.alphabet[x] for x in self.alignment[i, :])
+            result[self.nodes[i]] = sequence
+        
+        return result
+    
+
+def build_alignment(tree, sequence_dict, alphabet, include_inner=True):
+    
+    alignment_builder = _AlignmentBuilder(tree, sequence_dict, alphabet, include_inner)
+    
+    return alignment_builder.build()
         
         
             

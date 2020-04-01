@@ -5,6 +5,7 @@ import numpy as np
 
 from asymmetree.seqevolve.EvolvingSequence import EvoSeq, State
 from asymmetree.seqevolve.Matrices import diagonalize
+from asymmetree.seqevolve.Alignment import build_alignment
 
 
 class Evolver:
@@ -23,6 +24,7 @@ class Evolver:
     
     def evolve_along_tree(self, T, start_length=200, start_seq=None):
         
+        self.T = T
         self.site_counter = 0
         self.sequences = {}
         
@@ -172,6 +174,12 @@ class Evolver:
             pos = 0
             
         sequence.remove_range(pos, d)
+    
+    
+    def true_alignment(self):
+        
+        return build_alignment(self.T, self.sequences,
+                               self.subst_model.get_alphabet())
 
  
 if __name__ == "__main__":
@@ -191,5 +199,10 @@ if __name__ == "__main__":
     
     for node, sequence in evolver.sequences.items():
         print(node.label, subst_model.to_sequence(sequence))
+        
+    alg_seq = evolver.true_alignment()
+    for node, sequence in alg_seq.items():
+        print(node.label, sequence)
+    
     
     
