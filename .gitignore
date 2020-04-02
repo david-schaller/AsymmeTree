@@ -53,3 +53,4 @@ bin/
 
 # others
 examples/results/*
+*.testfile

@@ -4,10 +4,10 @@ import numpy as np
 import networkx as nx
 
 
-class _AlignmentBuilder:
+class AlignmentBuilder:
     
     
-    def __init__(self, tree, sequence_dict, alphabet, include_inner):
+    def __init__(self, tree, sequence_dict, alphabet, include_inner=True):
         
         self.tree = tree
         self.sequence_dict = sequence_dict
@@ -79,13 +79,110 @@ class _AlignmentBuilder:
         return result
     
 
-def build_alignment(tree, sequence_dict, alphabet, include_inner=True):
+def write_to_file(filename, alignment, al_format='phylip'):
     
-    alignment_builder = _AlignmentBuilder(tree, sequence_dict, alphabet, include_inner)
+    with open(filename, 'w') as f:
+        
+        if al_format == 'phylip':
+            _write_phylip(f, alignment)
     
-    return alignment_builder.build()
+        elif al_format == 'clustal':
+            _write_clustal(f, alignment)
         
+        elif al_format == 'pretty':
+            _write_pretty(f, alignment)
+            
+        else:
+            raise ValueError("Alignment format '{}' is not available!".format(al_format))
+            
+
+def _check_alignment(alignment):
+    
+    max_length = 0                          # maximal label length
+    seq_length = None                       # length of the aligned sequences
+    for node, seq in alignment.items():
         
+        if len(node.label) > max_length:
+            max_length = len(node.label)
+            
+        if seq_length is None:
+            seq_length = len(seq)
+        elif seq_length != len(seq):
+            raise ValueError("Aligned sequences must have the same length!")
+            
+    return max_length, seq_length
             
             
+def _write_phylip(f, alignment):
+    
+    max_length, seq_length = _check_alignment(alignment)
+    
+    f.write(" {} {}".format(len(alignment), seq_length))
+    
+    format_str = "\n{:" + str(max_length+3) + "}"
+    current = 0
+    
+    while current < seq_length:
         
+        end = min(seq_length, current+50)
+        
+        for node, seq in alignment.items():
+            
+            if current == 0:
+                f.write(format_str.format(node.label))
+            else:
+                f.write(format_str.format(''))
+                
+            f.write(" ".join( seq[i:min(i+10,end)] for i in range(current, end, 10) ))
+                
+        if end != seq_length:
+            f.write("\n")
+        
+        current += 50
+
+
+def _write_clustal(f, alignment):
+    
+    max_length, seq_length = _check_alignment(alignment)
+    
+    f.write('CLUSTAL W (1.8) multiple sequence alignment\n\n')
+    
+    format_str = "\n{:" + str(max_length+4) + "}{}"
+    current = 0
+    
+    while current < seq_length:
+        
+        end = min(seq_length, current+60)
+        
+        for node, seq in alignment.items():
+            f.write(format_str.format(node.label, seq[current:end]))
+                
+        if end != seq_length:
+            f.write("\n\n")
+        
+        current += 60
+    
+        
+def _write_pretty(f, alignment):
+    
+    _, seq_length = _check_alignment(alignment)
+    
+    f.write('  1          11         21         31         41       50\n')
+    f.write('  |          |          |          |          |        |')
+    
+    current = 0
+    
+    while current < seq_length:
+        
+        end = min(seq_length, current+50)
+        
+        for node, seq in alignment.items():
+            
+            count = end - current - seq[current:end].count('-')
+            seq_string = " ".join( seq[i:min(i+10,end)] for i in range(current, end, 10) )
+            f.write("\n  {:54}{:>6} {}".format(seq_string, count, node.label))
+                
+        if end != seq_length:
+            f.write("\n\n\n")
+        
+        current += 50

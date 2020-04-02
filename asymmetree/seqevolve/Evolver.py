@@ -5,7 +5,7 @@ import numpy as np
 
 from asymmetree.seqevolve.EvolvingSequence import EvoSeq, State
 from asymmetree.seqevolve.Matrices import diagonalize
-from asymmetree.seqevolve.Alignment import build_alignment
+from asymmetree.seqevolve.Alignment import AlignmentBuilder, write_to_file
 
 
 class Evolver:
@@ -176,10 +176,13 @@ class Evolver:
         sequence.remove_range(pos, d)
     
     
-    def true_alignment(self):
+    def true_alignment(self, include_inner=True):
         
-        return build_alignment(self.T, self.sequences,
-                               self.subst_model.get_alphabet())
+        alg_builder = AlignmentBuilder(self.T, self.sequences,
+                                       self.subst_model.get_alphabet(),
+                                       include_inner=include_inner)
+        
+        return alg_builder.build()
 
  
 if __name__ == "__main__":
@@ -195,7 +198,7 @@ if __name__ == "__main__":
     print(evolver.Q)
     
     T = ts.build_species_tree(5)
-    evolver.evolve_along_tree(T, start_length=30)
+    evolver.evolve_along_tree(T, start_length=150)
     
     for node, sequence in evolver.sequences.items():
         print(node.label, subst_model.to_sequence(sequence))
@@ -203,6 +206,8 @@ if __name__ == "__main__":
     alg_seq = evolver.true_alignment()
     for node, sequence in alg_seq.items():
         print(node.label, sequence)
+        
+    write_to_file("alignment.testfile", alg_seq, al_format='clustal')
     
     
     
