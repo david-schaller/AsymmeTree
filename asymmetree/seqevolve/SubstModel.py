@@ -8,17 +8,20 @@ from asymmetree.seqevolve.EmpiricalModels import empirical_models
 class SubstModel:
     
     
-    nuc_models = {'JC69', 'K80'}
+    nuc_models = {'JC69', 'K80', 'GTR'}
     aa_models = {'JC69'}
     
     nucleotides = 'ACGT'
     amino_acids = 'ARNDCQEGHILKMFPSTWYV'
     
     
-    def __init__(self, model_type, model_name):
+    def __init__(self, model_type, model_name,
+                 params=None):
         
         self.model_type = model_type.lower()
         self.model_name = model_name.upper()
+        
+        self._params = params
         
         if (self.model_type in ('nuc', 'nucleotide') and
             self.model_name in SubstModel.nuc_models):
@@ -49,6 +52,21 @@ class SubstModel:
             
             if self.model_name == 'JC69':
                 self.S, self.freqs = _JC69_nuc()
+                
+            elif self.model_name == 'K80':
+                
+                if self._params is None or 'kappa' not in self._params:
+                    raise ValueError("Model 'K80' requires the parameter 'kappa'!")
+                
+                self.S, self.freqs = _K80_nuc(self._params['kappa'])
+            
+            elif self.model_name == 'GTR':
+                
+                if self._params is None or 'abcdef' not in self._params or 'f' not in self._params:
+                    raise ValueError("Model 'GTR' requires the parameters 'abcdef' and 'f'!")
+                
+                self.S, self.freqs = _GTR_nuc(self._params['abcdef'],
+                                              self._params['f'])
         
         elif self.model_type == 'aa':
             
@@ -155,6 +173,31 @@ def _K80_nuc(kappa):
                   [1,     kappa, 1,     0    ]])
     
     freqs = np.array([0.25, 0.25, 0.25, 0.25])
+    
+    return S, freqs
+
+
+def _GTR_nuc(abcdef, f):
+    """Generalized time-reversible model.
+    
+    Parameterization as in e.g. used in PAML and ALF:
+    a:    C <--> T
+    b:    A <--> T
+    c:    G <--> T
+    d:    A <--> C  
+    e:    C <--> G
+    f:    A <--> G
+    """
+    
+    a, b, c, d, e, f = abcdef
+    
+    S = np.array([[0,  d,  f,  b],
+                  [d,  0,  e,  a],
+                  [f,  e,  0,  c],
+                  [b,  a,  c,  0]])
+    
+    freqs = np.asarray(abcdef)
+    freqs /= np.sum(freqs)
     
     return S, freqs
 
