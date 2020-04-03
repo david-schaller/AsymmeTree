@@ -150,7 +150,8 @@ AsymmeTree is an open-source Python library for the simulation and analysis of p
 It includes a simulator for species and gene trees with asymmetric evolution rates, tools for the inference and analysis of phylogenetic best matches \citep{geiss2019a,geiss2020c} (resp. best hits) from known gene trees or evolutionary distances. Moreover, it includes an algorithm to compute supertrees \citep{deng2016} and a method to estimate rooted species trees from an ensemble of orthology/paralogy relations \citep{hellmuth2015}.
 
 The library, and especially the simulator, was primarily designed to be able to validate mathematical concepts and test inference methods for various steps on the way to more realistically available data, i.e., dated gene trees, additive distances of gene sets, noisy distances and finally sequences.
-At the moment, AsymmeTree does not include a sequence simulator by itself, but third-party software such as \texttt{Pyvolve} \cite{spielman2015} can easily be incorporated into a simulation pipeline based on AsymmeTree.
+Both nucleotide and amino acid sequence simulation with or without indels are supported. In both cases, several substitution models are available.
+Alternatively, third-party software such as \texttt{Pyvolve} \cite{spielman2015} can easily be incorporated into a simulation pipeline based on AsymmeTree.
 
 The software is hosted on \href{https://github.com/david-schaller/AsymmeTree}{GitHub} and also available via The Python Package Index (\href{https://pypi.org/project/asymmetree/}{PyPI}).
 Please feel free to report bugs or make suggestions for improvement in the \href{https://github.com/david-schaller/AsymmeTree/issues}{Issues} section of the GitHUb repository.
@@ -200,11 +201,10 @@ AssymmeTree has several dependencies (which are installed automatically when usi
 	\item \href{https://matplotlib.org/}{Matplotlib}
 \end{itemize}
 
-Furthermore, to use functions involving sequence simulation and alignment, the following packages must be installed (i.e., they are not installed automatically!):
+Furthermore, to use functions involving sequence alignment, the following package(s) must be installed (i.e., they are not installed automatically!):
 
 \begin{itemize}
 	\item \href{http://biopython.org/wiki/Download}{Biopython} \citep{cock2009}
-	\item \href{https://github.com/sjspielman/pyvolve}{Pyvolve} \citep{spielman2015}
 \end{itemize}
 
 To use the tree reconstruction method for best match inference and the C++ implementation of the quartet method \citep{stadler2020}, resp., the following software must be installed

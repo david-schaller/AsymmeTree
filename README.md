@@ -2,13 +2,13 @@
 ![Logo](manual/images/logo.png)
 
 [![license](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![pypi version](https://img.shields.io/badge/pypi-v0.0.5-blue.svg)](https://pypi.org/project/asymmetree/)
+[![pypi version](https://img.shields.io/badge/pypi-v0.1.0-blue.svg)](https://pypi.org/project/asymmetree/)
 
 AsymmeTree is an open-source Python library for the simulation and analysis of phylogenetic scenarios.
 It includes a simulator for species and gene trees with asymmetric evolution rates, tools for the inference and analysis of phylogenetic Best Matches (resp. best hits) from known gene trees or evolutionary distances. Moreover, it includes an algorithm to compute supertrees and a method to estimate rooted species trees from an ensemble of orthology/paralogy relations.
 
 The library, and especially the simulator, was primarily designed to be able to validate mathematical concepts and test inference methods for various steps on the way to more realistically available data, i.e., dated gene trees, additive distances of gene sets, noisy distances and finally sequences.
-At the moment, AsymmeTree does not include a sequence simulator by itself, but third-party software such as `Pyvolve` can easily be incorporated into a simulation pipeline based on AsymmeTree.
+Both nucleotide and amino acid sequence simulation with or without indels are supported. In both cases, several substitution models are available.
 
 ## Installation
 
@@ -29,9 +29,8 @@ AsymmeTree has several dependencies (which are installed automatically when usin
 * [Scipy and Numpy](http://www.scipy.org/install.html)
 * [Matplotlib](https://matplotlib.org/)
 
-Furthermore, to use functions involving sequence simulation and alignment, the following packages must be installed (i.e., they are not installed automatically!):
+Furthermore, to use functions involving sequence alignment, the following package(s) must be installed (i.e., they are not installed automatically!):
 * [Biopython](http://biopython.org/wiki/Download)
-* [Pyvolve](https://github.com/sjspielman/pyvolve)
 
 To use the tree reconstruction method for best match inference and the C++ implementation of the quartet method, resp., the following software must be installed
 (I recommend that you compile these tools on your machine, place the binaries into a persistent location and add this location to your PATH environment variable):

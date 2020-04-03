@@ -4,7 +4,6 @@
 import numpy as np
 
 from asymmetree.seqevolve.EvolvingSequence import EvoSeq, State
-from asymmetree.seqevolve.Matrices import diagonalize
 from asymmetree.seqevolve.Alignment import AlignmentBuilder, write_to_file
 
 
@@ -13,11 +12,7 @@ class Evolver:
     def __init__(self, subst_model, indel_model=None):
         
         self.subst_model = subst_model
-        self.Q, self.freqs = subst_model.Q, subst_model.freqs
-        self.dim = self.Q.shape[0]
-        
-        # compute the eigensystem
-        self.eigvals, self.U, self.U_inv = diagonalize(self.Q, self.freqs)
+        self.eigvals, self.U, self.U_inv = subst_model.eigensystem()
         
         self.indel_model = indel_model
         
@@ -49,7 +44,8 @@ class Evolver:
             
     def _random_positions(self, n):
         
-        return np.random.choice(self.dim, n, p=self.freqs)
+        return np.random.choice(len(self.subst_model.alphabet), n,
+                                p=self.subst_model.freqs)
     
     
     def _random_sequence(self, n):
@@ -114,7 +110,7 @@ class Evolver:
             
             else:
                 # choose random character
-                site._value = self.choose_index(self.freqs, r[pos])
+                site._value = self.choose_index(self.subst_model.freqs, r[pos])
             
             pos += 1
     
@@ -179,7 +175,7 @@ class Evolver:
     def true_alignment(self, include_inner=True):
         
         alg_builder = AlignmentBuilder(self.T, self.sequences,
-                                       self.subst_model.get_alphabet(),
+                                       self.subst_model.alphabet,
                                        include_inner=include_inner)
         
         return alg_builder.build()
@@ -191,11 +187,11 @@ if __name__ == "__main__":
     from IndelModel import IndelModel
     import asymmetree.simulator.TreeSimulator as ts
     
-    subst_model = SubstModel("nucleotide", "JC69")
+    subst_model = SubstModel("aa", "WAG")
     indel_model = IndelModel(0.01, 0.01, length_model="zipf")
     
     evolver = Evolver(subst_model, indel_model=indel_model)
-    print(evolver.Q)
+    print(evolver.subst_model.Q)
     
     T = ts.build_species_tree(5)
     evolver.evolve_along_tree(T, start_length=150)
