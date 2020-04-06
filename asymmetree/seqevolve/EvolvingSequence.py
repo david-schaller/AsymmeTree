@@ -28,28 +28,33 @@ class State(Enum):
 class EvoSeqElement(DLListElement):
     """Site element in an evolving sequence."""
     
-    __slots__ = ('status', 'site_id', 'parent_el')
+    __slots__ = ('status', 'site_id', 'parent_el', 'rate_class', 'rate_factor')
     
     def __init__(self, value,
                  status, site_id,
                  prev_el=None, next_el=None,
-                 parent_el=None):
+                 parent_el=None,
+                 rate_class=0, rate_factor=1.0):
         
         super().__init__(value, prev_el=prev_el, next_el=next_el)
         
         self.status = status
         self.site_id = site_id
         self.parent_el = parent_el
+        self.rate_class = rate_class
+        self.rate_factor = rate_factor
 
 
 class EvoSeq(DLList):
     """Evolving sequence."""
     
-    __slots__ = ('_first', '_last', 'count', 'current')
+    __slots__ = ('total_subst_rate')
     
-    def __init__(self, *args):
+    def __init__(self, total_subst_rate=0.0):
         
-        super().__init__(args)
+        super().__init__()
+        
+        self.total_subst_rate = 0.0
         
         
     def __iter__(self):

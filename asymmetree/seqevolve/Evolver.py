@@ -113,6 +113,44 @@ class Evolver:
                 site._value = self.choose_index(self.subst_model.freqs, r[pos])
             
             pos += 1
+            
+            
+    def _substitute_gillespie(self, sequence, t):
+        
+        current_time = 0.0
+        
+        while current_time < t:
+            
+            total_rate = sequence.total_subst_rate
+            waiting_time = np.random.exponential(1/total_rate) if total_rate > 0.0 else float('inf')
+            current_time += waiting_time
+            
+            if current_time < t:
+                
+                site, r = self._choose_site(sequence)
+    
+    
+    def _choose_site(self, sequence):
+        
+        current_sum = 0.0
+        r = np.random.uniform(low=0.0, high=sequence.total_rate)
+        
+        for site in sequence:
+            
+            # use negative value on the diagonal of matrix Q
+            site_rate = - site.rate_factor * self.subst_model.Q[site._value, site._value]
+            current_sum += site_rate
+            
+            if current_sum > r:
+                
+                # return site and the "rest" of r
+                return site, r - (current_sum - site_rate)
+            
+            
+    def _choose_substitution(self):
+        
+        pass
+            
     
     
     def _generate_indels(self, sequence, t):
@@ -128,7 +166,7 @@ class Evolver:
             waiting_time = np.random.exponential(1/total_rate) if total_rate > 0.0 else float('inf')
             current_time += waiting_time
             
-            if current_time + waiting_time < t:
+            if current_time < t:
                 
                 r = np.random.random()
                 if r < ins_rate / total_rate:

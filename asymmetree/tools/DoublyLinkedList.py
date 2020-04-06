@@ -92,20 +92,26 @@ class DLList:
         
         if not isinstance(index, int):
             raise TypeError("Index must be of type 'int'!")
-        if index >= 0:
-            if index >= self._count:
-                raise IndexError("Index {} is out of bounds!".format(index))
+            
+        if index < (-self._count) or index >= self._count:
+            raise IndexError("Index {} is out of bounds!".format(index))
+            
+        if index < 0:
+            index += self._count
+        
+        if index <= self._count // 2:
+            # start from beginning
             element = self._first
-            for i in range(index):
+            for _ in range(index):
                 element = element._next
-            return element
+        
         else:
-            if index < (-self._count):
-                raise IndexError("Index {} is out of bounds!".format(index))
+            # start from end
             element = self._last
-            for i in range(-index - 1):
+            for _ in range(self._count - index - 1):
                 element = element._prev
-            return element
+            
+        return element
     
     
     def append(self, value):
@@ -194,6 +200,23 @@ class DLList:
             cut_start._prev, cut_end._next = None, None
             
             self._count -= length
+    
+    
+    def insert_right_of(self, element, value):
+        """Insert a new item right of an element of the list in O(1)."""
+        
+        if element is self._last:
+            new_element = self.append(value)
+            
+        else:
+            new_element = DLListElement(value,
+                                        prev_el=element,
+                                        next_el=element._next)
+            new_element._next._prev = new_element
+            element._next = new_element
+            self._count += 1
+        
+        return new_element
             
     
     def truncate(self, index):
@@ -296,4 +319,4 @@ if __name__ == "__main__":
     dllist.append_left(30)
     for x in dllist:
         print(x, end=" ")
-    print("\n", dllist[0], dllist[1], dllist[2], dllist[3], dllist[-4])
+    print("\n", dllist[0], dllist[1], dllist[2], dllist[3], dllist[-1])
