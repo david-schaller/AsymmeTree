@@ -9,12 +9,13 @@ from asymmetree.seqevolve.Alignment import AlignmentBuilder, write_to_file
 
 class Evolver:
     
-    def __init__(self, subst_model, indel_model=None):
+    def __init__(self, subst_model, indel_model=None, het_model=None):
         
         self.subst_model = subst_model
         self.eigvals, self.U, self.U_inv = subst_model.eigensystem()
         
         self.indel_model = indel_model
+        self.het_model = het_model
         
     
     def evolve_along_tree(self, T, start_length=200, start_seq=None):
@@ -25,21 +26,25 @@ class Evolver:
         
         if start_seq is None:
             root_seq = self._random_sequence(start_length)
-        
         else:
             root_seq = self._initialize_root(start_seq)
-            
-        for v in T.preorder():
-            
-            # root of the tree, assign start sequence
-            if v.parent is None:
-                self.sequences[v] = root_seq
-                
-            # evolve the sequence along an edge
-            else:
-                parent_seq = self.sequences[v.parent]
-                distance = v.dist
-                self.sequences[v] = self._evolve(parent_seq, distance)
+        
+        # apply matrix substitution
+        if not self.het_model:
+            for v in T.preorder():
+                if v.parent is None:
+                    self.sequences[v] = root_seq
+                else:
+                    self.sequences[v] = self._evolve(self.sequences[v.parent], v.dist)
+        
+        # apply Gillespie substitution        
+        else:
+            for v in T.preorder():
+                if v.parent is None:
+                    self._assign_rate_factors(root_seq, 'all')
+                    self.sequences[v] = root_seq
+                else:
+                    self.sequences[v] = self._evolve_gillespie(self.sequences[v.parent], v.dist)
           
             
     def _random_positions(self, n):
@@ -59,18 +64,6 @@ class Evolver:
         return seq
     
     
-    def choose_index(self, p, r):
-        
-        index = 0
-        current_sum = p[index]
-        
-        while r > current_sum and index < len(p) - 1:
-            index += 1
-            current_sum += p[index]
-        
-        return index
-    
-    
     def _initialize_root(self, sequence):
         
         seq = EvoSeq()
@@ -81,6 +74,19 @@ class Evolver:
         
         return seq
     
+    
+    def true_alignment(self, include_inner=True):
+        
+        alg_builder = AlignmentBuilder(self.T, self.sequences,
+                                       self.subst_model.alphabet,
+                                       include_inner=include_inner)
+        
+        return alg_builder.build()
+    
+    
+    # --------------------------------------------------------------------------
+    #                           Matrix substitution
+    # --------------------------------------------------------------------------
     
     def _evolve(self, parent_seq, distance):
         
@@ -96,8 +102,8 @@ class Evolver:
     
     def _substitute(self, sequence, t):
         
-        # transtion probabilty matrix
-        P = self.U  @  np.diag( np.exp(self.eigvals * t) )  @  self.U_inv
+        # transtion probabilty matrices
+        P_matrices = self._P_matrices(sequence, t)
         
         r = np.random.random(len(sequence))
         pos = 0
@@ -106,53 +112,158 @@ class Evolver:
             
             if site.status == State.INHERITED:
                 # mutate according to matrix P
-                site._value = self.choose_index(P[site._value, :], r[pos])
+                P = P_matrices[site.rate_class]
+                site._value = self._choose_index(P[site._value, :], r[pos])
             
             else:
                 # choose random character
-                site._value = self.choose_index(self.subst_model.freqs, r[pos])
+                site._value = self._choose_index(self.subst_model.freqs, r[pos])
             
             pos += 1
             
+    
+    def _choose_index(self, p, r):
+        
+        index = 0
+        current_sum = p[index]
+        
+        while r > current_sum and index < len(p) - 1:
+            index += 1
+            current_sum += p[index]
+        
+        return index
+    
+    
+    def _P_matrices(self, sequence, t):
+        
+        P_matrices = {}
+        
+        if not self.het_model:
+            P_matrices[0] = self.U  @  np.diag( np.exp(self.eigvals * t) )  @  self.U_inv
             
+        else:
+            for site in sequence:
+                
+                rate_class = site.rate_class
+                
+                if rate_class not in P_matrices:
+                    rate = self.het_model.get_class_rate(rate_class)
+                    P_matrices[rate_class] = self.U  @  np.diag( np.exp(self.eigvals * rate * t) )  @  self.U_inv
+        
+        return P_matrices
+        
+    
+    # --------------------------------------------------------------------------
+    #                         Gillespie substitution
+    # --------------------------------------------------------------------------
+    
+    def _assign_rate_factors(self, sequence, mode):
+        
+        if mode == 'all':
+            
+            rate_factors = self.het_model.get_rate_factors(len(sequence))
+            
+            i = 0
+            for site in sequence:
+                site.rate_factor = rate_factors[i]
+                i += 1
+                
+        elif mode == 'inserted':
+            
+            rate_factors = self.het_model.get_rate_factors(sequence.count_inserted())
+            
+            i = 0
+            for site in sequence:
+                
+                if site.statur == State.INSERTION:
+                    site.rate_factor = rate_factors[i]
+                    i += 1
+        
+        
+    def _evolve_gillespie(self, parent_seq, distance):
+        
+        child_seq = parent_seq.clone()
+        
+        if self.indel_model:
+            self._generate_indels(child_seq, distance)
+            self._assign_rate_factors(child_seq, 'inserted')
+        
+        self._substitute_gillespie(child_seq, distance)
+        
+        return child_seq
+    
+    
     def _substitute_gillespie(self, sequence, t):
         
-        current_time = 0.0
+        total_rate = self._total_subst_rate(sequence, exclude_inserted=True)
         
+        current_time = 0.0
         while current_time < t:
             
-            total_rate = sequence.total_subst_rate
-            waiting_time = np.random.exponential(1/total_rate) if total_rate > 0.0 else float('inf')
-            current_time += waiting_time
+            current_time += np.random.exponential(1/total_rate) if total_rate > 0.0 else float('inf')
             
             if current_time < t:
                 
-                site, r = self._choose_site(sequence)
+                site, mutation = self._draw_substitution(sequence, total_rate)
+                
+                total_rate += site.rate_factor * self.subst_model.Q[site._value, site._value]
+                total_rate -= site.rate_factor * self.subst_model.Q[mutation, mutation]
+                site._value = mutation
+                
     
-    
-    def _choose_site(self, sequence):
+    def _total_subst_rate(self, sequence, exclude_inserted=True):
         
-        current_sum = 0.0
-        r = np.random.uniform(low=0.0, high=sequence.total_rate)
+        total = 0.0
         
         for site in sequence:
             
-            # use negative value on the diagonal of matrix Q
+            if exclude_inserted and site.status == State.INSERTION:
+                continue
+            
+            total -= site.rate_factor * self.subst_model.Q[site._value, site._value]
+        
+        return total
+    
+    
+    def _draw_substitution(self, sequence, total_rate):
+        
+        chosen_site, chosen_mutation = None, None
+        r = np.random.uniform(low=0.0, high=total_rate)
+        
+        current_sum = 0.0
+        for site in sequence:
+            
+            if site.status == State.INSERTION:
+                continue
+            
+            # use negative value on the diagonal of the rate matrix Q
             site_rate = - site.rate_factor * self.subst_model.Q[site._value, site._value]
             current_sum += site_rate
             
             if current_sum > r:
+                chosen_site = site
                 
-                # return site and the "rest" of r
-                return site, r - (current_sum - site_rate)
+                # rescale the "rest" of r for application on the rate matrix Q
+                r = (r - current_sum + site_rate) / site.rate_factor
+                
+                break
             
+        current_sum = 0.0
+        for i in range(len(self.subst_model.alphabet)):
             
-    def _choose_substitution(self):
+            if i != site._value:            # skip the entry on diagonal
+                current_sum += self.subst_model.Q[site._value, i]
+                
+                if current_sum > r:
+                    chosen_mutation = i
+                    
+        return chosen_site, chosen_mutation
+    
+    
+    # --------------------------------------------------------------------------
+    #                               Indels
+    # --------------------------------------------------------------------------
         
-        pass
-            
-    
-    
     def _generate_indels(self, sequence, t):
         """Generates indels by a Gillespie process."""
         
@@ -163,8 +274,7 @@ class Evolver:
             ins_rate, del_rate = self.indel_model.get_rates(len(sequence))
             total_rate = ins_rate + del_rate
             
-            waiting_time = np.random.exponential(1/total_rate) if total_rate > 0.0 else float('inf')
-            current_time += waiting_time
+            current_time += np.random.exponential(1/total_rate) if total_rate > 0.0 else float('inf')
             
             if current_time < t:
                 
@@ -180,20 +290,22 @@ class Evolver:
         d = self.indel_model.draw_length()
         pos = np.random.randint(-1, high=len(sequence))
         
-        # inintialize insertion before the first item
+        # initialize insertion before the first item
         if pos == -1:
-            current_element = sequence.append_left(None, State.INSERTION,
-                                                   self.site_counter)
+            current_site = sequence.append_left(None, State.INSERTION,
+                                                self.site_counter)
             self.site_counter += 1
             d -= 1
+            
         # go to the element at position pos
         else:
-            current_element = sequence.element_at(pos)
+            current_site = sequence.element_at(pos)
             
         for _ in range(d):
-            current_element = sequence.insert_right_of(current_element,
-                                                       None, State.INSERTION,
-                                                       self.site_counter)
+            current_site = sequence.insert_right_of(current_site,
+                                                    None, State.INSERTION,
+                                                    self.site_counter)
+            
             self.site_counter += 1
     
     
@@ -208,15 +320,6 @@ class Evolver:
             pos = 0
             
         sequence.remove_range(pos, d)
-    
-    
-    def true_alignment(self, include_inner=True):
-        
-        alg_builder = AlignmentBuilder(self.T, self.sequences,
-                                       self.subst_model.alphabet,
-                                       include_inner=include_inner)
-        
-        return alg_builder.build()
 
  
 if __name__ == "__main__":

@@ -48,13 +48,9 @@ class EvoSeqElement(DLListElement):
 class EvoSeq(DLList):
     """Evolving sequence."""
     
-    __slots__ = ('total_subst_rate')
-    
-    def __init__(self, total_subst_rate=0.0):
+    def __init__(self):
         
         super().__init__()
-        
-        self.total_subst_rate = 0.0
         
         
     def __iter__(self):
@@ -67,11 +63,14 @@ class EvoSeq(DLList):
         pass
     
     
-    def append(self, value, status, site_id, parent_el=None):
+    def append(self, value, status, site_id, parent_el=None,
+               rate_class=0, rate_factor=1.0):
         
         new_end = EvoSeqElement(value, status, site_id,
                                 prev_el=self._last,
-                                parent_el=parent_el)
+                                parent_el=parent_el,
+                                rate_class=rate_class,
+                                rate_factor=rate_factor)
         if self._last:
             self._last._next = new_end
         self._last = new_end
@@ -81,11 +80,14 @@ class EvoSeq(DLList):
         return new_end
     
     
-    def append_left(self, value, status, site_id, parent_el=None):
+    def append_left(self, value, status, site_id, parent_el=None,
+                    rate_class=0, rate_factor=1.0):
         
         new_start = EvoSeqElement(value, status, site_id,
                                   next_el=self._first,
-                                  parent_el=parent_el)
+                                  parent_el=parent_el,
+                                  rate_class=rate_class,
+                                  rate_factor=rate_factor)
         if self._first:
             self._first._prev = new_start
         self._first = new_start
@@ -95,16 +97,20 @@ class EvoSeq(DLList):
         return new_start
     
     
-    def insert_right_of(self, element, value, status, site_id, parent_el=None):
+    def insert_right_of(self, element, value, status, site_id, parent_el=None,
+                        rate_class=0, rate_factor=1.0):
         
         if element is self._last:
-            new_element = self.append(value, status, site_id, parent_el=parent_el)
+            new_element = self.append(value, status, site_id, parent_el=parent_el,
+                                      rate_class=rate_class, rate_factor=rate_factor)
             
         else:
             new_element = EvoSeqElement(value, status, site_id,
                                         prev_el=element,
                                         next_el=element._next,
-                                        parent_el=parent_el)
+                                        parent_el=parent_el,
+                                        rate_class=rate_class,
+                                        rate_factor=rate_factor)
             new_element._next._prev = new_element
             element._next = new_element
             self._count += 1
@@ -120,7 +126,9 @@ class EvoSeq(DLList):
         while parent_site:
             child_seq.append(parent_site._value,
                              State.INHERITED, parent_site.site_id,
-                             parent_el=parent_site)
+                             parent_el=parent_site,
+                             rate_class=parent_site.rate_class,
+                             rate_factor=parent_site.rate_factor)
             parent_site = parent_site._next
             
         return child_seq
