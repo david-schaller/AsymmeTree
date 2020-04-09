@@ -148,13 +148,13 @@ class EvoSeq(DLList):
                 second = second._next
     
     
-    def count_inherited(self):
+    def count_status(self, status):
         
         counter = 0
         
         site = self._first
         while site:
-            if site.status == State.INHERITED:
+            if site.status == status:
                 counter += 1
             site = site._next
                 

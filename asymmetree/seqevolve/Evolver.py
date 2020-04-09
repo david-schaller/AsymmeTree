@@ -17,6 +17,8 @@ class Evolver:
         self.indel_model = indel_model
         self.het_model = het_model
         
+        self.apply_gillespie = True
+        
     
     def evolve_along_tree(self, T, start_length=200, start_seq=None):
         
@@ -28,23 +30,16 @@ class Evolver:
             root_seq = self._random_sequence(start_length)
         else:
             root_seq = self._initialize_root(start_seq)
+            
+        if self.het_model:
+            self.het_model.assign(root_seq)
         
-        # apply matrix substitution
-        if not self.het_model:
-            for v in T.preorder():
-                if v.parent is None:
-                    self.sequences[v] = root_seq
-                else:
-                    self.sequences[v] = self._evolve(self.sequences[v.parent], v.dist)
-        
-        # apply Gillespie substitution        
-        else:
-            for v in T.preorder():
-                if v.parent is None:
-                    self._assign_rate_factors(root_seq, 'all')
-                    self.sequences[v] = root_seq
-                else:
-                    self.sequences[v] = self._evolve_gillespie(self.sequences[v.parent], v.dist)
+        for v in T.preorder():
+            
+            if v.parent is None:
+                self.sequences[v] = root_seq
+            else:
+                self.sequences[v] = self._evolve(self.sequences[v.parent], v.dist)
           
             
     def _random_positions(self, n):
@@ -75,6 +70,24 @@ class Evolver:
         return seq
     
     
+    def _evolve(self, parent_seq, distance):
+        
+        child_seq = parent_seq.clone()
+        
+        if self.indel_model:
+            self._generate_indels(child_seq, distance)
+            
+            if self.het_model:
+                self.het_model.assign(child_seq)
+        
+        if not self.apply_gillespie:
+            self._substitute(child_seq, distance)               # apply matrix substitution
+        else:
+            self._substitute_gillespie(child_seq, distance)     # apply Gillespie substitution
+        
+        return child_seq
+    
+    
     def true_alignment(self, include_inner=True):
         
         alg_builder = AlignmentBuilder(self.T, self.sequences,
@@ -87,18 +100,6 @@ class Evolver:
     # --------------------------------------------------------------------------
     #                           Matrix substitution
     # --------------------------------------------------------------------------
-    
-    def _evolve(self, parent_seq, distance):
-        
-        child_seq = parent_seq.clone()
-        
-        if self.indel_model:
-            self._generate_indels(child_seq, distance)
-        
-        self._substitute(child_seq, distance)        
-        
-        return child_seq
-    
     
     def _substitute(self, sequence, t):
         
@@ -157,46 +158,11 @@ class Evolver:
     #                         Gillespie substitution
     # --------------------------------------------------------------------------
     
-    def _assign_rate_factors(self, sequence, mode):
-        
-        if mode == 'all':
-            
-            rate_factors = self.het_model.get_rate_factors(len(sequence))
-            
-            i = 0
-            for site in sequence:
-                site.rate_factor = rate_factors[i]
-                i += 1
-                
-        elif mode == 'inserted':
-            
-            rate_factors = self.het_model.get_rate_factors(sequence.count_inserted())
-            
-            i = 0
-            for site in sequence:
-                
-                if site.statur == State.INSERTION:
-                    site.rate_factor = rate_factors[i]
-                    i += 1
-        
-        
-    def _evolve_gillespie(self, parent_seq, distance):
-        
-        child_seq = parent_seq.clone()
-        
-        if self.indel_model:
-            self._generate_indels(child_seq, distance)
-            self._assign_rate_factors(child_seq, 'inserted')
-        
-        self._substitute_gillespie(child_seq, distance)
-        
-        return child_seq
-    
-    
     def _substitute_gillespie(self, sequence, t):
         
         total_rate = self._total_subst_rate(sequence, exclude_inserted=True)
         
+        # Gillespie process for inherited positions
         current_time = 0.0
         while current_time < t:
             
@@ -209,6 +175,15 @@ class Evolver:
                 total_rate += site.rate_factor * self.subst_model.Q[site._value, site._value]
                 total_rate -= site.rate_factor * self.subst_model.Q[mutation, mutation]
                 site._value = mutation
+        
+        # choose random character for insertions
+        r = np.random.random(sequence.count_status(State.INSERTION))
+        pos = 0
+        for site in sequence:
+            
+            if site.status == State.INSERTION:
+                site._value = self._choose_index(self.subst_model.freqs, r[pos])
+                pos += 1
                 
     
     def _total_subst_rate(self, sequence, exclude_inserted=True):
@@ -221,7 +196,7 @@ class Evolver:
                 continue
             
             total -= site.rate_factor * self.subst_model.Q[site._value, site._value]
-        
+            
         return total
     
     
@@ -256,6 +231,7 @@ class Evolver:
                 
                 if current_sum > r:
                     chosen_mutation = i
+                    break
                     
         return chosen_site, chosen_mutation
     
