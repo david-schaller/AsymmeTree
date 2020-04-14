@@ -46,6 +46,11 @@ class AlignmentBuilder:
             
             seq = self.sequence_dict[node]
             
+            # handle case |seq| = 1 correctly
+            if len(seq) == 1:
+                G.add_node(seq[0].site_id)
+            
+            # add nodes and edges to auxiliary graph
             for first, second in seq.element_pairs():
                 G.add_edge(first.site_id, second.site_id)
                 
@@ -116,10 +121,12 @@ def _check_alignment(alignment):
 def _write_phylip(f, alignment):
     
     max_length, seq_length = _check_alignment(alignment)
+    max_length = max(max_length, 9)
     
-    f.write(" {} {}".format(len(alignment), seq_length))
     
-    format_str = "\n{:" + str(max_length+3) + "}"
+    f.write("  {} {} i".format(len(alignment), seq_length))
+    
+    format_str = "\n{:" + str(max_length+1) + "}"
     current = 0
     
     while current < seq_length:

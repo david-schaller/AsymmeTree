@@ -53,4 +53,4 @@ bin/
 
 # others
 examples/results/*
-*.testfile
+testfile*

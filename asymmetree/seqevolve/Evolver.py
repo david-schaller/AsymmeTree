@@ -17,7 +17,7 @@ class Evolver:
         self.indel_model = indel_model
         self.het_model = het_model
         
-        self.apply_gillespie = True
+        self.jump_chain = True
         
     
     def evolve_along_tree(self, T, start_length=200, start_seq=None):
@@ -80,10 +80,10 @@ class Evolver:
             if self.het_model:
                 self.het_model.assign(child_seq)
         
-        if not self.apply_gillespie:
+        if not self.jump_chain:
             self._substitute(child_seq, distance)               # apply matrix substitution
         else:
-            self._substitute_gillespie(child_seq, distance)     # apply Gillespie substitution
+            self._substitute_jump_chain(child_seq, distance)    # apply jump chain substitution
         
         return child_seq
     
@@ -103,8 +103,8 @@ class Evolver:
     
     def _substitute(self, sequence, t):
         
-        # transtion probabilty matrices
-        P_matrices = self._P_matrices(sequence, t)
+        # transtion probability matrices
+        P = self._P_matrices(sequence, t)
         
         r = np.random.random(len(sequence))
         pos = 0
@@ -112,9 +112,9 @@ class Evolver:
         for site in sequence:
             
             if site.status == State.INHERITED:
-                # mutate according to matrix P
-                P = P_matrices[site.rate_class]
-                site._value = self._choose_index(P[site._value, :], r[pos])
+                # mutate according to matrix P_c of the corresponding class
+                P_c = P[site.rate_class]
+                site._value = self._choose_index(P_c[site._value, :], r[pos])
             
             else:
                 # choose random character
@@ -137,32 +137,37 @@ class Evolver:
     
     def _P_matrices(self, sequence, t):
         
-        P_matrices = {}
+        P = {}
         
         if not self.het_model:
-            P_matrices[0] = self.U  @  np.diag( np.exp(self.eigvals * t) )  @  self.U_inv
+            P[0] = self.U  @  np.diag( np.exp(self.eigvals * t) )  @  self.U_inv
             
         else:
             for site in sequence:
                 
-                rate_class = site.rate_class
+                c = site.rate_class
                 
-                if rate_class not in P_matrices:
-                    rate = self.het_model.get_class_rate(rate_class)
-                    P_matrices[rate_class] = self.U  @  np.diag( np.exp(self.eigvals * rate * t) )  @  self.U_inv
+                if c not in P:
+                    
+                    r = site.rate_factor
+                    
+                    if r > 0.0:
+                        P[c] = self.U  @  np.diag( np.exp(self.eigvals * r * t) )  @  self.U_inv
+                    elif r == 0:
+                        P[c] = np.identity(len(self.subst_model.alphabet))
         
-        return P_matrices
+        return P
         
     
     # --------------------------------------------------------------------------
-    #                         Gillespie substitution
+    #                        Jump chain substitution
     # --------------------------------------------------------------------------
     
-    def _substitute_gillespie(self, sequence, t):
+    def _substitute_jump_chain(self, sequence, t):
         
         total_rate = self._total_subst_rate(sequence, exclude_inserted=True)
         
-        # Gillespie process for inherited positions
+        # jump chain algorithm for inherited positions
         current_time = 0.0
         while current_time < t:
             
@@ -320,7 +325,7 @@ if __name__ == "__main__":
     for node, sequence in alg_seq.items():
         print(node.label, sequence)
         
-    write_to_file("alignment.testfile", alg_seq, al_format='clustal')
+    write_to_file("../../validation/testfile.alignment", alg_seq, al_format='phylip')
     
     
     
