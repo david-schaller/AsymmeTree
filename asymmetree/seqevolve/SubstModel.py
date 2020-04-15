@@ -23,17 +23,17 @@ class SubstModel:
         
         self._params = params
         
-        if (self.model_type in ('nuc', 'nucleotide') and
+        if (self.model_type in ('n', 'nuc', 'nucleotide') and
             self.model_name in SubstModel.nuc_models):
             
-            self.model_type = 'nuc'
+            self.model_type = 'n'
             self.alphabet = SubstModel.nucleotides
             
-        elif (self.model_type in ('aa', 'amino', 'aminoacid', 'protein') and
+        elif (self.model_type in ('a', 'aa', 'amino', 'aminoacid', 'protein') and
               (self.model_name in SubstModel.aa_models or 
                self.model_name in empirical_models)):
             
-            self.model_type = 'aa'
+            self.model_type = 'a'
             self.alphabet = SubstModel.amino_acids
                 
         else:
@@ -48,7 +48,7 @@ class SubstModel:
     def _load_exchangeability_and_freqs(self):
         """Load the exchangeability matrix S and the stationary frequencies pi."""
         
-        if self.model_type == 'nuc':
+        if self.model_type == 'n':
             
             if self.model_name == 'JC69':
                 self.S, self.freqs = _JC69_nuc()
@@ -68,7 +68,7 @@ class SubstModel:
                 self.S, self.freqs = _GTR_nuc(self._params['abcdef'],
                                               self._params['f'])
         
-        elif self.model_type == 'aa':
+        elif self.model_type == 'a':
             
             if self.model_name == 'JC69':
                 self.S, self.freqs = _JC69_aa()

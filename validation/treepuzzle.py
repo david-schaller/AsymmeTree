@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import subprocess
+
 import numpy as np
 
 
@@ -53,9 +55,34 @@ def rearrange_matrix(D, labels, target_labels):
             D_new[i, j] = D[mapping[i], mapping[j]]
     
     return D_new
+
+
+def calc_distances(infile, model='WAG'):
+    
+    models = ['WAG', 'DAYHOFF', 'JTT', 'MTREV24', 'BLOSUM62', 'VT']
+    
+    args = ['puzzle', infile]
+    
+    communication = b'k\nk\nk\n'
+    
+    if model.upper() in models:
+        for i in range(models.index(model.upper())):
+            communication += b'm\n'
+            
+    else:
+        raise ValueError("Model '{}' not available!".format(model))
+    
+    communication += b'y\n'
+    
+    proc = subprocess.Popen(args, stdin=subprocess.PIPE)
+    
+    for _ in range(1):
+        proc.communicate(communication)
         
 
 if __name__ == '__main__':
+    
+    calc_distances('testfile.alignment')
     
     D, labels = parse_distance_matrix('testfile.alignment.dist')
     
@@ -67,3 +94,5 @@ if __name__ == '__main__':
     
     print(D)
     print(sorted_labels)
+    
+    

@@ -9,7 +9,7 @@ from asymmetree.seqevolve.Alignment import AlignmentBuilder, write_to_file
 
 class Evolver:
     
-    def __init__(self, subst_model, indel_model=None, het_model=None):
+    def __init__(self, subst_model, indel_model=None, het_model=None, jump_chain=False):
         
         self.subst_model = subst_model
         self.eigvals, self.U, self.U_inv = subst_model.eigensystem()
@@ -17,7 +17,7 @@ class Evolver:
         self.indel_model = indel_model
         self.het_model = het_model
         
-        self.jump_chain = True
+        self._jump_chain = jump_chain
         
     
     def evolve_along_tree(self, T, start_length=200, start_seq=None):
@@ -80,7 +80,7 @@ class Evolver:
             if self.het_model:
                 self.het_model.assign(child_seq)
         
-        if not self.jump_chain:
+        if not self._jump_chain:
             self._substitute(child_seq, distance)               # apply matrix substitution
         else:
             self._substitute_jump_chain(child_seq, distance)    # apply jump chain substitution
@@ -88,13 +88,18 @@ class Evolver:
         return child_seq
     
     
-    def true_alignment(self, include_inner=True):
+    def true_alignment(self, include_inner=True, write_to=None, al_format='phylip'):
         
         alg_builder = AlignmentBuilder(self.T, self.sequences,
                                        self.subst_model.alphabet,
                                        include_inner=include_inner)
         
-        return alg_builder.build()
+        alignment = alg_builder.build()
+        
+        if write_to:
+            write_to_file(write_to, alignment, al_format=al_format)
+        
+        return alignment
     
     
     # --------------------------------------------------------------------------
@@ -321,11 +326,7 @@ if __name__ == "__main__":
     for node, sequence in evolver.sequences.items():
         print(node.label, subst_model.to_sequence(sequence))
         
-    alg_seq = evolver.true_alignment()
+    alg_seq = evolver.true_alignment(write_to="../../validation/testfile.alignment")
     for node, sequence in alg_seq.items():
         print(node.label, sequence)
         
-    write_to_file("../../validation/testfile.alignment", alg_seq, al_format='phylip')
-    
-    
-    

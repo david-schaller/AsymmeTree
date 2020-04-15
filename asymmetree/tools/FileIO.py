@@ -14,6 +14,7 @@ __copyright__ = "Copyright (C) 2019, David Schaller"
 
 def matrix_to_phylip(filename, leaves, matrix):
     """Write the distance matrix in phylip format."""
+    
     with open(filename, "w") as f:
         f.write(str(len(leaves)))
         for i in range(len(leaves)):
@@ -24,6 +25,7 @@ def matrix_to_phylip(filename, leaves, matrix):
 
 def species_to_genes(filename, scenario):
     """Write the species and corresponding genes file."""
+    
     with open(filename, "w") as f:
         species = list(scenario.color_dict)
         for i in range(len(species)):
@@ -38,6 +40,7 @@ def species_pairs_outgroups(filename, scenario):
     """Write pairs of species with corresponding outgroups 
     
     ("ok-species" file)."""
+    
     with open(filename, "w") as f:
         begin = True
         for i in range(len(scenario.subtree_list)):
@@ -58,6 +61,7 @@ def species_in_subtree(filename, scenario):
     """Species in the same subtree under the the root
     
     (one line per subtree)."""
+    
     with open(filename, "w") as f:
         begin = True
         for sp_list in scenario.subtree_list:
@@ -71,6 +75,7 @@ def species_in_subtree(filename, scenario):
 
 def subtree_BMG(filename, scenario):
     """Write the (subgraph of) BMG."""
+    
     with open(filename, "w") as f:
         begin = True
         for u, v in scenario.BMG_subtrees.edges:
@@ -85,6 +90,7 @@ def parse_BMG_edges(output, scenario):
     """Parse edge output from external program to a graph
     
     (converts keys to ints if possible)."""
+    
     BMG = nx.DiGraph()
     BMG.add_nodes_from(scenario.BMG.nodes(data=True))
     
@@ -99,7 +105,8 @@ def parse_BMG_edges(output, scenario):
                 if u not in BMG.nodes:
                     print("Not in BMG", u)
                 BMG.add_edge(u, v)
-    return BMG
+                
+    return BMG          
 
 
 def write_newick(filename, tree):
