@@ -68,7 +68,7 @@ def JC69_distance_var(p, n, amino_acid=False):
 def IV_proportions(seq1, seq2):
     """Computes the proportions of transitions and transversions."""
     
-    purines = {'A', 'a', 'C', 'c', 'R', 'r'}
+    purines = {'A', 'a', 'G', 'g', 'R', 'r'}
     pyrimidines = {'C', 'c', 'T', 't', 'U', 'u', 'Y', 'y'}
     
     if len(seq1) != len(seq2):
