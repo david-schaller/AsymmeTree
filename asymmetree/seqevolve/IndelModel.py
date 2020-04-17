@@ -10,7 +10,7 @@ class IndelModel:
     def __init__(self, insertion_rate, deletion_rate,
                  length_model='zipf',
                  max_length=False,
-                 params=None):
+                 **params):
         
         if insertion_rate < 0.0 or deletion_rate < 0.0:
             raise ValueError("Insertion and deletion rates must be non-negative!")
@@ -70,16 +70,13 @@ class IndelModel:
         
         if self._length_model == 'zipf':
             
-            if not self._params or 'a' not in self._params:
+            if 'a' not in self._params:
                 self._params = {'a': 1.821}     # (Chang and Benner 2004)
                 
             elif not isinstance(self._params['a'], float) or self._params['a'] <= 1.0:
                 raise ValueError("Invalid value for parameter 'a': {}".format(self._params['a']))
                 
         if self._length_model == 'negative_binomial':
-            
-            if not self._params:
-                self._params = {'r': 1, 'q': 0.5}
             
             if 'r' not in self._params:
                 self._params['r'] = 1

@@ -16,7 +16,7 @@ class SubstModel:
     
     
     def __init__(self, model_type, model_name,
-                 params=None):
+                 **params):
         
         self.model_type = model_type.lower()
         self.model_name = model_name.upper()
@@ -100,9 +100,23 @@ class SubstModel:
     def eigensystem(self):
         
         if not hasattr(self, 'eigenvals'):
-            self.eigvals, self.U, self.U_inv = diagonalize(self.Q, self.freqs)
+            self.eigenvals, self.U, self.U_inv = diagonalize(self.Q, self.freqs)
         
-        return self.eigvals, self.U, self.U_inv
+        return self.eigenvals, self.U, self.U_inv
+    
+    
+    def transition_prob_matrix(self, t):
+        """Calculate the transition probability matrix P(t).
+        
+        P(t) = U x e^(Lambda*t) x U^(-1)."""
+        
+        # ensure that eigensystem has been computed
+        self.eigensystem()
+        
+        # first multiplication element-wise, since corresponding matrix
+        # only has non-zero entries on the diagonal
+        
+        return (self.U * np.exp(self.eigenvals * t))  @  self.U_inv
         
     
     def to_indices(self, sequence):
@@ -130,7 +144,7 @@ def diagonalize(Q, freqs):
     # matrix is already symmetric
     if np.allclose(Q, Q.T):
         
-        eigvals, U = np.linalg.eigh(Q)
+        eigenvals, U = np.linalg.eigh(Q)
         U_inv = np.linalg.inv(U)
     
     # matrix is not symmetric but model is time-reversible
@@ -141,12 +155,12 @@ def diagonalize(Q, freqs):
         
         B = Phi @ Q @ Phi_inv
         
-        eigvals, R = np.linalg.eigh(B)
+        eigenvals, R = np.linalg.eigh(B)
 
         U = Phi_inv @ R
         U_inv = np.linalg.inv(R) @ Phi
     
-    return eigvals, U, U_inv
+    return eigenvals, U, U_inv
     
     
 # --------------------------------------------------------------------------

@@ -12,7 +12,6 @@ class Evolver:
     def __init__(self, subst_model, indel_model=None, het_model=None, jump_chain=False):
         
         self.subst_model = subst_model
-        self.eigvals, self.U, self.U_inv = subst_model.eigensystem()
         
         self.indel_model = indel_model
         self.het_model = het_model
@@ -81,9 +80,9 @@ class Evolver:
                 self.het_model.assign(child_seq)
         
         if not self._jump_chain:
-            self._substitute(child_seq, distance)               # apply matrix substitution
+            self._substitute(child_seq, distance)               # apply transition prob. matrix
         else:
-            self._substitute_jump_chain(child_seq, distance)    # apply jump chain substitution
+            self._substitute_jump_chain(child_seq, distance)    # apply jump chain
         
         return child_seq
     
@@ -103,7 +102,7 @@ class Evolver:
     
     
     # --------------------------------------------------------------------------
-    #                           Matrix substitution
+    #               Substitution by transition probability matrix
     # --------------------------------------------------------------------------
     
     def _substitute(self, sequence, t):
@@ -145,8 +144,8 @@ class Evolver:
         P = {}
         
         if not self.het_model:
-            P[0] = self.U  @  np.diag( np.exp(self.eigvals * t) )  @  self.U_inv
-            
+            P[0] = self.subst_model.transition_prob_matrix(t)
+
         else:
             for site in sequence:
                 
@@ -157,7 +156,7 @@ class Evolver:
                     r = site.rate_factor
                     
                     if r > 0.0:
-                        P[c] = self.U  @  np.diag( np.exp(self.eigvals * r * t) )  @  self.U_inv
+                        P[c] = self.subst_model.transition_prob_matrix(r * t)
                     elif r == 0:
                         P[c] = np.identity(len(self.subst_model.alphabet))
         
@@ -165,7 +164,7 @@ class Evolver:
         
     
     # --------------------------------------------------------------------------
-    #                        Jump chain substitution
+    #                        Substitution by Jump chain
     # --------------------------------------------------------------------------
     
     def _substitute_jump_chain(self, sequence, t):
@@ -308,14 +307,14 @@ class Evolver:
         sequence.remove_range(pos, d)
 
  
-if __name__ == "__main__":
+if __name__ == '__main__':
     
     from SubstModel import SubstModel
     from IndelModel import IndelModel
     import asymmetree.simulator.TreeSimulator as ts
     
-    subst_model = SubstModel("aa", "WAG")
-    indel_model = IndelModel(0.01, 0.01, length_model="zipf")
+    subst_model = SubstModel('a', 'WAG')
+    indel_model = IndelModel(0.01, 0.01, length_model='zipf')
     
     evolver = Evolver(subst_model, indel_model=indel_model)
     print(evolver.subst_model.Q)
@@ -326,7 +325,7 @@ if __name__ == "__main__":
     for node, sequence in evolver.sequences.items():
         print(node.label, subst_model.to_sequence(sequence))
         
-    alg_seq = evolver.true_alignment(write_to="../../validation/testfile.alignment")
+    alg_seq = evolver.true_alignment(write_to='../../validation/testfile.alignment')
     for node, sequence in alg_seq.items():
         print(node.label, sequence)
         

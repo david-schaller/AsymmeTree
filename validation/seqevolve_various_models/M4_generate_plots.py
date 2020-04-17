@@ -27,7 +27,7 @@ for i in range(len(models)):
     axs[i].set_xlim(0.0, max(df['true']))
     axs[i].set_ylim(0.0, 5.5)
     axs[i].tick_params(axis='both', which='major', labelsize=fs)
-    axs[i].tick_params(axis='both', which='major', labelsize=fs)
+    
     if i % 2 == 0:
         axs[i].set_ylabel('estimated distance', fontsize=fs)
     if i > 1:

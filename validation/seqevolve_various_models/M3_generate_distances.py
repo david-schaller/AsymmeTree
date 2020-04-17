@@ -16,8 +16,8 @@ def JC69_distances(labels, seqs):
     
     for i in range(N-1):
         for j in range(i, N):
-            p, n = dc.p_distance(seqs[labels[i]], seqs[labels[j]])
-            d = dc.JC69_distance(p)
+            
+            d = dc.JC69_distance(seqs[labels[i]], seqs[labels[j]])
             
             D[i, j] = d
             D[j, i] = d
@@ -33,8 +33,7 @@ def K80_distances(labels, seqs):
     for i in range(N-1):
         for j in range(i, N):
             
-            S, V, n = dc.IV_proportions(seqs[labels[i]], seqs[labels[j]])
-            d, kappa = dc.K80_distance(S, V)
+            d, kappa = dc.K80_distance(seqs[labels[i]], seqs[labels[j]])
             
             D[i, j] = d
             D[j, i] = d

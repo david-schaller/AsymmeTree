@@ -13,7 +13,7 @@ lengths = [100, 500, 1000, 5000, 20000]
 distances = [0.1, 0.2, 0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0]
 
 subst_models = [SubstModel('n', 'JC69'),
-                SubstModel('n', 'K80', params={'kappa': 2.0}),
+                SubstModel('n', 'K80', kappa=2.0),
                 SubstModel('a', 'WAG'),
                 SubstModel('a', 'JTT'),]
 
@@ -78,14 +78,12 @@ def calculate_distances(outfile):
         if model == 'JC69':
             
             labels, seqs = aux_functions.parse_phylip_alignment(file)
-            p, n = dc.p_distance(seqs['0'], seqs['1'])
-            d_hat = dc.JC69_distance(p)
+            d_hat = dc.JC69_distance(seqs['0'], seqs['1'])
             
         elif model == 'K80':
             
             labels, seqs = aux_functions.parse_phylip_alignment(file)
-            S, V, n = dc.IV_proportions(seqs['0'], seqs['1'])
-            d_hat, kappa = dc.K80_distance(S, V)
+            d_hat, kappa = dc.K80_distance(seqs['0'], seqs['1'])
             
         elif model in ('WAG', 'JTT'):
             

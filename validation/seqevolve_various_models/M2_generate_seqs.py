@@ -9,7 +9,7 @@ from M1_generate_trees import load
 seq_length = 500
 
 subst_models = [SubstModel('n', 'JC69'),
-                SubstModel('n', 'K80', params={'kappa': 2.0}),
+                SubstModel('n', 'K80', kappa=2.0),
                 SubstModel('a', 'WAG'),
                 SubstModel('a', 'JTT'),]
 
