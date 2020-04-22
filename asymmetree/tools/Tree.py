@@ -75,96 +75,133 @@ class Tree:
     
     
     def __init__(self, root):
+        
         self.root = root
     
     
-    def preorder(self, node=None):
+    def preorder(self):
         """Generator for preorder traversal of the tree."""
         
-        if node is None:
-            yield from self.preorder(node=self.root)
+        if self.root:
+            yield from self._preorder(self.root)
         else:
-            yield node
-            for child in node.children:
-                yield from self.preorder(node=child)
+            yield from []
+            
+                
+    def _preorder(self, node):
+        
+        yield node
+        for child in node.children:
+            yield from self._preorder(child)
     
     
-    def postorder(self, node=None):
+    def postorder(self):
         """Generator for postorder traversal of the tree."""
         
-        if node is None:
-            yield from self.postorder(node=self.root)
+        if self.root:
+            yield from self._postorder(self.root)
         else:
-            for child in node.children:
-                yield from self.postorder(node=child)
-            yield node
+            yield from []
             
     
-    def inner_vertices(self, node=None):
+    def _postorder(self, node):
+        
+        for child in node.children:
+            yield from self._postorder(child)
+        yield node
+            
+    
+    def inner_vertices(self):
         """Generator for inner vertices in preorder."""
         
-        if node is None:
-            yield from self.inner_vertices(node=self.root)
+        if self.root:
+            yield from self._inner_vertices(self.root)
         else:
-            if node.children:
-                yield node
-                for child in node.children:
-                    yield from self.inner_vertices(node=child)
+            yield from []
+                    
+                    
+    def _inner_vertices(self, node):
+        
+        if node.children:
+            yield node
+            for child in node.children:
+                yield from self._inner_vertices(child)
             
     
-    def edges(self, node=None):
+    def edges(self):
         """Generator for all edges of the tree."""
         
-        if node is None:
-            yield from self.edges(node=self.root)
+        if self.root:
+            yield from self._edges(self.root)
         else:
-            for child in node.children:
-                yield (node, child)
-                yield from self.edges(node=child)
+            yield from []
+                
+                
+    def _edges(self, node):
+        
+        for child in node.children:
+            yield (node, child)
+            yield from self._edges(child)
                 
     
-    def inner_edges(self, node=None):
+    def inner_edges(self):
         """Generator for all inner edges of the tree."""
         
-        if node is None:
-            yield from self.inner_edges(node=self.root)
+        if self.root:
+            yield from self._inner_edges(self.root)
         else:
-            for child in node.children:
-                if child.children:
-                    yield (node, child)
-                    yield from self.inner_edges(node=child)
+            yield from []
+                    
+                    
+    def _inner_edges(self, node):
+        
+        for child in node.children:
+            if child.children:
+                yield (node, child)
+                yield from self._inner_edges(child)
                 
     
-    def euler_generator(self, node=None, id_only=False):
+    def euler_generator(self, id_only=False):
         """Generator for an Euler tour of the tree."""
         
-        if node is None:
-            yield from self.euler_generator(node=self.root, id_only=id_only)
+        if self.root:
+            yield from self._euler_generator(self.root, id_only)
         else:
-            if id_only: yield node.ID
-            else: yield node
-            
-            for child in node.children:
-                yield from self.euler_generator(node=child, id_only=id_only)
+            yield from []     
                 
-                if id_only: yield node.ID
-                else: yield node
+    
+    def _euler_generator(self, node, id_only):
+        
+        if id_only: yield node.ID
+        else:       yield node
+        
+        for child in node.children:
+            yield from self._euler_generator(child, id_only)
+            
+            if id_only: yield node.ID
+            else:       yield node
             
     
-    def supply_leaves(self, node=None):
+    def supply_leaves(self):
         """Add the leaves to all nodes that are in the subtree of a specific node."""
         
-        if node is None:
-            self.supply_leaves(self.root)
-            return self.root.leaves
+        if self.root:
+            return self._supply_leaves(self.root)
         else:
-            node.leaves = []
-            if not node.children:
-                node.leaves.append(node)
-            else:
-                for child in node.children:
-                    node.leaves.extend(self.supply_leaves(child))
-            return node.leaves
+            return []
+        
+    
+    def _supply_leaves(self, node):
+        
+        node.leaves = []
+        
+        if not node.children:
+            node.leaves.append(node)
+        else:
+            for child in node.children:
+                node.leaves.extend(self._supply_leaves(child))
+                
+        return node.leaves
         
         
     def get_triples(self):
@@ -192,7 +229,7 @@ class Tree:
         
         parent = node.parent
         if not parent:
-            print("Cannot delete and reconnect root '{node}'!".format(node))
+            print("Cannot delete and reconnect root '{}'!".format(node))
             return False
         else:
             parent.remove_child(node)
@@ -210,14 +247,20 @@ class Tree:
     def to_newick(self, node=None):
         """Recursive Tree --> Newick (str) function."""
         
-        if node is None:
-            return self.to_newick(self.root) + ";"
-        elif not node.children:
+        if self.root:
+            return self._to_newick(self.root) + ';'
+        else:
+            return ';'
+        
+    
+    def _to_newick(self, node):
+        
+        if not node.children:
             return str(node)
         else:
             s = ''
             for child in node.children:
-                s += self.to_newick(node=child) + ","
+                s += self._to_newick(child) + ','
             return "({}){}".format(s[:-1], node)
       
     
@@ -275,9 +318,9 @@ class Tree:
             binary - forces the tree to be binary; default is False
         """
         
-        if not (isinstance(N, int)):
-            raise TypeError("N must be of type 'int'!")
-        root = TreeNode(0, label="0")
+        if not (isinstance(N, int)) or N < 1:
+            raise TypeError("N must be an 'int' > 0!")
+        root = TreeNode(0, label='0')
         tree = Tree(root)
         node_list = [root]
         break_prob = [0.5, 0.5]

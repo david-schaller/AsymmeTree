@@ -76,10 +76,14 @@ def LRT_from_observable_tree(T):
     """
     
     LRT = T.copy()
+    if not LRT.root:
+        return LRT
     
     # remove planted root
     if len(LRT.root.children) == 1:
-        LRT.delete_and_reconnect(LRT.root.children[0])
+        new_root = LRT.root.children[0]
+        new_root.detach()
+        LRT.root = new_root
     
     LRT.supply_leaves()                                 # assign list of leaves to each node
     

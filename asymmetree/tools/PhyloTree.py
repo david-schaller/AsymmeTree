@@ -59,7 +59,7 @@ class PhyloTree(Tree):
     
     def __init__(self, root):
         
-        if not isinstance(root, PhyloTreeNode):
+        if root is not None and not isinstance(root, PhyloTreeNode):
             raise TypeError("root must be of type 'PhyloTreeNode'.")
         super().__init__(root)
     
@@ -114,26 +114,33 @@ class PhyloTree(Tree):
     def supply_leaves(self, node=None, exclude_losses=True):
         """Add the leaves to all nodes that are in the subtree of a specific node."""
         
-        if not node:
-            self.supply_leaves(self.root, exclude_losses=exclude_losses)
-            return self.root.leaves
+        if self.root:
+            return self._supply_leaves(self.root, exclude_losses)
         else:
-            node.leaves = []
-            if not node.children:
-                if exclude_losses and node.label != "*":
-                    node.leaves.append(node)
-                elif not exclude_losses:
-                    node.leaves.append(node)
-            else:
-                for child in node.children:
-                    node.leaves.extend(self.supply_leaves(child, exclude_losses=exclude_losses))
-            return node.leaves
+            return []
+        
+    
+    def _supply_leaves(self, node, exclude_losses):
+        
+        node.leaves = []
+        
+        if not node.children:
+            if exclude_losses and node.label != "*":
+                node.leaves.append(node)
+            elif not exclude_losses:
+                node.leaves.append(node)
+        else:
+            for child in node.children:
+                node.leaves.extend(self._supply_leaves(child, exclude_losses))
+                
+        return node.leaves        
     
     
     def distances_from_root(self):
         
         leaf_distances = []
         distance_dict = {}
+        
         for v in self.preorder():
             if not v.parent:
                 distance_dict[v] = 0.0
@@ -142,6 +149,7 @@ class PhyloTree(Tree):
                 distance_dict[v] = depth
             if not v.children:
                 leaf_distances.append( (str(v), distance_dict[v]) )
+                
         return distance_dict, leaf_distances
     
     
@@ -173,12 +181,18 @@ class PhyloTree(Tree):
                   label_inner=True, color_inner=False):
         """Recursive PhyloTree --> Newick (str) function."""
         
-        if node is None:
-            return self.to_newick(self.root,
-                                  label=label, color=color, distance=distance,
-                                  label_inner=label_inner, color_inner=color_inner) + ";"
-        elif not node.children:
-            token = ""
+        if self.root:
+            return self._to_newick(self.root, label, color, distance, label_inner, color_inner) + ';'
+        else:
+            return ';'
+        
+    
+    def _to_newick(self, node, 
+                   label, color, distance,
+                   label_inner, color_inner):
+        
+        if not node.children:
+            token = ''
             if label:
                 token += str(node.label)
             if color and node.color:
@@ -189,10 +203,8 @@ class PhyloTree(Tree):
         else:
             s = ''
             for child in node.children:
-                s += self.to_newick(node=child,
-                                    label=label, color=color, distance=distance,
-                                    label_inner=label_inner, color_inner=color_inner) + ","
-            token = ""
+                s += self._to_newick(child, label, color, distance, label_inner, color_inner) + ','
+            token = ''
             if label and label_inner:
                 token += str(node.label)
             if color_inner and node.color:
@@ -330,11 +342,13 @@ class PhyloTree(Tree):
         self.check_integrity()
         G = nx.DiGraph()
         
+        if not self.root:
+            return G, None
+        
+        for v in self.preorder():
+            G.add_node(v.ID, label=v.label, color=v.color, tstamp=v.tstamp)
+        
         for u, v in self.edges():
-            if u.ID not in G:
-                G.add_node(u.ID, label=u.label, color=u.color, tstamp=u.tstamp)
-            if v.ID not in G:
-                G.add_node(v.ID, label=v.label, color=v.color, tstamp=v.tstamp)
             if u is v or u.ID == v.ID:
                 print("Loop at", str(u), str(v), v.transferred)
             G.add_edge(u.ID, v.ID, dist=v.dist, transferred=v.transferred)
@@ -346,10 +360,16 @@ class PhyloTree(Tree):
     def parse_nx(G, root):
         
         number_of_leaves = 0
+        
+        if root is None:
+            return PhyloTree(None)
     
         def build_tree(ID, parent=None):
+            
             nonlocal number_of_leaves
+            
             treenode = PhyloTreeNode(ID, label=G.nodes[ID]['label'])
+            
             if parent:
                 parent.add_child(treenode)
                 if 'dist' in G.edges[parent.ID, ID]:
@@ -370,6 +390,7 @@ class PhyloTree(Tree):
                 number_of_leaves += 1
             
             return treenode
+        
         tree = PhyloTree(build_tree(root))
         tree.number_of_species = number_of_leaves
         
@@ -378,6 +399,9 @@ class PhyloTree(Tree):
 
     
     def copy(self):
+        
+        if not self.root:
+            return PhyloTree(None)
         
         orig_to_new = {}
         

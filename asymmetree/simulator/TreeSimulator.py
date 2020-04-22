@@ -262,25 +262,39 @@ class GeneTreeSimulator:
         
         if self._prohibit_extinction == 'per_family' and self.total_surviving == 1:
             
-            return
+            branch = None
+            for b in self.branches:
+                if b.rate > 0.0:
+                    branch = b
+                    break
+            
+            if np.random.uniform(high=self.d+self.h) <= self.d:
+                event_type = 'D'
+            else:
+                event_type = 'H'
         
-        r = np.random.uniform() * self.total_rate
-        current_sum = 0.0
-        
-        for i in range(len(self.branches)):
-            if r <= current_sum + self.branches[i].rate:
-                break
-            current_sum += self.branches[i].rate
-        
-        branch = self.branches[i]
-        loss_factor = 1 if len(self.ES_to_b[(branch.S_u,branch.S_v)]) > 1 else 0
-        
-        if r <= current_sum + self.DLH_rates[0]:
-            event_type = 'D'
-        elif r <= current_sum + self.DLH_rates[0] + loss_factor * self.DLH_rates[1]:
-            event_type = 'L'
         else:
-            event_type = 'H'
+            r = np.random.uniform(high=self.total_rate)
+            current_sum = 0.0
+            
+            for i in range(len(self.branches)):
+                if r <= current_sum + self.branches[i].rate:
+                    break
+                current_sum += self.branches[i].rate
+            
+            branch = self.branches[i]
+            
+            loss_factor = 1
+            if (self._prohibit_extinction == 'per_species' and
+                len(self.ES_to_b[(branch.S_u,branch.S_v)]) <= 1):
+                loss_factor = 0
+            
+            if r <= current_sum + self.d:
+                event_type = 'D'
+            elif r <= current_sum + self.d + loss_factor * self.l:
+                event_type = 'L'
+            else:
+                event_type = 'H'
         
 #        assert np.isclose(self.total_rate, sum([b.rate for b in self.branches])), "Sum of rates and total rate are not equal."
         
@@ -330,15 +344,15 @@ class GeneTreeSimulator:
                 
                 # duplication
                 if event_type == 'D':
-                    self._duplication(event_tstamp, branch, event_type)
+                    self._duplication(event_tstamp, branch)
                 
                 # loss
                 elif event_type == 'L':
-                    self._loss(event_tstamp, branch, event_type)
+                    self._loss(event_tstamp, branch)
                     
                 # HGT    
                 elif event_type == 'H':
-                    self._hgt(event_tstamp, branch, event_type)
+                    self._hgt(event_tstamp, branch)
                 
                 t = event_tstamp
 
@@ -349,16 +363,14 @@ class GeneTreeSimulator:
         
         if len(self.S.root.children) > 1:
             # root is a speciation event
-            T = PhyloTree(PhyloTreeNode(self.id_counter, label='S',
-                                        color=self.S.root.ID, 
-                                        dist=0.0,
-                                        tstamp=self.S.root.tstamp))
+            root = PhyloTreeNode(self.id_counter, label='S', color=self.S.root.ID, 
+                                 dist=0.0, tstamp=self.S.root.tstamp)
         else:                    
             # planted species tree
-            T = PhyloTree(PhyloTreeNode(self.id_counter,
-                                        color=self.S.root.ID,
-                                        dist=0.0,
-                                        tstamp=self.S.root.tstamp))
+            root = PhyloTreeNode(self.id_counter, color=self.S.root.ID,
+                                 dist=0.0, tstamp=self.S.root.tstamp)
+            
+        T = PhyloTree(root)
         self.id_counter += 1
         self.spec_queue.popleft()
         
@@ -418,7 +430,7 @@ class GeneTreeSimulator:
             self.total_surviving += len(S_v.children) - 1
             
     
-    def _duplication(self, event_tstamp, branch, event_type):
+    def _duplication(self, event_tstamp, branch):
         
         S_u, S_v = branch.S_u, branch.S_v
         
@@ -456,7 +468,7 @@ class GeneTreeSimulator:
             self.total_rate += self.l
             
             
-    def _loss(self, event_tstamp, branch, event_type):
+    def _loss(self, event_tstamp, branch):
         
         S_u, S_v = branch.S_u, branch.S_v
         
@@ -479,7 +491,7 @@ class GeneTreeSimulator:
             
     
     
-    def _hgt(self, event_tstamp, branch, event_type):
+    def _hgt(self, event_tstamp, branch):
         
         S_u, S_v = branch.S_u, branch.S_v
         
@@ -542,6 +554,7 @@ class GeneTreeSimulator:
 # --------------------------------------------------------------------------
     
 def observable_tree(tree):
+    
     obs_tree = tree.copy()
     
     loss_nodes = []
@@ -562,8 +575,14 @@ def observable_tree(tree):
     
     # delete the root if the tree is planted
     if len(obs_tree.root.children) == 1:
-        obs_tree.delete_and_reconnect(obs_tree.root.children[0],
-                                      add_distances=False,
-                                      keep_transferred=False)
+        
+        new_root = obs_tree.root.children[0]
+        new_root.detach()
+        obs_tree.root = new_root
+        new_root.dist = 0.0
+        
+    elif not obs_tree.root.children and not obs_tree.root.label:
+        # no surviving genes --> return empty tree
+        obs_tree.root = None
     
     return obs_tree
