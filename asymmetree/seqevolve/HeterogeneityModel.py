@@ -15,7 +15,7 @@ class HeterogeneityModel:
         
         
         if not isinstance(classes, float) or classes <= 0:
-            raise ValueError("Number of classes must be a int > 0!")
+            raise ValueError("Number of classes must be an int > 0!")
         self._classes = classes
         
         self._sitewise = sitewise

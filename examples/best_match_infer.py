@@ -150,7 +150,7 @@ for rep in range(repeats):
     L = np.random.uniform(low=L_min, high=L_max) if L_max > L_min else 0.0
     H = np.random.uniform(low=H_min, high=H_max) if H_max > H_min else 0.0
     
-    S = ts.build_species_tree(np.random.randint(S_min, S_max+1), planted=True)
+    S = ts.simulate_species_tree(np.random.randint(S_min, S_max+1), planted=True)
     
     TGT_simulator = ts.GeneTreeSimulator(S)
     TGT1 = TGT_simulator.simulate((D,L,H))

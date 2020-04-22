@@ -154,7 +154,7 @@ Both nucleotide and amino acid sequence simulation with or without indels are su
 Alternatively, third-party software such as \texttt{Pyvolve} \cite{spielman2015} can easily be incorporated into a simulation pipeline based on AsymmeTree.
 
 The software is hosted on \href{https://github.com/david-schaller/AsymmeTree}{GitHub} and also available via The Python Package Index (\href{https://pypi.org/project/asymmetree/}{PyPI}).
-Please feel free to report bugs or make suggestions for improvement in the \href{https://github.com/david-schaller/AsymmeTree/issues}{Issues} section of the GitHUb repository.
+Please feel free to report bugs or make suggestions for improvement in the \href{https://github.com/david-schaller/AsymmeTree/issues}{Issues} section of the GitHub repository.
 
 If you use AsymmeTree in your project or code from it, please cite:
 
@@ -367,7 +367,7 @@ Example usage:
 \begin{python}
 import asymmetree.simulator.TreeSimulator as ts
 
-S = ts.build_species_tree(10, planted=True, non_binary=0.2)
+S = ts.simulate_species_tree(10, planted=True, non_binary=0.2)
 print(S.to_newick())
 \end{python}
 \vspace{2mm}
@@ -438,7 +438,7 @@ Example usage:
 import asymmetree.simulator.TreeSimulator as ts
 import asymmetree.simulator.TreeImbalancer as tm
 
-S = ts.build_species_tree(10)
+S = ts.simulate_species_tree(10)
 
 # true gene tree (with losses)
 TGT_simulator = ts.GeneTreeSimulator(S)

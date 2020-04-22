@@ -15,7 +15,7 @@ def simulate(directory, number_of_trees, species_per_tree):
     
     for i in range(number_of_trees):
         
-        S = ts.build_species_tree(50)
+        S = ts.simulate_species_tree(50)
         T_simulator = ts.GeneTreeSimulator(S)
         T = T_simulator.simulate((0.0, 0.0, 0.0))   # dupl./loss/HGT disabled
         

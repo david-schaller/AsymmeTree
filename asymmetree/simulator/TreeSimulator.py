@@ -5,10 +5,10 @@ Tree Simulator.
 
 Simulate species and gene trees.
 
-Methods in this module:
-    - build_species_tree
+Methods and classes in this module:
+    - simulate_species_tree
     - make_ultrametric
-    - build_gene_tree
+    - GeneTreeSimulator
     - observable_tree
 """
 
@@ -30,9 +30,9 @@ __copyright__ = "Copyright (C) 2020, David Schaller"
 #                       with the innovations model
 # --------------------------------------------------------------------------
 
-def build_species_tree(N, planted=True, model="innovations",
-                       non_binary=0.0):
-    """Builds a species tree S with N leaves.
+def simulate_species_tree(N, planted=True, model='innovations',
+                          non_binary=0.0):
+    """Simulates a species tree S with N leaves.
     
     Keyword parameters:
         planted -- add a planted root that has the canonical root as its
@@ -61,7 +61,7 @@ def build_species_tree(N, planted=True, model="innovations",
 def _innovations_model(N, planted=True):
     """Builds a species tree S with N leaves with the innovations model."""
     
-    tree = PhyloTree(PhyloTreeNode(0, label="0"))
+    tree = PhyloTree(PhyloTreeNode(0, label='0'))
     tree.number_of_species = N
     
     if planted:                     # planted tree (root is an implicit
@@ -173,13 +173,20 @@ def _select_edges_for_contraction(tree, p, exclude_planted_edge=True):
 
 class Branch:
     
-    def __init__(self, ID, parent, S_u, S_v, transferred):
+    __slots__ = ('ID', 'array_id', 'rate',
+                 'parent', 'S_u', 'S_v', 'transferred')
+    
+    def __init__(self, ID, array_id, rate,
+                 parent, S_u, S_v, transferred):
         
-        self.ID = ID
-        self.parent = parent
-        self.S_u = S_u
-        self.S_v = S_v
-        self.transferred = transferred
+        self.ID = ID                                    # unique branch id
+        self.array_id = array_id                        # index in rate array
+        self.rate = rate                                # total event rate
+        
+        self.parent = parent                            # parent node
+        self.S_u = S_u                                  # edge (S_u, S_v) into which
+        self.S_v = S_v                                  # the branch is embedded
+        self.transferred = transferred                  # 1 if HGT edge, 0 otherwise
         
 
 class GeneTreeSimulator:
@@ -193,7 +200,8 @@ class GeneTreeSimulator:
     
     
     def simulate(self, DLH_rates,
-                 dupl_polytomy=0.0):
+                 dupl_polytomy=0.0,
+                 prohibit_extinction='per_species'):
         """Simulate a gene tree along the specified species tree.
         
         Simulate a gene tree along the specified species tree where the parameter
@@ -201,8 +209,12 @@ class GeneTreeSimulator:
         
         Keyword arguments:
             dupl_polytomy - allows non-binary duplication events by specifying
-                            the lambda parameter for a poisson distribution
-                            (copy number = drawn number + 2); default is 0.0
+                the lambda parameter for a poisson distribution (copy number =
+                drawn number + 2); default is 0.0
+            prohibit_extinction - avoid the extinction of all members in any
+                species ('per_species'), of the complete gene family
+                ('per_family'), or no constraints (False); default is 
+                'per_species'.
         """
         
         self.DLH_rates = DLH_rates
@@ -211,11 +223,13 @@ class GeneTreeSimulator:
         self.l = DLH_rates[1]
         self.h = DLH_rates[2]
         
-        self.dupl_polytomy = dupl_polytomy
+        self._prohibit_extinction = prohibit_extinction
+        
+        self._dupl_polytomy = dupl_polytomy
         
         self._reset()
         
-        return self._gillespie_direct()
+        return self._gillespie_simulation()
     
     
     def _reset(self):
@@ -223,69 +237,80 @@ class GeneTreeSimulator:
         self.spec_queue = deque(self.sorted_speciations)    # queue for speciation events
         self.id_counter = 0
         
+        self.total_surviving = 0                            # counter for surviving genes
         self.total_rate = 0                                 # total event rate (all branches)
-        self.branch_rates = []                              # array for branch rates
+        self.branches = []
         
         self.ES_to_b = {e: [] for e in self.sorted_edges}   # maps E(S) --> existing branches
-        self.i_to_b = {}                                    # maps array index --> branch
-        self.b_to_i = {}                                    # maps branch --> array index
 
     
     def _get_tstamp(self, t):
         
-        if self.total_rate <= 0.0:
+        if self._prohibit_extinction == 'per_family' and self.total_surviving == 1:
+            rate = self.d + self.l
+        else:
+            rate = self.total_rate
+        
+        
+        if rate <= 0.0:
             return -1
         else:
-            return t - np.random.exponential(1/self.total_rate)
+            return t - np.random.exponential(1/rate)
     
     
     def _get_branch_and_type(self):
         
+        if self._prohibit_extinction == 'per_family' and self.total_surviving == 1:
+            
+            return
+        
         r = np.random.uniform() * self.total_rate
-        index, current_sum = 0, 0
+        current_sum = 0.0
         
-        for rate in self.branch_rates:
-            if r <= current_sum + rate:
+        for i in range(len(self.branches)):
+            if r <= current_sum + self.branches[i].rate:
                 break
-            current_sum += rate
-            index += 1
+            current_sum += self.branches[i].rate
         
-        branch = self.i_to_b[index]
+        branch = self.branches[i]
         loss_factor = 1 if len(self.ES_to_b[(branch.S_u,branch.S_v)]) > 1 else 0
         
         if r <= current_sum + self.DLH_rates[0]:
-            event_type = "D"
+            event_type = 'D'
         elif r <= current_sum + self.DLH_rates[0] + loss_factor * self.DLH_rates[1]:
-            event_type = "L"
+            event_type = 'L'
         else:
-            event_type = "H"
+            event_type = 'H'
         
-#        assert np.isclose(self.total_rate, sum(self.branch_rates)), "Sum of rates and total rate are not equal."
+#        assert np.isclose(self.total_rate, sum([b.rate for b in self.branches])), "Sum of rates and total rate are not equal."
         
         return branch, event_type
     
     
     def _get_copy_number(self):
         
-        if self.dupl_polytomy <= 0.0:
+        if self._dupl_polytomy <= 0.0:
             return 2
         else:
-            return 2 + np.random.poisson(lam=self.dupl_polytomy)
+            return 2 + np.random.poisson(lam=self._dupl_polytomy)
 
 
     def _coexisting_edges(self, tstamp, exclude_edge=None):
         """Return list of edges for the given timestamp."""
         
         valid_edges = []
+        
         for edge in self.sorted_edges:
+            
             if edge[0].tstamp <= tstamp:
                 break
             elif edge[1].tstamp < tstamp and edge != exclude_edge:
                 valid_edges.append(edge)
+                
         return valid_edges
 
 
-    def _gillespie_direct(self):
+    def _gillespie_simulation(self):
         
         T = self._initiatialize_tree()
         t = T.root.tstamp                   # start time = 1.0
@@ -304,15 +329,15 @@ class GeneTreeSimulator:
                 branch, event_type = self._get_branch_and_type()
                 
                 # duplication
-                if event_type == "D":
+                if event_type == 'D':
                     self._duplication(event_tstamp, branch, event_type)
                 
                 # loss
-                elif event_type == "L":
+                elif event_type == 'L':
                     self._loss(event_tstamp, branch, event_type)
                     
                 # HGT    
-                elif event_type == "H":
+                elif event_type == 'H':
                     self._hgt(event_tstamp, branch, event_type)
                 
                 t = event_tstamp
@@ -324,7 +349,7 @@ class GeneTreeSimulator:
         
         if len(self.S.root.children) > 1:
             # root is a speciation event
-            T = PhyloTree(PhyloTreeNode(self.id_counter, label="S",
+            T = PhyloTree(PhyloTreeNode(self.id_counter, label='S',
                                         color=self.S.root.ID, 
                                         dist=0.0,
                                         tstamp=self.S.root.tstamp))
@@ -336,16 +361,23 @@ class GeneTreeSimulator:
                                         tstamp=self.S.root.tstamp))
         self.id_counter += 1
         self.spec_queue.popleft()
+        
+        if self._prohibit_extinction == 'per_species':
+            rate = self.d + self.h
+        else:
+            rate = self.rate_sum
                 
         for S_v in self.S.root.children:
-            new_branch = Branch(self.id_counter, T.root, self.S.root, S_v, 0)
+            
+            array_id = len(self.branches)
+            new_branch = Branch(self.id_counter, array_id, rate,
+                                T.root, self.S.root, S_v, 0)
             self.ES_to_b[(self.S.root, S_v)].append(new_branch)
-            index = len(self.branch_rates)
-            self.branch_rates.append(self.d + self.h)
-            self.total_rate += self.d + self.h
-            self.i_to_b[index] = new_branch
-            self.b_to_i[new_branch] = index
+            self.branches.append(new_branch)
             self.id_counter += 1
+            
+        self.total_rate += len(self.S.root.children) * rate   
+        self.total_surviving = len(self.S.root.children)
             
         return T
             
@@ -356,33 +388,41 @@ class GeneTreeSimulator:
         S_u = S_v.parent
         
         for branch in self.ES_to_b[(S_u, S_v)]:
-            spec_node = PhyloTreeNode(branch.ID, label="S",
-                                 color=S_v.ID, tstamp=S_v.tstamp,
-                                 dist=abs(S_v.tstamp-branch.parent.tstamp),
-                                 transferred=branch.transferred)
+            
+            spec_node = PhyloTreeNode(branch.ID, label='S',
+                                      color=S_v.ID, tstamp=S_v.tstamp,
+                                      dist=abs(S_v.tstamp-branch.parent.tstamp),
+                                      transferred=branch.transferred)
             branch.parent.add_child(spec_node)
+            
             if not S_v.children:
                 spec_node.label = str(spec_node.ID)
+                
             for S_w in S_v.children:
-                new_branch = Branch(self.id_counter, spec_node, S_v, S_w, 0)
-                self.ES_to_b[(S_v, S_w)].append(new_branch)
+                
                 if S_w is S_v.children[0]:
-                    index = self.b_to_i[branch]
+                    array_id = branch.array_id
+                    new_branch = Branch(self.id_counter, array_id, branch.rate,
+                                        spec_node, S_v, S_w, 0)
+                    self.branches[array_id] = new_branch
                 else:
-                    index = len(self.branch_rates)
-                    self.branch_rates.append(self.branch_rates[self.b_to_i[branch]])
-                    self.total_rate += self.branch_rates[index]
-                self.i_to_b[index] = new_branch
-                self.b_to_i[new_branch] = index
+                    array_id = len(self.branches)
+                    new_branch = Branch(self.id_counter, array_id, branch.rate,
+                                        spec_node, S_v, S_w, 0)
+                    self.branches.append(new_branch)
+                
+                self.ES_to_b[(S_v, S_w)].append(new_branch)
                 self.id_counter += 1
-            del self.b_to_i[branch]
+                
+            self.total_rate += (len(S_v.children) - 1) * branch.rate
+            self.total_surviving += len(S_v.children) - 1
             
     
     def _duplication(self, event_tstamp, branch, event_type):
         
         S_u, S_v = branch.S_u, branch.S_v
         
-        dupl_node = PhyloTreeNode(branch.ID, label="D",
+        dupl_node = PhyloTreeNode(branch.ID, label='D',
                                   color=(S_u.ID,S_v.ID),
                                   tstamp=event_tstamp,
                                   dist=abs(event_tstamp-branch.parent.tstamp),
@@ -393,21 +433,26 @@ class GeneTreeSimulator:
         copy_number = self._get_copy_number()
         
         for i in range(copy_number):
-            new_branch = Branch(self.id_counter, dupl_node, S_u, S_v, 0)
-            self.ES_to_b[(S_u, S_v)].append(new_branch)
+            
             if i == 0:
-                index = self.b_to_i[branch]
-                self.branch_rates[index] = self.rate_sum
+                array_id = branch.array_id
+                new_branch = Branch(self.id_counter, array_id, self.rate_sum,
+                                    dupl_node, S_u, S_v, 0)
+                self.branches[array_id] = new_branch
             else:
-                index = len(self.branch_rates)
-                self.branch_rates.append(self.rate_sum)
-            self.i_to_b[index] = new_branch
-            self.b_to_i[new_branch] = index
+                array_id = len(self.branches)
+                new_branch = Branch(self.id_counter, array_id, self.rate_sum,
+                                    dupl_node, S_u, S_v, 0)
+                self.branches.append(new_branch)
+            
+            self.ES_to_b[(S_u, S_v)].append(new_branch)
             self.id_counter += 1
-        del self.b_to_i[branch]
         
+        self.total_surviving += (copy_number - 1)
         self.total_rate += (copy_number - 1) * (self.rate_sum)
-        if len(self.ES_to_b[(S_u, S_v)]) == copy_number:
+        
+        if (self._prohibit_extinction == 'per_species' and
+            len(self.ES_to_b[(S_u, S_v)]) == copy_number):
             self.total_rate += self.l
             
             
@@ -415,21 +460,23 @@ class GeneTreeSimulator:
         
         S_u, S_v = branch.S_u, branch.S_v
         
-        loss_node = PhyloTreeNode(branch.ID, label="*",
+        loss_node = PhyloTreeNode(branch.ID, label='*',
                                   color=(S_u.ID,S_v.ID),
                                   tstamp=event_tstamp,
                                   dist=abs(event_tstamp-branch.parent.tstamp),
                                   transferred=branch.transferred)
         branch.parent.add_child(loss_node)
         self.ES_to_b[(S_u, S_v)].remove(branch)
-        self.branch_rates[self.b_to_i[branch]] = 0
-        del self.b_to_i[branch]
+        branch.rate = 0.0
         
-        if len(self.ES_to_b[(S_u, S_v)]) == 1:
-            self.total_rate -= (self.rate_sum + self.l)
-            self.branch_rates[self.b_to_i[self.ES_to_b[(S_u, S_v)][0]]] -= self.l
-        else:
-            self.total_rate -= self.rate_sum
+        self.total_surviving -= 1
+        self.total_rate -= self.rate_sum
+        
+        if (self._prohibit_extinction == 'per_species' and
+            len(self.ES_to_b[(S_u, S_v)]) == 1):
+            self.total_rate -= self.l
+            self.ES_to_b[(S_u, S_v)][0].rate -= self.l
+            
     
     
     def _hgt(self, event_tstamp, branch, event_type):
@@ -440,7 +487,7 @@ class GeneTreeSimulator:
                                              exclude_edge=(S_u, S_v))
         if valid_edges:
             trans_edge = random.choice(valid_edges)
-            hgt_node = PhyloTreeNode(branch.ID, label="H",
+            hgt_node = PhyloTreeNode(branch.ID, label='H',
                                      color=(S_u.ID,S_v.ID),
                                      tstamp=event_tstamp,
                                      dist=abs(event_tstamp-branch.parent.tstamp),
@@ -449,29 +496,28 @@ class GeneTreeSimulator:
             self.ES_to_b[(S_u, S_v)].remove(branch)
             
             # original branch
-            new_branch = Branch(self.id_counter, hgt_node, S_u, S_v, 0)        
+            array_id = branch.array_id
+            new_branch = Branch(self.id_counter, array_id, branch.rate,
+                                hgt_node, S_u, S_v, 0) 
+            self.branches[array_id] = new_branch
             self.ES_to_b[(S_u, S_v)].append(new_branch)
-            index = self.b_to_i[branch]
-            self.i_to_b[index] = new_branch
-            self.b_to_i[new_branch] = index
             self.id_counter += 1
             
             # receiving branch
-            trans_branch = Branch(self.id_counter, hgt_node, *trans_edge, 1)
+            array_id = len(self.branches)
+            trans_branch = Branch(self.id_counter, array_id, self.rate_sum,
+                                  hgt_node, *trans_edge, 1)
+            self.branches.append(trans_branch)
             self.ES_to_b[trans_edge].append(trans_branch)
-            index = len(self.branch_rates)
-            self.branch_rates.append(self.rate_sum)
-            self.i_to_b[index] = trans_branch
-            self.b_to_i[trans_branch] = index
             self.id_counter += 1
             
-            del self.b_to_i[branch]
+            self.total_surviving += 1
+            self.total_rate += self.rate_sum
             
-            if len(self.ES_to_b[trans_edge]) == 2:
-                self.total_rate += (self.rate_sum + self.l)
-                self.branch_rates[self.b_to_i[self.ES_to_b[trans_edge][0]]] += self.l
-            else:
-                self.total_rate += self.rate_sum
+            if (self._prohibit_extinction == 'per_species' and
+                len(self.ES_to_b[trans_edge]) == 2):
+                self.total_rate += self.l
+                self.ES_to_b[trans_edge][0].rate += self.l 
                 
     
     def _assert_no_extinction(self, T):
@@ -480,7 +526,7 @@ class GeneTreeSimulator:
         VS_to_VT = {l.ID: [] for l in self.S.preorder() if not l.children}
         
         for v in T.preorder():
-            if not v.children and not v.label == "*":
+            if not v.children and not v.label == '*':
                 VS_to_VT[v.color].append(v.ID)
                 
         for leaf_list in VS_to_VT.values():
@@ -500,7 +546,7 @@ def observable_tree(tree):
     
     loss_nodes = []
     for node in obs_tree.postorder():
-        if not node.children and node.label == "*":
+        if not node.children and node.label == '*':
             loss_nodes.append(node)
     
     # traverse from loss node to root delete if degree <= 1

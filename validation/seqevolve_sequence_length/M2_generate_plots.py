@@ -31,7 +31,7 @@ for i in range(len(models)):
     df_na = df1.groupby(by=['model', 'd', 'length'], as_index=False).count()
     df_na['proportion_nan'] = 1 - df_na['d_hat'] / df_na['i']
     
-    df1 = df[(df['d_hat'] < 6.0)]
+    df1 = df1[(df1['d_hat'] < 6.0)]
 
     sns.boxplot(y='d_hat', x='d', 
                 data=df1, 
@@ -72,7 +72,9 @@ for i in range(len(models)):
     ax_twin.set_ylim(0, 7)
     ax_twin.set_ylabel('Proportion NaN', fontsize=fs)
     ax_twin.set_yticks([0,1])
-    ax_twin.tick_params(axis='both', which='major', labelsize=fs)
+    ax_twin.tick_params(axis='both', which='major', labelsize=fs, colors='grey')
+    ax_twin.spines['right'].set_color('grey')
+    ax_twin.yaxis.label.set_color('grey')
 
 
 plt.tight_layout()

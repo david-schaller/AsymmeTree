@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from math import log
 import numpy as np
-from scipy.optimize import minimize
+import scipy.optimize
 
 from asymmetree.seqevolve import SubstModel
 
@@ -12,6 +11,10 @@ References:
     Ziheng Yang (2006). Computational Molecular Evolution.
     Oxford Series in Ecology and Evolution.
 """
+
+MIN_LENGTH = 1e-6
+MAX_LENGTH = 20.0
+#MAXITER = 100
 
 
 def maximum_likelihood_distance(seq1, seq2,
@@ -27,15 +30,14 @@ def maximum_likelihood_distance(seq1, seq2,
             
     seqs = _to_indices(seq1, seq2, subst_model)
     
-    # use Jukes-Cantor as starting guess
-    if subst_model.model_type == 'n':
-        x0 = JC69_distance(seq1, seq2, amino_acid=False)
-    elif subst_model.model_type == 'a':
-        x0 = JC69_distance(seq1, seq2, amino_acid=True)
-    x0 = x0 if x0 != float('nan') else 5.0
-        
-    opt_result = minimize(_likelihood, x0, args=(seqs, subst_model),
-                          bounds=[(0.0, None)],)
+    x0 = _initial_guess(seqs, subst_model.model_type)
+    
+    # distance 0.0 if sequences are equal
+    if x0 == 0.0:
+        return x0
+    
+    opt_result = scipy.optimize.minimize(_likelihood, x0, args=(seqs, subst_model),
+                                         bounds=((MIN_LENGTH, None),),)
     
     if opt_result.success:
         return opt_result.x
@@ -43,16 +45,23 @@ def maximum_likelihood_distance(seq1, seq2,
         return float('nan')
     
 
+def _initial_guess(seqs, model_type):
+    
+    p = np.sum(seqs[0] != seqs[1]) / seqs.shape[1]
+    
+    x0 = _JC69_transform(p, amino_acid=(model_type=='a'))
+    
+    x0 = x0 if x0 != float('nan') else MAX_LENGTH / 2
+    
+    return x0
+    
+
 def _likelihood(x, seqs, subst_model):
     
     P = subst_model.transition_prob_matrix(x)
     
-    log_likelihood = 0
-    for k in range(seqs.shape[1]):
-        p = P[ seqs[0][k], seqs[1][k] ]
-        log_likelihood += log(p) if p > 0.0 else float('inf')
-        
-    return -log_likelihood
+    # - log-likelihood
+    return - np.sum( np.log( P[seqs[0], seqs[1]] ))
             
             
 def _to_indices(seq1, seq2, subst_model):
@@ -132,7 +141,7 @@ def _JC69_transform(p, amino_acid=False):
         d = float('nan')
     
     else:
-        d = - (a/b) * log(1 - (b/a) * p)
+        d = - (a/b) * np.log(1 - (b/a) * p)
         
     return d
 
@@ -205,32 +214,30 @@ def _IV_proportions(seq1, seq2):
 def _K80_transform(S, V):
     """Kimura 1980 distance and transition/transversion ratio."""
     
-    try:
-        d = - 0.5 * log(1 - 2 * S - V) - 0.25 * log(1 - 2 * V)
-        kappa = 2 * log(1 - 2 * S - V) / log(1 - 2 * V) - 1
+    a1 = 1.0 - 2.0 * S - V
+    a2 = 1.0 - 2.0 * V
+    
+    if a1 <= 0.0 or a2 <= 0.0:
+        return float('nan'), float('nan')
+    
+    else:
+        d = - 0.5 * np.log(a1) - 0.25 * np.log(a2)
+        kappa = 2.0 * np.log(a1) / np.log(a2) - 1.0 if a2 < 1.0 else float('nan')
         
         return d, kappa
-    
-    except ValueError:
-        return float('nan'), float('nan')
-    
-    except ZeroDivisionError:
-        return float('nan'), float('nan')
 
 
 def _K80_distance_var(S, V, n):
     """Kimura 1980 distance variance."""
     
-    try:
-        a = 1 / (1 - 2 * S - V)
-        b = 0.5 * ( 1 / (1 - 2 * S - V) + 1 / (1 - 2 * V) )
-        
-        var_d = (a**2 * S + b**2 * V - (a * S + b * V)**2) / n
-        
-        return var_d
+    a1 = 1.0 - 2.0 * S - V
+    a2 = 1.0 - 2.0 * V
     
-    except ValueError:
+    if a1 <= 0.0 or a2 <= 0.0:
         return float('nan')
     
-    except ZeroDivisionError:
-        return float('nan')
+    else:
+        a = 1.0 / a1
+        b = 0.5 * ( 1.0 / a1 + 1.0 / a2 )
+        
+        return (a**2 * S + b**2 * V - (a * S + b * V)**2) / n

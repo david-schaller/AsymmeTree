@@ -17,7 +17,7 @@ DLH_rates = (1,1,0)
 #                            SPECIES TREE
 # --------------------------------------------------------------------------
 
-S = ts.build_species_tree(10, planted=True, non_binary=0.2)
+S = ts.simulate_species_tree(10, planted=True, non_binary=0.2)
 print("------------- S -------------")
 print(S.to_newick())
 

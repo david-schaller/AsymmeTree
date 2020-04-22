@@ -254,7 +254,7 @@ if __name__ == "__main__":
     import asymmetree.simulator.TreeSimulator as ts
     import asymmetree.simulator.TreeImbalancer as tm
     
-    S = ts.build_species_tree(6, planted=True, non_binary=0.2)
+    S = ts.simulate_species_tree(6, planted=True, non_binary=0.2)
     
     TGT_simulator = ts.GeneTreeSimulator(S)
     TGT = TGT_simulator.simulate((1.0,1.0,1.0),

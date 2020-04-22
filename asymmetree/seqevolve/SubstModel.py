@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
+from scipy import linalg
 
 from asymmetree.seqevolve.EmpiricalModels import empirical_models
 
@@ -78,6 +79,9 @@ class SubstModel:
                 
         # make sure stationary frequencies sum to 1
         self.freqs /= np.sum(self.freqs)
+        
+        # compute cumulative frequencies for evolver
+        self.freqs_cumulative = np.cumsum(self.freqs)
     
     
     def _build_rate_matrix(self):
@@ -144,21 +148,21 @@ def diagonalize(Q, freqs):
     # matrix is already symmetric
     if np.allclose(Q, Q.T):
         
-        eigenvals, U = np.linalg.eigh(Q)
-        U_inv = np.linalg.inv(U)
+        eigenvals, U = linalg.eigh(Q)
+        U_inv = linalg.inv(U)
     
     # matrix is not symmetric but model is time-reversible
     else:
     
         Phi = np.diag(np.sqrt(freqs))
-        Phi_inv = np.linalg.inv(Phi)
+        Phi_inv = linalg.inv(Phi)
         
         B = Phi @ Q @ Phi_inv
         
-        eigenvals, R = np.linalg.eigh(B)
+        eigenvals, R = linalg.eigh(B)
 
         U = Phi_inv @ R
-        U_inv = np.linalg.inv(R) @ Phi
+        U_inv = linalg.inv(R) @ Phi
     
     return eigenvals, U, U_inv
     

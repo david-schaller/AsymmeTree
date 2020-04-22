@@ -28,7 +28,7 @@ class Evolver:
         if start_seq is None:
             root_seq = self._random_sequence(start_length)
         else:
-            root_seq = self._initialize_root(start_seq)
+            root_seq = self._initialize_with_sequence(start_seq)
             
         if self.het_model:
             self.het_model.assign(root_seq)
@@ -58,7 +58,7 @@ class Evolver:
         return seq
     
     
-    def _initialize_root(self, sequence):
+    def _initialize_with_sequence(self, sequence):
         
         seq = EvoSeq()
         
@@ -107,8 +107,8 @@ class Evolver:
     
     def _substitute(self, sequence, t):
         
-        # transtion probability matrices
-        P = self._P_matrices(sequence, t)
+        # (cumulative) transition probability matrices
+        P = self._cumulative_P_matrices(sequence, t)
         
         r = np.random.random(len(sequence))
         pos = 0
@@ -116,35 +116,23 @@ class Evolver:
         for site in sequence:
             
             if site.status == State.INHERITED:
-                # mutate according to matrix P_c of the corresponding class
-                P_c = P[site.rate_class]
-                site._value = self._choose_index(P_c[site._value, :], r[pos])
+                # mutate according to matrix of the corresponding class
+                site._value = np.argmax(P[site.rate_class][site._value, :] > r[pos])
             
             else:
                 # choose random character
-                site._value = self._choose_index(self.subst_model.freqs, r[pos])
+                site._value = np.argmax(self.subst_model.freqs_cumulative > r[pos])
             
             pos += 1
-            
-    
-    def _choose_index(self, p, r):
-        
-        index = 0
-        current_sum = p[index]
-        
-        while r > current_sum and index < len(p) - 1:
-            index += 1
-            current_sum += p[index]
-        
-        return index
     
     
-    def _P_matrices(self, sequence, t):
+    def _cumulative_P_matrices(self, sequence, t):
         
         P = {}
         
         if not self.het_model:
-            P[0] = self.subst_model.transition_prob_matrix(t)
+            P[0] = np.cumsum(self.subst_model.transition_prob_matrix(t),
+                             axis=1)
 
         else:
             for site in sequence:
@@ -156,9 +144,11 @@ class Evolver:
                     r = site.rate_factor
                     
                     if r > 0.0:
-                        P[c] = self.subst_model.transition_prob_matrix(r * t)
+                        P[c] = np.cumsum(self.subst_model.transition_prob_matrix(r * t),
+                                         axis=1)
                     elif r == 0:
-                        P[c] = np.identity(len(self.subst_model.alphabet))
+                        P[c] = np.cumsum(np.identity(len(self.subst_model.alphabet)),
+                                         axis=1)
         
         return P
         
@@ -185,13 +175,13 @@ class Evolver:
                 total_rate -= site.rate_factor * self.subst_model.Q[mutation, mutation]
                 site._value = mutation
         
-        # choose random character for insertions
+        # choose random characters for insertions
         r = np.random.random(sequence.count_status(State.INSERTION))
         pos = 0
         for site in sequence:
             
             if site.status == State.INSERTION:
-                site._value = self._choose_index(self.subst_model.freqs, r[pos])
+                site._value = np.argmax(self.subst_model.freqs_cumulative > r[pos])
                 pos += 1
                 
     
@@ -316,10 +306,10 @@ if __name__ == '__main__':
     subst_model = SubstModel('a', 'WAG')
     indel_model = IndelModel(0.01, 0.01, length_model='zipf')
     
-    evolver = Evolver(subst_model, indel_model=indel_model)
+    evolver = Evolver(subst_model, indel_model=indel_model, jump_chain=False)
     print(evolver.subst_model.Q)
     
-    T = ts.build_species_tree(5)
+    T = ts.simulate_species_tree(5)
     evolver.evolve_along_tree(T, start_length=150)
     
     for node, sequence in evolver.sequences.items():
