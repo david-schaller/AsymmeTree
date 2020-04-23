@@ -18,6 +18,7 @@ from collections import deque
 import numpy as np
 
 from asymmetree.tools.PhyloTree import PhyloTree, PhyloTreeNode
+import asymmetree.simulator._SpeciesTreeModels as stm
 
 
 __author__ = "David Schaller"
@@ -43,7 +44,7 @@ def simulate_species_tree(N, planted=True, model='innovations',
     """
     
     if isinstance(model, str) and model.lower() in ('innovation', 'innovations'):
-        tree = _innovations_model(N, planted=planted)
+        tree = stm._innovations_model(N, planted=planted)
     else:
         raise ValueError("Model '{}' is not available!".format(model))
         
@@ -55,77 +56,6 @@ def simulate_species_tree(N, planted=True, model='innovations',
          
     make_ultrametric(tree)
         
-    return tree
-        
-
-def _innovations_model(N, planted=True):
-    """Builds a species tree S with N leaves with the innovations model."""
-    
-    tree = PhyloTree(PhyloTreeNode(0, label='0'))
-    tree.number_of_species = N
-    
-    if planted:                     # planted tree (root is an implicit
-                                    # outgroup with outdegree = 1)
-        root = PhyloTreeNode(1, label="1")
-        tree.root.add_child(root)
-        node_counter = 2
-    else:
-        root = tree.root
-        node_counter = 1
-    
-    t = 1
-    features = [0]                  # set of available features
-    species = {(0,): root}          # extant species
-    
-    while len(species) < N:
-        
-        loss_candidates = set()     # species for which loss of a feature
-        for s in species.keys():    # can trigger a speciation
-            for i in range(0, len(s)):
-                    if s[:i] + s[i+1:] not in species:
-                        loss_candidates.add(s)
-        
-        if not loss_candidates:     # INNOVATION EVENT
-            s = random.choice(list(species))
-            new_feature = len(features)
-            
-            new_s = s + (new_feature,)
-            
-            child1 = PhyloTreeNode(node_counter, label=str(node_counter))
-            species[s].add_child(child1)
-            child2 = PhyloTreeNode(node_counter+1, label=str(node_counter+1))
-            species[s].add_child(child2)
-            
-            node_counter += 2
-            
-            species[s] = child1
-            species[new_s] = child2
-            features.append(new_feature)
-            t += 1
-            
-        else:
-            s = random.choice(list(loss_candidates))
-            
-            if len(s) > 1:
-                feature_index = random.randint(0, len(s)-1)
-            else:
-                feature_index = 0
-            
-            new_s = s[:feature_index] + s[feature_index+1:]
-            
-            if new_s not in species:    # LOSS EVENT
-                
-                child1 = PhyloTreeNode(node_counter, label=str(node_counter))
-                species[s].add_child(child1)
-                child2 = PhyloTreeNode(node_counter+1, label=str(node_counter+1))
-                species[s].add_child(child2)
-
-                node_counter += 2
-                
-                species[s] = child1
-                species[new_s] = child2
-                t += 1
-    
     return tree
 
 

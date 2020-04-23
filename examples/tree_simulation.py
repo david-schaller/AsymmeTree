@@ -11,7 +11,7 @@ import asymmetree.best_matches.LRTConstructor as lrt
 #      duplication, loss and horizontal gene transfer events
 # --------------------------------------------------------------------------
 
-DLH_rates = (0.0, 1.0, 0.0)
+DLH_rates = (1.0, 1.0, 0.0)
 
 # --------------------------------------------------------------------------
 #                            SPECIES TREE
@@ -26,7 +26,7 @@ print(S.to_newick())
 # --------------------------------------------------------------------------
 
 TGT_simulator = ts.GeneTreeSimulator(S)
-TGT = TGT_simulator.simulate(DLH_rates, prohibit_extinction=False)
+TGT = TGT_simulator.simulate(DLH_rates, prohibit_extinction='per_species')
 TGT = tm.imbalance_tree(TGT, S, baseline_rate=1,
                         lognormal_v=0.2,
                         gamma_param=(0.5, 1.0, 2.2),
