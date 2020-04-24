@@ -9,7 +9,6 @@ Wrapper class for species and gene tree. Compute statistics, BMG/RBMG.
 import networkx as nx
 
 from asymmetree.simulator import TreeSimulator as ts
-from asymmetree.simulator.DistanceMatrix import distance_matrix
 from asymmetree.best_matches import TrueBMG
 
 
@@ -26,7 +25,9 @@ class Scenario:
         
         self.OGT = OGT if OGT else ts.observable_tree(TGT)
         
-        self._genes()
+        self.genes = self.OGT.color_sorted_leaves()
+        self.gene_index = {gene: i for i, gene in enumerate(self.genes)}
+        
         self._count_events()
         self._sort_species_to_subtrees()
         self._sort_genes_to_species()
@@ -35,22 +36,6 @@ class Scenario:
         self.BMG, self.RBMG = TrueBMG.best_match_graphs(self.OGT)
         
         self.BMG_subtrees, self.RBMG_subtrees = self.reduce_to_subtrees(self.BMG, self.RBMG)
-        
-        
-    def _genes(self):
-        
-        self.OGT.supply_leaves()
-        color_dict = {}
-        for gene in self.OGT.root.leaves:
-            if gene.color not in color_dict:
-                color_dict[gene.color] = []
-            color_dict[gene.color].append(gene)
-        self.genes = []                                 # color-sorted gene list
-        for color, gene_list in color_dict.items():
-            for gene in gene_list:
-                self.genes.append(gene)
-                                                        # maps gene to index in matrix
-        self.gene_index = {gene: i for i, gene in enumerate(self.genes)}
     
     
     def _count_events(self):
@@ -62,7 +47,7 @@ class Scenario:
                 self.event_counts[1] += 1
                 if self.S.root.ID == v.color[0]:
                     self.event_counts[4] += 1
-            elif v.label == "*":
+            elif v.is_loss():
                 self.event_counts[2] += 1
             elif v.label == "H":
                 self.event_counts[3] += 1
@@ -111,6 +96,7 @@ class Scenario:
     def reduce_to_subtrees(self, full_BMG, full_RBMG):
         """Return a subgraph of the true RBMG with edges {u,v} for which the
         corresponding species (colors) are in the same subtree of root(S)."""
+        
         BMG_subtrees = nx.DiGraph()
         RBMG_subtrees = nx.Graph()
         
@@ -128,8 +114,9 @@ class Scenario:
     
     
     def get_distance_matrix(self):
-        _, _, D = distance_matrix(self.OGT, leaves=self.genes,
-                                  leaf_index=self.gene_index)
+        
+        _, D = self.OGT.distance_matrix(leaf_order=self.genes)
+        
         return D
     
     

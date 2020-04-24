@@ -74,7 +74,7 @@ class GeneTreeVis:
                 raise ValueError("Distance mode not known: " + str(distance))
             if not v.children:
                 self.leaf_counter += 1
-                if v.label != '*' and v.color not in self.colors:
+                if not v.is_loss() and v.color not in self.colors:
                     self.colors[v.color] = len(self.colors)
                 
         self.ax.set_xlim(-0.1,xmax+0.5)
@@ -141,7 +141,7 @@ class GeneTreeVis:
                 if v.label == 'H':
                     self.draw_hgt(*self.node_positions[v])
             else:
-                if v.label == '*':
+                if v.is_loss():
                     self.draw_loss(*self.node_positions[v])
                 else:
                     x, y = self.node_positions[v]

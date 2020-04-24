@@ -32,7 +32,7 @@ class TreeNode:
     
     def __repr__(self):
         
-        return "tn" + str(self.ID)
+        return "<TN: {}>".format(self.ID)
     
                                             
     def add_child(self, child_node):
@@ -294,10 +294,6 @@ class Tree:
             return False
         
         for i in range(len(hierarchy1)):
-            
-#            if len(hierarchy1[i]) > 1:
-#                print(hierarchy1[i])
-#                print(hierarchy2[i])
             
             if hierarchy1[i] != hierarchy2[i]:
                 print("Hierarchies not equal:\n{}\n{}".format(hierarchy1[i], hierarchy2[i]))

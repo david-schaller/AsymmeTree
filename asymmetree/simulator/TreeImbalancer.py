@@ -23,7 +23,7 @@ __copyright__ = "Copyright (C) 2019, David Schaller"
 
 
 def imbalance_tree(T, S, baseline_rate=1.0,
-                   lognormal_v=0.0,
+                   autocorrelation_variance=0.0,
                    gamma_param=(0.5, 1.0, 2.2),
                    weights=(1, 1, 1),
                    inplace=True):
@@ -31,7 +31,7 @@ def imbalance_tree(T, S, baseline_rate=1.0,
     
     Keyword arguments:
     baseline_rate   -- mean of substitution rate for conserved genes
-    lognormal_v     -- variance factor for lognormal distribution
+    autocorrelation_variance -- variance factor for lognormal distribution
     gamma_param     -- param. for gamma distribution (a, loc, scale)
     weights         -- weights for choice between conservation,
                        subfunctionalization and neofunctionalization
@@ -44,7 +44,7 @@ def imbalance_tree(T, S, baseline_rate=1.0,
         
     _divergent_rates(T, S, gamma_param, weights)
     
-    _autocorrelation(T, S, baseline_rate, lognormal_v)
+    _autocorrelation(T, S, baseline_rate, autocorrelation_variance)
     
     return T
 
@@ -125,7 +125,7 @@ def _divergent_rates(T, S, gamma_param, weights):
 #                    rates[(u,v)].append((u.tstamp, rates[(u.parent,u)][-1][1]))
         
         # ------------------- LOSS ---------------------
-        elif u.label == "*":
+        elif u.is_loss():
             gene_counter[u.color].remove(u)
             if len(gene_counter[u.color]) == 1:
                 v = gene_counter[u.color][0]
@@ -164,11 +164,11 @@ def _divergent_rates(T, S, gamma_param, weights):
 #
 # --------------------------------------------------------------------------
 
-def _autocorrelation(T, S, baseline_rate, lognormal_v):
+def _autocorrelation(T, S, baseline_rate, autocorrelation_variance):
     """
     Keyword arguments:
     baseline_rate   -- mean of substitution rate for conserved genes
-    lognormal_v     -- variance factor for lognormal distribution
+    autocorrelation_variance     -- variance factor for lognormal distribution
     """
     rates = {}                                                          # maps node v --> rate
     S_parent = {}
@@ -176,7 +176,7 @@ def _autocorrelation(T, S, baseline_rate, lognormal_v):
         if not v.parent:
             rates[v.ID] = baseline_rate
         else:
-            var = lognormal_v * v.dist
+            var = autocorrelation_variance * v.dist
             mu = np.log(rates[v.parent.ID]) - var/2                     # exp. value equal to parent's rate
             rates[v.ID] = np.exp(np.random.normal(mu, np.sqrt(var)))
             S_parent[v.ID] = v.parent.ID                                # save parent's ID for below

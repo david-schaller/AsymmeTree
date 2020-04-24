@@ -15,7 +15,7 @@ import asymmetree.best_matches.TreeReconstruction as tr
 import asymmetree.best_matches.Quartets as qd
 
 
-class CustomAnalysis:
+class ComparisonAnalysis:
     
     def __init__(self, scenario, D, epsilon=0.000_000_01):
         
@@ -118,7 +118,7 @@ class CustomAnalysis:
     @staticmethod
     def write_header(filename, *first_columns):
         line = (len(first_columns)) * "{}\t"
-        line = line.format(*first_columns) + CustomAnalysis.summary_header()
+        line = line.format(*first_columns) + ComparisonAnalysis.summary_header()
         with open(filename, "w") as f:
             f.write(line)
 
@@ -141,7 +141,7 @@ sim_ID = 0
 stats_file = "results/method_comparison.csv"
 
 # write header of the main statistics file
-CustomAnalysis.write_header(stats_file, "SCEN_ID", "noise_type", "sd", "true_sd", "alpha")
+ComparisonAnalysis.write_header(stats_file, "SCEN_ID", "noise_type", "sd", "true_sd", "alpha")
 
 
 for rep in range(repeats):
@@ -155,13 +155,13 @@ for rep in range(repeats):
     TGT_simulator = ts.GeneTreeSimulator(S)
     TGT1 = TGT_simulator.simulate((D,L,H))
     TGT1 = tm.imbalance_tree(TGT1, S, baseline_rate=1,
-                            lognormal_v=0.2,
+                            autocorrelation_variance=0.2,
                             gamma_param=(0.5, 1.0, 2.2),
                             weights=(1/3, 1/3, 1/3))
     
     TGT2 = TGT_simulator.simulate((D,L,H))
     TGT2 = tm.imbalance_tree(TGT2, S, baseline_rate=1,
-                            lognormal_v=0.2,
+                            autocorrelation_variance=0.2,
                             gamma_param=(0.5, 1.0, 2.2),
                             weights=(1/3, 1/3, 1/3))
     
@@ -177,11 +177,11 @@ for rep in range(repeats):
         true_sd1 = np.nanstd(np.divide(D1_noisy, D1)) if noise_sd > 0.0 else 0.0
         true_sd2 = np.nanstd(np.divide(D2_noisy, D2)) if noise_sd > 0.0 else 0.0
         
-        summary1 = CustomAnalysis(scenario1, D1_noisy, epsilon=epsilon)
+        summary1 = ComparisonAnalysis(scenario1, D1_noisy, epsilon=epsilon)
         summary1.compute_statistics()
         summary1.write_summary_line(stats_file, sim_ID, "no_bias", noise_sd, true_sd1, 0.0)
         
-        summary2 = CustomAnalysis(scenario2, D2_noisy, epsilon=epsilon)
+        summary2 = ComparisonAnalysis(scenario2, D2_noisy, epsilon=epsilon)
         summary2.compute_statistics()
         summary2.write_summary_line(stats_file, sim_ID+1, "no_bias", noise_sd, true_sd2, 0.0)
         
@@ -192,11 +192,11 @@ for rep in range(repeats):
         true_sd1 = np.nanstd(np.divide(D1_noisy, D1)) if noise_alpha > 0.0 else 0.0
         true_sd2 = np.nanstd(np.divide(D2_noisy, D2)) if noise_alpha > 0.0 else 0.0
         
-        summary1 = CustomAnalysis(scenario1, D1_noisy, epsilon=epsilon)
+        summary1 = ComparisonAnalysis(scenario1, D1_noisy, epsilon=epsilon)
         summary1.compute_statistics()
         summary1.write_summary_line(stats_file, sim_ID, "bias", 0.0, true_sd1, noise_alpha)
         
-        summary2 = CustomAnalysis(scenario2, D2_noisy, epsilon=epsilon)
+        summary2 = ComparisonAnalysis(scenario2, D2_noisy, epsilon=epsilon)
         summary2.compute_statistics()
         summary2.write_summary_line(stats_file, sim_ID+1, "bias", 0.0, true_sd2, noise_alpha)
         

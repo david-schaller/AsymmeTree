@@ -16,7 +16,6 @@ import random
 import numpy as np
 
 from asymmetree.tools.PhyloTree import PhyloTree, PhyloTreeNode
-from asymmetree.simulator import DistanceMatrix
 
 
 __author__ = "David Schaller"
@@ -145,10 +144,10 @@ def convex_linear_comb(D1, D2, alpha=0.05, first_only=False):
     
     Keyword arguments:
         alpha -- distribution of the resp. disturbance matrix
-        single -- only return D1'
+        first_only -- only return D1'
         
     """
-    if not single:
+    if not first_only:
         if D1.shape == D2.shape:
             return ((1-alpha) * D1 + alpha * D2,
                     (1-alpha) * D2 + alpha * D1)
@@ -225,7 +224,8 @@ def wrong_topology_matrix(OGT):
     random_leaves = random_tree.supply_leaves()         # implicit random bijection
     random.shuffle(random_leaves)                       # to original tree
     
-    return DistanceMatrix.distance_matrix(random_tree, leaves=random_leaves)[2]
+    _, D = random_tree.distance_matrix(leaf_order=random_leaves)
+    return D
 
 
 # --------------------------------------------------------------------------

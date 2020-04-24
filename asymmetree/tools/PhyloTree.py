@@ -8,7 +8,8 @@ Classes in this module:
     - PhyloTree
 """
 
-import collections, random, re
+import collections, itertools, random, re
+import numpy as np
 import networkx as nx
 
 from asymmetree.tools.Tree import Tree, TreeNode
@@ -30,15 +31,16 @@ class PhyloTreeNode(TreeNode):
                  dist = 1.0, tstamp=None, transferred=0):
         
         super().__init__(ID, label=label)
-        self.color = color
-        self.dist = dist
-        self.tstamp = tstamp
-        self.transferred = transferred
+        self.color = color                      # color / reconciliation
+        self.dist = dist                        # distance from parent
+        self.tstamp = tstamp                    # time stamp
+        self.transferred = transferred          # 1 if edge parent-self was an 
+                                                # HGT edge, and 0 otherwise
 
     
     def __repr__(self):
         
-        return "pn" + str(self.ID)
+        return "<PhyloTN: {}>".format(self.ID)
     
     
     def __str__(self):
@@ -49,6 +51,11 @@ class PhyloTreeNode(TreeNode):
             return "{}<{}>:{}".format(self.label, self.color, self.dist)
         else:
             return "{}:{}".format(self.label, self.dist)
+        
+    
+    def is_loss(self):
+        
+        return self.label == '*'
 
 
 class PhyloTree(Tree):
@@ -111,7 +118,7 @@ class PhyloTree(Tree):
             contracted.add(v)
             
     
-    def supply_leaves(self, node=None, exclude_losses=True):
+    def supply_leaves(self, exclude_losses=True):
         """Add the leaves to all nodes that are in the subtree of a specific node."""
         
         if self.root:
@@ -125,7 +132,7 @@ class PhyloTree(Tree):
         node.leaves = []
         
         if not node.children:
-            if exclude_losses and node.label != "*":
+            if exclude_losses and not node.is_loss():
                 node.leaves.append(node)
             elif not exclude_losses:
                 node.leaves.append(node)
@@ -133,7 +140,66 @@ class PhyloTree(Tree):
             for child in node.children:
                 node.leaves.extend(self._supply_leaves(child, exclude_losses))
                 
-        return node.leaves        
+        return node.leaves
+    
+    
+    def color_sorted_leaves(self):
+        
+        self.supply_leaves()
+        color_dict = {}
+        
+        for leaf in self.root.leaves:
+            if leaf.color not in color_dict:
+                color_dict[leaf.color] = []
+            color_dict[leaf.color].append(leaf)
+            
+        leaves = []
+        for color, leaf_list in color_dict.items():
+            for leaf in leaf_list:
+                leaves.append(leaf)
+        
+        return leaves
+    
+    
+    def distance_matrix(self, leaf_order=None):
+        """Computes the distance matrix from the phylogenetic tree.
+        
+        Additionally a list of leaves corresponding to the indices in the matrix
+        is returned.
+        
+        Keyword arguments:
+            leaf_order -- list of leaves defining the indices for the matrix;
+                default is None, in which case leaves are indexed in sibling order.
+        """
+        
+        distance_dict, _ = self.distances_from_root()
+        self.supply_leaves()
+        
+        if leaf_order:
+            if set(leaf_order) != set(self.root.leaves):
+                raise ValueError("Ordered leaf list does not match with the leaves in the tree!")
+            leaves = leaf_order
+        else:
+            # leaves in sibling order
+            leaves = self.root.leaves      
+        
+        leaf_index = {l: i for i, l in enumerate(leaves)}
+        
+        D = np.zeros((len(leaves),len(leaves)), dtype=np.float)
+        
+        for v in self.preorder():
+            if v.children:
+                for c1, c2 in itertools.combinations(v.children, 2):
+                    for x in c1.leaves:
+                        x_index = leaf_index[x]
+                        x_dist = distance_dict[x] - distance_dict[v]
+                        for y in c2.leaves:
+                            y_index = leaf_index[y]
+                            y_dist = distance_dict[y] - distance_dict[v]
+                            D[x_index, y_index] = x_dist + y_dist
+                            D[y_index, x_index] = x_dist + y_dist
+        
+        return leaves, D
     
     
     def distances_from_root(self):

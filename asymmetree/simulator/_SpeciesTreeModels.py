@@ -6,8 +6,13 @@ import numpy as np
 from asymmetree.tools.PhyloTree import PhyloTree, PhyloTreeNode
 
 
-def _innovations_model(N, planted=True):
-    """Builds a species tree S with N leaves with the innovations model."""
+def _innovations_model(N, planted, ultrametric=True):
+    """Builds a species tree S with N leaves with the innovations model.
+    
+    Keyword arguments:
+        ultrametric - it True make tree ultrametric and rescale it to
+            depth 1.0, else all edges have length 1.0; default is True.
+    """
     
     tree = PhyloTree(PhyloTreeNode(0, label='0'))
     tree.number_of_species = N
@@ -70,8 +75,33 @@ def _innovations_model(N, planted=True):
                 
                 species[s] = child1
                 species[new_s] = child2
+                
+    if ultrametric:         
+        _make_ultrametric(tree)
     
     return tree
+
+
+def _make_ultrametric(tree):
+    """Makes a given species tree S ultrametric.
+    
+    It is t(root) = 1 and t(x) = 0 for x in L(S)."""
+    
+    for v in tree.preorder():
+        if not v.parent:
+            v.dist = 0.0
+            v.tstamp = 1.0
+        elif not v.children:
+            v.dist = v.parent.tstamp
+            v.tstamp = 0.0
+        else:                               # random walk to a leaf
+            pos = v                         # current position
+            length = 0                      # path length |P|
+            while pos.children:
+                length += 1
+                pos = pos.children[np.random.randint(len(pos.children))]
+            v.dist = (v.parent.tstamp) * 2 * np.random.uniform() / (length+1)
+            v.tstamp = v.parent.tstamp - v.dist
 
 
 def _reverse_time_stamps(tree):
@@ -85,6 +115,11 @@ def _reverse_time_stamps(tree):
 
 
 def _yule(N, birth_rate):
+    
+    if birth_rate is None:
+        birth_rate = 1.0
+    elif birth_rate <= 0.0:
+        raise ValueError("Birth rate must be >0!")
     
     tree = PhyloTree(PhyloTreeNode(0, label='0', dist=0.0, tstamp=0.0))
     tree.number_of_species = N
@@ -122,9 +157,73 @@ def _yule(N, birth_rate):
     return tree
 
 
-def _EBDP_backward(N, parameters, max_tries=500):
+def _BDP(N, **kwargs):
     
-    birth_inv_sum = sum([1/parameters[i][0] for i in range(len(parameters))])
+    # remove potentially supplied 'episodes' argument
+    episodes = _EBDP_check_episodes(birth_rate = kwargs.get('birth_rate'),
+                                    death_rate = kwargs.get('death_rate'))
+    
+    return _EBDP_backward(N, episodes)
+
+
+def _EBDP(N, **kwargs):
+    
+    episodes = _EBDP_check_episodes(**kwargs)
+    
+    return _EBDP_backward(N, episodes)
+
+
+def _EBDP_check_episodes(**kwargs):
+    
+    birth_rate = kwargs.get('birth_rate')
+    death_rate = kwargs.get('death_rate')
+    episodes = kwargs.get('episodes')
+    
+    # episodes parameter is prefered
+    if episodes is not None:
+        
+        for episode in episodes:
+            if len(episode) != 4:
+                raise ValueError("All episodes must contain 4 values: birth rate, "\
+                                 "death rate, proportion of survivors, time stamp "\
+                                 "(from recent time as 0)!")
+            
+            birth_rate, death_rate, rho, t = episode
+            
+            if birth_rate <= 0.0 or birth_rate < death_rate:
+                raise ValueError("Birth rate must be >0 and >=death rate "\
+                                 "in all episodes!")
+                
+            if rho <= 0.0 or rho > 1.0:
+                raise ValueError("Proportion of survivors must be in (0.0, 1.0]!")
+        
+        return episodes
+    
+    elif birth_rate is not None:
+        
+        if birth_rate <= 0.0 or (death_rate and birth_rate < death_rate):
+            raise ValueError("Birth rate must be >0 and >=death rate!")
+            
+        if death_rate and death_rate < 0.0:
+            raise ValueError("Death rate must be >=0!")
+        
+        if death_rate is None:
+            return [(birth_rate, 0.0, 1.0, 0.0)]
+        else:
+            return [(birth_rate, death_rate, 1.0, 0.0)]
+        
+    else:
+        if death_rate:
+            raise ValueError("Birth rate (>0) must be specified if death rate "\
+                             "is supplied!")
+            
+        return [(birth_rate, 0.0, 1.0, 0.0)]
+
+
+def _EBDP_backward(N, episodes, max_tries=500):
+    """Episodic birth–death process (EBDP), backward algorithm by Stadler 2001."""
+    
+    birth_inv_sum = sum([1/episodes[i][0] for i in range(len(episodes))])
     
     for _ in range(max_tries):
         
@@ -137,7 +236,7 @@ def _EBDP_backward(N, parameters, max_tries=500):
         id_counter = N
         
         while branches:
-            birth_i, death_i, rho_i, t_i = parameters[i]
+            birth_i, death_i, rho_i, t_i = episodes[i]
             
             losses_to_add = round(len(branches) / rho_i) - len(branches)
             for j in range(losses_to_add):
@@ -147,10 +246,10 @@ def _EBDP_backward(N, parameters, max_tries=500):
             while branches:
                 w = np.random.exponential( 1 / ((birth_i + death_i) * len(branches)) )
                 
-                if i+1 < len(parameters) and t + w < parameters[i+1][3]:
+                if i+1 < len(episodes) and t + w < episodes[i+1][3]:
                     
                     i += 1
-                    t = parameters[i+1][3]
+                    t = episodes[i+1][3]
                     break
                 
                 else:
@@ -199,6 +298,7 @@ if __name__ == '__main__':
     print(T.to_newick())
     
     print('------------------------')
-    T2 = _EBDP_backward(10, [(1.0, 0.3, 0.8, 0.0)])
+#    T2 = _EBDP(10, episodes=[(1.0, 0.3, 0.8, 0.0)])
+    T2 = _EBDP(10, birth_rate=1, death_rate=0.5)
     print(T2.to_newick())
     

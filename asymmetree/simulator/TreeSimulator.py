@@ -32,7 +32,7 @@ __copyright__ = "Copyright (C) 2020, David Schaller"
 # --------------------------------------------------------------------------
 
 def simulate_species_tree(N, planted=True, model='innovations',
-                          non_binary=0.0):
+                          non_binary=0.0, **kwargs):
     """Simulates a species tree S with N leaves.
     
     Keyword parameters:
@@ -42,9 +42,23 @@ def simulate_species_tree(N, planted=True, model='innovations',
         non_binary -- probability that an inner edge is contracted;
                       results in non-binary tree; default is 0.0
     """
+    if not isinstance(N, int) or N < 0:
+        raise ValueError("N must be an int >=0!")
+    elif N == 0:
+        return PhyloTree(None)
     
     if isinstance(model, str) and model.lower() in ('innovation', 'innovations'):
-        tree = stm._innovations_model(N, planted=planted)
+        tree = stm._innovations_model(N, planted)
+        
+    elif isinstance(model, str) and model.lower() == 'yule':
+        tree = stm._yule(N, kwargs.get('birth_rate'))
+        
+    elif isinstance(model, str) and model.upper() == 'BDP':
+        tree = stm._BDP(N, **kwargs)
+        
+    elif isinstance(model, str) and model.upper() == 'EBDP':
+        tree = stm._EBDP(N, **kwargs)
+        
     else:
         raise ValueError("Model '{}' is not available!".format(model))
         
@@ -53,31 +67,8 @@ def simulate_species_tree(N, planted=True, model='innovations',
                                                min(non_binary, 1.0),
                                                exclude_planted_edge=True)
          tree.contract(edges)
-         
-    make_ultrametric(tree)
         
     return tree
-
-
-def make_ultrametric(tree):
-    """Makes a given species tree S ultrametric.
-    
-    It is t(root) = 1 and t(x) = 0 for x in L(S)."""
-    for v in tree.preorder():
-        if not v.parent:
-            v.dist = 0.0
-            v.tstamp = 1.0
-        elif not v.children:
-            v.dist = v.parent.tstamp
-            v.tstamp = 0.0
-        else:                               # random walk to a leaf
-            pos = v                         # current position
-            length = 0                      # path length |P|
-            while pos.children:
-                length += 1
-                pos = pos.children[np.random.randint(len(pos.children))]
-            v.dist = (v.parent.tstamp) * 2 * np.random.uniform() / (length+1)
-            v.tstamp = v.parent.tstamp - v.dist
             
             
 def _select_edges_for_contraction(tree, p, exclude_planted_edge=True):
@@ -468,7 +459,7 @@ class GeneTreeSimulator:
         VS_to_VT = {l.ID: [] for l in self.S.preorder() if not l.children}
         
         for v in T.preorder():
-            if not v.children and not v.label == '*':
+            if not v.children and not v.is_loss():
                 VS_to_VT[v.color].append(v.ID)
                 
         for leaf_list in VS_to_VT.values():
@@ -489,7 +480,7 @@ def observable_tree(tree):
     
     loss_nodes = []
     for node in obs_tree.postorder():
-        if not node.children and node.label == '*':
+        if not node.children and node.is_loss():
             loss_nodes.append(node)
     
     # traverse from loss node to root delete if degree <= 1

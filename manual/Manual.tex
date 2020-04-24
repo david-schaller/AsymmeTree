@@ -237,8 +237,6 @@ Table~\ref{tab:module_overview} is an overview over the subpackages and modules 
 		Simulation of evolution rate asymmetries, autocorrelation between ancestors and descendants as well as correlation between genes in the same species. \\
 		\texttt{Scenario} & 
 		Wrapper class for species and gene tree scenarios, computation of the (R)BMG as well as event counts and some statistics. \\
-		\texttt{DistanceMatrix} & 
-		Computation of the distance matrix from an observable gene tree. \\
 		\texttt{NoisyMatrix} & 
 		Generation of a noisy matrix (\emph{random perturbation} or \emph{wrong topology noise}). \\
 		\hline
@@ -421,9 +419,9 @@ The following keyword parameters (with their default values) are available:
 
 \vspace{3mm}
 \renewcommand{\arraystretch}{1.5}
-\begin{tabularx}{0.95\textwidth} { >{\raggedright\arraybackslash}p{4cm} >{\raggedright\arraybackslash}X }
+\begin{tabularx}{0.95\textwidth} { >{\raggedright\arraybackslash}p{5.6cm} >{\raggedright\arraybackslash}X }
 	\texttt{baseline\_rate=1.0} & starting value for the substitution rate (per time unit) and expected value for conserved genes\\
-	\texttt{lognormal\_v=0.0}  & variance factor for a lognormal distribution that controls autocorrelation between genes of the same (and closely related) species, the higher the lower the auto\-corre\-la\-tion\\
+	\texttt{autocorrelation\_variance=0.0}  & variance factor for a lognormal distribution that controls autocorrelation between genes of the same (and closely related) species, the higher the lower the auto\-corre\-la\-tion\\
 	\texttt{gamma\_param=(0.5, 1.0, 2.2)}  & parameter the for Gamma distribution (\texttt{a, loc, scale}) from which rate factors for divergent are drawn, the default values are chosen to fit observed asymmetries between paralogs in yeast data \citep{byrne2007}\\
 	\texttt{weights=(1, 1, 1)}  & weights for choice between conservation,
 	subfunctionalization and neofunctionalization after a duplication event\\
@@ -446,7 +444,7 @@ TGT = TGT_simulator.simulate( (0.5, 0.5, 0.5) )    # event rates D, L, H
 
 # imbalancing
 TGT = tm.imbalance_tree(TGT, S, baseline_rate=1,
-                        lognormal_v=0.2,
+                        autocorrelation_variance=0.2,
                         gamma_param=(0.5, 1.0, 2.2),
                         weights=(1, 1, 1))
 
@@ -458,15 +456,14 @@ OGT = ts.observable_tree(TGT)
 
 \subsubsection{Distance matrix and noise simulation}
 
-The additive distance from an \textbf{observable} gene tree can be computed using the function \texttt{distance\_matrix(tree)} in the \texttt{DistanceMatrix} module.
-It return a tuple containing a list of leaves in the tree, a dictionary mapping leaves to indices and the distance matrix as a 2-dimensional \texttt{numpy} array.
+The additive distance from an \textbf{observable} gene tree can be computed using the function \texttt{distance\_matrix()} of a \texttt{PhyloTree} instance.
+It returns a tuple containing a list of leaves in the tree (specifying the indexing) and the distance matrix as a 2-dimensional \texttt{numpy} array.
 
 \vspace{2mm}
 \begin{python}
-from asymmetree.simulator.DistanceMatrix import distance_matrix
-
 # T is an observable gene tree
-leaves, leaf_index, D = distance_matrix(T)
+leaves, D = T.distance_matrix()
+leaf_index_dict = {leaf: i for i, leaf in leaves}
 \end{python}
 \vspace{2mm}
 

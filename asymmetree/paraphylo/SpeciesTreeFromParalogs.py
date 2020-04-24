@@ -402,7 +402,7 @@ if __name__ == "__main__":
         TGT_simulator = ts.GeneTreeSimulator(S)
         TGT = TGT_simulator.simulate((1,1,0))
         TGT = tm.imbalance_tree(TGT, S, baseline_rate=1,
-                                lognormal_v=0.2,
+                                autocorrelation_variance=0.2,
                                 gamma_param=(0.5, 1.0, 2.2),
                                 weights=(1, 1, 1))
         OGT = ts.observable_tree(TGT)
