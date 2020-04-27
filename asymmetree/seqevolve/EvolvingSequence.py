@@ -15,7 +15,6 @@ from asymmetree.tools.DoublyLinkedList import DLList, DLListElement, DLListItera
 
 
 __author__ = "David Schaller"
-__copyright__ = "Copyright (C) 2020, David Schaller"
 
 
 class State(Enum):

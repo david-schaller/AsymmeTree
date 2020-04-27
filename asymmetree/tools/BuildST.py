@@ -22,7 +22,6 @@ from asymmetree.tools.hdtgraph.DynamicGraph import Graph as HDTGraph
 
 
 __author__ = "David Schaller"
-__copyright__ = "Copyright (C) 2018, David Schaller"
 
 
 class BuildST:

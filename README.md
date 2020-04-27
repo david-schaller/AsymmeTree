@@ -29,9 +29,6 @@ AsymmeTree has several dependencies (which are installed automatically when usin
 * [Scipy and Numpy](http://www.scipy.org/install.html)
 * [Matplotlib](https://matplotlib.org/)
 
-Furthermore, to use functions involving sequence alignment, the following package(s) must be installed (i.e., they are not installed automatically!):
-* [Biopython](http://biopython.org/wiki/Download)
-
 To use the tree reconstruction method for best match inference and the C++ implementation of the quartet method, resp., the following software must be installed
 (I recommend that you compile these tools on your machine, place the binaries into a persistent location and add this location to your PATH environment variable):
 * [RapidNJ](https://birc.au.dk/software/rapidnj/)

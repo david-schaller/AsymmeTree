@@ -6,7 +6,6 @@ from asymmetree.tools import Tree
 
 
 __author__ = "David Schaller"
-__copyright__ = "Copyright (C) 2019, David Schaller"
 
 
 class SimpleGraph:

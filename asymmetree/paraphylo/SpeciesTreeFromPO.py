@@ -8,7 +8,6 @@ from asymmetree.paraphylo.POParser import parse_po_graph
 
 
 __author__ = "David Schaller"
-__copyright__ = "Copyright (C) 2020, David Schaller"
 
 
 def _reconstruct(params):

@@ -5,6 +5,9 @@ import itertools, random
 import asymmetree.tools.DoublyLinkedList as dll
 
 
+__author__ = "David Schaller"
+
+
 class TreeNode:
     """Class 'TreeNode'.
     

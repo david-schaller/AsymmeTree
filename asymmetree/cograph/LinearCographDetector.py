@@ -16,7 +16,6 @@ from asymmetree.cograph.Cograph import Cotree, CotreeNode
 
 
 __author__ = "David Schaller"
-__copyright__ = "Copyright (C) 2019, David Schaller"
 
 
 class LCD:

@@ -12,6 +12,10 @@ References:
     Oxford Series in Ecology and Evolution.
 """
 
+
+__author__ = "David Schaller"
+
+
 MIN_LENGTH = 1e-6
 MAX_LENGTH = 20.0
 #MAXITER = 100

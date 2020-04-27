@@ -6,6 +6,9 @@ import numpy as np
 from asymmetree.tools.PhyloTree import PhyloTree, PhyloTreeNode
 
 
+__author__ = "David Schaller"
+
+
 def _innovations_model(N, planted, ultrametric=True):
     """Builds a species tree S with N leaves with the innovations model.
     

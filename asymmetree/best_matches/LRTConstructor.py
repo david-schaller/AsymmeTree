@@ -16,7 +16,6 @@ from asymmetree.tools.PhyloTree import PhyloTree, PhyloTreeNode
 
 
 __author__ = "David Schaller"
-__copyright__ = "Copyright (C) 2020, David Schaller"
 
 
 # --------------------------------------------------------------------------

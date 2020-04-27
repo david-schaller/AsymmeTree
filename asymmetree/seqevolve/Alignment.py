@@ -4,6 +4,9 @@ import numpy as np
 import networkx as nx
 
 
+__author__ = "David Schaller"
+
+
 class AlignmentBuilder:
     
     

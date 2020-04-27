@@ -28,7 +28,6 @@ from asymmetree.tools.Tree import Tree
 
 
 __author__ = "David Schaller"
-__copyright__ = "Copyright (C) 2018, David Schaller"
 
 
 class Edge:

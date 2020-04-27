@@ -7,6 +7,9 @@ from asymmetree.seqevolve.EvolvingSequence import EvoSeq, State
 from asymmetree.seqevolve.Alignment import AlignmentBuilder, write_to_file
 
 
+__author__ = "David Schaller"
+
+
 class Evolver:
     
     def __init__(self, subst_model, indel_model=None, het_model=None, jump_chain=False):

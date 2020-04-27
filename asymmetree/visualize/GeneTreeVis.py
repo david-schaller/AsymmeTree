@@ -6,7 +6,6 @@ import matplotlib.patches as mpatches
 
 
 __author__ = "David Schaller"
-__copyright__ = "Copyright (C) 2019, David Schaller"
 
 
 class GeneTreeVis:

@@ -14,8 +14,8 @@ import networkx as nx
 
 from asymmetree.tools.Tree import Tree, TreeNode
 
+
 __author__ = "David Schaller"
-__copyright__ = "Copyright (C) 2020, David Schaller"
 
 
 class PhyloTreeNode(TreeNode):

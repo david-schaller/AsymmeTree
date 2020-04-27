@@ -5,6 +5,9 @@ import numpy as np
 from asymmetree.seqevolve.EvolvingSequence import State
 
 
+__author__ = "David Schaller"
+
+
 class HeterogeneityModel:
     
     def __init__(self, alpha, classes=5, sitewise=False, invariant=0.0):

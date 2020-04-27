@@ -6,6 +6,9 @@ from scipy import linalg
 from asymmetree.seqevolve.EmpiricalModels import empirical_models
 
 
+__author__ = "David Schaller"
+
+
 class SubstModel:
     
     

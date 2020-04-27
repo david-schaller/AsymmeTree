@@ -17,7 +17,6 @@ import networkx as nx
 
 
 __author__ = "David Schaller"
-__copyright__ = "Copyright (C) 2019, David Schaller"
 
 
 def parse_po_graph(filename):

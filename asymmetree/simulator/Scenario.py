@@ -13,7 +13,6 @@ from asymmetree.best_matches import TrueBMG
 
 
 __author__ = "David Schaller"
-__copyright__ = "Copyright (C) 2019, David Schaller"
 
 
 class Scenario:
