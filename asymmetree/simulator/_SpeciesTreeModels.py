@@ -160,6 +160,54 @@ def _yule(N, birth_rate):
     return tree
 
 
+def _yule_age(age, birth_rate):
+    
+    if birth_rate is None:
+        birth_rate = 1.0
+    elif birth_rate <= 0.0:
+        raise ValueError("Birth rate must be >0!")
+        
+    if not isinstance(age, (float, int)) or age <= 0.0:
+        raise ValueError("Age must be a number >0!")
+    elif isinstance(age, int):
+        age = float(age)
+    
+    tree = PhyloTree(PhyloTreeNode(0, label='0', dist=0.0, tstamp=0.0))
+    
+    branches = [(1, tree.root)]
+    forward_time = 0.0
+    node_counter = 1
+    
+    while forward_time < age:
+        
+        rate = len(branches) * birth_rate
+        forward_time += np.random.exponential(1/rate)
+        
+        # do not branch if age is already reached
+        if forward_time >= age:
+            break
+        
+        i = np.random.randint(len(branches))
+        branch_id, parent = branches[i]
+        spec_node = PhyloTreeNode(branch_id, label=str(branch_id),
+                                  dist=forward_time-parent.tstamp,
+                                  tstamp=forward_time)
+        parent.add_child(spec_node)
+        branches[i] = (node_counter, spec_node)
+        branches.append((node_counter+1, spec_node))
+        node_counter += 2
+    
+    # finalize the branches
+    for branch_id, parent in branches:
+        parent.add_child( PhyloTreeNode(branch_id, label=str(branch_id),
+                                        dist=age-parent.tstamp,
+                                        tstamp=age) )
+    
+    _reverse_time_stamps(tree)
+    
+    return tree
+
+
 def _BDP(N, **kwargs):
     
     # remove potentially supplied 'episodes' argument
@@ -265,7 +313,8 @@ def _EBDP_backward(N, episodes, max_tries=500):
                                                   dist=0.0, tstamp=t)
                         id_counter += 1
                         if len(branches) > 1:
-                            k, l = np.random.choice(len(branches), 2, replace=False)
+                            k, l = np.random.choice(len(branches), 2,
+                                                    replace=False)
                             if k > l:
                                 k, l = l, k
                             spec_node.add_child(branches[k])
@@ -278,7 +327,8 @@ def _EBDP_backward(N, episodes, max_tries=500):
                             branches.clear()
                     else:
                         # extinction event drawn
-                        branches.append( PhyloTreeNode(id_counter, '*', dist=0.0, tstamp=t) )
+                        branches.append( PhyloTreeNode(id_counter, '*',
+                                                       dist=0.0, tstamp=t) )
                         id_counter += 1
         
         # return tree with the following probability
@@ -293,15 +343,95 @@ def _EBDP_backward(N, episodes, max_tries=500):
     print("Could not return a tree after {} simulations!".format(max_tries),
           file=sys.stderr)
     
+    
+def _EBDP_mass_extinction(branches, surviving_rate, t):
+    
+    no_of_losses = round((1-surviving_rate) * len(branches))
+    chosen_losses = sorted(np.random.choice(len(branches), replace=False,
+                                            size=no_of_losses),
+                           reverse=True)
+    for j in chosen_losses:
+        branch_id, parent = branches[j]
+        loss_node = PhyloTreeNode(branch_id, '*',
+                                  dist=t-parent.tstamp,
+                                  tstamp=t)
+        parent.add_child(loss_node)
+        branches.pop(j)
+    
+
+def _EBDP_age(age, episodes):
+    """Episodic birth–death process (EBDP), forward algorithm with max age."""
+    
+    tree = PhyloTree(PhyloTreeNode(0, label='0', dist=0.0, tstamp=0.0))
+    
+    branches = [(1, tree.root)]
+    forward_time = 0.0
+    node_counter = 1
+    i = 0               # current episode
+    
+    # may lead to extinction of the single branch at time t=0
+    _EBDP_mass_extinction(branches, episodes[i][2], episodes[i][3])
+    
+    while forward_time < age:
+        birth_rate, death_rate, *_ = episodes[i]
+        
+        rate = len(branches) * (birth_rate + death_rate)
+        waiting_time = np.random.exponential(1/rate) if rate > 0.0 else float('inf')
+        
+        if i+1 < len(episodes) and episodes[i+1][3] <= forward_time + waiting_time:
+            _EBDP_mass_extinction(branches, episodes[i+1][2], episodes[i+1][3])
+            forward_time = episodes[i+1][3]
+        
+        elif forward_time + waiting_time >= age:
+            break
+        
+        else:
+            forward_time += waiting_time
+            
+            j = np.random.randint(len(branches))
+            branch_id, parent = branches[j]
+            
+            if birth_rate > np.random.uniform(low=0.0, high=birth_rate+death_rate):
+                # speciation event drawn
+                spec_node = PhyloTreeNode(branch_id, label=str(branch_id),
+                                          dist=forward_time-parent.tstamp,
+                                          tstamp=forward_time)
+                parent.add_child(spec_node)
+                branches[j] = (node_counter, spec_node)
+                branches.append((node_counter+1, spec_node))
+                node_counter += 2
+            else:
+                # extinction event drawn
+                loss_node = PhyloTreeNode(branch_id, '*',
+                                          dist=forward_time-parent.tstamp,
+                                          tstamp=forward_time)
+                parent.add_child(loss_node)
+                branches.pop(j)
+                
+    # finalize the (surviving) branches
+    for branch_id, parent in branches:
+        parent.add_child( PhyloTreeNode(branch_id, label=str(branch_id),
+                                        dist=age-parent.tstamp,
+                                        tstamp=age) )
+    
+    _reverse_time_stamps(tree)
+    
+    return tree
+    
 
 
 if __name__ == '__main__':
     
+    print('Yule ------------------------')
     T = _yule(10, 1.0)
     print(T.to_newick())
     
-    print('------------------------')
+    print('EBDP ------------------------')
 #    T2 = _EBDP(10, episodes=[(1.0, 0.3, 0.8, 0.0)])
     T2 = _EBDP(10, birth_rate=1, death_rate=0.5)
     print(T2.to_newick())
+    
+    print('Yule age ------------------------')
+    T3 = _yule_age(2.0, 1.0)
+    print(T3.to_newick())
     
