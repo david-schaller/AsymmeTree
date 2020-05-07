@@ -22,7 +22,7 @@ __author__ = "David Schaller"
 
 
 def imbalance_tree(T, S, baseline_rate=1.0,
-                   autocorr_rates=None,
+                   autocorr_factors=None,
                    autocorr_variance=0.0,
                    gamma_param=(0.5, 1.0, 2.2),
                    CSN_weights=(1, 1, 1),
@@ -31,7 +31,7 @@ def imbalance_tree(T, S, baseline_rate=1.0,
     
     Keyword arguments:
     baseline_rate -- mean of substitution rate for conserved genes
-    autocorr_rates -- autocorrelation rate factors for the edges of S
+    autocorr_factors -- autocorrelation rate factors for the edges of S
     autocorr_variance -- autocorrelation variance factor for lognormal
         distribution, only relevant if 'autocorrelation_rates' are not supplied 
     gamma_param -- param. for gamma distribution (a, loc, scale)
@@ -48,8 +48,8 @@ def imbalance_tree(T, S, baseline_rate=1.0,
     _divergent_rates(T, S, gamma_param, CSN_weights)
     
     # autocorrelation
-    if autocorr_rates:
-        _apply_autocorrelation(T, autocorr_rates, inplace=True)
+    if autocorr_factors:
+        _apply_autocorrelation(T, autocorr_factors, inplace=True)
     elif autocorr_variance > 0.0:
         _, edge_rates = autocorrelation_factors(S, autocorr_variance)
         _apply_autocorrelation(T, edge_rates, inplace=True)
