@@ -4,10 +4,7 @@ import time, os
 import numpy as np
 
 from asymmetree.tools import FileIO, GraphTools
-import asymmetree.simulator.TreeSimulator as ts
-import asymmetree.simulator.TreeImbalancer as tm
-from asymmetree.simulator.Scenario import Scenario
-from asymmetree.simulator import NoisyMatrix
+import asymmetree.treeevolve as te
 
 from asymmetree.best_matches import TrueBMG
 import asymmetree.best_matches.ExtBestHits as ebh
@@ -150,30 +147,30 @@ for rep in range(repeats):
     L = np.random.uniform(low=L_min, high=L_max) if L_max > L_min else 0.0
     H = np.random.uniform(low=H_min, high=H_max) if H_max > H_min else 0.0
     
-    S = ts.simulate_species_tree(np.random.randint(S_min, S_max+1), planted=True)
+    S = te.simulate_species_tree(np.random.randint(S_min, S_max+1), planted=True)
     
-    TGT_simulator = ts.GeneTreeSimulator(S)
+    TGT_simulator = te.GeneTreeSimulator(S)
     TGT1 = TGT_simulator.simulate((D,L,H))
-    TGT1 = tm.imbalance_tree(TGT1, S, baseline_rate=1,
+    TGT1 = te.imbalance_tree(TGT1, S, baseline_rate=1,
                             autocorrelation_variance=0.2,
                             gamma_param=(0.5, 1.0, 2.2),
                             weights=(1/3, 1/3, 1/3))
     
     TGT2 = TGT_simulator.simulate((D,L,H))
-    TGT2 = tm.imbalance_tree(TGT2, S, baseline_rate=1,
+    TGT2 = te.imbalance_tree(TGT2, S, baseline_rate=1,
                             autocorrelation_variance=0.2,
                             gamma_param=(0.5, 1.0, 2.2),
                             weights=(1/3, 1/3, 1/3))
     
-    scenario1 = Scenario(S, TGT1, (D,L,H))
-    scenario2 = Scenario(S, TGT2, (D,L,H))
+    scenario1 = te.Scenario(S, TGT1, (D,L,H))
+    scenario2 = te.Scenario(S, TGT2, (D,L,H))
     
     D1 = scenario1.get_distance_matrix()
     D2 = scenario2.get_distance_matrix()
     
     for noise_sd in noise_sds:
-        D1_noisy = NoisyMatrix.noisy_matrix(D1, noise_sd)
-        D2_noisy = NoisyMatrix.noisy_matrix(D2, noise_sd)
+        D1_noisy = te.noisy_matrix(D1, noise_sd)
+        D2_noisy = te.noisy_matrix(D2, noise_sd)
         true_sd1 = np.nanstd(np.divide(D1_noisy, D1)) if noise_sd > 0.0 else 0.0
         true_sd2 = np.nanstd(np.divide(D2_noisy, D2)) if noise_sd > 0.0 else 0.0
         
@@ -188,7 +185,7 @@ for rep in range(repeats):
         print(sim_ID/ (2*repeats), "Noise:", noise_sd)
     
     for noise_alpha in noise_alphas:
-        D1_noisy, D2_noisy = NoisyMatrix.convex_linear_comb(D1, D2, alpha=noise_alpha)
+        D1_noisy, D2_noisy = te.convex_linear_comb(D1, D2, alpha=noise_alpha)
         true_sd1 = np.nanstd(np.divide(D1_noisy, D1)) if noise_alpha > 0.0 else 0.0
         true_sd2 = np.nanstd(np.divide(D2_noisy, D2)) if noise_alpha > 0.0 else 0.0
         

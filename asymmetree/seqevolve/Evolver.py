@@ -304,7 +304,7 @@ if __name__ == '__main__':
     
     from SubstModel import SubstModel
     from IndelModel import IndelModel
-    import asymmetree.simulator.TreeSimulator as ts
+    import asymmetree.treeevolve as te
     
     subst_model = SubstModel('a', 'WAG')
     indel_model = IndelModel(0.01, 0.01, length_model='zipf')
@@ -312,7 +312,7 @@ if __name__ == '__main__':
     evolver = Evolver(subst_model, indel_model=indel_model, jump_chain=False)
     print(evolver.subst_model.Q)
     
-    T = ts.simulate_species_tree(5)
+    T = te.simulate_species_tree(5)
     evolver.evolve_along_tree(T, start_length=150)
     
     for node, sequence in evolver.sequences.items():

@@ -382,8 +382,7 @@ if __name__ == "__main__":
     
     # ----- TESTING THIS MODULE -----
     
-    import asymmetree.simulator.TreeSimulator as ts
-    import asymmetree.simulator.TreeImbalancer as tm
+    import asymmetree.treeevolve as te
     from asymmetree.best_matches import TrueBMG
     
     # SPECIES TREE:
@@ -398,13 +397,13 @@ if __name__ == "__main__":
     
     # GENE FAMILIES:
     for i in range(100):
-        TGT_simulator = ts.GeneTreeSimulator(S)
+        TGT_simulator = te.GeneTreeSimulator(S)
         TGT = TGT_simulator.simulate((1,1,0))
-        TGT = tm.imbalance_tree(TGT, S, baseline_rate=1,
+        TGT = te.imbalance_tree(TGT, S, baseline_rate=1,
                                 autocorrelation_variance=0.2,
                                 gamma_param=(0.5, 1.0, 2.2),
                                 weights=(1, 1, 1))
-        OGT = ts.observable_tree(TGT)
+        OGT = te.observable_tree(TGT)
         
     #    ortho_graph = TrueBMG.true_orthology_graph(OGT)
     #    tr.add_ortho_graph(ortho_graph)

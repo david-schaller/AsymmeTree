@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import asymmetree.simulator.TreeSimulator as ts
-import asymmetree.simulator.TreeImbalancer as tm
-from asymmetree.simulator.Scenario import Scenario
+import asymmetree.treeevolve as te
 from asymmetree.best_matches.Quartets import Quartets
 import asymmetree.best_matches.LRTConstructor as lrt
 
@@ -17,7 +15,7 @@ DLH_rates = (1.0, 1.0, 0.0)
 #                            SPECIES TREE
 # --------------------------------------------------------------------------
 
-S = ts.simulate_species_tree(10, planted=True, non_binary=0.2)
+S = te.simulate_species_tree(10, planted=True, non_binary_prob=0.2)
 print("------------- S -------------")
 print(S.to_newick())
 
@@ -25,9 +23,9 @@ print(S.to_newick())
 #                             GENE TREE
 # --------------------------------------------------------------------------
 
-TGT_simulator = ts.GeneTreeSimulator(S)
+TGT_simulator = te.GeneTreeSimulator(S)
 TGT = TGT_simulator.simulate(DLH_rates, prohibit_extinction='per_species')
-TGT = tm.imbalance_tree(TGT, S, baseline_rate=1,
+TGT = te.imbalance_tree(TGT, S, baseline_rate=1,
                         autocorrelation_variance=0.2,
                         gamma_param=(0.5, 1.0, 2.2),
                         weights=(1, 1, 1))
@@ -39,7 +37,7 @@ print('All species have at least one copy:', TGT_simulator._assert_no_extinction
 #                       OBSERVABLE GENE TREE
 # --------------------------------------------------------------------------
 
-OGT = ts.observable_tree(TGT)
+OGT = te.observable_tree(TGT)
 print("------------- OGT -------------")
 print(OGT.to_newick())
 
@@ -55,7 +53,7 @@ print(LRT.to_newick())
 #                              SCENARIO
 # --------------------------------------------------------------------------
 
-scenario = Scenario(S, TGT, DLH_rates, OGT=OGT)         # wrap everything in a scenario
+scenario = te.Scenario(S, TGT, DLH_rates, OGT=OGT)      # wrap everything in a scenario
 D = scenario.get_distance_matrix()                      # compute the distance matrix
 
 

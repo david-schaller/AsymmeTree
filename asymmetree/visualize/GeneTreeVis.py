@@ -250,14 +250,13 @@ class GeneTreeVis:
 
 if __name__ == "__main__":
     
-    import asymmetree.simulator.TreeSimulator as ts
-    import asymmetree.simulator.TreeImbalancer as tm
+    import asymmetree.treeevolve as te
     
-    S = ts.simulate_species_tree(6, planted=True, non_binary=0.2)
+    S = te.simulate_species_tree(6, planted=True, non_binary_prob=0.2)
     
-    TGT_simulator = ts.GeneTreeSimulator(S)
+    TGT_simulator = te.GeneTreeSimulator(S)
     TGT = TGT_simulator.simulate((1.0,1.0,1.0),
                                  dupl_polytomy=0.5)
-    TGT = tm.imbalance_tree(TGT, S)
+    TGT = te.imbalance_tree(TGT, S)
     
     gtv = GeneTreeVis(TGT)

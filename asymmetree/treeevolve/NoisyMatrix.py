@@ -9,7 +9,6 @@ Methods in this module:
     - noisy_matrix
     - convex_linear_comb
     - wrong_topology_matrix
-    - check_metric
 """
 
 import random
@@ -232,7 +231,7 @@ def wrong_topology_matrix(OGT):
 #   
 # --------------------------------------------------------------------------
 
-def check_metric(matrix):
+def _check_metric(matrix):
     """Check whether a given matrix is a metric."""
     N = matrix.shape[0]
     for i in range(N):
@@ -244,7 +243,7 @@ def check_metric(matrix):
             if matrix[i,j] != matrix[j,i]:
                 print("Not symmetrical for",i,j)
                 return False
-            if abs(matrix[i,j] - np.min(matrix[i,:] + matrix[:,j])) > 0.000_000_001:
+            if abs(matrix[i,j] - np.min(matrix[i,:] + matrix[:,j])) > 1e-8:
                 print("Violation of triangle inequality!",i,j, np.min(matrix[i,:] + matrix[:,j]), matrix[i,j])
                 return False
     return True

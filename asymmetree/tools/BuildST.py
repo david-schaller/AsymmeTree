@@ -483,7 +483,7 @@ if __name__ == "__main__":
     
     import numpy as np
     from asymmetree.tools.PhyloTree import PhyloTree
-    from asymmetree.simulator.TreeSimulator import observable_tree
+    from asymmetree.treeevolve import observable_tree
     
     N = 20
     t = PhyloTree.random_colored_tree(N, [1,2,3], binary=False)

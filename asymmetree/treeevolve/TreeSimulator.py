@@ -18,7 +18,7 @@ from collections import deque
 import numpy as np
 
 from asymmetree.tools.PhyloTree import PhyloTree, PhyloTreeNode
-import asymmetree.simulator._SpeciesTreeModels as stm
+import asymmetree.treeevolve._SpeciesTreeModels as stm
 
 
 __author__ = "David Schaller"
@@ -27,43 +27,88 @@ __author__ = "David Schaller"
 # --------------------------------------------------------------------------
 #                    CONSTRUCTION OF THE SPECIES TREE
 #
-#                       with the innovations model
 # --------------------------------------------------------------------------
 
-def simulate_species_tree(N, planted=True, model='innovations',
-                          non_binary=0.0, **kwargs):
+def simulate_species_tree(N, model='innovations',
+                          non_binary_prob=0.0, planted=True, **kwargs):
     """Simulates a species tree S with N leaves.
     
     Keyword parameters:
-        planted -- add a planted root that has the canonical root as its
-                   single neighbor; default is True
         model -- simulation model to be applied; default is 'innovations'
-        non_binary -- probability that an inner edge is contracted;
-                      results in non-binary tree; default is 0.0
+        non_binary_prob -- probability that an inner edge is contracted;
+                 results in non-binary tree; default is 0.0
+        planted -- add a planted root that has the canonical root as its
+                 single neighbor; default is True
     """
     if not isinstance(N, int) or N < 0:
         raise ValueError("N must be an int >=0!")
     elif N == 0:
         return PhyloTree(None)
     
-    if isinstance(model, str) and model.lower() in ('innovation', 'innovations'):
+    if not isinstance(model, str):
+        raise ValueError("Model must be of type 'str'!")
+    
+    if non_binary_prob < 0.0 or non_binary_prob > 1.0:
+        raise ValueError("Contraction prob. must be in [0.0, 1.0]!")
+    
+    if model.lower() in ('innovation', 'innovations'):
         tree = stm._innovations_model(N, planted)
         
-    elif isinstance(model, str) and model.lower() == 'yule':
+    elif model.lower() == 'yule':
         tree = stm._yule(N, kwargs.get('birth_rate'))
         
-    elif isinstance(model, str) and model.upper() == 'BDP':
+    elif model.upper() == 'BDP':
         tree = stm._BDP(N, **kwargs)
         
-    elif isinstance(model, str) and model.upper() == 'EBDP':
+    elif model.upper() == 'EBDP':
         tree = stm._EBDP(N, **kwargs)
         
     else:
         raise ValueError("Model '{}' is not available!".format(model))
         
-    if non_binary > 0.0:
-         edges = _select_edges_for_contraction(tree,
-                                               min(non_binary, 1.0),
+    if non_binary_prob > 0.0:
+         edges = _select_edges_for_contraction(tree, non_binary_prob,
+                                               exclude_planted_edge=True)
+         tree.contract(edges)
+        
+    return tree
+
+
+def simulate_species_tree_age(age, model='yule',
+                              non_binary_prob=0.0, **kwargs):
+    """Simulates a (planted) species tree S of the specified age.
+    
+    Keyword parameters:
+        model -- simulation model to be applied; default is 'yule'
+        non_binary_prob -- probability that an inner edge is contracted;
+                 results in non-binary tree; default is 0.0
+    """
+    
+    if not isinstance(age, (float, int)) or age <= 0.0:
+        raise ValueError("Age must be a number >0!")
+    elif isinstance(age, int):
+        age = float(age)
+        
+    if not isinstance(model, str):
+        raise ValueError("Model must be of type 'str'!")
+        
+    if non_binary_prob < 0.0 or non_binary_prob > 1.0:
+        raise ValueError("Contraction prob. must be in [0.0, 1.0]!")
+    
+    if model.lower() == 'yule':
+        tree = stm._yule_age(age, kwargs.get('birth_rate'))
+        
+    elif model.upper() == 'BDP':
+        tree = stm._BDP_age(age, **kwargs)
+        
+    elif model.upper() == 'EBDP':
+        tree = stm._EBDP_age(age, **kwargs)
+        
+    else:
+        raise ValueError("Model '{}' is not available!".format(model))
+        
+    if non_binary_prob > 0.0:
+         edges = _select_edges_for_contraction(tree, non_binary_prob,
                                                exclude_planted_edge=True)
          tree.contract(edges)
         
@@ -91,7 +136,7 @@ def _select_edges_for_contraction(tree, p, exclude_planted_edge=True):
 # --------------------------------------------------------------------------
 
 
-class Branch:
+class _Branch:
     
     __slots__ = ('ID', 'array_id', 'rate',
                  'parent', 'S_u', 'S_v', 'transferred')
@@ -302,8 +347,8 @@ class GeneTreeSimulator:
         for S_v in self.S.root.children:
             
             array_id = len(self.branches)
-            new_branch = Branch(self.id_counter, array_id, rate,
-                                T.root, self.S.root, S_v, 0)
+            new_branch = _Branch(self.id_counter, array_id, rate,
+                                 T.root, self.S.root, S_v, 0)
             self.ES_to_b[(self.S.root, S_v)].append(new_branch)
             self.branches.append(new_branch)
             self.id_counter += 1
@@ -334,13 +379,13 @@ class GeneTreeSimulator:
                 
                 if S_w is S_v.children[0]:
                     array_id = branch.array_id
-                    new_branch = Branch(self.id_counter, array_id, branch.rate,
-                                        spec_node, S_v, S_w, 0)
+                    new_branch = _Branch(self.id_counter, array_id, branch.rate,
+                                         spec_node, S_v, S_w, 0)
                     self.branches[array_id] = new_branch
                 else:
                     array_id = len(self.branches)
-                    new_branch = Branch(self.id_counter, array_id, branch.rate,
-                                        spec_node, S_v, S_w, 0)
+                    new_branch = _Branch(self.id_counter, array_id, branch.rate,
+                                         spec_node, S_v, S_w, 0)
                     self.branches.append(new_branch)
                 
                 self.ES_to_b[(S_v, S_w)].append(new_branch)
@@ -368,13 +413,13 @@ class GeneTreeSimulator:
             
             if i == 0:
                 array_id = branch.array_id
-                new_branch = Branch(self.id_counter, array_id, self.rate_sum,
-                                    dupl_node, S_u, S_v, 0)
+                new_branch = _Branch(self.id_counter, array_id, self.rate_sum,
+                                     dupl_node, S_u, S_v, 0)
                 self.branches[array_id] = new_branch
             else:
                 array_id = len(self.branches)
-                new_branch = Branch(self.id_counter, array_id, self.rate_sum,
-                                    dupl_node, S_u, S_v, 0)
+                new_branch = _Branch(self.id_counter, array_id, self.rate_sum,
+                                     dupl_node, S_u, S_v, 0)
                 self.branches.append(new_branch)
             
             self.ES_to_b[(S_u, S_v)].append(new_branch)
@@ -429,16 +474,16 @@ class GeneTreeSimulator:
             
             # original branch
             array_id = branch.array_id
-            new_branch = Branch(self.id_counter, array_id, branch.rate,
-                                hgt_node, S_u, S_v, 0) 
+            new_branch = _Branch(self.id_counter, array_id, branch.rate,
+                                 hgt_node, S_u, S_v, 0) 
             self.branches[array_id] = new_branch
             self.ES_to_b[(S_u, S_v)].append(new_branch)
             self.id_counter += 1
             
             # receiving branch
             array_id = len(self.branches)
-            trans_branch = Branch(self.id_counter, array_id, self.rate_sum,
-                                  hgt_node, *trans_edge, 1)
+            trans_branch = _Branch(self.id_counter, array_id, self.rate_sum,
+                                   hgt_node, *trans_edge, 1)
             self.branches.append(trans_branch)
             self.ES_to_b[trans_edge].append(trans_branch)
             self.id_counter += 1

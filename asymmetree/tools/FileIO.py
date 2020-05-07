@@ -119,10 +119,7 @@ if __name__ == "__main__":
     
     # generate new files in folder "test_data"
     
-    import asymmetree.simulator.TreeSimulator as ts
-    import asymmetree.simulator.TreeImbalancer as tm
-    
-    from asymmetree.simulator.Scenario import Scenario
+    import asymmetree.treeevolve as te
     from asymmetree.tools.PhyloTree import PhyloTree
     
     matrix_file = "test_data/matrix.phylip"
@@ -134,22 +131,22 @@ if __name__ == "__main__":
     
     DLH_rates = (1,1,0)
     
-    #S = ts.simulate_species_tree(10, planted=True)
+    #S = te.simulate_species_tree(10, planted=True)
     S = PhyloTree.parse_newick("(((8:0.08603999468839801,(10:0.06055381385164242,(12:0.02750356935270675,(14:0.0071494825768602215,15:0.0071494825768602215)13:0.02035408677584653)11:0.03305024449893567)9:0.025486180836755596)2:0.34305906001624026,(((16:0.036223587639635554,(18:0.032127988304223636,19:0.032127988304223636)17:0.0040955993354119214)6:0.1114990457717915,7:0.14772263341142705)4:0.03331012904283408,5:0.18103276245426114)3:0.24806629225037713)1:0.5709009452953617)0:0.0")
     S.reconstruct_IDs()
     S.reconstruct_timestamps()
     print("------------- S -------------")
     print(S.to_newick())
     
-    TGT_simulator = ts.GeneTreeSimulator(S)
+    TGT_simulator = te.GeneTreeSimulator(S)
     TGT = TGT_simulator.simulate(DLH_rates)
     print("done")
-    TGT = tm.imbalance_tree(TGT, S)
+    TGT = te.imbalance_tree(TGT, S)
     
     print("------------- TGT -------------")
     print(TGT.to_newick())
     
-    scenario = Scenario(S, TGT, DLH_rates)
+    scenario = te.Scenario(S, TGT, DLH_rates)
     print(scenario.subtree_list)
     D = scenario.get_distance_matrix()
     

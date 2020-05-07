@@ -114,7 +114,7 @@ def _reverse_time_stamps(tree):
         max_depth = max(max_depth, v.tstamp)
             
     for v in tree.preorder():
-        v.tstamp = abs(v.tstamp - max_depth)   
+        v.tstamp = abs(v.tstamp - max_depth)
 
 
 def _yule(N, birth_rate):
@@ -166,11 +166,6 @@ def _yule_age(age, birth_rate):
         birth_rate = 1.0
     elif birth_rate <= 0.0:
         raise ValueError("Birth rate must be >0!")
-        
-    if not isinstance(age, (float, int)) or age <= 0.0:
-        raise ValueError("Age must be a number >0!")
-    elif isinstance(age, int):
-        age = float(age)
     
     tree = PhyloTree(PhyloTreeNode(0, label='0', dist=0.0, tstamp=0.0))
     
@@ -203,6 +198,7 @@ def _yule_age(age, birth_rate):
                                         dist=age-parent.tstamp,
                                         tstamp=age) )
     
+    # reverse such that t(root) = age and t(leaves) = 0.0
     _reverse_time_stamps(tree)
     
     return tree
@@ -233,13 +229,22 @@ def _EBDP_check_episodes(**kwargs):
     # episodes parameter is prefered
     if episodes is not None:
         
-        for episode in episodes:
-            if len(episode) != 4:
+        if len(episodes) == 0:
+            raise ValueError("List of episodes must not be empty!")
+        
+        for i in range(len(episodes)):
+            
+            if len(episodes[i]) != 4:
                 raise ValueError("All episodes must contain 4 values: birth rate, "\
                                  "death rate, proportion of survivors, time stamp "\
                                  "(from recent time as 0)!")
             
-            birth_rate, death_rate, rho, t = episode
+            birth_rate, death_rate, rho, t = episodes[i]
+            if i == 0 and t != 0.0:
+                raise ValueError("First episode must be at t=0.0!")
+            elif i > 0 and episodes[i-1][3] >= t:
+                print(episodes[i-1][3], t)
+                raise ValueError("Episodes must be in correct temporal order!")
             
             if birth_rate <= 0.0 or birth_rate < death_rate:
                 raise ValueError("Birth rate must be >0 and >=death rate "\
@@ -268,7 +273,7 @@ def _EBDP_check_episodes(**kwargs):
             raise ValueError("Birth rate (>0) must be specified if death rate "\
                              "is supplied!")
             
-        return [(birth_rate, 0.0, 1.0, 0.0)]
+        return [(1.0, 0.0, 1.0, 0.0)]
 
 
 def _EBDP_backward(N, episodes, max_tries=500):
@@ -297,14 +302,12 @@ def _EBDP_backward(N, episodes, max_tries=500):
             while branches:
                 w = np.random.exponential( 1 / ((birth_i + death_i) * len(branches)) )
                 
-                if i+1 < len(episodes) and t + w < episodes[i+1][3]:
-                    
-                    i += 1
+                if i+1 < len(episodes) and t + w > episodes[i+1][3]:
                     t = episodes[i+1][3]
+                    i += 1
                     break
                 
                 else:
-                    
                     t += w
                     
                     if birth_i > np.random.uniform(low=0.0, high=birth_i+death_i):
@@ -342,8 +345,79 @@ def _EBDP_backward(N, episodes, max_tries=500):
         
     print("Could not return a tree after {} simulations!".format(max_tries),
           file=sys.stderr)
+   
+
+def _BDP_age(age, **kwargs):
     
+    # remove potentially supplied 'episodes' argument
+    episodes = _EBDP_age_check_episodes(birth_rate = kwargs.get('birth_rate'),
+                                        death_rate = kwargs.get('death_rate'))
     
+    return _EBDP_age_forward(age, episodes)
+
+
+def _EBDP_age(age, **kwargs):
+    
+    episodes = _EBDP_age_check_episodes(**kwargs)
+    
+    return _EBDP_age_forward(age, episodes)
+
+
+def _EBDP_age_check_episodes(**kwargs):
+    
+    birth_rate = kwargs.get('birth_rate')
+    death_rate = kwargs.get('death_rate')
+    episodes = kwargs.get('episodes')
+    
+    # episodes parameter is prefered
+    if episodes is not None:
+        
+        if len(episodes) == 0:
+            raise ValueError("List of episodes must not be empty!")
+        
+        for i in range(len(episodes)):
+            
+            if len(episodes[i]) != 4:
+                raise ValueError("All episodes must contain 4 values: birth rate, "\
+                                 "death rate, proportion of survivors, time stamp "\
+                                 "(from recent time as 0)!")
+            
+            birth_rate, death_rate, rho, t = episodes[i]
+            if i == 0 and t != 0.0:
+                raise ValueError("First episode must be at t=0.0!")
+            elif i > 0 and episodes[i-1][3] >= t:
+                print(episodes[i-1][3], t)
+                raise ValueError("Episodes must be in correct temporal order!")
+            
+            if birth_rate < 0.0 or death_rate < 0.0:
+                raise ValueError("Birth and death rate must be >=0 "\
+                                 "in all episodes!")
+                
+            if rho <= 0.0 or rho > 1.0:
+                raise ValueError("Proportion of survivors must be in (0.0, 1.0]!")
+        
+        return episodes
+    
+    elif birth_rate is not None:
+        
+        if birth_rate < 0.0 or (death_rate is not None and death_rate < 0.0):
+            raise ValueError("Birth and death rate must be >=0!")
+        
+        if death_rate is None:
+            # default death rate = 0.0
+            return [(birth_rate, 0.0, 1.0, 0.0)]
+        else:
+            return [(birth_rate, death_rate, 1.0, 0.0)]
+        
+    else:
+        if death_rate:
+            raise ValueError("Birth rate (>=0) must be specified if death rate "\
+                             "is supplied!")
+        
+        # default birth rate = 1.0 and death rate = 0.0
+        return [(1.0, 0.0, 1.0, 0.0)]
+
+   
 def _EBDP_mass_extinction(branches, surviving_rate, t):
     
     no_of_losses = round((1-surviving_rate) * len(branches))
@@ -359,8 +433,8 @@ def _EBDP_mass_extinction(branches, surviving_rate, t):
         branches.pop(j)
     
 
-def _EBDP_age(age, episodes):
-    """Episodic birth–death process (EBDP), forward algorithm with max age."""
+def _EBDP_age_forward(age, episodes):
+    """Episodic birth–death process (EBDP), forward algorithm with max. age."""
     
     tree = PhyloTree(PhyloTreeNode(0, label='0', dist=0.0, tstamp=0.0))
     
@@ -378,9 +452,10 @@ def _EBDP_age(age, episodes):
         rate = len(branches) * (birth_rate + death_rate)
         waiting_time = np.random.exponential(1/rate) if rate > 0.0 else float('inf')
         
-        if i+1 < len(episodes) and episodes[i+1][3] <= forward_time + waiting_time:
+        if i+1 < len(episodes) and forward_time + waiting_time >= episodes[i+1][3]:
             _EBDP_mass_extinction(branches, episodes[i+1][2], episodes[i+1][3])
             forward_time = episodes[i+1][3]
+            i += 1
         
         elif forward_time + waiting_time >= age:
             break
@@ -414,7 +489,9 @@ def _EBDP_age(age, episodes):
                                         dist=age-parent.tstamp,
                                         tstamp=age) )
     
-    _reverse_time_stamps(tree)
+    # reverse such that t(root) = age and t(surviving leaves) = 0.0
+    for v in tree.preorder():
+        v.tstamp = age - v.tstamp
     
     return tree
     
@@ -427,11 +504,16 @@ if __name__ == '__main__':
     print(T.to_newick())
     
     print('EBDP ------------------------')
-#    T2 = _EBDP(10, episodes=[(1.0, 0.3, 0.8, 0.0)])
-    T2 = _EBDP(10, birth_rate=1, death_rate=0.5)
+    T2 = _EBDP(10, episodes=[(1.0, 0.3, 0.8, 0.0), (0.9, 0.4, 0.6, 0.3)])
+#    T2 = _EBDP(10, birth_rate=1, death_rate=0.5)
     print(T2.to_newick())
     
     print('Yule age ------------------------')
     T3 = _yule_age(2.0, 1.0)
     print(T3.to_newick())
+    
+    print('EBDP age ------------------------')
+    T4 = _EBDP_age(2.0, episodes=[(1.0, 0.3, 0.8, 0.0), (0.9, 0.4, 0.6, 0.3)])
+#    T4 = _EBDP_age(2.0, birth_rate=1, death_rate=0.5)
+    print(T4.to_newick())
     
