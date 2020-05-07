@@ -8,7 +8,7 @@ Classes in this module:
     - PhyloTree
 """
 
-import collections, itertools, random, re
+import collections, itertools, random, re, pickle
 import numpy as np
 import networkx as nx
 
@@ -461,8 +461,31 @@ class PhyloTree(Tree):
         tree.number_of_species = number_of_leaves
         
         return tree
-# --------------------------------------------------------------------------
 
+# --------------------------------------------------------------------------
+#                           SERIALIZATION
+# --------------------------------------------------------------------------
+            
+    def serialize(self, filename):
+        """Serialize the tree using pickle."""
+        
+        tree_nx, root_id = self.to_nx()
+        pickle.dump( (tree_nx, root_id), open(filename, "wb") )
+    
+    
+    @staticmethod
+    def load(filename):
+        """Load a phylogenetic tree from a file.
+        
+        Using the Python module pickle."""
+        
+        tree_nx, root_id = pickle.load( open("tree.pickle", "rb") )
+        tree = PhyloTree.parse_nx(tree_nx, root_id)
+        
+        return tree
+    
+# --------------------------------------------------------------------------
+        
     
     def copy(self):
         

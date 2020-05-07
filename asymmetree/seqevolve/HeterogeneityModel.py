@@ -19,26 +19,26 @@ class HeterogeneityModel:
         
         if not isinstance(classes, float) or classes <= 0:
             raise ValueError("Number of classes must be an int > 0!")
-        self._classes = classes
+        self.classes = classes
         
-        self._sitewise = sitewise
+        self.sitewise = sitewise
         
         if not isinstance(invariant, float) or invariant < 0.0 or invariant > 1.0:
             raise ValueError("Proportion of invariant sites must be in [0.0, 1.0]!")
         self._invariant = invariant
         
-        if not self._sitewise:
+        if not self.sitewise:
             self._initilize_classes()
         
     
     def _initilize_classes(self):
         
-        if self._classes == 1:
+        if self.classes == 1:
             self._class_rates = [1.0]
             
         else:
             self._class_rates = np.random.gamma(self._alpha, scale=1/self._alpha,
-                                                size=self._classes)
+                                                size=self.classes)
         
         
     def assign(self, sequence, exclude_inherited=True):
@@ -61,7 +61,7 @@ class HeterogeneityModel:
     def _draw(self, n):
         
         # mode 1: sitewise heterogeneity
-        if self._sitewise:
+        if self.sitewise:
             
             rate_classes = [None for _ in range(n)]
             rate_factors = np.random.gamma(self._alpha, scale=1/self._alpha, size=n)
@@ -69,7 +69,7 @@ class HeterogeneityModel:
         # mode 2: one or multiple  classes
         else:
             
-            rate_classes = np.random.randint(self._classes, size=n).tolist()
+            rate_classes = np.random.randint(self.classes, size=n).tolist()
             rate_factors = np.asarray([self._class_rates[c] for c in rate_classes])
             
         if self._invariant:

@@ -19,7 +19,12 @@ class Evolver:
         self.indel_model = indel_model
         self.het_model = het_model
         
-        self._jump_chain = jump_chain
+        if (jump_chain or 
+            (het_model and het_model.sitewise) or
+            (het_model and het_model.classes > 5)):     # determine best cutoff
+            self._jump_chain = True
+        else:
+            self._jump_chain = False
         
     
     def evolve_along_tree(self, T, start_length=200, start_seq=None):

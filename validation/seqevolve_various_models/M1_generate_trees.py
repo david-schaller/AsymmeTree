@@ -3,9 +3,7 @@
 import os, pickle, glob
 
 from asymmetree.tools.PhyloTree import PhyloTree
-import asymmetree.simulator.TreeSimulator as ts
-import asymmetree.simulator.TreeImbalancer as ti
-from asymmetree.simulator.DistanceMatrix import distance_matrix
+import asymmetree.treeevolve as te
 
 
 def simulate(directory, number_of_trees, species_per_tree):
@@ -15,11 +13,11 @@ def simulate(directory, number_of_trees, species_per_tree):
     
     for i in range(number_of_trees):
         
-        S = ts.simulate_species_tree(50)
-        T_simulator = ts.GeneTreeSimulator(S)
+        S = te.simulate_species_tree(50)
+        T_simulator = te.GeneTreeSimulator(S)
         T = T_simulator.simulate((0.0, 0.0, 0.0))   # dupl./loss/HGT disabled
         
-        ti.imbalance_tree(T, S, autocorrelation_variance=0.2)
+        te.imbalance_tree(T, S, autocorr_variance=0.2)
         
         T_nx = T.to_nx()
         with open("{}/scenario{}.pickle".format(directory, i), 'wb') as f:
@@ -47,7 +45,7 @@ def true_distances(directory):
     matrices = []
     for T in trees:
         
-        leaves, leaf_index, D = distance_matrix(T)
+        leaves, D = T.distance_matrix()
         labels = [v.label for v in leaves]
         
         matrices.append((labels, D))

@@ -12,7 +12,7 @@ import itertools
 import networkx as nx
 
 from asymmetree.best_matches import TrueBMG
-from asymmetree.tools.PhyloTree import PhyloTree, PhyloTreeNode
+from asymmetree import PhyloTree, PhyloTreeNode
 
 
 __author__ = "David Schaller"

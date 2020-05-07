@@ -5,13 +5,6 @@ from asymmetree.best_matches.Quartets import Quartets
 import asymmetree.best_matches.LRTConstructor as lrt
 
 # --------------------------------------------------------------------------
-#                            RATES FOR
-#      duplication, loss and horizontal gene transfer events
-# --------------------------------------------------------------------------
-
-DLH_rates = (1.0, 1.0, 0.0)
-
-# --------------------------------------------------------------------------
 #                            SPECIES TREE
 # --------------------------------------------------------------------------
 
@@ -24,11 +17,13 @@ print(S.to_newick())
 # --------------------------------------------------------------------------
 
 TGT_simulator = te.GeneTreeSimulator(S)
-TGT = TGT_simulator.simulate(DLH_rates, prohibit_extinction='per_species')
+TGT = TGT_simulator.simulate(DLH_rates=(1.0, 1.0, 0.0),
+                             prohibit_extinction='per_species')
+
 TGT = te.imbalance_tree(TGT, S, baseline_rate=1,
-                        autocorrelation_variance=0.2,
+                        autocorr_variance=0.2,
                         gamma_param=(0.5, 1.0, 2.2),
-                        weights=(1, 1, 1))
+                        CSN_weights=(1, 1, 1))
 print("------------- TGT -------------")
 print(TGT.to_newick())
 print('All species have at least one copy:', TGT_simulator._assert_no_extinction(TGT))

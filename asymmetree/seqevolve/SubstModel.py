@@ -20,12 +20,12 @@ class SubstModel:
     
     
     def __init__(self, model_type, model_name,
-                 **params):
+                 **kwargs):
         
         self.model_type = model_type.lower()
         self.model_name = model_name.upper()
         
-        self._params = params
+        self._params = kwargs
         
         if (self.model_type in ('n', 'nuc', 'nucleotide') and
             self.model_name in SubstModel.nuc_models):

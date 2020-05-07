@@ -100,8 +100,10 @@ class EvoSeq(DLList):
                         rate_class=0, rate_factor=1.0):
         
         if element is self._last:
-            new_element = self.append(value, status, site_id, parent_el=parent_el,
-                                      rate_class=rate_class, rate_factor=rate_factor)
+            new_element = self.append(value, status, site_id,
+                                      parent_el=parent_el,
+                                      rate_class=rate_class,
+                                      rate_factor=rate_factor)
             
         else:
             new_element = EvoSeqElement(value, status, site_id,

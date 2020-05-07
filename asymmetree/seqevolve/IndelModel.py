@@ -13,7 +13,7 @@ class IndelModel:
     def __init__(self, insertion_rate, deletion_rate,
                  length_model='zipf',
                  max_length=False,
-                 **params):
+                 **kwargs):
         
         if insertion_rate < 0.0 or deletion_rate < 0.0:
             raise ValueError("Insertion and deletion rates must be non-negative!")
@@ -28,7 +28,7 @@ class IndelModel:
             raise ValueError("Indel model '{}' is not available!".format(length_model))
         
         self._max_length = max_length
-        self._params = params
+        self._params = kwargs
         
         # check the parameter according to length model
         self._check_params()

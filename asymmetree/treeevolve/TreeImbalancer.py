@@ -22,28 +22,41 @@ __author__ = "David Schaller"
 
 
 def imbalance_tree(T, S, baseline_rate=1.0,
-                   autocorrelation_variance=0.0,
+                   autocorr_rates=None,
+                   autocorr_variance=0.0,
                    gamma_param=(0.5, 1.0, 2.2),
-                   weights=(1, 1, 1),
+                   CSN_weights=(1, 1, 1),
                    inplace=True):
     """Imbalances an (ultrametric) TRUE gene tree.
     
     Keyword arguments:
-    baseline_rate   -- mean of substitution rate for conserved genes
-    autocorrelation_variance -- variance factor for lognormal distribution
-    gamma_param     -- param. for gamma distribution (a, loc, scale)
-    weights         -- weights for choice between conservation,
-                       subfunctionalization and neofunctionalization
-    inplace         -- if False, copy the tree before imbalancing
+    baseline_rate -- mean of substitution rate for conserved genes
+    autocorr_rates -- autocorrelation rate factors for the edges of S
+    autocorr_variance -- autocorrelation variance factor for lognormal
+        distribution, only relevant if 'autocorrelation_rates' are not supplied 
+    gamma_param -- param. for gamma distribution (a, loc, scale)
+    CSN_weights -- weights for choice between conservation, subfunctionalization
+        and neofunctionalization
+    inplace -- if False, copy the tree before imbalancing
     """
     
     if not inplace:
         T = T.copy()
-    weights = np.asarray(weights) / sum(weights)
-        
-    _divergent_rates(T, S, gamma_param, weights)
+     
+    # factors for subfunctionalization/neofunctionalization
+    CSN_weights = np.asarray(CSN_weights) / sum(CSN_weights)
+    _divergent_rates(T, S, gamma_param, CSN_weights)
     
-    _autocorrelation(T, S, baseline_rate, autocorrelation_variance)
+    # autocorrelation
+    if autocorr_rates:
+        _apply_autocorrelation(T, autocorr_rates, inplace=True)
+    elif autocorr_variance > 0.0:
+        _, edge_rates = autocorrelation_factors(S, autocorr_variance)
+        _apply_autocorrelation(T, edge_rates, inplace=True)
+    
+    # finally apply baseline rate
+    for v in T.preorder():
+        v.dist *= baseline_rate
     
     return T
 
@@ -54,43 +67,49 @@ def imbalance_tree(T, S, baseline_rate=1.0,
 # --------------------------------------------------------------------------
 
 def _adjust_distances(T, rates):
+    
     for edge, rate_list in rates.items():
         time_points = np.asarray([tstamp for tstamp, _ in rate_list] + [edge[1].tstamp])
         rate_values = np.asarray([rate for _, rate in rate_list])
-        edge[1].dist = np.dot(-np.diff(time_points),rate_values)
+        edge[1].dist = np.dot(-np.diff(time_points), rate_values)
+        
+
+def _get_rate(marked_as, gamma_param):
+    
+    if marked_as == "conserved":
+        # --- conserved genes are set to rate 1 ---
+        return 1.0
+    
+    elif marked_as == "divergent":
+        # --- fitted gamma distribution ---
+        return (np.random.gamma(gamma_param[0], scale=gamma_param[2]) +
+                gamma_param[1])
+        
+
+def _duplication_type(marked_as, CSN_weights):
+    
+    if marked_as == "divergent":
+        return "divergent", "divergent"
+    else:
+        r = np.random.choice(3, p=CSN_weights)
+        if r == 0:                                  # conservation
+            return "conserved", "conserved"
+        elif r == 1:                                # subfunctionalization
+            return "divergent", "divergent"
+        else:                                       # neofunctionalization
+            if np.random.uniform() < 0.5:
+                return "divergent", "conserved"
+            else:
+                return "conserved", "divergent"
 
 
-def _divergent_rates(T, S, gamma_param, weights):
+def _divergent_rates(T, S, gamma_param, CSN_weights):
     """
     Keyword arguments:
-    gamma_param     -- param. for gamma distribution (a, loc, scale)
-    weights         -- weights for choice between conservation,
-                       subfunctionalization and neofunctionalization
+    gamma_param -- param. for gamma distribution (a, loc, scale)
+    CSN_weights -- weights for choice between conservation,
+        subfunctionalization and neofunctionalization
     """
-    
-    def get_rate(marked_as):
-        if marked_as == "conserved":
-            # --- conserved genes are set to rate 1 ---
-            return 1.0
-        elif marked_as == "divergent":
-            # --- fitted gamma distribution ---
-            return (np.random.gamma(gamma_param[0], scale=gamma_param[2]) +
-                    gamma_param[1])
-    
-    def duplication_type(marked_as):
-        if marked_as == "divergent":
-            return "divergent", "divergent"
-        else:
-            r = np.random.choice(3, p=weights)
-            if r == 0:                                  # conservation
-                return "conserved", "conserved"
-            elif r == 1:                                # subfunctionalization
-                return "divergent", "divergent"
-            else:                                       # neofunctionalization
-                if np.random.uniform() < 0.5:
-                    return "divergent", "conserved"
-                else:
-                    return "conserved", "divergent"
     
     T_nodes = T.sorted_nodes()
     rates = {edge: [] for edge in T.edges()}        # edge --> list of (tstamp, rate) tuples
@@ -108,18 +127,19 @@ def _divergent_rates(T, S, gamma_param, weights):
                 S_u = u.color
                 S_v = v.color if not isinstance(v.color, tuple) else v.color[1]
                 gene_counter[(S_u, S_v)].append(v)
-                rates[(u,v)].append((u.tstamp, get_rate(marked[v])))
+                rates[(u,v)].append((u.tstamp, _get_rate(marked[v], gamma_param)))
 #                rates[(u,v)].append((u.tstamp, rates[(u.parent,u)][-1][1] if u.parent else 1.0))
             
         # ---------------- DUPLICATION -----------------
         elif u.label == "D":
-            marked[u.children[0]], marked[u.children[1]] = duplication_type(marked[u])
+            marked[u.children[0]], marked[u.children[1]] = _duplication_type(marked[u],
+                                                                             CSN_weights)
             gene_counter[u.color].remove(u)
             for v in u.children:
                 gene_counter[u.color].append(v)
-                rates[(u,v)].append((u.tstamp, get_rate(marked[v])))
+                rates[(u,v)].append((u.tstamp, _get_rate(marked[v], gamma_param)))
 #                if marked[u] == "conserved":
-#                    rates[(u,v)].append((u.tstamp, get_rate(marked[v])))
+#                    rates[(u,v)].append((u.tstamp, get_rate(marked[v]), gamma_param))
 #                else:
 #                    rates[(u,v)].append((u.tstamp, rates[(u.parent,u)][-1][1]))
         
@@ -130,7 +150,7 @@ def _divergent_rates(T, S, gamma_param, weights):
                 v = gene_counter[u.color][0]
                 if marked[v] == "divergent":
                     marked[v] = "conserved"
-                    rates[(v.parent,v)].append((u.tstamp, get_rate(marked[v])))
+                    rates[(v.parent,v)].append((u.tstamp, _get_rate(marked[v], gamma_param)))
         
         # ---------- HORIZONTAL GENE TRANSFER ----------
         elif u.label == "H":
@@ -145,7 +165,7 @@ def _divergent_rates(T, S, gamma_param, weights):
             if u.parent:
                 rates[(u,v1)].append((u.tstamp, rates[(u.parent,u)][-1][1]))
             else:
-                rates[(u,v1)].append((u.tstamp, get_rate(marked[v1])))
+                rates[(u,v1)].append((u.tstamp, _get_rate(marked[v1], gamma_param)))
             
             # transferred copy
             marked[v2] = "divergent"
@@ -153,7 +173,7 @@ def _divergent_rates(T, S, gamma_param, weights):
                 gene_counter[v2.color].append(v2)
             else:
                 gene_counter[(S_parents[v2.color], v2.color)].append(v2)
-            rates[(u,v2)].append((u.tstamp, get_rate(marked[v2])))
+            rates[(u,v2)].append((u.tstamp, _get_rate(marked[v2], gamma_param)))
             
     _adjust_distances(T, rates)
     return T
@@ -162,26 +182,40 @@ def _divergent_rates(T, S, gamma_param, weights):
 #                         AUTOCORRELATION
 #
 # --------------------------------------------------------------------------
-
-def _autocorrelation(T, S, baseline_rate, autocorrelation_variance):
-    """
-    Keyword arguments:
-    baseline_rate   -- mean of substitution rate for conserved genes
-    autocorrelation_variance     -- variance factor for lognormal distribution
-    """
-    rates = {}                                                          # maps node v --> rate
-    S_parent = {}
-    for v in S.preorder():
+    
+def autocorrelation_factors(tree, variance):
+    """Geometric Brownian motion process to assign rate factors to species tree."""
+    
+    node_rates = {}                 # maps node v --> rate of v
+    edge_rates = {}                 # maps v of edge (u,v) --> rate of (u,v)
+    
+    for v in tree.preorder():
         if not v.parent:
-            rates[v.ID] = baseline_rate
+            # assign factor 1.0 to root (= expected value for all other nodes
+            # and edges)
+            node_rates[v.ID] = 1.0
+            edge_rates[v.ID] = 1.0
         else:
-            var = autocorrelation_variance * v.dist
-            mu = np.log(rates[v.parent.ID]) - var/2                     # exp. value equal to parent's rate
-            rates[v.ID] = np.exp(np.random.normal(mu, np.sqrt(var)))
-            S_parent[v.ID] = v.parent.ID                                # save parent's ID for below
+            var = variance * v.dist
+            # ensure that exp. value is equal to parent's rate
+            mu = np.log(node_rates[v.parent.ID]) - var/2
+            
+            node_rates[v.ID] = np.exp(np.random.normal(mu, np.sqrt(var)))
+            
+            # edge rate as arithmetic mean of u and v
+            edge_rates[v.ID] = (node_rates[v.parent.ID] + node_rates[v.ID]) / 2
+            
+    return node_rates, edge_rates
+
+
+def _apply_autocorrelation(T, edge_rates, inplace=True):
+    
+    if not inplace:
+        T = T.copy()
     
     for v in T.preorder():
         if v.parent:
-            S_v_ID = v.color[1] if isinstance(v.color, tuple) else v.color
-            effective_rate = (rates[S_parent[S_v_ID]] + rates[S_v_ID]) / 2
-            v.dist = v.dist * effective_rate
+            edge_ID = v.color[1] if isinstance(v.color, tuple) else v.color
+            v.dist *= edge_rates[edge_ID]
+    
+    return T

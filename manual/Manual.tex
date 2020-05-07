@@ -389,7 +389,7 @@ import asymmetree.simulator.TreeSimulator as ts
 
 # S is a species tree of type PhyloTree
 TGT_simulator = ts.GeneTreeSimulator(S)
-TGT = TGT_simulator.simulate(DLH_rates)
+TGT = TGT_simulator.simulate(DLH_rates=(1.0, 0.5, 0.1))
 \end{python}
 \vspace{2mm}
 
@@ -415,7 +415,7 @@ The following keyword parameters (with their default values) are available:
 \renewcommand{\arraystretch}{1.5}
 \begin{tabularx}{0.95\textwidth} { >{\raggedright\arraybackslash}p{5.6cm} >{\raggedright\arraybackslash}X }
 	\texttt{baseline\_rate=1.0} & starting value for the substitution rate (per time unit) and expected value for conserved genes\\
-	\texttt{autocorrelation\_variance=0.0}  & variance factor for a lognormal distribution that controls autocorrelation between genes of the same (and closely related) species, the higher the lower the auto\-corre\-la\-tion\\
+	\texttt{autocorr\_variance=0.0}  & variance factor for a lognormal distribution that controls autocorrelation between genes of the same (and closely related) species, the higher the lower the auto\-corre\-la\-tion\\
 	\texttt{gamma\_param=(0.5, 1.0, 2.2)}  & parameter the for Gamma distribution (\texttt{a, loc, scale}) from which rate factors for divergent are drawn, the default values are chosen to fit observed asymmetries between paralogs in yeast data \citep{byrne2007}\\
 	\texttt{weights=(1, 1, 1)}  & weights for choice between conservation,
 	subfunctionalization and neofunctionalization after a duplication event\\
@@ -434,11 +434,11 @@ S = ts.simulate_species_tree(10)
 
 # true gene tree (with losses)
 TGT_simulator = ts.GeneTreeSimulator(S)
-TGT = TGT_simulator.simulate( (0.5, 0.5, 0.5) )    # event rates D, L, H
+TGT = TGT_simulator.simulate(DLH_rates=(0.5, 0.5, 0.5))
 
 # imbalancing
 TGT = tm.imbalance_tree(TGT, S, baseline_rate=1,
-                        autocorrelation_variance=0.2,
+                        autocorr_variance=0.2,
                         gamma_param=(0.5, 1.0, 2.2),
                         weights=(1, 1, 1))
 

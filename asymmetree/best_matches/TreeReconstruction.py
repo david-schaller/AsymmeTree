@@ -3,7 +3,7 @@
 import os, subprocess, itertools, time
 
 from asymmetree.tools import FileIO
-from asymmetree.tools.PhyloTree import PhyloTree, PhyloTreeNode
+from asymmetree import PhyloTree, PhyloTreeNode
 
 
 __author__ = "David Schaller"

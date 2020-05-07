@@ -17,7 +17,7 @@ from collections import deque
 
 import numpy as np
 
-from asymmetree.tools.PhyloTree import PhyloTree, PhyloTreeNode
+from asymmetree import PhyloTree, PhyloTreeNode
 import asymmetree.treeevolve._SpeciesTreeModels as stm
 
 
@@ -30,7 +30,10 @@ __author__ = "David Schaller"
 # --------------------------------------------------------------------------
 
 def simulate_species_tree(N, model='innovations',
-                          non_binary_prob=0.0, planted=True, **kwargs):
+                          non_binary_prob=0.0,
+                          planted=True,
+                          remove_losses=False,
+                          **kwargs):
     """Simulates a species tree S with N leaves.
     
     Keyword parameters:
@@ -39,6 +42,8 @@ def simulate_species_tree(N, model='innovations',
                  results in non-binary tree; default is 0.0
         planted -- add a planted root that has the canonical root as its
                  single neighbor; default is True
+        remove_losses -- remove all branches that lead to losses, only relevant
+                 for some models; default is False
     """
     if not isinstance(N, int) or N < 0:
         raise ValueError("N must be an int >=0!")
@@ -51,21 +56,21 @@ def simulate_species_tree(N, model='innovations',
     if non_binary_prob < 0.0 or non_binary_prob > 1.0:
         raise ValueError("Contraction prob. must be in [0.0, 1.0]!")
     
+    
     if model.lower() in ('innovation', 'innovations'):
         tree = stm._innovations_model(N, planted)
         
-    elif model.lower() == 'yule':
-        tree = stm._yule(N, kwargs.get('birth_rate'))
-        
-    elif model.upper() == 'BDP':
-        tree = stm._BDP(N, **kwargs)
-        
-    elif model.upper() == 'EBDP':
-        tree = stm._EBDP(N, **kwargs)
-        
     else:
-        raise ValueError("Model '{}' is not available!".format(model))
-        
+        if model.lower() == 'yule':
+            tree = stm._yule(N, kwargs.get('birth_rate'))
+        elif model.upper() == 'BDP':
+            tree = stm._BDP(N, **kwargs)
+        elif model.upper() == 'EBDP':
+            tree = stm._EBDP(N, **kwargs)
+        else:
+            raise ValueError("Model '{}' is not available!".format(model))
+    
+    
     if non_binary_prob > 0.0:
          edges = _select_edges_for_contraction(tree, non_binary_prob,
                                                exclude_planted_edge=True)
@@ -164,19 +169,18 @@ class GeneTreeSimulator:
                                                         # sort (u,v) by tstamp of u
     
     
-    def simulate(self, DLH_rates,
+    def simulate(self, DLH_rates=(0.0, 0.0, 0.0),
                  dupl_polytomy=0.0,
-                 prohibit_extinction='per_species'):
+                 prohibit_extinction='per_species',
+                 **kwargs):
         """Simulate a gene tree along the specified species tree.
         
-        Simulate a gene tree along the specified species tree where the parameter
-        'DLH_rates' contains the rates for duplications, losses and HGTs.
-        
         Keyword arguments:
-            dupl_polytomy - allows non-binary duplication events by specifying
+            DLH_rates -- rates for duplications, losses and HGTs
+            dupl_polytomy -- allows non-binary duplication events by specifying
                 the lambda parameter for a poisson distribution (copy number =
                 drawn number + 2); default is 0.0
-            prohibit_extinction - avoid the extinction of all members in any
+            prohibit_extinction -- avoid the extinction of all members in any
                 species ('per_species'), of the complete gene family
                 ('per_family'), or no constraints (False); default is 
                 'per_species'.
@@ -517,37 +521,55 @@ class GeneTreeSimulator:
 #                 CONSTRUCTION OF THE OBSERVABLE TREE
 #
 # --------------------------------------------------------------------------
+        
+def _delete_losses_and_contract(tree, inplace=False):
     
-def observable_tree(tree):
-    
-    obs_tree = tree.copy()
+    if not inplace:
+        tree = tree.copy()
     
     loss_nodes = []
-    for node in obs_tree.postorder():
+    for node in tree.postorder():
         if not node.children and node.is_loss():
             loss_nodes.append(node)
     
     # traverse from loss node to root delete if degree <= 1
     for loss_node in loss_nodes:
-        current = obs_tree.delete_and_reconnect(loss_node,
-                                                add_distances=True,
-                                                keep_transferred=True)
+        current = tree.delete_and_reconnect(loss_node,
+                                            add_distances=True,
+                                            keep_transferred=True)
         
         while len(current.children) < 2 and current.parent:
-            current = obs_tree.delete_and_reconnect(current,
-                                                    add_distances=True,
-                                                    keep_transferred=True)
+            current = tree.delete_and_reconnect(current,
+                                                add_distances=True,
+                                                keep_transferred=True)
     
-    # delete the root if the tree is planted
-    if len(obs_tree.root.children) == 1:
+    return tree
+
+
+def _remove_planted_root(tree, inplace=True):
+    
+    if not inplace:
+        tree = tree.copy()
         
-        new_root = obs_tree.root.children[0]
+    # delete the root if the tree is planted
+    if len(tree.root.children) == 1:
+        
+        new_root = tree.root.children[0]
         new_root.detach()
-        obs_tree.root = new_root
+        tree.root = new_root
         new_root.dist = 0.0
         
-    elif not obs_tree.root.children and not obs_tree.root.label:
+    elif not tree.root.children and not tree.root.label:
         # no surviving genes --> return empty tree
-        obs_tree.root = None
+        tree.root = None
+    
+    return tree
+    
+    
+def observable_tree(tree):
+    
+    obs_tree = _delete_losses_and_contract(tree, inplace=False)
+    
+    _remove_planted_root(obs_tree, inplace=True)
     
     return obs_tree

@@ -398,11 +398,11 @@ if __name__ == "__main__":
     # GENE FAMILIES:
     for i in range(100):
         TGT_simulator = te.GeneTreeSimulator(S)
-        TGT = TGT_simulator.simulate((1,1,0))
+        TGT = TGT_simulator.simulate(DLH_rates=(1,1,0))
         TGT = te.imbalance_tree(TGT, S, baseline_rate=1,
-                                autocorrelation_variance=0.2,
+                                autocorr_variance=0.2,
                                 gamma_param=(0.5, 1.0, 2.2),
-                                weights=(1, 1, 1))
+                                CSN_weights=(1, 1, 1))
         OGT = te.observable_tree(TGT)
         
     #    ortho_graph = TrueBMG.true_orthology_graph(OGT)
