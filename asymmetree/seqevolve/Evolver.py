@@ -4,7 +4,8 @@
 import numpy as np
 
 from asymmetree.seqevolve.EvolvingSequence import EvoSeq, State
-from asymmetree.seqevolve.Alignment import AlignmentBuilder, write_to_file
+from asymmetree.seqevolve.Alignment import AlignmentBuilder
+from asymmetree.file_io.SeqFileIO import write_alignment
 
 
 __author__ = "David Schaller"
@@ -104,7 +105,7 @@ class Evolver:
         alignment = alg_builder.build()
         
         if write_to:
-            write_to_file(write_to, alignment, al_format=al_format)
+            write_alignment(write_to, alignment, al_format=al_format)
         
         return alignment
     

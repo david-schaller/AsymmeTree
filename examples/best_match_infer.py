@@ -3,7 +3,8 @@
 import time, os
 import numpy as np
 
-from asymmetree.tools import FileIO, GraphTools
+from asymmetree.tools import GraphTools
+from asymmetree.file_io import ScenarioFileIO
 import asymmetree.treeevolve as te
 
 from asymmetree.best_matches import TrueBMG
@@ -26,9 +27,9 @@ class ComparisonAnalysis:
         matrix_filename = "temp.phylip"
         species_filename = "temp_species.txt"
         tree_filename = "temp_tree.txt"
-        FileIO.matrix_to_phylip(matrix_filename, self.scenario.genes, self.D)
-        FileIO.species_to_genes(species_filename, self.scenario)
-        FileIO.write_newick(tree_filename, self.scenario.S)
+        ScenarioFileIO.matrix_to_phylip(matrix_filename, self.scenario.genes, self.D)
+        ScenarioFileIO.species_to_genes(species_filename, self.scenario)
+        ScenarioFileIO.write_newick(tree_filename, self.scenario.S)
         
         # ---- true BMG, RBMG (based on l.c.a.) ----
         BMG, RBMG = self.scenario.BMG_subtrees, self.scenario.RBMG_subtrees

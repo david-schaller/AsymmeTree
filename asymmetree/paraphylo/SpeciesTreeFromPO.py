@@ -4,7 +4,7 @@ import time
 from multiprocessing import Pool
 
 from asymmetree.paraphylo.SpeciesTreeFromParalogs import TreeReconstructor
-from asymmetree.paraphylo.POParser import parse_po_graph
+from asymmetree.file_io.ProteinOrthoParser import parse_po_graph
 
 
 __author__ = "David Schaller"

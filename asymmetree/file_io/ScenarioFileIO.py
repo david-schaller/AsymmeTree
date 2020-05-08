@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-File I/O.
+File I/O related to module 'Scenario'.
 """
 
 import itertools
@@ -118,17 +118,24 @@ def write_newick(filename, tree):
 
 if __name__ == "__main__":
     
-    # generate new files in folder "test_data"
+    # generate new files in folder "testfiles"
+    import os
     
     import asymmetree.treeevolve as te
     from asymmetree.tools.PhyloTree import PhyloTree
     
-    matrix_file = "test_data/matrix.phylip"
-    species_file = "test_data/spec_genes.txt"
-    outgroup_file = "test_data/outgroups.txt"
-    subtrees_file = "test_data/species_subtrees.txt"
-    bmg_file = "test_data/bmg.txt"
-    tree_file = "test_data/species_tree.txt"
+    directory = 'testfiles'
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    
+    matrix_file =   os.path.join(directory, 'matrix.phylip')
+    species_file =  os.path.join(directory, 'spec_genes.txt')
+    outgroup_file = os.path.join(directory, 'outgroups.txt')
+    subtrees_file = os.path.join(directory, 'species_subtrees.txt')
+    bmg_file =      os.path.join(directory, 'bmg.txt')
+    tree_file =     os.path.join(directory, 'species_tree.txt')
+    
+    DLH_rates=(1,1,0)
     
     #S = te.simulate_species_tree(10, planted=True)
     S = PhyloTree.parse_newick("(((8:0.08603999468839801,(10:0.06055381385164242,(12:0.02750356935270675,(14:0.0071494825768602215,15:0.0071494825768602215)13:0.02035408677584653)11:0.03305024449893567)9:0.025486180836755596)2:0.34305906001624026,(((16:0.036223587639635554,(18:0.032127988304223636,19:0.032127988304223636)17:0.0040955993354119214)6:0.1114990457717915,7:0.14772263341142705)4:0.03331012904283408,5:0.18103276245426114)3:0.24806629225037713)1:0.5709009452953617)0:0.0")
@@ -138,7 +145,7 @@ if __name__ == "__main__":
     print(S.to_newick())
     
     TGT_simulator = te.GeneTreeSimulator(S)
-    TGT = TGT_simulator.simulate(DLH_rates=(1,1,0))
+    TGT = TGT_simulator.simulate(DLH_rates=DLH_rates)
     print("done")
     TGT = te.imbalance_tree(TGT, S)
     

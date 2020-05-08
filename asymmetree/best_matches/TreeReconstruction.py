@@ -2,7 +2,7 @@
 
 import os, subprocess, itertools, time
 
-from asymmetree.tools import FileIO
+from asymmetree.file_io.ScenarioFileIO import matrix_to_phylip
 from asymmetree import PhyloTree, PhyloTreeNode
 
 
@@ -140,7 +140,7 @@ def midpoint_rooting(tree):
 def nj_from_numpy_matrix(leaves, leaf_index, matrix,
                          filename="temp.phylip"):
 
-    FileIO.matrix_to_phylip(filename, leaves, matrix)
+    matrix_to_phylip(filename, leaves, matrix)
     tree = neighbor_joining(leaves, leaf_index, filename)
     os.remove(filename)
     

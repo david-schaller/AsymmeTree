@@ -16,7 +16,7 @@ import numpy as np
 import networkx as nx
 
 from asymmetree.best_matches import TrueBMG
-from asymmetree.tools import FileIO
+from asymmetree.file_io.ScenarioFileIO import parse_BMG_edges, matrix_to_phylip, species_to_genes, write_newick
 
 
 __author__ = "David Schaller"
@@ -454,7 +454,7 @@ def quartet_qinfer(scenario,
     if output == -1:
         raise Exception("no output from qinfer")
     
-    BMG = FileIO.parse_BMG_edges(output.stdout.decode(), scenario)
+    BMG = parse_BMG_edges(output.stdout.decode(), scenario)
     RBMG = TrueBMG.RBMG_from_BMG(BMG)
     
     return BMG, RBMG, exec_time
@@ -483,9 +483,9 @@ def quartet_from_scenario(scenario, epsilon=-1,
     tree_filename = "temp_tree.txt"
     
     matrix = scenario.get_distance_matrix()
-    FileIO.matrix_to_phylip(matrix_filename, scenario.genes, matrix)
-    FileIO.species_to_genes(species_filename, scenario)
-    FileIO.write_newick(tree_filename, scenario.S)
+    matrix_to_phylip(matrix_filename, scenario.genes, matrix)
+    species_to_genes(species_filename, scenario)
+    write_newick(tree_filename, scenario.S)
     
     BMG, RBMG, exec_time = quartet_qinfer(scenario,
                                           matrix_filename, species_filename, tree_filename,

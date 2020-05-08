@@ -26,7 +26,8 @@ def imbalance_tree(T, S, baseline_rate=1.0,
                    autocorr_variance=0.0,
                    gamma_param=(0.5, 1.0, 2.2),
                    CSN_weights=(1, 1, 1),
-                   inplace=True):
+                   inplace=True,
+                   **kwargs):
     """Imbalances an (ultrametric) TRUE gene tree.
     
     Keyword arguments:
