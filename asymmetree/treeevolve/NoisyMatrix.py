@@ -33,7 +33,7 @@ def noisy_matrix(orig_matrix, sd, metric_repair="reject"):
     elif metric_repair == "reject":
         return _noise_reject_method(orig_matrix, sd)
     else:
-        raise ValueError("Illegal argument!")
+        raise ValueError("illegal argument '{}'".format(metric_repair))
 
     
 def _noise_reject_method(orig_matrix, sd):

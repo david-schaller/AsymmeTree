@@ -90,10 +90,10 @@ class DLList:
     def element_at(self, index):
         
         if not isinstance(index, int):
-            raise TypeError("Index must be of type 'int'!")
+            raise TypeError("index must be of type 'int'")
             
         if index < (-self._count) or index >= self._count:
-            raise IndexError("Index {} is out of bounds!".format(index))
+            raise IndexError('index {} is out of bounds'.format(index))
             
         if index < 0:
             index += self._count
@@ -167,7 +167,7 @@ class DLList:
                 self.remove_element(element)
                 return
             element = element._next
-        raise KeyError("Value {} is not in the doubly-linked list!".format(value))
+        raise KeyError('value {} is not in the doubly-linked list'.format(value))
         
         
     def remove_range(self, index, length=None):
@@ -177,12 +177,12 @@ class DLList:
         is specified or index+length is out of bounds, the list gets truncated."""
         
         if not isinstance(index, int):
-            raise TypeError("Index must be of type 'int'!")
+            raise TypeError("index must be of type 'int'")
         elif index < 0:
             index = self._count + index
             
         if length is not None and (not isinstance(length, int) or length < 1):
-            raise TypeError("Length must be of type 'int' and > 0!")
+            raise TypeError("length must be of type 'int' and >0")
         
         if length is None or index + length >= self._count:
             self.truncate(index)

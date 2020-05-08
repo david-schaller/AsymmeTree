@@ -37,7 +37,7 @@ class SimpleGraph:
     
     def add_edge(self, u, v):
         if u == v:
-            raise ValueError("No loops allowed!")
+            raise ValueError("no loops allowed")
         # add nodes if not yet in the graph
         self.add_node(u)
         self.add_node(v)
@@ -96,7 +96,7 @@ class SimpleGraph:
         set2 = set(other.adj_list.keys())
         
         if set1 != set2:
-            raise ValueError("Graphs do not have the same vertex set")
+            raise ValueError("graphs do not have the same vertex set")
             return
         
         V = list(set1)

@@ -125,7 +125,7 @@ def _divergent_rates(T, S, gamma_param, CSN_weights):
             for v in u.children:
                 marked[v] = marked[u]
                 S_u = u.color
-                S_v = v.color if not isinstance(v.color, tuple) else v.color[1]
+                S_v = v.color if not isinstance(v.color, (tuple, list)) else v.color[1]
                 gene_counter[(S_u, S_v)].append(v)
                 rates[(u,v)].append((u.tstamp, _get_rate(marked[v], gamma_param)))
 #                rates[(u,v)].append((u.tstamp, rates[(u.parent,u)][-1][1] if u.parent else 1.0))
@@ -169,7 +169,7 @@ def _divergent_rates(T, S, gamma_param, CSN_weights):
             
             # transferred copy
             marked[v2] = "divergent"
-            if isinstance(v2.color, tuple):
+            if isinstance(v2.color, (tuple, list)):
                 gene_counter[v2.color].append(v2)
             else:
                 gene_counter[(S_parents[v2.color], v2.color)].append(v2)
@@ -215,7 +215,7 @@ def _apply_autocorrelation(T, edge_rates, inplace=True):
     
     for v in T.preorder():
         if v.parent:
-            edge_ID = v.color[1] if isinstance(v.color, tuple) else v.color
+            edge_ID = v.color[1] if isinstance(v.color, (tuple, list)) else v.color
             v.dist *= edge_rates[edge_ID]
     
     return T

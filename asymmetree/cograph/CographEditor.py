@@ -472,7 +472,7 @@ if __name__ == "__main__":
         new_cograph = new_cotree.to_cograph()
 #        print(new_cograph.adj_list)
 #        if not cograph.graphs_equal(new_cograph):
-#            raise Exception("Cographs not equal")
+#            raise Exception("cographs not equal")
 #        else:
 #            print(True)
         print(CE.best_cost, cograph.symmetric_diff(new_cograph))

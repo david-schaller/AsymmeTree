@@ -28,7 +28,7 @@ def maximum_likelihood_distance(seq1, seq2,
     if subst_model is None:
         
         if model_type is None or model_name is None:
-            raise ValueError('No substitution model specified!')
+            raise ValueError('no substitution model specified')
         else:
             subst_model = SubstModel(model_type, model_name)
             
@@ -71,7 +71,7 @@ def _likelihood(x, seqs, subst_model):
 def _to_indices(seq1, seq2, subst_model):
     
     if len(seq1) != len(seq2):
-        raise ValueError("Unequal sequence lengths: {} and {}!".format(len(seq1), len(seq2)))
+        raise ValueError("unequal sequence lengths: {} and {}".format(len(seq1), len(seq2)))
 
     seq1_indeces, seq2_indeces = [], []
     
@@ -96,7 +96,7 @@ def p_distance(seq1, seq2, exclude_gaps=True):
     """
     
     if len(seq1) != len(seq2):
-        raise ValueError("Unequal sequence lengths: {} and {}!".format(len(seq1), len(seq2)))
+        raise ValueError("unequal sequence lengths: {} and {}".format(len(seq1), len(seq2)))
         
     diffs, valid_columns = 0, 0
     
@@ -187,7 +187,7 @@ def _IV_proportions(seq1, seq2):
     pyrimidines = {'C', 'c', 'T', 't', 'U', 'u', 'Y', 'y'}
     
     if len(seq1) != len(seq2):
-        raise ValueError("Unequal sequence lengths: {} and {}!".format(len(seq1), len(seq2)))
+        raise ValueError("unequal sequence lengths: {} and {}".format(len(seq1), len(seq2)))
         
     transitions, transversions, valid_columns = 0, 0, 0
     

@@ -30,7 +30,7 @@ class TreeReconstructor:
         elif cotree_mode == "all":                  # use all cotrees
             self._cotree_mode = "all"
         else:
-            raise ValueError("Invalid argument for cotree usage: '{}'.".format(cotree_mode))
+            raise ValueError("invalid argument '{}' for cotree usage".format(cotree_mode))
         
         
     def add_ortho_graph(self, ortho_graph):
@@ -107,10 +107,10 @@ class TreeReconstructor:
         elif mode.lower() == 'greedy':
             root = self._GREEDY(weighted=weighted)
         else:
-            raise ValueError("Mode '{}' is not valid!".format(mode))
+            raise ValueError("mode '{}' is not valid".format(mode))
             
         if not root:
-            raise Exception("Could not build a species tree!")
+            raise RuntimeError("could not build a species tree")
         
         self.S = PhyloTree(root)
         
@@ -277,7 +277,7 @@ class TreeReconstructor:
     def _max_consistent_triple_set(self):
         
         if self.S is None:
-            raise Exception("Species tree has not been built yet!")
+            raise RuntimeError("species tree has not been built yet")
             
         R_total = self.S.get_triples()      # all triples of the tree
         R_max_cons = {}                     # max. consistent subset of R (i.e. heuristic)

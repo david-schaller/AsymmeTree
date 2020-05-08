@@ -46,15 +46,15 @@ def simulate_species_tree(N, model='innovations',
                  for some models; default is False
     """
     if not isinstance(N, int) or N < 0:
-        raise ValueError("N must be an int >=0!")
+        raise ValueError("N must be an int >=0")
     elif N == 0:
         return PhyloTree(None)
     
     if not isinstance(model, str):
-        raise ValueError("Model must be of type 'str'!")
+        raise ValueError("model must be of type 'str'")
     
     if non_binary_prob < 0.0 or non_binary_prob > 1.0:
-        raise ValueError("Contraction prob. must be in [0.0, 1.0]!")
+        raise ValueError("contraction prob. must be in [0.0, 1.0]")
     
     
     if model.lower() in ('innovation', 'innovations'):
@@ -68,7 +68,7 @@ def simulate_species_tree(N, model='innovations',
         elif model.upper() == 'EBDP':
             tree = stm._EBDP(N, **kwargs)
         else:
-            raise ValueError("Model '{}' is not available!".format(model))
+            raise ValueError("model '{}' is not available".format(model))
     
     
     if non_binary_prob > 0.0:
@@ -90,15 +90,15 @@ def simulate_species_tree_age(age, model='yule',
     """
     
     if not isinstance(age, (float, int)) or age <= 0.0:
-        raise ValueError("Age must be a number >0!")
+        raise ValueError('age must be a number >0')
     elif isinstance(age, int):
         age = float(age)
         
     if not isinstance(model, str):
-        raise ValueError("Model must be of type 'str'!")
+        raise ValueError("model must be of type 'str'")
         
     if non_binary_prob < 0.0 or non_binary_prob > 1.0:
-        raise ValueError("Contraction prob. must be in [0.0, 1.0]!")
+        raise ValueError("contraction prob. must be in [0.0, 1.0]")
     
     if model.lower() == 'yule':
         tree = stm._yule_age(age, kwargs.get('birth_rate'))
@@ -110,7 +110,7 @@ def simulate_species_tree_age(age, model='yule',
         tree = stm._EBDP_age(age, **kwargs)
         
     else:
-        raise ValueError("Model '{}' is not available!".format(model))
+        raise ValueError("model '{}' is not available".format(model))
         
     if non_binary_prob > 0.0:
          edges = _select_edges_for_contraction(tree, non_binary_prob,

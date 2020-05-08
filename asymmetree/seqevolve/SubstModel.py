@@ -41,7 +41,7 @@ class SubstModel:
             self.alphabet = SubstModel.amino_acids
                 
         else:
-            raise ValueError("Model '{}', '{}' is not available!".format(model_type, model_name))
+            raise ValueError("model '{}', '{}' is not available".format(model_type, model_name))
         
         self.alphabet_dict = {item: index for index, item in enumerate(self.alphabet)}
         
@@ -60,14 +60,14 @@ class SubstModel:
             elif self.model_name == 'K80':
                 
                 if self._params is None or 'kappa' not in self._params:
-                    raise ValueError("Model 'K80' requires the parameter 'kappa'!")
+                    raise ValueError("model 'K80' requires the parameter 'kappa'")
                 
                 self.S, self.freqs = _K80_nuc(self._params['kappa'])
             
             elif self.model_name == 'GTR':
                 
                 if self._params is None or 'abcdef' not in self._params or 'f' not in self._params:
-                    raise ValueError("Model 'GTR' requires the parameters 'abcdef' and 'f'!")
+                    raise ValueError("model 'GTR' requires the parameters 'abcdef' and 'f'")
                 
                 self.S, self.freqs = _GTR_nuc(self._params['abcdef'],
                                               self._params['f'])
@@ -131,7 +131,7 @@ class SubstModel:
         try:
             result = [self.alphabet_dict[letter] for letter in sequence]
         except KeyError:
-            raise ValueError("Invalid sequence for the specified model!")
+            raise ValueError("invalid sequence for the specified model")
             
         return result
     

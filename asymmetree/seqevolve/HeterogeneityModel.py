@@ -13,18 +13,18 @@ class HeterogeneityModel:
     def __init__(self, alpha, classes=5, sitewise=False, invariant=0.0):
         
         if not isinstance(alpha, float) or alpha <= 0.0:
-            raise ValueError("Heterogeneity parameter alpha must be a float > 0.0!")
+            raise ValueError('heterogeneity parameter alpha must be a float > 0.0')
         self._alpha = alpha
         
         
         if not isinstance(classes, float) or classes <= 0:
-            raise ValueError("Number of classes must be an int > 0!")
+            raise ValueError('number of classes must be an int >0')
         self.classes = classes
         
         self.sitewise = sitewise
         
         if not isinstance(invariant, float) or invariant < 0.0 or invariant > 1.0:
-            raise ValueError("Proportion of invariant sites must be in [0.0, 1.0]!")
+            raise ValueError('proportion of invariant sites must be in [0.0, 1.0]')
         self._invariant = invariant
         
         if not self.sitewise:

@@ -16,14 +16,15 @@ class GenomeSimulator:
                  output_directory=None):
         
         if not isinstance(species_tree, PhyloTree):
-            raise TypeError("Species tree must be of type 'PhyloTree'!")
+            raise TypeError("species tree must be of type 'PhyloTree'")
         
         self.S = species_tree
         self.outdir = output_directory
         
         if self.outdir:
             self._check_outdir()
-            self.species_tree.serialize(self._path('species_tree.pickle'))
+            self.species_tree.serialize(self._path('species_tree.json'),
+                                        mode='json')
             
         self.true_gene_trees = []
         self.observable_gene_trees = []
@@ -45,6 +46,10 @@ class GenomeSimulator:
     
     def simulate_gene_trees(self, N, **kwargs):
         
+        self.number_of_families = N
+        self.true_gene_trees = []
+        self.observable_gene_trees = []
+        
         simulator = te.GeneTreeSimulator(self.S)
         _, autocorr_factors = te.autocorrelation_factors(self.S)
         
@@ -62,6 +67,15 @@ class GenomeSimulator:
             
             if self.outdir:
                 TGT.serialize(self._path('true_gene_trees',
-                                         'tree{}.pickle'.format(i)))
+                                         'gene_tree{}.json'.format(i)),
+                              mode='json')
+                
+    
+    def simulate_sequences(self, subst_model, root_genome=None, **kwargs):
+        
+        if root_genome is not None:
+            if len(root_genome) != len(self.number_of_families):
+                raise ValueError('no. of sequences in root genome does not'\
+                                 'match no of gene families')
     
     

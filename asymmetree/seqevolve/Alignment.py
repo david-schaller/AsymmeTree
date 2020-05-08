@@ -101,7 +101,7 @@ def write_to_file(filename, alignment, al_format='phylip'):
             _write_pretty(f, alignment)
             
         else:
-            raise ValueError("Alignment format '{}' is not available!".format(al_format))
+            raise ValueError("alignment format '{}' is not available".format(al_format))
             
 
 def _check_alignment(alignment):
@@ -116,7 +116,7 @@ def _check_alignment(alignment):
         if seq_length is None:
             seq_length = len(seq)
         elif seq_length != len(seq):
-            raise ValueError("Aligned sequences must have the same length!")
+            raise ValueError("aligned sequences must have the same length")
             
     return max_length, seq_length
             

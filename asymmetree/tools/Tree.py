@@ -59,7 +59,7 @@ class TreeNode:
             child_node.parent = None
             child_node.parent_dll_element = None
         else:
-            raise ValueError("Not a child of this node!")
+            raise ValueError("{} is not a child of node {}".format(child_node, self))
             
             
     def detach(self):
@@ -145,6 +145,27 @@ class Tree:
         for child in node.children:
             yield (node, child)
             yield from self._edges(child)
+            
+            
+    def edges_sibling_order(self):
+        """Generator for all edges of the tree with sibling order.
+        
+        Returns edges uv as tuples (u, v, nr) where nr is the index of v in the
+        list of children of node u."""
+        
+        if self.root:
+            yield from self._edges_sibling_order(self.root)
+        else:
+            yield from []
+                
+                
+    def _edges_sibling_order(self, node):
+        
+        i = 0
+        for child in node.children:
+            yield (node, child, i)
+            yield from self._edges_sibling_order(child)
+            i += 1
                 
     
     def inner_edges(self):
@@ -318,7 +339,7 @@ class Tree:
         """
         
         if not (isinstance(N, int)) or N < 1:
-            raise TypeError("N must be an 'int' > 0!")
+            raise TypeError("N must be an 'int' > 0")
         root = TreeNode(0, label='0')
         tree = Tree(root)
         node_list = [root]

@@ -8,7 +8,7 @@ Classes in this module:
     - PhyloTree
 """
 
-import collections, itertools, random, re, pickle
+import collections, itertools, random, re, pickle, json
 import numpy as np
 import networkx as nx
 
@@ -45,7 +45,7 @@ class PhyloTreeNode(TreeNode):
     
     def __str__(self):
         
-        if isinstance(self.color, tuple):
+        if isinstance(self.color, (tuple, list)):
             return "{}<{}-{}>:{}".format(self.label, *self.color, self.dist)
         elif self.color:
             return "{}<{}>:{}".format(self.label, self.color, self.dist)
@@ -67,7 +67,7 @@ class PhyloTree(Tree):
     def __init__(self, root):
         
         if root is not None and not isinstance(root, PhyloTreeNode):
-            raise TypeError("root must be of type 'PhyloTreeNode'.")
+            raise TypeError("root must be of type 'PhyloTreeNode'")
         super().__init__(root)
     
     
@@ -177,7 +177,8 @@ class PhyloTree(Tree):
         
         if leaf_order:
             if set(leaf_order) != set(self.root.leaves):
-                raise ValueError("Ordered leaf list does not match with the leaves in the tree!")
+                raise ValueError('ordered leaf list does not match with the '\
+                                 'leaves in the tree')
             leaves = leaf_order
         else:
             # leaves in sibling order
@@ -262,7 +263,7 @@ class PhyloTree(Tree):
             if label:
                 token += str(node.label)
             if color and node.color:
-                token += "<{}-{}>".format(*node.color) if isinstance(node.color, tuple) else "<{}>".format(node.color)
+                token += "<{}-{}>".format(*node.color) if isinstance(node.color, (tuple, list)) else "<{}>".format(node.color)
             if distance:
                 token += ":{}".format(node.dist)
             return token
@@ -274,7 +275,7 @@ class PhyloTree(Tree):
             if label and label_inner:
                 token += str(node.label)
             if color_inner and node.color:
-                token += "<{}-{}>".format(*node.color) if isinstance(node.color, tuple) else "<{}>".format(node.color)
+                token += "<{}-{}>".format(*node.color) if isinstance(node.color, (tuple, list)) else "<{}>".format(node.color)
             if distance:
                 token += ":{}".format(node.dist)
             return "({}){}".format(s[:-1], token)
@@ -305,7 +306,7 @@ class PhyloTree(Tree):
                 if child[0] == '(':                                 # the child has subtrees
                     end = child.rfind(')')
                     if end == -1:
-                        raise ValueError("Invalid Newick-String!")
+                        raise ValueError('invalid Newick string')
                     parse_subtree(node, child[1:end])               # recursive call 'parse_subtree'
                 child = child[end+1:].strip()
                 label_col_dist = label_col_dist_regex.match(child)
@@ -343,7 +344,7 @@ class PhyloTree(Tree):
                     current += c
                 elif c == ')':
                     if stack <= 0:
-                        raise ValueError("Invalid Newick-String!")
+                        raise ValueError('invalid Newick string')
                     stack -= 1
                     current += c
                 else:
@@ -352,7 +353,7 @@ class PhyloTree(Tree):
             return children
         
         if not isinstance(newick, str):
-            raise ValueError("Newick parser needs a 'str' as input.")
+            raise ValueError("Newick parser needs a 'str' as input")
         end = newick.find(";")
         if end != -1:
             newick = newick[:end]
@@ -365,7 +366,7 @@ class PhyloTree(Tree):
                                             # (important for non-recursive to_newick2)
             return PhyloTree(root)
         else:
-            raise ValueError("Invalid Newick-String!")
+            raise ValueError('invalid Newick string')
     
     
     def reconstruct_IDs(self):
@@ -412,12 +413,17 @@ class PhyloTree(Tree):
             return G, None
         
         for v in self.preorder():
-            G.add_node(v.ID, label=v.label, color=v.color, tstamp=v.tstamp)
+            G.add_node(v.ID, label=v.label,
+                       color=v.color,
+                       tstamp=v.tstamp,
+                       dist=v.dist,
+                       transferred=v.transferred)
         
-        for u, v in self.edges():
+        for u, v, sibling_nr in self.edges_sibling_order():
             if u is v or u.ID == v.ID:
-                print("Loop at", str(u), str(v), v.transferred)
-            G.add_edge(u.ID, v.ID, dist=v.dist, transferred=v.transferred)
+                raise RuntimeError('loop at {} and {}'.format(u, v))
+            G.add_edge(u.ID, v.ID)
+            G.nodes[v.ID]['sibling_nr'] = sibling_nr
             
         return G, self.root.ID
     
@@ -438,6 +444,9 @@ class PhyloTree(Tree):
             
             if parent:
                 parent.add_child(treenode)
+                
+                # edge attributes are deprecated,
+                # for compatibilty with older versions of AsymmeTree:
                 if 'dist' in G.edges[parent.ID, ID]:
                     treenode.dist = G.edges[parent.ID, ID]['dist']
                 if 'transferred' in G.edges[parent.ID, ID]:
@@ -446,11 +455,25 @@ class PhyloTree(Tree):
             if 'label' in G.nodes[ID]:
                 treenode.label = G.nodes[ID]['label']
             if 'color' in G.nodes[ID]:
-                treenode.color = G.nodes[ID]['color']
+                if isinstance(G.nodes[ID]['color'], list):
+                    treenode.color = tuple(G.nodes[ID]['color'])
+                else:
+                    treenode.color = G.nodes[ID]['color']
             if 'tstamp' in G.nodes[ID]:
                 treenode.tstamp = G.nodes[ID]['tstamp']
+            if 'dist' in G.nodes[ID]:
+                treenode.dist = G.nodes[ID]['dist']
+            if 'transferred' in G.nodes[ID]:
+                treenode.transferred = G.nodes[ID]['transferred']
             
-            for child_id in G.neighbors(ID):
+            try:
+                children_ids = sorted(G.neighbors(ID),
+                                  key=lambda item: G.nodes[item]['sibling_nr'])
+            except KeyError:
+                # for compatibilty with older versions of AsymmeTree:
+                children_ids = [item for item in G.neighbors(ID)]
+            
+            for child_id in children_ids:
                 build_tree(child_id, parent=treenode)
             if G.out_degree(ID) == 0:
                 number_of_leaves += 1
@@ -466,20 +489,51 @@ class PhyloTree(Tree):
 #                           SERIALIZATION
 # --------------------------------------------------------------------------
             
-    def serialize(self, filename):
+    def serialize(self, filename, mode='json'):
         """Serialize the tree using pickle."""
         
         tree_nx, root_id = self.to_nx()
-        pickle.dump( (tree_nx, root_id), open(filename, "wb") )
+        
+        if mode == 'json':
+            data = nx.readwrite.json_graph.tree_data(tree_nx, root=root_id)
+            
+            with open(filename, 'w') as f:
+                f.write( json.dumps(data) )
+                
+        elif mode == 'pickle':
+            pickle.dump( (tree_nx, root_id), open(filename, "wb") )
+            
+        else:
+            raise ValueError("serialization mode '{}' not supported".format(mode))
     
     
     @staticmethod
-    def load(filename):
+    def load(filename, mode='json'):
         """Load a phylogenetic tree from a file.
         
-        Using the Python module pickle."""
+        Using either the Python module json or pickle."""
         
-        tree_nx, root_id = pickle.load( open("tree.pickle", "rb") )
+        if mode == 'json':
+            with open(filename, 'r') as f:
+                data = json.loads( f.read() )
+                
+            tree_nx = nx.readwrite.json_graph.tree_graph(data)
+            
+            root_id = None
+            for v in tree_nx:
+                if tree_nx.in_degree(v) == 0:
+                    root_id = v
+                    break
+                
+            if root_id is None:
+                raise RuntimeError('could not identify root')
+                
+        elif mode == 'pickle':
+            tree_nx, root_id = pickle.load( open(filename, "rb") )
+            
+        else:
+            raise ValueError("serialization mode '{}' not supported".format(mode))
+        
         tree = PhyloTree.parse_nx(tree_nx, root_id)
         
         return tree
@@ -520,11 +574,10 @@ class PhyloTree(Tree):
         """
         
         if not (isinstance(N, int) and isinstance(colors, collections.Iterable)):
-            raise TypeError("N must be of type 'int' and colors must be iterable!")
-        root = PhyloTreeNode(0, label="0")
+            raise TypeError("N must be of type 'int' and colors must be iterable")
+        root = PhyloTreeNode(0, label='0')
         tree = PhyloTree(root)
         node_list = [root]
-        break_prob = [0.5, 0.5]
         nr, leaf_count = 1, 1
         
         while leaf_count < N:
@@ -541,14 +594,6 @@ class PhyloTree(Tree):
                 leaf_count += 1
             elif node.children and not binary:
                 # add only one child if there are already children
-                
-                # probability to add another child (decraeses exponentially)
-                break_prob[0] = 1 / 1.4**len(node.children)
-                # probability to choose another node
-                break_prob[1] = 1 - break_prob[0]
-                if random.choices( (0,1), weights=break_prob )[0] == 1:
-                    continue
-                
                 new_child = PhyloTreeNode(nr, label=str(nr))
                 node.add_child(new_child)
                 node_list.append(new_child)
@@ -590,3 +635,10 @@ if __name__ == "__main__":
     t3 = PhyloTree.parse_nx(nx_tree, nx_root)
     print("--------------------------------------------")
     print( t3.to_newick() )
+    
+    t.serialize('testfile_tree.json', mode='json')
+    t.serialize('testfile_tree.pickle', mode='pickle')
+    
+    t4 = PhyloTree.load('testfile_tree.json', mode='json')
+    print("--------------------------------------------")
+    print( t4.to_newick() )

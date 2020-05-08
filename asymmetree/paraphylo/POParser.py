@@ -85,7 +85,7 @@ def parse_best_match_candidates(filename):
 #    if species_match:
 #        species = species_match.group(1)
 #    else:
-#        raise ValueError("Could not extract species from filename '{}'.".format(filename))
+#        raise ValueError("could not extract species from filename '{}'".format(filename))
     
     with open(filename, "r") as f:
         

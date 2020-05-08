@@ -16,7 +16,7 @@ class IndelModel:
                  **kwargs):
         
         if insertion_rate < 0.0 or deletion_rate < 0.0:
-            raise ValueError("Insertion and deletion rates must be non-negative!")
+            raise ValueError("insertion and deletion rates must be non-negative")
         else:
             self._ins_rate = insertion_rate     # insertion rate per site
             self._del_rate = deletion_rate      # deletion rate per site
@@ -25,7 +25,7 @@ class IndelModel:
         if length_model in ('zipf', 'negative_binomial'):
             self._length_model = length_model
         else:
-            raise ValueError("Indel model '{}' is not available!".format(length_model))
+            raise ValueError("indel model '{}' is not available".format(length_model))
         
         self._max_length = max_length
         self._params = kwargs
@@ -69,7 +69,7 @@ class IndelModel:
         if self._max_length is not False:
             
             if not isinstance(self._max_length, int) or self._max_length < 1:
-                raise ValueError("Maximal indel length must be an int > 0 !")
+                raise ValueError("maximal indel length must be an int >0")
         
         if self._length_model == 'zipf':
             
@@ -77,7 +77,7 @@ class IndelModel:
                 self._params = {'a': 1.821}     # (Chang and Benner 2004)
                 
             elif not isinstance(self._params['a'], float) or self._params['a'] <= 1.0:
-                raise ValueError("Invalid value for parameter 'a': {}".format(self._params['a']))
+                raise ValueError("invalid value for parameter 'a': {}".format(self._params['a']))
                 
         if self._length_model == 'negative_binomial':
             
@@ -87,12 +87,12 @@ class IndelModel:
                 self._params['q'] = 0.5
                 
             if not isinstance(self._params['r'], int) or self._params['r'] < 1:
-                raise ValueError("Parameter 'r' must be an int and > 0!")
+                raise ValueError("parameter 'r' must be an int and >0")
             
             if (not isinstance(self._params['q'], float) or 
                 self._params['q'] <= 0 or 
                 self._params['q'] >= 1.0):
-                raise ValueError("Parameter 'q' must be a float > 0 and < 1!")
+                raise ValueError("parameter 'q' must be a float >0 and <1")
             
             
     def _distribution_mean(self):

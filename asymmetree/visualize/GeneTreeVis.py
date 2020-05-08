@@ -68,9 +68,9 @@ class GeneTreeVis:
                     if self.distance_dict[v] > xmax:
                         xmax = self.distance_dict[v]
             elif distance == "divtime":
-                raise ValueError("Divergence time not yet implemented!")
+                raise ValueError("divergence time not yet implemented")
             else:
-                raise ValueError("Distance mode not known: " + str(distance))
+                raise ValueError("distance mode '{}' not supported".format(distance))
             if not v.children:
                 self.leaf_counter += 1
                 if not v.is_loss() and v.color not in self.colors:

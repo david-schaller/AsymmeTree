@@ -354,7 +354,7 @@ class Graph:
         """
         
         if not isinstance(tree, Tree):
-            raise TypeError("Instance of type 'Tree' required!")
+            raise TypeError("instance of type 'Tree' required")
         
         nodedict = self.levels[0].nodedict
         nodedict[tree.root] = DGNode(tree.root)

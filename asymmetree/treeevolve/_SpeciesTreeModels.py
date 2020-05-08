@@ -122,7 +122,7 @@ def _yule(N, birth_rate):
     if birth_rate is None:
         birth_rate = 1.0
     elif birth_rate <= 0.0:
-        raise ValueError("Birth rate must be >0!")
+        raise ValueError("birth rate must be >0")
     
     tree = PhyloTree(PhyloTreeNode(0, label='0', dist=0.0, tstamp=0.0))
     tree.number_of_species = N
@@ -165,7 +165,7 @@ def _yule_age(age, birth_rate):
     if birth_rate is None:
         birth_rate = 1.0
     elif birth_rate <= 0.0:
-        raise ValueError("Birth rate must be >0!")
+        raise ValueError("birth rate must be >0")
     
     tree = PhyloTree(PhyloTreeNode(0, label='0', dist=0.0, tstamp=0.0))
     
@@ -230,38 +230,38 @@ def _EBDP_check_episodes(**kwargs):
     if episodes is not None:
         
         if len(episodes) == 0:
-            raise ValueError("List of episodes must not be empty!")
+            raise ValueError("list of episodes must not be empty")
         
         for i in range(len(episodes)):
             
             if len(episodes[i]) != 4:
-                raise ValueError("All episodes must contain 4 values: birth rate, "\
+                raise ValueError("all episodes must contain 4 values: birth rate, "\
                                  "death rate, proportion of survivors, time stamp "\
-                                 "(from recent time as 0)!")
+                                 "(from recent time as 0)")
             
             birth_rate, death_rate, rho, t = episodes[i]
             if i == 0 and t != 0.0:
-                raise ValueError("First episode must be at t=0.0!")
+                raise ValueError("first episode must be at t=0.0")
             elif i > 0 and episodes[i-1][3] >= t:
                 print(episodes[i-1][3], t)
-                raise ValueError("Episodes must be in correct temporal order!")
+                raise ValueError("episodes must be in correct temporal order")
             
             if birth_rate <= 0.0 or birth_rate < death_rate:
-                raise ValueError("Birth rate must be >0 and >=death rate "\
-                                 "in all episodes!")
+                raise ValueError("birth rate must be >0 and >=death rate "\
+                                 "in all episodes")
                 
             if rho <= 0.0 or rho > 1.0:
-                raise ValueError("Proportion of survivors must be in (0.0, 1.0]!")
+                raise ValueError("proportion of survivors must be in (0.0, 1.0]")
         
         return episodes
     
     elif birth_rate is not None:
         
         if birth_rate <= 0.0 or (death_rate and birth_rate < death_rate):
-            raise ValueError("Birth rate must be >0 and >=death rate!")
+            raise ValueError("birth rate must be >0 and >=death rate")
             
         if death_rate and death_rate < 0.0:
-            raise ValueError("Death rate must be >=0!")
+            raise ValueError("death rate must be >=0")
         
         if death_rate is None:
             return [(birth_rate, 0.0, 1.0, 0.0)]
@@ -270,8 +270,8 @@ def _EBDP_check_episodes(**kwargs):
         
     else:
         if death_rate:
-            raise ValueError("Birth rate (>0) must be specified if death rate "\
-                             "is supplied!")
+            raise ValueError("birth rate (>0) must be specified if death rate "\
+                             "is supplied")
             
         return [(1.0, 0.0, 1.0, 0.0)]
 
@@ -373,35 +373,35 @@ def _EBDP_age_check_episodes(**kwargs):
     if episodes is not None:
         
         if len(episodes) == 0:
-            raise ValueError("List of episodes must not be empty!")
+            raise ValueError("list of episodes must not be empty")
         
         for i in range(len(episodes)):
             
             if len(episodes[i]) != 4:
-                raise ValueError("All episodes must contain 4 values: birth rate, "\
+                raise ValueError("all episodes must contain 4 values: birth rate, "\
                                  "death rate, proportion of survivors, time stamp "\
-                                 "(from recent time as 0)!")
+                                 "(from recent time as 0)")
             
             birth_rate, death_rate, rho, t = episodes[i]
             if i == 0 and t != 0.0:
-                raise ValueError("First episode must be at t=0.0!")
+                raise ValueError("first episode must be at t=0.0")
             elif i > 0 and episodes[i-1][3] >= t:
                 print(episodes[i-1][3], t)
-                raise ValueError("Episodes must be in correct temporal order!")
+                raise ValueError("episodes must be in correct temporal order")
             
             if birth_rate < 0.0 or death_rate < 0.0:
-                raise ValueError("Birth and death rate must be >=0 "\
-                                 "in all episodes!")
+                raise ValueError("birth and death rate must be >=0 "\
+                                 "in all episodes")
                 
             if rho <= 0.0 or rho > 1.0:
-                raise ValueError("Proportion of survivors must be in (0.0, 1.0]!")
+                raise ValueError("proportion of survivors must be in (0.0, 1.0]")
         
         return episodes
     
     elif birth_rate is not None:
         
         if birth_rate < 0.0 or (death_rate is not None and death_rate < 0.0):
-            raise ValueError("Birth and death rate must be >=0!")
+            raise ValueError("birth and death rate must be >=0")
         
         if death_rate is None:
             # default death rate = 0.0
@@ -411,8 +411,8 @@ def _EBDP_age_check_episodes(**kwargs):
         
     else:
         if death_rate:
-            raise ValueError("Birth rate (>=0) must be specified if death rate "\
-                             "is supplied!")
+            raise ValueError("birth rate (>=0) must be specified if death rate "\
+                             "is supplied")
         
         # default birth rate = 1.0 and death rate = 0.0
         return [(1.0, 0.0, 1.0, 0.0)]

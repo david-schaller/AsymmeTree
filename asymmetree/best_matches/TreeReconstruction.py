@@ -29,7 +29,7 @@ def neighbor_joining(leaves, leaf_index, matrix_filename,
     elif os.path.exists(binary_path):
          nj_command = binary_path
     else:
-        raise FileNotFoundError("Path to RapidNJ binary file '{}' does not exist!".format(binary_path))
+        raise FileNotFoundError("path to RapidNJ binary file '{}' does not exist".format(binary_path))
             
     start_time = time.time()
     
@@ -37,7 +37,7 @@ def neighbor_joining(leaves, leaf_index, matrix_filename,
         output = subprocess.run([nj_command, matrix_filename, "-i", "pd"],
                                 stdout=subprocess.PIPE)
     except:
-        raise FileNotFoundError("Calling RapidNJ failed!")
+        raise FileNotFoundError("calling RapidNJ failed")
         
     calltime = time.time() - start_time
     

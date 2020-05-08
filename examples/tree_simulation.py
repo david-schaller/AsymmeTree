@@ -4,6 +4,8 @@ import asymmetree.treeevolve as te
 from asymmetree.best_matches.Quartets import Quartets
 import asymmetree.best_matches.LRTConstructor as lrt
 
+DLH_rates=(1.0, 1.0, 0.0)
+
 # --------------------------------------------------------------------------
 #                            SPECIES TREE
 # --------------------------------------------------------------------------
@@ -17,7 +19,7 @@ print(S.to_newick())
 # --------------------------------------------------------------------------
 
 TGT_simulator = te.GeneTreeSimulator(S)
-TGT = TGT_simulator.simulate(DLH_rates=(1.0, 1.0, 0.0),
+TGT = TGT_simulator.simulate(DLH_rates=DLH_rates,
                              prohibit_extinction='per_species')
 
 TGT = te.imbalance_tree(TGT, S, baseline_rate=1,

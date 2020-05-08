@@ -428,7 +428,7 @@ def quartet_qinfer(scenario,
     elif os.path.exists(binary_path):
         qinfer_command = binary_path
     else:
-        raise FileNotFoundError("Path to qinfer binary file '{}' does not exist!".format(binary_path))
+        raise FileNotFoundError("path to qinfer binary file '{}' does not exist".format(binary_path))
     
     output = -1
     
@@ -447,12 +447,12 @@ def quartet_qinfer(scenario,
     try:
         output = subprocess.run(command, stdout=subprocess.PIPE)
     except:
-        raise FileNotFoundError("Calling qinfer failed!")
+        raise FileNotFoundError("calling qinfer failed")
         
     exec_time = time.time() - start
     
     if output == -1:
-        raise Exception("No output from qinfer!")
+        raise Exception("no output from qinfer")
     
     BMG = FileIO.parse_BMG_edges(output.stdout.decode(), scenario)
     RBMG = TrueBMG.RBMG_from_BMG(BMG)
