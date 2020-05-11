@@ -3,13 +3,7 @@
 """
 Tree Simulator.
 
-Simulate species and gene trees.
-
-Methods and classes in this module:
-    - simulate_species_tree
-    - make_ultrametric
-    - GeneTreeSimulator
-    - observable_tree
+Simulate dated species and gene trees.
 """
 
 import random
@@ -32,19 +26,24 @@ __author__ = "David Schaller"
 def simulate_species_tree(N, model='innovations',
                           non_binary_prob=0.0,
                           planted=True,
-                          remove_losses=False,
+                          remove_extinct=False,
+                          rescale_to_height=None,
                           **kwargs):
     """Simulates a species tree S with N leaves.
     
     Keyword parameters:
         model -- simulation model to be applied; default is 'innovations'
         non_binary_prob -- probability that an inner edge is contracted;
-                 results in non-binary tree; default is 0.0
+            results in non-binary tree; default is 0.0
         planted -- add a planted root that has the canonical root as its
-                 single neighbor; default is True
-        remove_losses -- remove all branches that lead to losses, only relevant
-                 for some models; default is False
+            single neighbor; default is True
+        remove_extinct -- remove all branches that lead to extinctions, only
+            relevant for some models; default is False
+        rescale_to_height -- determines the final distance from the root to the
+            (surviving) leaves, default is None, i.e. model dependent
     """
+    
+    # parameter checking
     if not isinstance(N, int) or N < 0:
         raise ValueError("N must be an int >=0")
     elif N == 0:
@@ -55,22 +54,36 @@ def simulate_species_tree(N, model='innovations',
     
     if non_binary_prob < 0.0 or non_binary_prob > 1.0:
         raise ValueError("contraction prob. must be in [0.0, 1.0]")
+        
+    if (rescale_to_height is not None and
+        (not isinstance(rescale_to_height, (int, float)) or
+         rescale_to_height < 0.0)):
+        raise ValueError("height must be a number >=0")
+    elif rescale_to_height is not None and N == 1 and not planted:
+        raise ValueError('rescaling is not applicable to unplanted trees '\
+                         'with only one leaf')
     
-    
+    # main simulation algorithm
     if model.lower() in ('innovation', 'innovations'):
         tree = stm._innovations_model(N, planted)
-        
+    elif model.lower() == 'yule':
+        tree = stm._yule(N, kwargs.get('birth_rate'))
+    elif model.upper() == 'BDP':
+        tree = stm._BDP(N, **kwargs)
+    elif model.upper() == 'EBDP':
+        tree = stm._EBDP(N, **kwargs)
     else:
-        if model.lower() == 'yule':
-            tree = stm._yule(N, kwargs.get('birth_rate'))
-        elif model.upper() == 'BDP':
-            tree = stm._BDP(N, **kwargs)
-        elif model.upper() == 'EBDP':
-            tree = stm._EBDP(N, **kwargs)
-        else:
-            raise ValueError("model '{}' is not available".format(model))
+        raise ValueError("model '{}' is not available".format(model))
+        
+    # remove extinct branches for model that include losses
+    if remove_extinct and model.upper() in ('BDP', 'EBDP'):
+        _delete_losses_and_contract(tree, inplace=True)
+        
+    # remove planted edge for models that are planted by construction
+    if not planted and model.upper() in ('YULE', 'BDP', 'EBDP'):
+        _remove_planted_root(tree, inplace=True)
     
-    
+    # make tree non_binary by random contraction of edges
     if non_binary_prob > 0.0:
          edges = _select_edges_for_contraction(tree, non_binary_prob,
                                                exclude_planted_edge=True)
@@ -80,7 +93,8 @@ def simulate_species_tree(N, model='innovations',
 
 
 def simulate_species_tree_age(age, model='yule',
-                              non_binary_prob=0.0, **kwargs):
+                              non_binary_prob=0.0,
+                              **kwargs):
     """Simulates a (planted) species tree S of the specified age.
     
     Keyword parameters:
@@ -89,6 +103,7 @@ def simulate_species_tree_age(age, model='yule',
                  results in non-binary tree; default is 0.0
     """
     
+    # parameter checking
     if not isinstance(age, (float, int)) or age <= 0.0:
         raise ValueError('age must be a number >0')
     elif isinstance(age, int):
@@ -100,23 +115,43 @@ def simulate_species_tree_age(age, model='yule',
     if non_binary_prob < 0.0 or non_binary_prob > 1.0:
         raise ValueError("contraction prob. must be in [0.0, 1.0]")
     
+    # main simulation algorithm
     if model.lower() == 'yule':
         tree = stm._yule_age(age, kwargs.get('birth_rate'))
-        
     elif model.upper() == 'BDP':
         tree = stm._BDP_age(age, **kwargs)
-        
     elif model.upper() == 'EBDP':
         tree = stm._EBDP_age(age, **kwargs)
-        
     else:
         raise ValueError("model '{}' is not available".format(model))
         
+    # make tree non_binary by random contraction of edges
     if non_binary_prob > 0.0:
          edges = _select_edges_for_contraction(tree, non_binary_prob,
                                                exclude_planted_edge=True)
          tree.contract(edges)
         
+    return tree
+
+
+def _rescale(tree, height, inplace=True):
+    
+    if not inplace:
+        tree = tree.copy()
+    
+    old_height = tree.root.tstamp
+    
+    # not available for trees that only consist of a root
+    if old_height <= 0.0:
+        raise RuntimeError("cannot rescale tree of "\
+                           "height '{}'".format(old_height))
+        
+    scaling_factor = height / old_height
+    
+    for v in tree.preorder():
+        v.tstamp *= scaling_factor
+        v.dist   *= scaling_factor
+    
     return tree
             
             
@@ -139,6 +174,12 @@ def _select_edges_for_contraction(tree, p, exclude_planted_edge=True):
 #                    CONSTRUCTION OF THE GENE TREE
 #
 # --------------------------------------------------------------------------
+    
+
+def simulate_dated_gene_tree(S, **kwargs):
+    
+    gene_tree_simulator = GeneTreeSimulator(S)
+    gene_tree_simulator.simulate(**kwargs)
 
 
 class _Branch:
@@ -176,7 +217,8 @@ class GeneTreeSimulator:
         """Simulate a gene tree along the specified species tree.
         
         Keyword arguments:
-            DLH_rates -- rates for duplications, losses and HGTs
+            DLH_rates -- rates for duplications, losses and HGTs, default is
+                (0.0, 0.0, 0.0)
             dupl_polytomy -- allows non-binary duplication events by specifying
                 the lambda parameter for a poisson distribution (copy number =
                 drawn number + 2); default is 0.0

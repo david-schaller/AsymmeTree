@@ -13,21 +13,21 @@ def _innovations_model(N, planted, ultrametric=True):
     """Builds a species tree S with N leaves with the innovations model.
     
     Keyword arguments:
-        ultrametric - it True make tree ultrametric and rescale it to
-            depth 1.0, else all edges have length 1.0; default is True.
+        ultrametric - if True make tree ultrametric and rescale it to
+            height 1.0, else all edges have length 1.0; default is True
     """
     
     tree = PhyloTree(PhyloTreeNode(0, label='0'))
     tree.number_of_species = N
+    node_counter = 1
     
-    if planted:                     # planted tree (root is an implicit
-                                    # outgroup with outdegree = 1)
+    # planted tree (root is an implicit outgroup with outdegree = 1)
+    if planted:
         root = PhyloTreeNode(1, label="1")
         tree.root.add_child(root)
-        node_counter = 2
+        node_counter += 1
     else:
         root = tree.root
-        node_counter = 1
     
     features = [0]                  # set of available features
     species = {(0,): root}          # extant species
@@ -89,6 +89,10 @@ def _make_ultrametric(tree):
     """Makes a given species tree S ultrametric.
     
     It is t(root) = 1 and t(x) = 0 for x in L(S)."""
+    
+    if not tree.root.children:
+        tree.root.dist = 0.0
+        tree.root.tstamp = 0.0
     
     for v in tree.preorder():
         if not v.parent:
@@ -154,7 +158,7 @@ def _yule(N, birth_rate):
         parent.add_child( PhyloTreeNode(branch_id, label=str(branch_id),
                                         dist=forward_time-parent.tstamp,
                                         tstamp=forward_time) )
-        
+    
     _reverse_time_stamps(tree)
     
     return tree

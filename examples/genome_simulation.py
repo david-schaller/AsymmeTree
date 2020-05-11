@@ -17,9 +17,10 @@ het_model = None
 genome_sim = GenomeSimulator(species_tree, outdir='testfile_genome')
 
 genome_sim.simulate_gene_trees(50, DLH_rates=(1.0, 0.5, 0.0),
+                               base_rate_distr=('gamma', 1.0, 1.0),
                                prohibit_extinction='per_species')
 
 genome_sim.simulate_sequences(subst_model,
                               indel_model=indel_model,
                               het_model=het_model,
-                              length_distribution=('constant', 200))
+                              length_distr=('constant', 200))

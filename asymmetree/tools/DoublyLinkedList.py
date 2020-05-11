@@ -40,7 +40,7 @@ class DLList:
         self._last = None
         self._count = 0
         for arg in args:
-            if isinstance(arg, collections.Iterable):
+            if isinstance(arg, collections.abc.Iterable):
                 for item in arg:
                     self.append(item)
             else:

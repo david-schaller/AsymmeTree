@@ -4,11 +4,6 @@
 Noisy Matrix.
 
 Introduce noise into a distance matrix.
-
-Methods in this module:
-    - noisy_matrix
-    - convex_linear_comb
-    - wrong_topology_matrix
 """
 
 import random

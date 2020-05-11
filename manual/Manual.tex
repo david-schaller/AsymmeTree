@@ -414,7 +414,7 @@ The following keyword parameters (with their default values) are available:
 \vspace{3mm}
 \renewcommand{\arraystretch}{1.5}
 \begin{tabularx}{0.95\textwidth} { >{\raggedright\arraybackslash}p{5.6cm} >{\raggedright\arraybackslash}X }
-	\texttt{baseline\_rate=1.0} & starting value for the substitution rate (per time unit) and expected value for conserved genes\\
+	\texttt{base\_rate=1.0} & starting value for the substitution rate (per time unit) and expected value for conserved genes\\
 	\texttt{autocorr\_variance=0.0}  & variance factor for a lognormal distribution that controls autocorrelation between genes of the same (and closely related) species, the higher the lower the auto\-corre\-la\-tion\\
 	\texttt{gamma\_param=(0.5, 1.0, 2.2)}  & parameter the for Gamma distribution (\texttt{a, loc, scale}) from which rate factors for divergent are drawn, the default values are chosen to fit observed asymmetries between paralogs in yeast data \citep{byrne2007}\\
 	\texttt{weights=(1, 1, 1)}  & weights for choice between conservation,
@@ -437,7 +437,7 @@ TGT_simulator = ts.GeneTreeSimulator(S)
 TGT = TGT_simulator.simulate(DLH_rates=(0.5, 0.5, 0.5))
 
 # imbalancing
-TGT = tm.imbalance_tree(TGT, S, baseline_rate=1,
+TGT = tm.imbalance_tree(TGT, S, base_rate=1,
                         autocorr_variance=0.2,
                         gamma_param=(0.5, 1.0, 2.2),
                         weights=(1, 1, 1))
@@ -1260,7 +1260,7 @@ As a conclusion, data from small-scale duplications or perhaps a mixed data set 
 Another important source of substitution rate variance is the heterogeneity among the considered species. Mutation rates are negatively correlated with traits like body size and generation time and positively correlated with metabolic rate. Whilst the connection to generation time is explained intuitively by a slower establishment of mutations in the population, the latter is, e.g., linked to a higher abundance of aerobic respiration by-products and a generally increased DNA synthesis \citep{martin1993,gillooly2005,nabholz2007}.
 
 As this also affects the singleton genes, i.e., genes having no paralogs in the same species, it constitutes an important aspect that violates the \emph{Molecular Clock Hypothesis} and should be taken into account for realistic evolution rate modeling.
-The goal of this section is, therefore, to assign baseline rates for the conserved genes to all nodes and edges of the species tree.
+The goal of this section is, therefore, to assign base rates for the conserved genes to all nodes and edges of the species tree.
 
 \citet{kishino2001} simulate the development of the mutation rate $\varrho$ by sampling the rate of the ending node of an edge $uv$ from a log-normal distribution ($\textrm{Lognormal}(\mu,\sigma^2)$). To avoid bias towards increasing or decreasing rates, the mean~$\mu$ of the underlying normal distribution is normalized such that $\mathbf{E}(\varrho_v) = \varrho_u$. Since the expected value of a log-normal distribution is given by
 \begin{equation}
@@ -1308,7 +1308,7 @@ As described in the next section, the rates $\varrho^0_e$ will be used as factor
 
 \subsubsection{Implementation}\label{sec:imbalancing_implementation}
 
-As seen in the previous sections, several aspects have to be taken into account to simulate realistic substitution rate imbalances. Therefore, a hierarchical model is used that incorporates both the baseline rates $\varrho^0_e$ assigned to the branches of the species tree $S$ and the gene-specific effects resulting from unequal fates of gene copies after duplication and horizontal gene transfer events.
+As seen in the previous sections, several aspects have to be taken into account to simulate realistic substitution rate imbalances. Therefore, a hierarchical model is used that incorporates both the base rates $\varrho^0_e$ assigned to the branches of the species tree $S$ and the gene-specific effects resulting from unequal fates of gene copies after duplication and horizontal gene transfer events.
 
 The values $\varrho^0_e$ for the edges $e=uv \in E(S)$ are determined by a pre-order traversal of $S$ as described in Section \ref{sec:autocorrelation}, where a user-defined mean substitution rate for the conserved members of the gene family is used as starting value $\varrho_{\rho_S}$ or $\varrho_{0_S}$ if the tree is planted, respectively.
 

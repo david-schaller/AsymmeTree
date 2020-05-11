@@ -52,9 +52,6 @@ def performance(true_graph, graph):
     accuracy = (tp + tn) / (tp + tn + fp + fn) if tp + tn + fp + fn > 0 else float('nan')
     precision = tp / (tp + fp) if tp + fp > 0 else float('nan')
     recall = tp / (tp + fn) if tp + fn > 0 else float('nan')
-#    accuracy = (tp + tn) / (tp + tn + fp + fn) if tp + tn + fp + fn > 0 else 1.0
-#    precision = tp / (tp + fp) if tp + fp > 0 else 1.0
-#    recall = tp / (tp + fn) if tp + fn > 0 else 1.0
     
     return order, size, tp, tn, fp, fn, accuracy, precision, recall
 

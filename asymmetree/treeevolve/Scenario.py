@@ -56,11 +56,11 @@ class Scenario:
         
         # sort the species into the subtrees of the first speciation event of S
         self.subtree_list, self.subtree_index = [], {}
+        self.S.supply_leaves()
         for u in self.S.preorder():                          # exclude root of planted tree
             if len(u.children) > 1:
                 for i in range(len(u.children)):
-                    self.subtree_list.append([gene.ID for gene in self.S._preorder(u.children[i]) 
-                                         if len(gene.children) == 0])
+                    self.subtree_list.append([l.ID for l in u.children[i].leaves])
                     self.subtree_index.update({item: i for item in self.subtree_list[i]})
                 break
         

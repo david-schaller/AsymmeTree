@@ -50,44 +50,32 @@ class GenomeSimulator:
         return os.path.join(self.outdir, *args)
             
     
-    def simulate_gene_trees(self, N, **kwargs):
+    def simulate_gene_trees(self, N,
+                            **kwargs):
         
         self.number_of_families = N
-        self.true_gene_trees = []
-        self.observable_gene_trees = []
+        
+        self.true_gene_trees = te.simulate_gene_trees(self.S, N=N, **kwargs)
+        if N == 1:
+            self.true_gene_trees = [self.true_gene_trees]
+        
+        self.observable_gene_trees = [te.observable_tree(tree)
+                                      for tree in self.true_gene_trees]
         
         # sequences should be emptied here if methods were called before
         if hasattr(self, 'sequence_dicts'):
             self.sequence_dicts.clear()
         
-        simulator = te.GeneTreeSimulator(self.S)
-        
-        # autocorrelation between genes of the same or related species
-        autocorr_variance = kwargs.pop('autocorr_variance', 0.0)
-        _, autocorr_factors = te.autocorrelation_factors(self.S,
-                                                         autocorr_variance)
-        
-        for i in range(self.number_of_families):
-            
-            TGT = simulator.simulate(**kwargs)
-            te.imbalance_tree(TGT, self.S,
-                              baseline_rate=1.0,
-                              autocorr_factors=autocorr_factors,
-                              **kwargs)
-            self.true_gene_trees.append(TGT)
-            
-            OGT = te.observable_tree(TGT)
-            self.observable_gene_trees.append(OGT)
-            
-            if self.outdir:
+        if self.outdir:
+            for i in range(N):
                 filename = self._path('true_gene_trees',
                                       'gene_tree{}.json'.format(i))
-                TGT.serialize(filename, mode='json')
+                self.true_gene_trees[i].serialize(filename, mode='json')
                 
     
     def simulate_sequences(self, subst_model,
                            root_genome=None,
-                           length_distribution=('constant', 200),
+                           length_distr=('constant', 200),
                            min_length=10,
                            write_fastas=True,
                            write_alignments=True,
@@ -105,7 +93,7 @@ class GenomeSimulator:
                 raise ValueError('no. of sequences in root genome does not'\
                                  'match no of gene families')
         else:
-            self._check_distribution(length_distribution, min_length)
+            self._check_distribution(length_distr, min_length)
         
         evolver = se.Evolver(subst_model, **kwargs)
         
@@ -148,7 +136,7 @@ class GenomeSimulator:
             
         basename = 'alignment{}.phylip'.format(family_id)
         filename = self._path('alignments', basename)
-        write_alignment(filename, alignment, al_format='phylip')
+        write_alignment(filename, alignment, alignment_format='phylip')
     
                 
     def _write_fastas(self, include_inner=False):
@@ -182,48 +170,68 @@ class GenomeSimulator:
             write_fasta(filename, sequences)
                 
                 
-    def _check_distribution(self, length_distribution, min_length):
+    def _check_distribution(self, distr, min_length):
         
         if not isinstance(min_length, int) or min_length < 0:
             raise ValueError('minimal sequence length must be an int >=0')
         self._min_length = min_length
+        
+        if isinstance(distr, int):
+            if min_length > distr:
+                raise ValueError('constant sequence length must be >= '\
+                                 'minimal sequence length')
+                
+            self._length_distr = 'constant'
+            self._seq_length = distr
             
-        if length_distribution[0] == 'constant':
-            seq_length = length_distribution[1]
+        elif distr[0] == 'constant':
+            seq_length = distr[1]
             if not isinstance(seq_length, int) or min_length > seq_length:
                 raise ValueError('constant sequence length must be an int >= '\
                                  'minimal sequence length')
                 
-            self._length_distribution = 'constant'
+            self._length_distr = 'constant'
             self._seq_length = seq_length
             
-        elif length_distribution[0] == 'gamma':
-            shape = length_distribution[1]
-            scale = length_distribution[2]
+        elif distr[0] == 'gamma':
+            shape = distr[1]
+            scale = distr[2]
             
             if (not isinstance(shape, float) or shape <= 0.0 or 
                 not isinstance(scale, float) or scale <= 0.0):
                 raise ValueError('scale and shape parameters for gamma '\
                                  'distribution must be floats >0.0')
             
-            exp_val = round(shape * scale, 3)
-            if exp_val < min_length:
+            mean = round(shape * scale, 3)
+            if mean < min_length:
                 raise ValueError('expected value for gamma distribution '\
-                                 '({}) must be >= minimal length'.format(exp_val))
-                
+                                 '({}) must be >= minimal length'.format(mean))
+            
+            self._length_distr == 'gamma'
             self._shape = shape
             self._scale = scale
             
+        elif distr[0] == 'gamma_mean':
+            mean = distr[1]
+            
+            if not isinstance(mean , (int, float)) or mean < min_length:
+                raise ValueError('mean of gamma distribution must be '\
+                                 '>= minimal length')
+            
+            self._length_distr == 'gamma'
+            self._shape = 1.0
+            self._scale = mean / self._shape
+            
         else:
             raise ValueError("length distribution '{}' is not "\
-                             "supported".format(length_distribution))
+                             "supported".format(distr))
             
     
     def _get_sequence_length(self):
         
-        if self._length_distribution == 'constant':
+        if self._length_distr == 'constant':
             return self._seq_length
-        else:
+        elif self._length_distr == 'gamma':
             length = -1
             while length < self._min_length:
                 length = round(np.random.gamma(self._shape, scale=self._scale))
@@ -233,7 +241,3 @@ class GenomeSimulator:
     def _compose_label(self, node, family_id):
         
         return 'fam{}gene{}spec{}'.format(family_id, node.label, node.color)
-            
-            
-    
-    

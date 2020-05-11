@@ -27,7 +27,7 @@ class PhyloTreeNode(TreeNode):
     __slots__ = ('color', 'dist', 'tstamp', 'transferred')
     
     
-    def __init__(self, ID, label="", color=None,
+    def __init__(self, ID, label='', color=None,
                  dist = 1.0, tstamp=None, transferred=0):
         
         super().__init__(ID, label=label)
@@ -121,26 +121,26 @@ class PhyloTree(Tree):
     def supply_leaves(self, exclude_losses=True):
         """Add the leaves to all nodes that are in the subtree of a specific node."""
         
+        def _supply_leaves(node, exclude_losses):
+        
+            node.leaves = []
+            
+            if not node.children:
+                if exclude_losses and not node.is_loss():
+                    node.leaves.append(node)
+                elif not exclude_losses:
+                    node.leaves.append(node)
+            else:
+                for child in node.children:
+                    node.leaves.extend(_supply_leaves(child, exclude_losses))
+                    
+            return node.leaves
+        
+        
         if self.root:
-            return self._supply_leaves(self.root, exclude_losses)
+            return _supply_leaves(self.root, exclude_losses)
         else:
             return []
-        
-    
-    def _supply_leaves(self, node, exclude_losses):
-        
-        node.leaves = []
-        
-        if not node.children:
-            if exclude_losses and not node.is_loss():
-                node.leaves.append(node)
-            elif not exclude_losses:
-                node.leaves.append(node)
-        else:
-            for child in node.children:
-                node.leaves.extend(self._supply_leaves(child, exclude_losses))
-                
-        return node.leaves
     
     
     def color_sorted_leaves(self):
@@ -243,42 +243,39 @@ class PhyloTree(Tree):
 #                          TREE  <--->  NEWICK
 # --------------------------------------------------------------------------
         
-    def to_newick(self, node=None, 
-                  label=True, color=True, distance=True,
-                  label_inner=True, color_inner=False):
+    def to_newick(self, label=True, color=True, distance=True,
+                        label_inner=True, color_inner=False):
         """Recursive PhyloTree --> Newick (str) function."""
         
+        def _to_newick(node):
+            
+            if not node.children:
+                token = ''
+                if label:
+                    token += str(node.label)
+                if color and node.color:
+                    token += "<{}-{}>".format(*node.color) if isinstance(node.color, (tuple, list)) else "<{}>".format(node.color)
+                if distance:
+                    token += ":{}".format(node.dist)
+                return token
+            else:
+                s = ''
+                for child in node.children:
+                    s += _to_newick(child) + ','
+                token = ''
+                if label and label_inner:
+                    token += str(node.label)
+                if color_inner and node.color:
+                    token += "<{}-{}>".format(*node.color) if isinstance(node.color, (tuple, list)) else "<{}>".format(node.color)
+                if distance:
+                    token += ":{}".format(node.dist)
+                return "({}){}".format(s[:-1], token)
+        
+        
         if self.root:
-            return self._to_newick(self.root, label, color, distance, label_inner, color_inner) + ';'
+            return _to_newick(self.root) + ';'
         else:
             return ';'
-        
-    
-    def _to_newick(self, node, 
-                   label, color, distance,
-                   label_inner, color_inner):
-        
-        if not node.children:
-            token = ''
-            if label:
-                token += str(node.label)
-            if color and node.color:
-                token += "<{}-{}>".format(*node.color) if isinstance(node.color, (tuple, list)) else "<{}>".format(node.color)
-            if distance:
-                token += ":{}".format(node.dist)
-            return token
-        else:
-            s = ''
-            for child in node.children:
-                s += self._to_newick(child, label, color, distance, label_inner, color_inner) + ','
-            token = ''
-            if label and label_inner:
-                token += str(node.label)
-            if color_inner and node.color:
-                token += "<{}-{}>".format(*node.color) if isinstance(node.color, (tuple, list)) else "<{}>".format(node.color)
-            if distance:
-                token += ":{}".format(node.dist)
-            return "({}){}".format(s[:-1], token)
     
     
     @staticmethod
@@ -406,7 +403,7 @@ class PhyloTree(Tree):
             
     def to_nx(self):
         
-        self.check_integrity()
+        self._assert_integrity()
         G = nx.DiGraph()
         
         if not self.root:
@@ -573,7 +570,7 @@ class PhyloTree(Tree):
             binary - forces the tree to be binary; default is False
         """
         
-        if not (isinstance(N, int) and isinstance(colors, collections.Iterable)):
+        if not (isinstance(N, int) and isinstance(colors, collections.abc.Iterable)):
             raise TypeError("N must be of type 'int' and colors must be iterable")
         root = PhyloTreeNode(0, label='0')
         tree = PhyloTree(root)
@@ -607,16 +604,15 @@ class PhyloTree(Tree):
         return tree
     
     
-    def check_integrity(self):
+    def _assert_integrity(self):
         
         for v in self.preorder():
             for child in v.children:
                 if child is v:
-                    print("Loop at " + str(v))
-                    raise KeyboardInterrupt
+                    raise RuntimeError('loop at {}'.format(v))
                 if child.parent is not v:
-                    print("PhyloTree invalid for " + str(v) + " and " + str(child))
-                    raise KeyboardInterrupt
+                    raise RuntimeError('PhyloTree invalid for '\
+                                       '{} and {}'.format(v, child))
 
     
 if __name__ == "__main__":

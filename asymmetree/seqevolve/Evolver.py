@@ -96,7 +96,8 @@ class Evolver:
         return child_seq
     
     
-    def true_alignment(self, include_inner=True, write_to=None, al_format='phylip'):
+    def true_alignment(self, include_inner=True, write_to=None,
+                       alignment_format='phylip'):
         
         alg_builder = AlignmentBuilder(self.T, self.sequences,
                                        self.subst_model.alphabet,
@@ -105,7 +106,8 @@ class Evolver:
         alignment = alg_builder.build()
         
         if write_to:
-            write_alignment(write_to, alignment, al_format=al_format)
+            write_alignment(write_to, alignment,
+                            alignment_format=alignment_format)
         
         return alignment
     

@@ -399,7 +399,7 @@ if __name__ == "__main__":
     for i in range(100):
         TGT_simulator = te.GeneTreeSimulator(S)
         TGT = TGT_simulator.simulate(DLH_rates=(1,1,0))
-        TGT = te.imbalance_tree(TGT, S, baseline_rate=1,
+        TGT = te.imbalance_tree(TGT, S, base_rate=1,
                                 autocorr_variance=0.2,
                                 gamma_param=(0.5, 1.0, 2.2),
                                 CSN_weights=(1, 1, 1))

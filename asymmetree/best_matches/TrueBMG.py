@@ -5,12 +5,6 @@ Orthology graph, cBMG, cRBMG.
 
 This module provides classes concerning colored graphs and colored
 (phylogentic) trees, including a cBMG(PhyloTree)-function.
-
-Methods in this module:
-    - true_orthology_graph(tree)
-    - best_match_graphs(tree)
-    - build_cBMG_alternative(tree)
-    - RBMG_from_BMG(cBMG)
 """
 
 import itertools

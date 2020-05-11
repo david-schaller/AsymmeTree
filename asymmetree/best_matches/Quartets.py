@@ -2,12 +2,6 @@
 
 """
 Quartet approach for best match inference.
-
-Methods in this module:
-    - quartet_qinfer
-    - quartet_from_scenario
-Classes:
-    - Quartets
 """
 
 import itertools, random,  subprocess, time, os

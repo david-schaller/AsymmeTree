@@ -56,23 +56,23 @@ def write_fasta(filename, sequences):
 #                       Multiple Sequence Alignments
 # ------------------------------------------------------------------------------
 
-def write_alignment(filename, alignment, al_format='phylip'):
+def write_alignment(filename, alignment, alignment_format='phylip'):
     
     alignment = labeled_sequences(alignment)
     
     with open(filename, 'w') as f:
         
-        if al_format == 'phylip':
+        if alignment_format == 'phylip':
             _write_phylip(f, alignment)
     
-        elif al_format == 'clustal':
+        elif alignment_format == 'clustal':
             _write_clustal(f, alignment)
         
-        elif al_format == 'pretty':
+        elif alignment_format == 'pretty':
             _write_pretty(f, alignment)
             
         else:
-            raise ValueError("alignment format '{}' is not available".format(al_format))
+            raise ValueError("alignment format '{}' is not available".format(alignment_format))
             
 
 def _check_alignment(alignment):

@@ -4,11 +4,6 @@
 Extended Best Hits Method.
 
 Implementation of the Extended Best Hits method for best match inference.
-
-Methods in this module:
-    - ebh_qinfer
-    - ebh_from_scenario
-    - ebh
 """
 
 import os, subprocess, time

@@ -58,7 +58,8 @@ def simulate():
                         alignment[PhyloTreeNode(2, label='2')] = seq
                         alignment[PhyloTreeNode(3, label='3')] = seq
                         
-                        write_to_file(outfile, alignment, al_format='phylip')
+                        write_to_file(outfile, alignment,
+                                      alignment_format='phylip')
                         
                     else:
                         evolver.true_alignment(include_inner=True,

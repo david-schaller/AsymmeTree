@@ -4,24 +4,90 @@
 Tree Imbalancer.
 
 Introduce evolution rate asymmetries and autocorrelation.
-
-Methods in this module:
-    - imbalance_tree
 """
 
 import numpy as np
 
+from asymmetree.treeevolve.TreeSimulator import GeneTreeSimulator
+
 
 __author__ = "David Schaller"
 
+# --------------------------------------------------------------------------
+#                         USER INTERFACE FUNCTION
+# --------------------------------------------------------------------------
+
+def simulate_gene_trees(S, N=1,
+                        base_rate_distr=('constant', 1.0),
+                        **kwargs):
+    """Simulates dated and imbalanced gene trees along a species tree.
+    
+    Keyword arguments:
+        N -- number of gene trees to be simulated, default is 1, in which case
+            a tree is returned, otherwise a list is returned
+        base_rate_distr -- distribution for the evolution rate at the roots of
+            the gene trees, default is ('constant', 1.0)
+        kwargs -- see arguments of GeneTreeSimulator.simulate and imbalance_tree
+        """
+    
+    gene_trees = []
+    
+    simulator = GeneTreeSimulator(S)
+    
+    # autocorrelation between genes of the same or related species
+    autocorr_variance = kwargs.pop('autocorr_variance', 0.0)
+    _, autocorr_factors = autocorrelation_factors(S, autocorr_variance)
+    
+    # main simulation and imbalancing
+    for i in range(N):
+        
+        TGT = simulator.simulate(**kwargs)
+        imbalance_tree(TGT, S,
+                       base_rate=_get_base_rate(base_rate_distr),
+                       autocorr_factors=autocorr_factors,
+                       **kwargs)
+        gene_trees.append(TGT)
+    
+    if N == 1:
+        return gene_trees[0]
+    else:
+        return gene_trees
+
+
+def _get_base_rate(distr):
+    
+    if isinstance(distr, (int, float)) and distr >= 0.0:
+        return float(distr)
+    
+    elif isinstance(distr, (tuple, list)):
+        
+        if (distr[0] == 'constant' and
+            isinstance(distr[1], (int, float)) and
+            distr[1] >= 0.0):
+            return float(distr[1])
+        
+        elif (distr[0] == 'gamma' and
+              isinstance(distr[1], (int, float)) and distr[1] > 0.0 and
+              isinstance(distr[2], (int, float)) and distr[2] > 0.0):
+            shape = float(distr[1])
+            scale = float(distr[2])
+            return np.random.gamma(shape, scale=scale)
+        
+        elif (distr[0] == 'gamma_mean' and
+              isinstance(distr[1], (int, float)) and distr[1] > 0.0):
+            shape = 1.0
+            scale = distr[1] / shape
+            return np.random.gamma(shape, scale=scale)
+        
+    raise ValueError("distribution '{}' not supported".format(distr))
+    
 
 # --------------------------------------------------------------------------
 #                      IMBALANCING OF THE GENE TREE
-#
 # --------------------------------------------------------------------------
 
 
-def imbalance_tree(T, S, baseline_rate=1.0,
+def imbalance_tree(T, S, base_rate=1.0,
                    autocorr_factors=None,
                    autocorr_variance=0.0,
                    gamma_param=(0.5, 1.0, 2.2),
@@ -31,7 +97,7 @@ def imbalance_tree(T, S, baseline_rate=1.0,
     """Imbalances an (ultrametric) TRUE gene tree.
     
     Keyword arguments:
-    baseline_rate -- mean of substitution rate for conserved genes
+    base_rate -- mean of substitution rate for conserved genes
     autocorr_factors -- autocorrelation rate factors for the edges of S
     autocorr_variance -- autocorrelation variance factor for lognormal
         distribution, only relevant if 'autocorrelation_rates' are not supplied 
@@ -55,16 +121,15 @@ def imbalance_tree(T, S, baseline_rate=1.0,
         _, edge_rates = autocorrelation_factors(S, autocorr_variance)
         _apply_autocorrelation(T, edge_rates, inplace=True)
     
-    # finally apply baseline rate
+    # finally apply base rate
     for v in T.preorder():
-        v.dist *= baseline_rate
+        v.dist *= base_rate
     
     return T
 
 
 # --------------------------------------------------------------------------
 #                       EVOLUTION RATE ASYMMETRY
-#
 # --------------------------------------------------------------------------
 
 def _adjust_distances(T, rates):
@@ -129,7 +194,6 @@ def _divergent_rates(T, S, gamma_param, CSN_weights):
                 S_v = v.color if not isinstance(v.color, (tuple, list)) else v.color[1]
                 gene_counter[(S_u, S_v)].append(v)
                 rates[(u,v)].append((u.tstamp, _get_rate(marked[v], gamma_param)))
-#                rates[(u,v)].append((u.tstamp, rates[(u.parent,u)][-1][1] if u.parent else 1.0))
             
         # ---------------- DUPLICATION -----------------
         elif u.label == "D":
@@ -139,10 +203,6 @@ def _divergent_rates(T, S, gamma_param, CSN_weights):
             for v in u.children:
                 gene_counter[u.color].append(v)
                 rates[(u,v)].append((u.tstamp, _get_rate(marked[v], gamma_param)))
-#                if marked[u] == "conserved":
-#                    rates[(u,v)].append((u.tstamp, get_rate(marked[v]), gamma_param))
-#                else:
-#                    rates[(u,v)].append((u.tstamp, rates[(u.parent,u)][-1][1]))
         
         # ------------------- LOSS ---------------------
         elif u.is_loss():
@@ -181,11 +241,15 @@ def _divergent_rates(T, S, gamma_param, CSN_weights):
 
 # --------------------------------------------------------------------------
 #                         AUTOCORRELATION
-#
 # --------------------------------------------------------------------------
     
 def autocorrelation_factors(tree, variance):
-    """Geometric Brownian motion process to assign rate factors to species tree."""
+    """Geometric Brownian motion process to assign rate factors to species tree.
+    
+    The parameter 'variance' is a hyperparameter for a log-normal distribution
+    from which offspring rates are drawn. The overall variance of this
+    distribution is 'variance' * divergence time.
+    """
     
     node_rates = {}                 # maps node v --> rate of v
     edge_rates = {}                 # maps v of edge (u,v) --> rate of (u,v)

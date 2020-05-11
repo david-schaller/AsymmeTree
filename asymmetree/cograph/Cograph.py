@@ -13,7 +13,7 @@ class SimpleGraph:
     def __init__(self, initial=None):
         if isinstance(initial, dict):
             self.adj_list = initial
-        elif isinstance(initial, collections.Iterable):
+        elif isinstance(initial, collections.abc.Iterable):
             self.adj_list = {v: set() for v in initial}
         else:
             self.adj_list = {}
