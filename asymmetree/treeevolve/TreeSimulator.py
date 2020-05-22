@@ -594,14 +594,9 @@ def _remove_planted_root(tree, inplace=True):
         tree = tree.copy()
         
     # delete the root if the tree is planted
-    if len(tree.root.children) == 1:
+    tree.remove_planted_root()
         
-        new_root = tree.root.children[0]
-        new_root.detach()
-        tree.root = new_root
-        new_root.dist = 0.0
-        
-    elif not tree.root.children and not tree.root.label:
+    if not tree.root.children and not tree.root.label:
         # no surviving genes --> return empty tree
         tree.root = None
     

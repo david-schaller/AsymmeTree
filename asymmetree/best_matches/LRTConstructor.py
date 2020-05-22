@@ -20,35 +20,37 @@ __author__ = "David Schaller"
 
 # --------------------------------------------------------------------------
 #                      LRT FROM OBSERVABLE GENE TREE
-#
-#        WARNING: seems to work, but not (yet) mathmatically proven
 # --------------------------------------------------------------------------
 
 
-def _rho_colors(T, subtree_colors):
-    """Computes the colors s for which each v is the root of some thinness class."""
+def _arc_colors(T, subtree_colors):
+    """Color sets relevant for redundant edge computation.
     
-    colors = subtree_colors[T.root]                   # full color set
+    Computes for all inner vertices v the color set of y such that y with (x,y)
+    is an arc in the BMG and lca(x,y) = v.
+    """
     
-    rho_colors = {v: set() for v in T.preorder()}     # colors s for which v is the root of some thinness class
+    all_colors = subtree_colors[T.root]
+    
+    arc_colors = {v: set() for v in T.preorder()}     # color sets for all v
     
     for u in T.root.leaves:
-        remaining = colors - {u.color}                  # colors to which no best match has yet been found
-        current = u.parent                              # start with direct parent of each node
+        remaining = all_colors - {u.color}            # colors to which no best match has yet been found
+        current = u.parent                            # start with direct parent of each node
         while remaining and current:
             colors_here = set()
             for v in current.leaves:
-                if v.color in remaining:                # best match found
+                if v.color in remaining:              # best match found
                     colors_here.add(v.color)
             
-            rho_colors[current] |= colors_here          # update thinness class root colors
-            remaining -= colors_here                    # update remaining colors
+            arc_colors[current].update(colors_here)
+            remaining -= colors_here
             current = current.parent
     
-    return rho_colors
+    return arc_colors
 
 
-def _redundant_edges(T, subtree_colors, rho_colors):
+def _redundant_edges(T, subtree_colors, arc_colors):
     
     redundant_edges = []
     
@@ -59,7 +61,7 @@ def _redundant_edges(T, subtree_colors, rho_colors):
             if v2 is not v:
                 aux_set.update(subtree_colors[v2])
         
-        if not rho_colors[v].intersection(aux_set):
+        if not arc_colors[v].intersection(aux_set):
             redundant_edges.append((u, v))
     
     return redundant_edges
@@ -70,28 +72,24 @@ def LRT_from_observable_tree(T):
     
     The unique Least Resolved Tree from a leaf-colored (observable)
     gene tree is computed by contraction of all redundant edges.
-    
-    WARNING: seems to work, but not (yet) mathmatically proven!
     """
     
     LRT = T.copy()
     if not LRT.root:
         return LRT
     
-    # remove planted root
-    if len(LRT.root.children) == 1:
-        new_root = LRT.root.children[0]
-        new_root.detach()
-        LRT.root = new_root
+    # remove planted root if existent
+    LRT.remove_planted_root()
     
-    LRT.supply_leaves()                                 # assign list of leaves to each node
+    # assign list of leaves to each node
+    LRT.supply_leaves()
     
     subtree_colors = {}
     for v in LRT.preorder():
         subtree_colors[v] = {leaf.color for leaf in v.leaves}
         
-    rho_colors = _rho_colors(LRT, subtree_colors)
-    redundant_edges = _redundant_edges(LRT, subtree_colors, rho_colors)
+    arc_colors = _arc_colors(LRT, subtree_colors)
+    redundant_edges = _redundant_edges(LRT, subtree_colors, arc_colors)
     LRT.contract(redundant_edges)
     LRT = LRT.topology_only()
     

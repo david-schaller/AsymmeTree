@@ -2,10 +2,6 @@
 
 """
 Tree data structure for phylogentic trees.
-
-Classes in this module:
-    - PhyloTreeNode
-    - PhyloTree
 """
 
 import collections, itertools, random, re, pickle, json
@@ -117,9 +113,23 @@ class PhyloTree(Tree):
             
             contracted.add(v)
             
+            
+    def remove_planted_root(self):
+        """Removes the planted root if existent.
+        
+        The the tree has a planted root, its single child becomes the new root.
+        """
+        
+        if len(self.root.children) == 1:
+        
+            new_root = self.root.children[0]
+            new_root.detach()
+            self.root = new_root
+            new_root.dist = 0.0
+            
     
     def supply_leaves(self, exclude_losses=True):
-        """Add the leaves to all nodes that are in the subtree of a specific node."""
+        """Add the leaves to all nodes under their respective subtrees."""
         
         def _supply_leaves(node, exclude_losses):
         

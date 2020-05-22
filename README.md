@@ -29,31 +29,49 @@ AsymmeTree has several dependencies (which are installed automatically when usin
 * [Scipy and Numpy](http://www.scipy.org/install.html)
 * [Matplotlib](https://matplotlib.org/)
 
-To use the tree reconstruction method for best match inference and the C++ implementation of the quartet method, resp., the following software must be installed
-(I recommend that you compile these tools on your machine, place the binaries into a persistent location and add this location to your PATH environment variable):
-* [RapidNJ](https://birc.au.dk/software/rapidnj/)
-* [qinfer](https://github.com/david-schaller/qinfer)
+The simulation of phylogenetic scenarios and sequences does not have any other dependencies.
+To use the tree reconstruction method for best match inference and the C++ implementation of the quartet method, resp., [RapidNJ](https://birc.au.dk/software/rapidnj/) and [qinfer](https://github.com/david-schaller/qinfer) must be installed.
+I recommend that you compile these tools on your machine, place the binaries into a persistent location and add this location to your PATH environment variable.
 
 ## Usage and Description
 
-For a more detailed description of the usage and the implementation of the simulator please read the [manual](https://github.com/david-schaller/AsymmeTree/blob/master/manual/Manual.pdf).
+For a more detailed description of the usage and the implementation of the simulator please read the [manual](https://github.com/david-schaller/AsymmeTree/blob/master/manual/AsymmeTreeManual.pdf).
 
 ### Tree data structures
 
-The two classes `Tree` (in `asymmetree.tools.Tree`) and `PhyloTree` (in `asymmetree.tools.PhyloTree`, inherits from `Tree`) implement tree data structures which are essential for most of the modules in the package.
+The two classes `Tree` and `PhyloTree` implement tree data structures which are essential for most of the modules in the package.
 The latter contains converters and parsers for the Newick format and a NetworkX graph format.
 
-### Simulator for species and gene trees
+### Simulator for phylogenetic trees
 
-The subpackage `asymmetree.simulator` contains modules for the simulation and manipulation of species trees and gene trees.
+The subpackage `asymmetree.treeevolve` contains modules for the simulation and manipulation of species trees and gene trees.
 
-The following steps are implemented:
-* species tree simulation ('innovation model')
-* gene tree simulation (Gillespie algorithm)
-* gene tree imbalancing (asymmetric evolution rates of paralogous genes)
-* computation of a (noisy) distance matrix from the gene tree
+A typical simulation consists of the following steps:
+* dated species tree (models e.g. 'innovation', 'Yule' and '(episodic) birth-death process')
+* dated gene tree(s) (Gillespie-like algorithm)
+* imbalanced gene tree(s) (assignment of asymmetric evolution rates to paralogous genes)
+* observable gene tree(s) (removal of all branches that lead to losses only)
 
-### Best Match Inference
+The resulting gene trees have edge lengths (`dist`) that correspond to product of the divergence time between the respective nodes and the evolutionary rates that were assigned to them.
+Such a tree defines a distance matrix on its set of leaves (more precisely, an additive metric).
+Noise can be added to this matrix by several methods.
+Alternatively, sequences can be simulated along the tree, from which distances can be reestimated.
+
+### Simulator for sequences
+
+The subpackage `asymmetree.treeevolve` contains modules for the simulation of nucleotide or amino acid sequences along a phylogenetic tree.
+The substitution of sites is modeled by continuous-time Markov chains.
+These models typically take a substitution-rate matrix and the equilibrium frequencies of the states (i.e. the nucleotides or amino acids as input).
+Moreover, insertions and deletions (indels) and heterogeneity among the sites can be simulated.
+
+A typical simulation therefore is run with the following components (only the substitution model is mandatory):
+* substitution model (model for nucleotidess e.g. 'JC69', 'K80', 'GTR'; for amino acids 'DAYHOFF', 'BLOSUM62', 'JTT', 'WAG', 'LG')
+* indel model (based on the tool 'Dawg' by Cartwright 2005)
+* heterogeneity model (constant / sitewise / number of classes; proportion of invariant sites)
+
+
+
+### Best Match inference
 
 Phylogenetic best matches of a gene x of species X are defined as those genes y of another species Y that share the lowest common ancestor with x in the gene tree among all genes in that species. In contrast, two genes are orthologs if their last common ancestor was a speciation event. Orthology and reciprocal best matches are closely related.
 
@@ -61,7 +79,7 @@ The subpackage `asymmetree.best_matches` contains functions to compute both rela
 
 If the true (observable) gene tree is known (as e.g. the case in simulations), best matches and orthologs can be computed using the module `TrueBMG`. If only distance data is available, best matches have to be estimated. AsymmeTree currently implements three different methods that are described by Stadler et al. (2020).
 
-### Supertree Computation
+### Supertree computation
 
 Implementation of the BuildST algorithm described by Deng & Fernández-Baca (2016) to compute a supertree from a given list of tree based on the leaf labels. The algorithm uses the dynamic graph data structure described by Holm, de Lichtenberg and Thorup in 2001 (HDT algorithm).
 * `asymmetree.tools.BuildST`
@@ -73,22 +91,10 @@ The subpackages `asymmetree.cograph` and `asymmetree.paraphylo` contain heuristi
 The latter is a reimplementation of [ParaPhylo](http://pacosy.informatik.uni-leipzig.de/208-0-ParaPhylo.html) which uses heuristics for the NP-hard steps instead of exact ILP solutions.
 
 
-## REFERENCES
+## Citation and references
 
 If you use AsymmeTree in your project or code from it, please cite:
 
 * **Stadler, P. F., Geiß, M., Schaller, D., López Sánchez, A., González Laffitte, M., Valdivia, D., Hellmuth, M., and Hernández Rosales, M. (2019) From Best Hits to Best Matches. Submitted to Algorithms for Molecular Biology.**
 
-Other references for concepts and algorithms that were implemented:
-
-* Deng, Y. and Fernández-Baca, D. (2016) Fast Compatibility Testing for Rooted Phylogenetic Trees. 27th Annual Symposium on Combinatorial Pattern Matching (CPM 2016). doi: 10.4230/LIPIcs.CPM.2016.12.
-
-* Geiß, M., Chávez, E., González Laffitte, M., López Sánchez, A., Stadler, B. M. R., Valdivia, D. I., Hellmuth, M., Hernández Rosales, M., and Stadler, P. F. (2019) Best match graphs. Journal of Mathematical Biology, 78(7):2015-2057. ISSN 0303-6812, 1432-1416. doi: 10.1007/s00285-019-01332-9.
-
-* Hellmuth, M., Wieseke, N., Lechner, M., Lenhof, H.-P., Middendorf, M., and Stadler, P. F. (2015) Phylogenomics with paralogs. PNAS, 112(7):2058-2063. doi: 10.1073/pnas.1412770112.
-
-* Holm, J., de Lichtenberg, K., and Thorup, M. (2001) Poly-logarithmic deterministic fully-dynamic algorithms for connectivity, minimum spanning tree, 2-edge, and biconnectivity. J. ACM, 48(4):723–760. doi: 10.1145/502090.502095.
-
-* Lechner, M., Findeiß, S., Steiner, L., Marz, M., Stadler, P. F., and Prohaska, S. J. (2011). Proteinortho: detection of (co-) orthologs in large-scale analysis. BMC bioinformatics, 12(1), 124. ISSN 1471-2105. doi: 10.1186/1471-2105-12-124.
-
-* Rauch Henzinger, M. and King, V. (1999) Randomized fully dynamic graph algorithms with polylogarithmic time per operation. J. ACM 46(4):502–536. doi: 10.1145/225058.225269.
+For references to concepts and algorithms that were implemented please see the [manual](https://github.com/david-schaller/AsymmeTree/blob/master/manual/AsymmeTreeManual.pdf).

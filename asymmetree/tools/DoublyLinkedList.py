@@ -5,10 +5,6 @@ Doubly-linked list.
 
 Implementation of a doubly-linked list in Python 3. The list enables access
 to single list elements in order to modify/delete values in constant time.
-
-Classes in this module:
-    - DLListElement     (doubly-linked list element)
-    - DLList            (doubly-linked list)
 """
 
 import collections
