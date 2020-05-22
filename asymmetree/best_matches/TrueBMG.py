@@ -25,18 +25,19 @@ def orthology_from_tree(tree):
     """Constructs the true orthology graph from an event-labeled tree."""
     
     tree.supply_leaves()                                # assign list of leaves to each node
-    G = nx.Graph()
+    TOG = nx.Graph()
     
     for v in tree.root.leaves:
-        G.add_node(v.ID, label=v.label, color=v.color)
+        TOG.add_node(v.ID, label=v.label, color=v.color)
     
     for node in tree.preorder():
         if node.label == 'S':
             for child1, child2 in itertools.combinations(node.children, 2):
                 for u in child1.leaves:
                     for v in child2.leaves:
-                        G.add_edge(u.ID, v.ID)
-    return G
+                        TOG.add_edge(u.ID, v.ID)
+                        
+    return TOG
 
 
 def BMG_from_tree(tree, supply_RBMG=False):
@@ -77,4 +78,5 @@ def RBMG_from_BMG(BMG):
         for y in neighbors:
             if BMG.has_edge(y,x):
                 RBMG.add_edge(x,y)
+                
     return RBMG

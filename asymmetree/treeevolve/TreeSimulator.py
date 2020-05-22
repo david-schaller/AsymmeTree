@@ -179,7 +179,7 @@ def _select_edges_for_contraction(tree, p, exclude_planted_edge=True):
 def simulate_dated_gene_tree(S, **kwargs):
     
     gene_tree_simulator = GeneTreeSimulator(S)
-    gene_tree_simulator.simulate(**kwargs)
+    return gene_tree_simulator.simulate(**kwargs)
 
 
 class _Branch:

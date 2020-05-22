@@ -59,7 +59,7 @@ Alternatively, sequences can be simulated along the tree, from which distances c
 
 ### Simulator for sequences
 
-The subpackage `asymmetree.treeevolve` contains modules for the simulation of nucleotide or amino acid sequences along a phylogenetic tree.
+The subpackage `asymmetree.seqevolve` contains modules for the simulation of nucleotide or amino acid sequences along a phylogenetic tree.
 The substitution of sites is modeled by continuous-time Markov chains.
 These models typically take a substitution-rate matrix and the equilibrium frequencies of the states (i.e. the nucleotides or amino acids as input).
 Moreover, insertions and deletions (indels) and heterogeneity among the sites can be simulated.
@@ -75,9 +75,8 @@ A typical simulation therefore is run with the following components (only the su
 
 Phylogenetic best matches of a gene x of species X are defined as those genes y of another species Y that share the lowest common ancestor with x in the gene tree among all genes in that species. In contrast, two genes are orthologs if their last common ancestor was a speciation event. Orthology and reciprocal best matches are closely related.
 
-The subpackage `asymmetree.best_matches` contains functions to compute both relations from a given gene tree or to estimate them from distance data on a set of genes \citep{stadler2020}.
-
-If the true (observable) gene tree is known (as e.g. the case in simulations), best matches and orthologs can be computed using the module `TrueBMG`. If only distance data is available, best matches have to be estimated. AsymmeTree currently implements three different methods that are described by Stadler et al. (2020).
+The subpackage `asymmetree.best_matches` contains functions to compute both relations.
+If the true (observable) gene tree is known (as e.g. the case in simulations), best matches and orthologs can be computed using the module `TrueBMG`. If only distance data is available, best matches have to be estimated (from distance data on a set of genes). AsymmeTree currently implements three different methods that are described by Stadler et al. (2020).
 
 ### Supertree computation
 
