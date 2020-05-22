@@ -67,8 +67,8 @@ def false_edges(true_graph, graph):
         fn_graph = nx.Graph()
         fp_graph = nx.Graph()
         
-    fn_graph.add_nodes_from(true_graph)
-    fp_graph.add_nodes_from(true_graph)
+    fn_graph.add_nodes_from(true_graph.nodes(data=True))
+    fp_graph.add_nodes_from(true_graph.nodes(data=True))
         
     for u, v in graph.edges():
         if not true_graph.has_edge(u,v):
@@ -99,58 +99,82 @@ def sort_by_colors(graph):
     color_dict = {}
     
     for v in graph.nodes():
-        color = graph[v]['color']
+        color = graph.nodes[v]['color']
         
         if color not in color_dict:
             color_dict[color] = [v]
         else:
             color_dict[color].append(v)
+    
+    return color_dict
             
 
 def classify_good_ugly(BMG, RBMG, fp):
     
     for x, y in fp.edges():
-        fp[x][y]['middle_in_good'] = False
-        fp[x][y]['first_in_ugly'] = False
+        fp.edges[x, y]['middle_in_good'] = False
+        fp.edges[x, y]['first_in_ugly'] = False
         
     color_dict = sort_by_colors(BMG)
     
-    # middle edges of good quartets
+    
     for x, y in fp.edges():
+        
+        # middle edges of good quartets
         for c in color_dict:
             
-            if c == BMG[x]['color'] or c == BMG[y]['color']:
+            if c == BMG.nodes[x]['color'] or c == BMG.nodes[y]['color']:
                 continue
             
             for z1, z2 in itertools.permutations(color_dict[c], 2):
                 
-                if (RBMG.has_egde(z1, x) and RBMG.has_egde(z2, y) and
+                if (RBMG.has_edge(z1, x) and RBMG.has_edge(z2, y) and
                     BMG.has_edge(z1, y) and not BMG.has_edge(y, z1) and
                     BMG.has_edge(z2, x) and not BMG.has_edge(x, z2)):
                     
-                    fp[x][y]['middle_in_good'] = True
+                    fp.edges[x, y]['middle_in_good'] = True
                     
-    # first edges of ugly quartets
-    for _ in range(2):
-        
-        for x2 in color_dict[BMG[x]['color']]:
-            if x == x2 or not RBMG.has_edge(y, x2):
-                continue
+        # first edges of ugly quartets
+        for _ in range(2):
             
-            for z in RBMG.neighbors(z2):
-                
-                if (BMG[z]['color'] == BMG[x]['color'] or
-                    BMG[z]['color'] == BMG[y]['color']):
+            for x2 in color_dict[BMG.nodes[x]['color']]:
+                if x == x2 or not RBMG.has_edge(y, x2):
                     continue
                 
-                if not RBMG.has_edge(z, y) and not RBMG.has_edge(z, x):
-                    fp[x][y]['first_in_ugly'] = True
-        
-        # swap for second iteration
-        x, y = y, x
+                for z in RBMG.neighbors(x2):
+                    
+                    if (BMG.nodes[z]['color'] == BMG.nodes[x]['color'] or
+                        BMG.nodes[z]['color'] == BMG.nodes[y]['color']):
+                        continue
+                    
+                    if not RBMG.has_edge(z, y) and not RBMG.has_edge(z, x):
+                        fp.edges[x, y]['first_in_ugly'] = True
+            
+            # swap for second iteration
+            x, y = y, x
     
-    return fp        
+    return fp   
 
+
+def count_good_ugly(BMG, RBMG, fp):
+    
+    classify_good_ugly(BMG, RBMG, fp)
+    
+    good, ugly, both = 0, 0, 0
+    
+    for x, y in fp.edges():
+        
+        if fp.edges[x, y]['middle_in_good'] and fp.edges[x, y]['first_in_ugly']:
+            good += 1
+            ugly += 1
+            both += 1
+        elif fp.edges[x, y]['middle_in_good']:
+            good += 1
+        elif fp.edges[x, y]['first_in_ugly']:
+            ugly += 1
+    
+    return good, ugly, both        
+    
 
 # --------------------------------------------------------------------------
 #                             P4 EDITING
