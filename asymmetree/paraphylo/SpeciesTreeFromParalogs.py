@@ -405,10 +405,10 @@ if __name__ == "__main__":
                                 CSN_weights=(1, 1, 1))
         OGT = te.observable_tree(TGT)
         
-    #    ortho_graph = TrueBMG.true_orthology_graph(OGT)
+    #    ortho_graph = TrueBMG.orthology_from_tree(OGT)
     #    tr.add_ortho_graph(ortho_graph)
         
-        _, RBMG = TrueBMG.best_match_graphs(OGT)
+        _, RBMG = TrueBMG.BMG_from_tree(OGT, supply_RBMG=True)
         tr.add_ortho_graph(RBMG)
         
         

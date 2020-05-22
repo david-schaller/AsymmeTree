@@ -31,8 +31,8 @@ class Scenario:
         self._sort_species_to_subtrees()
         self._sort_genes_to_species()
         
-        self.TOG = TrueBMG.true_orthology_graph(self.OGT)
-        self.BMG, self.RBMG = TrueBMG.best_match_graphs(self.OGT)
+        self.TOG = TrueBMG.orthology_from_tree(self.OGT)
+        self.BMG, self.RBMG = TrueBMG.BMG_from_tree(self.OGT, supply_RBMG=True)
         
         self.BMG_subtrees, self.RBMG_subtrees = self.reduce_to_subtrees(self.BMG, self.RBMG)
     

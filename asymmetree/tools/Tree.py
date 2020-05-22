@@ -250,6 +250,18 @@ class Tree:
             node.children.clear()
         
         return parent
+    
+    
+    def get_max_ID(self):
+        """Returns the maximum of all node IDs."""
+        
+        max_ID = -1
+        
+        for v in self.preorder():
+            if v.ID is not None:
+                max_ID = max(v.ID, max_ID)
+                
+        return max_ID
         
     
     def to_newick(self, node=None):

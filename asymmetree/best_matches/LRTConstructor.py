@@ -205,7 +205,7 @@ class LRTConstructor:
             for subtree in subtrees:
                 tree.root.add_child(subtree.root)
         
-        return TrueBMG.best_match_graphs(tree)
+        return TrueBMG.BMG_from_tree(tree)
 
 
 class HelpGraph:
@@ -261,20 +261,19 @@ class HelpGraph:
             return cut[1]
         
         
-if __name__ == "__main__":
+if __name__ == '__main__':
     
-    colors = [i+1 for i in range(5)]
-    T = PhyloTree.random_colored_tree(30, colors)
-    print("--- T ---\n", T.to_newick())
+    T = PhyloTree.random_colored_tree(30, 5)
+    print('--- T ---\n', T.to_newick())
     
-    BMG, _ = TrueBMG.best_match_graphs(T)
+    BMG = TrueBMG.BMG_from_tree(T)
     
     lrt_constr = LRTConstructor(BMG, mincut=False)
     LRT1 = lrt_constr.build_tree()
     
     LRT2 = LRT_from_observable_tree(T)
     
-    print("--- LRT1 ---\n", LRT1.to_newick())
-    print("--- LRT2 ---\n", LRT2.to_newick())
+    print('--- LRT1 ---\n', LRT1.to_newick())
+    print('--- LRT2 ---\n', LRT2.to_newick())
     
-    print("LRTs equal: {}".format( LRT1.compare_topology(LRT2) ))
+    print('LRTs equal: {}'.format( LRT1.compare_topology(LRT2) ))

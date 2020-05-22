@@ -580,8 +580,14 @@ class PhyloTree(Tree):
             binary - forces the tree to be binary; default is False
         """
         
-        if not (isinstance(N, int) and isinstance(colors, collections.abc.Iterable)):
-            raise TypeError("N must be of type 'int' and colors must be iterable")
+        if not isinstance(N, int):
+            raise TypeError("N must be of type 'int'")
+            
+        if isinstance(colors, int):
+            colors = [i+1 for i in range(colors)]
+        elif not isinstance(colors, collections.abc.Iterable):
+            raise TypeError("'colors' must be of type 'int' or iterable")
+        
         root = PhyloTreeNode(0, label='0')
         tree = PhyloTree(root)
         node_list = [root]

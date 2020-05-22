@@ -47,7 +47,7 @@ class ComparisonAnalysis:
         start = time.time()
         nj_tree = tr.neighbor_joining(self.scenario.genes, self.scenario.gene_index, matrix_filename)
         tr.midpoint_rooting(nj_tree)
-        BMG_nj, RBMG_nj = TrueBMG.best_match_graphs(nj_tree)
+        BMG_nj, RBMG_nj = TrueBMG.BMG_from_tree(nj_tree, supply_RBMG=True)
         self.time_nj = time.time() - start
         BMG_nj, RBMG_nj = self.scenario.reduce_to_subtrees(BMG_nj, RBMG_nj)
         self.BMG_nj_stats = GraphTools.performance(BMG, BMG_nj)

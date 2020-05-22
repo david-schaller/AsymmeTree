@@ -494,10 +494,10 @@ The functions \texttt{best\_match\_ graphs(tree)} and \texttt{true\_orthology\_g
 
 \vspace{2mm}
 \begin{python}
-from asymmetree.best_matches.TrueBMG import true_orthology_graph, best_match_graphs
+from asymmetree.best_matches.TrueBMG import orthology_from_tree, best_match_graphs
 
 # T is an observable gene tree
-orthology_graph = true_orthology_graph(T)
+orthology_graph = orthology_from_tree(T)
 BMG, RBMG = best_match_graphs(T)    # Best Match Graph and Reciprocal Best Match Graph as a tuple
 \end{python}
 \vspace{2mm}
