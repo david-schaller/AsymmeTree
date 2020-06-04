@@ -7,7 +7,7 @@ from asymmetree.paraphylo.SpeciesTreeFromParalogs import TreeReconstructor
 from asymmetree.file_io.ProteinOrthoParser import parse_po_graph
 
 
-__author__ = "David Schaller"
+__author__ = 'David Schaller'
 
 
 def _reconstruct(params):
@@ -36,16 +36,19 @@ def reconstruct_trees_and_write(infile, outfile, cotree_modes, triple_modes,
     else:
         results = list(map(_reconstruct, inputs))
     
-    with open(outfile, "w") as f:
+    with open(outfile, 'w') as f:
         for i in range(len(inputs)):
             
             _, cotree_mode, triple_mode = inputs[i]
             newick, time_needed = results[i]
-            f.write("# Cotree usage mode: {}, Max. Consistent Triple Set heuristic: {}, Time: {}\n".format(cotree_mode, triple_mode, time_needed))
-            f.write(newick + "\n")
+            f.write('# Cotree usage mode: {}, Max. Consistent Triple Set '\
+                    'heuristic: {}, Time: {}\n'.format(cotree_mode,
+                                                       triple_mode,
+                                                       time_needed))
+            f.write(newick + '\n')
             
             
-def reconstruct_from_PO(filename, triple_mode="BPMF"):
+def reconstruct_from_PO(filename, triple_mode='BPMF'):
     
     G = parse_po_graph(filename)
     tr = TreeReconstructor()

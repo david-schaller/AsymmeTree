@@ -1,147 +1,12 @@
 # -*- coding: utf-8 -*-
 
-import collections, itertools, random
+import itertools, random
+import networkx as nx
 
 from asymmetree.tools import Tree
 
 
-__author__ = "David Schaller"
-
-
-class SimpleGraph:
-    
-    def __init__(self, initial=None):
-        if isinstance(initial, dict):
-            self.adj_list = initial
-        elif isinstance(initial, collections.abc.Iterable):
-            self.adj_list = {v: set() for v in initial}
-        else:
-            self.adj_list = {}
-    
-    
-    def add_node(self, v):
-        if v not in self.adj_list:
-            self.adj_list[v] = set()
-    
-    
-    def has_edge(self, u, v):
-        if u in self.adj_list and v in self.adj_list[u]:
-            return True
-        else:
-            return False
-        
-    
-    def neighbors(self, v):
-        return iter(self.adj_list[v])
-    
-    
-    def add_edge(self, u, v):
-        if u == v:
-            raise ValueError("no loops allowed")
-        # add nodes if not yet in the graph
-        self.add_node(u)
-        self.add_node(v)
-        
-        self.adj_list[u].add(v)
-        self.adj_list[v].add(u)
-    
-    
-    def connected_comp(self, make_undirected=False):
-        """Determines connected components by breadth-first search.
-        
-        Return a list of dictionaries.
-        """
-        result = []                                             # a list of dictionaries
-        visited = set()                                         # already visited nodes
-        Q = collections.deque()                                 # initialize queue
-        for start_node in self.adj_list.keys():
-            if start_node in visited:
-                continue
-            conn_comp = dict()                                  # dictionary that represents a c.c.
-            conn_comp[start_node] = self.adj_list[start_node]
-            visited.add(start_node)
-            Q.append(start_node)
-            while Q:
-                v = Q[0]
-                for u in self.adj_list[v]:
-                    if u not in visited:
-                        visited.add(u)
-                        Q.append(u)
-                        conn_comp[u] = self.adj_list[u]
-                Q.popleft()
-            result.append(conn_comp)
-        return result
-    
-    
-    def graphs_equal(self, other):
-        """Returns whether two undirected graphs are equal."""
-        
-        set1 = set(self.adj_list.keys())
-        set2 = set(other.adj_list.keys())
-        
-        if set1 != set2:
-            return False
-        
-        for v in set1:
-            if self.adj_list[v] != other.adj_list[v]:
-                return False
-        
-        return True
-    
-    
-    def symmetric_diff(self, other):
-        """Returns the number of edges in the symmetric difference."""
-        
-        set1 = set(self.adj_list.keys())
-        set2 = set(other.adj_list.keys())
-        
-        if set1 != set2:
-            raise ValueError("graphs do not have the same vertex set")
-            return
-        
-        V = list(set1)
-        sym_diff_number = 0
-        
-        for i in range(0, len(V)-1):
-            for j in range(i+1, len(V)):
-                if self.has_edge(V[i], V[j]) and not other.has_edge(V[i], V[j]):
-                    sym_diff_number += 1
-                elif not self.has_edge(V[i], V[j]) and other.has_edge(V[i], V[j]):
-                    sym_diff_number += 1
-        
-        return sym_diff_number
-    
-    
-    def get_complement(self):
-        
-        compl_graph = SimpleGraph(initial=self.adj_list.keys())
-        
-        V = list(self.adj_list.keys())
-        
-        for i in range(len(V)-1):
-            for j in range(i+1, len(V)):
-                if not self.has_edge(V[i], V[j]):
-                    compl_graph.add_edge(V[i], V[j])
-        
-        return compl_graph
-    
-    
-    @staticmethod
-    def random_graph(N, p=0.5):
-        """Construct a random graph on N nodes.
-        
-        Keyword arguments:
-            p - probability that an edge xy is inserted"""
-        V = [i for i in range(1, N+1)]
-        
-        G = SimpleGraph(initial=V)
-        
-        for i in range(0, len(V)-1):
-            for j in range(i+1, len(V)):
-                if random.random() < p:
-                    G.add_edge(V[i], V[j])
-        
-        return G
+__author__ = 'David Schaller'
     
 
 class CotreeNode(Tree.TreeNode):
@@ -158,14 +23,18 @@ class CotreeNode(Tree.TreeNode):
         
     
     def __str__(self):
+        
         if not self.children:
             return str(self.ID)
-        elif self.label == "series":
-            return "<1>"
-        elif self.label == "parallel":
-            return "<0>"
+        
+        elif self.label == 'series':
+            return '<1>'
+        
+        elif self.label == 'parallel':
+            return '<0>'
+        
         else:
-            return "<>"
+            return '<>'
         
 
 class Cotree(Tree.Tree):
@@ -179,18 +48,18 @@ class Cotree(Tree.Tree):
         
     
     def to_cograph(self):
+        
         self.supply_leaves()
-        G = SimpleGraph()
+        G = nx.Graph()
         
         for v in self.root.leaves:
             G.add_node(v.ID)
         
         for u in self.preorder():
-            if u.label == "series":
-                for child1, child2 in itertools.combinations(u.children, 2):
-                    for v1 in child1.leaves:
-                        for v2 in child2.leaves:
-                            G.add_edge(v1.ID, v2.ID)
+            if u.label == 'series':
+                for v1, v2 in itertools.combinations(u.children, 2):
+                    for l1, l2 in itertools.product(v1.leaves, v2.leaves):
+                        G.add_edge(l1.ID, l2.ID)
         
         return G
         
@@ -199,58 +68,50 @@ class Cotree(Tree.Tree):
     def cotree(G):
         """Checks if a graph is a cograph and returns its cotree.
         
-        Simple O(n^3) implementation."""
+        Simple O(n^3) implementation.
+        """
         
         def build_cotree(G, label=None):
+            
             v = CotreeNode(None)
             v.label = label
             child_nodes = []
             
-            if len(G.adj_list) == 1:
-                v.label = "leaf"
-                for ID in G.adj_list.keys():
+            if G.order() == 1:
+                v.label = 'leaf'
+                for ID in G.nodes():
                     v.ID = ID
-            
-            elif v.label is None:
-                ccs = G.connected_comp()
-                if len(ccs) > 1:
-                    v.label = "parallel"
                     
-                    for cc in ccs:
-                        G_i = SimpleGraph(initial=cc)
-                        v_i = build_cotree(G_i, label="series")
-                        if v_i:
-                            child_nodes.append(v_i)
-                        else:
-                            return False
+                return v
+            
+            child_nodes = []
+            
+            if v.label is None:
+                ccs = [cc for cc in nx.connected_components(G)]
+                
+                if len(ccs) > 1:
+                    v.label = 'parallel'
                 else:
-                    G = G.get_complement()
-                    ccs = G.connected_comp()
+                    G = nx.complement(G)
+                    ccs = [cc for cc in nx.connected_components(G)]
                     if len(ccs) > 1:
-                        v.label = "series"
-                        
-                        for cc in ccs:
-                            G_i = SimpleGraph(initial=cc)
-                            v_i = build_cotree(G_i, label="parallel")
-                            if v_i:
-                                child_nodes.append(v_i)
-                            else:
-                                return False
+                        v.label = 'series'
                     else:
                         return False
             
             else:
-                G = G.get_complement()
-                ccs = G.connected_comp()
-                if len(ccs) > 1:                 
-                    for cc in ccs:
-                        child_label = "series" if v.label=="parallel" else "parallel"
-                        G_i = SimpleGraph(initial=cc)
-                        v_i = build_cotree(G_i, label=child_label)
-                        if v_i:
-                            child_nodes.append(v_i)
-                        else:
-                            return False
+                G = nx.complement(G)
+                ccs = [cc for cc in nx.connected_components(G)]
+                
+                if len(ccs) == 1:
+                    return False
+            
+            child_label = 'series' if v.label == 'parallel' else 'parallel'
+            for cc in ccs:
+                G_i = G.subgraph(cc).copy()
+                v_i = build_cotree(G_i, label=child_label)
+                if v_i:
+                    child_nodes.append(v_i)
                 else:
                     return False
             
@@ -265,7 +126,6 @@ class Cotree(Tree.Tree):
         if root:
             return Cotree(root)
         else:
-            print("Not a Cograph!")
             return False
        
     
@@ -297,20 +157,21 @@ class Cotree(Tree.Tree):
                 
         for v in cotree.preorder():                     # assign labels ('series', 'parallel', 'leaf')
             if not v.children:
-                v.label == "leaf"
+                v.label == 'leaf'
             elif v.parent is None:
                 if force_series_root:
-                    v.label = "series"
+                    v.label = 'series'
                 else:
-                    v.label = "series" if random.random() < 0.5 else "parallel"
+                    v.label = 'series' if random.random() < 0.5 else 'parallel'
             else:
-                v.label = "series" if v.parent.label == "parallel" else "parallel"
+                v.label = 'series' if v.parent.label == 'parallel' else 'parallel'
                 
         return cotree
     
     
-if __name__ == "__main__":
+if __name__ == '__main__':
     
+    import asymmetree.tools.GraphTools as gt
     from pprint import pprint
     
     cotree = Cotree.random_cotree(100)
@@ -323,18 +184,20 @@ if __name__ == "__main__":
     cograph2 = cotree2.to_cograph()
     #pprint(cograph2.adj_list)
     
-    print(cograph.graphs_equal(cograph2))
+    print(gt.graphs_equal(cograph,cograph2))
     
-    cograph3 = SimpleGraph()
-    cograph3.add_edge("a", "b")
-    cograph3.add_edge("b", "d")
-    cograph3.add_edge("c", "d")
-    cograph3.add_edge("b", "c")
+    cograph3 = nx.Graph()
+    cograph3.add_edge('a', 'b')
+    cograph3.add_edge('b', 'd')
+    cograph3.add_edge('c', 'd')
+    cograph3.add_edge('b', 'c')
     cotree3 = Cotree.cotree(cograph3)
     print(cotree3.to_newick())
     
-    cograph4 = SimpleGraph.random_graph(10, p=0.5)
-    pprint(cograph4.adj_list)
+    cograph4 = gt.random_graph(4, p=0.5)
+    pprint(cograph4.edges())
     cotree4 = Cotree.cotree(cograph4)
     if cotree4:
         print(cotree4.to_newick())
+    else:
+        print('Not a cograph!')

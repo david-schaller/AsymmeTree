@@ -4,7 +4,7 @@
 Graph Tools.
 """
 
-import itertools
+import itertools, random
 import numpy as np
 import networkx as nx
 
@@ -16,17 +16,58 @@ __author__ = "David Schaller"
 #                            GENERAL GRAPH TOOLS
 # --------------------------------------------------------------------------
 
-def graphs_equal(graph1, graph2):
+def graphs_equal(G1, G2):
     """Returns whether two NetworkX graphs (directed or undirected) are equal."""
     
-    if (not graph1.order() == graph2.order()) or (not graph1.size() == graph2.size()):
+    if (not G1.order() == G2.order()) or (not G1.size() == G2.size()):
         return False
     
-    for u, v in graph1.edges():
-        if not graph2.has_edge(u,v):
+    if set(G1.nodes()) != set(G2.nodes()):
+        return False
+    
+    for u, v in G1.edges():
+        if not G2.has_edge(u,v):
             return False
     
     return True
+
+
+def symmetric_diff(G1, G2):
+    """Returns the number of edges in the symmetric difference."""
+    
+    set1 = {x for x in G1.nodes()}
+    set2 = {x for x in G2.nodes()}
+    
+    if set1 != set2:
+        raise RuntimeError("graphs do not have the same vertex set")
+        return
+    
+    sym_diff_number = 0
+    
+    for x, y in itertools.combinations(set1, 2):
+        if G1.has_edge(x, y) and not G2.has_edge(x, y):
+            sym_diff_number += 1
+        elif not G1.has_edge(x, y) and G2.has_edge(x, y):
+            sym_diff_number += 1
+    
+    return sym_diff_number
+
+
+def random_graph(N, p=0.5):
+    """Construct a random graph on N nodes.
+    
+    Keyword arguments:
+        p - probability that an edge xy is inserted
+    """
+        
+    G = nx.Graph()
+    G.add_nodes_from(range(1, N+1))
+    
+    for x, y in itertools.combinations(range(1, N+1), 2):
+        if random.random() < p:
+            G.add_edge(x, y)
+    
+    return G
 
 
 def performance(true_graph, graph):
@@ -114,9 +155,9 @@ def classify_good_ugly(BMG, RBMG, fp):
     for x, y in fp.edges():
         fp.edges[x, y]['middle_in_good'] = False
         fp.edges[x, y]['first_in_ugly'] = False
+        fp.edges[x, y]['first_in_bad'] = False
         
     color_dict = sort_by_colors(BMG)
-    
     
     for x, y in fp.edges():
         
@@ -133,12 +174,12 @@ def classify_good_ugly(BMG, RBMG, fp):
                     BMG.has_edge(z2, x) and not BMG.has_edge(x, z2)):
                     
                     fp.edges[x, y]['middle_in_good'] = True
-                    
-        # first edges of ugly quartets
+        
+        # first edges of ugly/bad quartets          
         for _ in range(2):
             
             for x2 in color_dict[BMG.nodes[x]['color']]:
-                if x == x2 or not RBMG.has_edge(y, x2):
+                if x == x2:
                     continue
                 
                 for z in RBMG.neighbors(x2):
@@ -146,9 +187,15 @@ def classify_good_ugly(BMG, RBMG, fp):
                     if (BMG.nodes[z]['color'] == BMG.nodes[x]['color'] or
                         BMG.nodes[z]['color'] == BMG.nodes[y]['color']):
                         continue
-                    
-                    if not RBMG.has_edge(z, y) and not RBMG.has_edge(z, x):
+                    # first edges of ugly quartets
+                    if (RBMG.has_edge(y, x2) and not RBMG.has_edge(z, y) and
+                        not RBMG.has_edge(z, x)):
                         fp.edges[x, y]['first_in_ugly'] = True
+                    
+                    # first edges of bad quartets
+                    elif (not RBMG.has_edge(y, x2) and RBMG.has_edge(z, y) and
+                          not BMG.has_edge(x, z)):
+                        fp.edges[x, y]['first_in_bad'] = True
             
             # swap for second iteration
             x, y = y, x
@@ -173,7 +220,46 @@ def count_good_ugly(BMG, RBMG, fp):
         elif fp.edges[x, y]['first_in_ugly']:
             ugly += 1
     
-    return good, ugly, both        
+    return good, ugly, both
+
+
+def count_good_ugly_bad(BMG, RBMG, fp):
+    
+    classify_good_ugly(BMG, RBMG, fp)
+    
+    gub, gu, gb, ub, g, u, b = 0, 0, 0, 0, 0, 0, 0
+    
+    for x, y in fp.edges():
+        
+        if fp.edges[x, y]['middle_in_good'] and fp.edges[x, y]['first_in_ugly'] and fp.edges[x, y]['first_in_bad']:
+            gub += 1
+            gu += 1
+            gb += 1
+            ub += 1
+            g += 1
+            u += 1
+            b += 1
+            
+        elif fp.edges[x, y]['middle_in_good'] and fp.edges[x, y]['first_in_ugly']:
+            gu += 1
+            g += 1
+            u += 1
+        elif fp.edges[x, y]['middle_in_good'] and fp.edges[x, y]['first_in_bad']:
+            gb += 1
+            g += 1
+            b += 1
+        elif fp.edges[x, y]['first_in_ugly'] and fp.edges[x, y]['first_in_bad']:
+            ub += 1
+            u += 1
+            b += 1
+        elif fp.edges[x, y]['middle_in_good']:
+            g += 1
+        elif fp.edges[x, y]['first_in_ugly']:
+            u += 1
+        elif fp.edges[x, y]['first_in_bad']:
+            b += 1
+    
+    return gub, gu, gb, ub, g, u, b
     
 
 # --------------------------------------------------------------------------

@@ -248,6 +248,28 @@ class PhyloTree(Tree):
         
         return T
     
+    
+    def count_node_types(self):
+        
+        counts = {'S': 0, 'D': 0, 'L': 0, 'H': 0, 'extant': 0}
+        
+        for v in self.preorder():
+            
+            if not v.children:
+                if v.is_loss():
+                    counts['L'] += 1
+                else:
+                    counts['extant'] += 1
+            
+            elif v.label == 'S':
+                counts['S'] += 1
+            elif v.label == 'D':
+                counts['D'] += 1
+            elif v.label == 'H':
+                counts['H'] += 1
+        
+        return counts        
+    
 
 # --------------------------------------------------------------------------
 #                          TREE  <--->  NEWICK

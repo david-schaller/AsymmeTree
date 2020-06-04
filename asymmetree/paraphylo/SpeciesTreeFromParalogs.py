@@ -4,19 +4,17 @@ import itertools
 
 import networkx as nx
 
-from asymmetree.cograph.Cograph import SimpleGraph
 from asymmetree.cograph.CographEditor import CographEditor
-
 from asymmetree.tools.PhyloTree import PhyloTree, PhyloTreeNode
 
 
-__author__ = "David Schaller"
+__author__ = 'David Schaller'
 
 
 class TreeReconstructor:
     
     
-    def __init__(self, edit_runs_per_cc=10, cotree_mode="best"):
+    def __init__(self, edit_runs_per_cc=10, cotree_mode='best'):
         
         self.R = {}             # (weighted) species triples
         self.L = set()          # set of species leaves
@@ -25,10 +23,10 @@ class TreeReconstructor:
                                                     # per connected component
         self.S = None           # the reconstructed species tree
         
-        if cotree_mode == "best":                   # only use the best cotree
-            self._cotree_mode = "best"
-        elif cotree_mode == "all":                  # use all cotrees
-            self._cotree_mode = "all"
+        if cotree_mode == 'best':                   # only use the best cotree
+            self._cotree_mode = 'best'
+        elif cotree_mode == 'all':                  # use all cotrees
+            self._cotree_mode = 'all'
         else:
             raise ValueError("invalid argument '{}' for cotree usage".format(cotree_mode))
         
@@ -37,7 +35,7 @@ class TreeReconstructor:
         
         for cc in nx.connected_components(ortho_graph):
             
-            G = SimpleGraph()
+            G = nx.Graph()
             color_dict = {}
             
             for u in cc:
@@ -53,10 +51,10 @@ class TreeReconstructor:
             cotree = ce.cograph_edit(run_number=self._edit_runs_per_cc)
             
             # add the informative triples (root is a speciation)
-            if self._cotree_mode == "best":
+            if self._cotree_mode == 'best':
                 self._informative_triples(cotree, color_dict)
                 
-            elif self._cotree_mode == "all":
+            elif self._cotree_mode == 'all':
                 weight_per_tree = 1 / len(ce.cotrees)
                 for cotree in ce.cotrees:
                     self._informative_triples(cotree, color_dict,
@@ -69,7 +67,7 @@ class TreeReconstructor:
         cotree.supply_leaves()
         
         for u in cotree.preorder():
-            if u.label == "parallel" or not u.children:
+            if u.label == 'parallel' or not u.children:
                 continue
             
             for v1, v2 in itertools.permutations(u.children, 2):
@@ -110,7 +108,7 @@ class TreeReconstructor:
             raise ValueError("mode '{}' is not valid".format(mode))
             
         if not root:
-            raise RuntimeError("could not build a species tree")
+            raise RuntimeError('could not build a species tree')
         
         self.S = PhyloTree(root)
         
@@ -145,7 +143,7 @@ class TreeReconstructor:
             else:
                 child_nodes.append(Ti)
                 
-        subtree_root = PhyloTreeNode(0, label="")       # place new inner node
+        subtree_root = PhyloTreeNode(0, label='')       # place new inner node
         for Ti in child_nodes:
             subtree_root.add_child(Ti)                  # add roots of the subtrees to the new node
         
@@ -164,7 +162,7 @@ class TreeReconstructor:
 
         for a, b, c in R:
             if G.has_edge(a, b):
-                G[a][b]["weight"] += R[(a,b,c)]
+                G[a][b]['weight'] += R[(a,b,c)]
             else:
                 G.add_edge(a, b, weight=R[(a,b,c)])
                 
@@ -234,7 +232,7 @@ class TreeReconstructor:
                     S_i, S_j = pair
             
             # create new node S_k connecting S_i and S_j
-            S_k = PhyloTreeNode(0, label="")
+            S_k = PhyloTreeNode(0, label='')
             S_k.add_child(S_i)
             S_k.add_child(S_j)
             
@@ -245,7 +243,7 @@ class TreeReconstructor:
             del nodes[S_i]
             del nodes[S_j]
             
-        assert len(nodes) == 1, "More than 1 node left!"
+        assert len(nodes) == 1, 'more than 1 node left'
         
         return next(iter(nodes))
     
@@ -277,7 +275,7 @@ class TreeReconstructor:
     def _max_consistent_triple_set(self):
         
         if self.S is None:
-            raise RuntimeError("species tree has not been built yet")
+            raise RuntimeError('species tree has not been built yet')
             
         R_total = self.S.get_triples()      # all triples of the tree
         R_max_cons = {}                     # max. consistent subset of R (i.e. heuristic)
@@ -366,7 +364,7 @@ class TreeReconstructor:
         if v is None:
             supports = self._subtree_support()
             supports[self.S.root] = self._total_support(self._max_consistent_triple_set())
-            return self.newick_with_support(v=self.S.root, supports=supports) + ";"
+            return self.newick_with_support(v=self.S.root, supports=supports) + ';'
         
         elif not v.children:
             return str(v.label)
@@ -374,11 +372,11 @@ class TreeReconstructor:
         else:
             s = ''
             for child in v.children:
-                s += self.newick_with_support(v=child, supports=supports) + ","
-            return "({}){}".format(s[:-1], supports[v])
+                s += self.newick_with_support(v=child, supports=supports) + ','
+            return '({}){}'.format(s[:-1], supports[v])
         
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     
     # ----- TESTING THIS MODULE -----
     
@@ -387,13 +385,13 @@ if __name__ == "__main__":
     
     # SPECIES TREE:
     #S = ts.simulate_species_tree(10)
-    S = PhyloTree.parse_newick("(((((16:0.38786287055727103,(18:0.2071277923445058,19:0.2071277923445058)17:0.18073507821276524)12:0.10075553853805931,(14:0.13224182895383052,15:0.13224182895383052)13:0.3563765801414998)4:0.07517286794939665,(6:0.5373882998574596,(8:0.4434182448023457,(10:0.04929450217312242,11:0.04929450217312242)9:0.3941237426292233)7:0.0939700550551139)5:0.02640297718726732)2:0.2512472266526016,3:0.8150385036973286)1:0.18496149630267142)0:0.0;")
+    S = PhyloTree.parse_newick('(((((16:0.38786287055727103,(18:0.2071277923445058,19:0.2071277923445058)17:0.18073507821276524)12:0.10075553853805931,(14:0.13224182895383052,15:0.13224182895383052)13:0.3563765801414998)4:0.07517286794939665,(6:0.5373882998574596,(8:0.4434182448023457,(10:0.04929450217312242,11:0.04929450217312242)9:0.3941237426292233)7:0.0939700550551139)5:0.02640297718726732)2:0.2512472266526016,3:0.8150385036973286)1:0.18496149630267142)0:0.0;')
     S.reconstruct_IDs()
     S.reconstruct_timestamps()
     
     print(S.to_newick())
     
-    tr = TreeReconstructor(cotree_mode="best")
+    tr = TreeReconstructor(cotree_mode='best')
     
     # GENE FAMILIES:
     for i in range(100):
@@ -412,8 +410,8 @@ if __name__ == "__main__":
         tr.add_ortho_graph(RBMG)
         
         
-    S_estimate = tr.build_species_tree(mode="mincut")
+    S_estimate = tr.build_species_tree(mode='mincut')
     print(tr.newick_with_support())
     
-    S_estimate2 = tr.build_species_tree(mode="BPMF")
+    S_estimate2 = tr.build_species_tree(mode='BPMF')
     print(tr.newick_with_support())
