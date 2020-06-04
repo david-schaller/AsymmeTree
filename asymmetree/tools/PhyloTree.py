@@ -651,28 +651,72 @@ class PhyloTree(Tree):
                 if child.parent is not v:
                     raise RuntimeError('PhyloTree invalid for '\
                                        '{} and {}'.format(v, child))
+   
+     
+# --------------------------------------------------------------------------
+#                         TREE MANIPULATION
+# -------------------------------------------------------------------------- 
+
+def delete_losses_and_contract(tree, inplace=False):
+    
+    if not inplace:
+        tree = tree.copy()
+    
+    loss_nodes = []
+    for node in tree.postorder():
+        if not node.children and node.is_loss():
+            loss_nodes.append(node)
+    
+    # traverse from loss node to root delete if degree <= 1
+    for loss_node in loss_nodes:
+        current = tree.delete_and_reconnect(loss_node,
+                                            add_distances=True,
+                                            keep_transferred=True)
+        
+        while len(current.children) < 2 and current.parent:
+            current = tree.delete_and_reconnect(current,
+                                                add_distances=True,
+                                                keep_transferred=True)
+    
+    return tree
+
+
+def remove_planted_root(tree, inplace=True):
+    
+    if not inplace:
+        tree = tree.copy()
+        
+    # delete the root if the tree is planted
+    tree.remove_planted_root()
+        
+    if not tree.root.children and not tree.root.label:
+        # no surviving genes --> return empty tree
+        tree.root = None
+    
+    return tree
 
     
-if __name__ == "__main__":
-    colors = ("s", "t", "v", "w")
+if __name__ == '__main__':
+    
+    colors = ('s', 't', 'v', 'w')
     N = 20
     
     t = PhyloTree.random_colored_tree(N, colors)
-    print("------------- Random tree test -------------")
+    print('------------- Random tree test -------------')
     print( t.to_newick() )
-    print("--------------------------------------------")
+    print('--------------------------------------------')
     
     t2 = PhyloTree.parse_newick(t.to_newick())
     print( t2.to_newick() )
     
     nx_tree, nx_root = t.to_nx()
     t3 = PhyloTree.parse_nx(nx_tree, nx_root)
-    print("--------------------------------------------")
+    print('--------------------------------------------')
     print( t3.to_newick() )
     
     t.serialize('testfile_tree.json', mode='json')
     t.serialize('testfile_tree.pickle', mode='pickle')
     
     t4 = PhyloTree.load('testfile_tree.json', mode='json')
-    print("--------------------------------------------")
+    print('--------------------------------------------')
     print( t4.to_newick() )

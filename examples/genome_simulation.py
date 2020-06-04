@@ -8,7 +8,7 @@ from asymmetree.seqevolve import SubstModel, IndelModel, HeterogeneityModel
 __author__ = "David Schaller"
 
 
-species_tree = simulate_species_tree(10, model='innovations')
+species_tree = simulate_species_tree(10, model='innovation')
 
 subst_model = SubstModel('a', 'JTT')
 indel_model = IndelModel(0.01, 0.01, length_model='zipf')

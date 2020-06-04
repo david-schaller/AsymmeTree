@@ -147,7 +147,7 @@ if __name__ == "__main__":
     TGT_simulator = te.GeneTreeSimulator(S)
     TGT = TGT_simulator.simulate(DLH_rates=DLH_rates)
     print("done")
-    TGT = te.imbalance_tree(TGT, S)
+    TGT = te.assign_rates(TGT, S)
     
     print("------------- TGT -------------")
     print(TGT.to_newick())

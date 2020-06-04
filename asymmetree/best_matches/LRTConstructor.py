@@ -15,12 +15,40 @@ from asymmetree.best_matches import TrueBMG
 from asymmetree import PhyloTree, PhyloTreeNode
 
 
-__author__ = "David Schaller"
+__author__ = 'David Schaller'
 
 
 # --------------------------------------------------------------------------
 #                      LRT FROM OBSERVABLE GENE TREE
 # --------------------------------------------------------------------------
+
+def LRT_from_observable_tree(T):
+    """Computes the Least Resolved Tree from a tree.
+    
+    The unique Least Resolved Tree from a leaf-colored (observable)
+    gene tree is computed by contraction of all redundant edges.
+    """
+    
+    LRT = T.copy()
+    if not LRT.root:
+        return LRT
+    
+    # remove planted root if existent
+    LRT.remove_planted_root()
+    
+    # assign list of leaves to each node
+    LRT.supply_leaves()
+    
+    subtree_colors = {}
+    for v in LRT.preorder():
+        subtree_colors[v] = {leaf.color for leaf in v.leaves}
+        
+    arc_colors = _arc_colors(LRT, subtree_colors)
+    redundant_edges = _redundant_edges(LRT, subtree_colors, arc_colors)
+    LRT.contract(redundant_edges)
+    LRT = LRT.topology_only()
+    
+    return LRT
 
 
 def _arc_colors(T, subtree_colors):
@@ -67,35 +95,6 @@ def _redundant_edges(T, subtree_colors, arc_colors):
     return redundant_edges
 
 
-def LRT_from_observable_tree(T):
-    """Computes the Least Resolved Tree from a tree.
-    
-    The unique Least Resolved Tree from a leaf-colored (observable)
-    gene tree is computed by contraction of all redundant edges.
-    """
-    
-    LRT = T.copy()
-    if not LRT.root:
-        return LRT
-    
-    # remove planted root if existent
-    LRT.remove_planted_root()
-    
-    # assign list of leaves to each node
-    LRT.supply_leaves()
-    
-    subtree_colors = {}
-    for v in LRT.preorder():
-        subtree_colors[v] = {leaf.color for leaf in v.leaves}
-        
-    arc_colors = _arc_colors(LRT, subtree_colors)
-    redundant_edges = _redundant_edges(LRT, subtree_colors, arc_colors)
-    LRT.contract(redundant_edges)
-    LRT = LRT.topology_only()
-    
-    return LRT
-
-
 # --------------------------------------------------------------------------
 #                               LRT FROM BMG
 # --------------------------------------------------------------------------
@@ -117,7 +116,7 @@ class LRTConstructor:
         """Initialize color dictionary and leaf set."""
         
         for v in self.G.nodes:
-            color = self.G.nodes[v]["color"]
+            color = self.G.nodes[v]['color']
             if color not in self.color_dict:
                 self.color_dict[color] = [v]
             else:
@@ -128,12 +127,11 @@ class LRTConstructor:
     def informative_triples(self):
         """Compute the informative triples."""
         
-        for col1, col2 in itertools.permutations(self.color_dict.keys(), 2):
-            list1, list2 = self.color_dict[col1], self.color_dict[col2]
-            for a in list1:
-                for b, c in itertools.permutations(list2, 2):
-                    if self.G.has_edge(a,b) and (not self.G.has_edge(a,c)):   # X1 / X2 / X3 / X4
-                        self.R.append( (a,b,c) )
+        for c_a, c_b in itertools.permutations(self.color_dict.keys(), 2):
+            for a in self.color_dict[c_a]:
+                for b, b2 in itertools.permutations(self.color_dict[c_b], 2):
+                    if self.G.has_edge(a, b) and (not self.G.has_edge(a, b2)):
+                        self.R.append( (a, b, b2) )
     
     
     def build_tree(self):
@@ -155,15 +153,15 @@ class LRTConstructor:
         
         if len(L) == 1:                                 # trivial case: only one leaf left in L
             leaf = L.pop()
-            return PhyloTreeNode(leaf, label=self.G.nodes[leaf]["label"],
-                            color=self.G.nodes[leaf]["color"])
+            return PhyloTreeNode(leaf, label=self.G.nodes[leaf]['label'],
+                            color=self.G.nodes[leaf]['color'])
             
         help_graph_A = HelpGraph(L, R, self)            # construct the help graph A(R)
                                                         # determine connected components A1, ..., Ak
         conn_comps = help_graph_A.connected_comp(mincut=self.mincut)
         
         if len(conn_comps) <= 1:                        # return False if less than 2 connected components
-            print("Connected component:\n", conn_comps)
+            print('Connected component:\n', conn_comps)
             return False
         child_nodes = []
         for cc in conn_comps:
@@ -178,7 +176,7 @@ class LRTConstructor:
             else:
                 child_nodes.append(Ti)
                 
-        subtree_root = PhyloTreeNode(0, label="")       # place new inner node
+        subtree_root = PhyloTreeNode(0, label='')       # place new inner node
         for Ti in child_nodes:
             subtree_root.add_child(Ti)                  # add roots of the subtrees to the new node
    

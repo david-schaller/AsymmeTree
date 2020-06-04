@@ -8,7 +8,7 @@ Wrapper class for species and gene tree. Compute statistics, BMG/RBMG.
 
 import networkx as nx
 
-from asymmetree.treeevolve import TreeSimulator as ts
+from asymmetree.treeevolve.GeneTree import observable_tree
 from asymmetree.best_matches import TrueBMG
 
 
@@ -23,7 +23,7 @@ class Scenario:
         self.TGT = TGT
         self.DLH_rates = DLH_rates
         
-        self.OGT = OGT if OGT else ts.observable_tree(TGT)
+        self.OGT = OGT if OGT else observable_tree(TGT)
         
         self.genes = self.OGT.color_sorted_leaves()
         self.gene_index = {gene: i for i, gene in enumerate(self.genes)}

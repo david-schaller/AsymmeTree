@@ -257,6 +257,6 @@ if __name__ == "__main__":
     TGT_simulator = te.GeneTreeSimulator(S)
     TGT = TGT_simulator.simulate(DLH_rates=(1.0,1.0,1.0),
                                  dupl_polytomy=0.5)
-    TGT = te.imbalance_tree(TGT, S)
+    TGT = te.assign_rates(TGT, S)
     
     gtv = GeneTreeVis(TGT)

@@ -12,7 +12,7 @@ import itertools
 import networkx as nx
 
 
-__author__ = "David Schaller"
+__author__ = 'David Schaller'
 
 
 # --------------------------------------------------------------------------

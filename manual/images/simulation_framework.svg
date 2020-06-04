@@ -14,7 +14,7 @@
    viewBox="0 0 183.83572 92.497437"
    version="1.1"
    id="svg8"
-   inkscape:version="0.92.3 (2405546, 2018-03-11)"
+   inkscape:version="0.92.5 (2060ec1f9f, 2020-04-08)"
    sodipodi:docname="simulation_framework.svg">
   <defs
      id="defs2">
@@ -237,16 +237,16 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.4"
-     inkscape:cx="424.37463"
-     inkscape:cy="205.13823"
+     inkscape:cx="290.8032"
+     inkscape:cy="203.70966"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
      showguides="true"
      inkscape:guide-bbox="true"
-     inkscape:window-width="1859"
-     inkscape:window-height="1025"
-     inkscape:window-x="1981"
+     inkscape:window-width="2488"
+     inkscape:window-height="1376"
+     inkscape:window-x="1992"
      inkscape:window-y="27"
      inkscape:window-maximized="1">
     <sodipodi:guide
@@ -735,9 +735,12 @@
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.52777767px;font-family:'TeX Gyre Termes';-inkscape-font-specification:'TeX Gyre Termes';fill:#666666;stroke-width:0.06651869"
          y="105.57257"
          x="171.86372"
-         sodipodi:role="line">e.g. <tspan
-   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.52777767px;font-family:'Courier New';-inkscape-font-specification:'Courier New'"
-   id="tspan1085">Pyvolve</tspan>, ...</tspan></text>
+         sodipodi:role="line">subpackage</tspan><tspan
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:3.52777767px;font-family:FreeMono;-inkscape-font-specification:'FreeMono Bold';fill:#666666;stroke-width:0.06651869"
+         y="110.04227"
+         x="171.86372"
+         sodipodi:role="line"
+         id="tspan1133">seqevolve</tspan></text>
     <text
        id="text926-8-9"
        y="27.653439"

@@ -49,7 +49,7 @@ The subpackage `treeevolve` contains modules for the simulation and manipulation
 A typical simulation consists of the following steps:
 * dated species tree (models e.g. 'innovation', 'Yule' and '(episodic) birth-death process')
 * dated gene tree(s) (Gillespie-like algorithm)
-* imbalanced gene tree(s) (assignment of asymmetric evolution rates to paralogous genes)
+* assignment of asymmetric evolution rates to paralogous genes
 * observable gene tree(s) (removal of all branches that lead to losses only)
 
 The resulting gene trees have edge lengths (`dist`) that correspond to product of the divergence time between the respective nodes and the evolutionary rates that were assigned to them.

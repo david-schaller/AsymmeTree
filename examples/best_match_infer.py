@@ -152,16 +152,16 @@ for rep in range(repeats):
     
     TGT_simulator = te.GeneTreeSimulator(S)
     TGT1 = TGT_simulator.simulate(DLH_rates=(D,L,H))
-    TGT1 = te.imbalance_tree(TGT1, S, base_rate=1,
-                            autocorr_variance=0.2,
-                            gamma_param=(0.5, 1.0, 2.2),
-                            CSN_weights=(1/3, 1/3, 1/3))
+    TGT1 = te.assign_rates(TGT1, S, base_rate=1,
+                           autocorr_variance=0.2,
+                           gamma_param=(0.5, 1.0, 2.2),
+                           CSN_weights=(1/3, 1/3, 1/3))
     
     TGT2 = TGT_simulator.simulate(DLH_rates=(D,L,H))
-    TGT2 = te.imbalance_tree(TGT2, S, base_rate=1,
-                            autocorr_variance=0.2,
-                            gamma_param=(0.5, 1.0, 2.2),
-                            CSN_weights=(1/3, 1/3, 1/3))
+    TGT2 = te.assign_rates(TGT2, S, base_rate=1,
+                           autocorr_variance=0.2,
+                           gamma_param=(0.5, 1.0, 2.2),
+                           CSN_weights=(1/3, 1/3, 1/3))
     
     scenario1 = te.Scenario(S, TGT1, (D,L,H))
     scenario2 = te.Scenario(S, TGT2, (D,L,H))

@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 """
-Tree Simulator.
+Gene Tree Simulator.
 
-Simulate dated species and gene trees.
+Simulate dated gene trees.
 """
 
 import random
@@ -11,168 +11,16 @@ from collections import deque
 
 import numpy as np
 
-from asymmetree import PhyloTree, PhyloTreeNode
-import asymmetree.treeevolve._SpeciesTreeModels as stm
+from asymmetree.tools.PhyloTree import (PhyloTree, PhyloTreeNode,
+                                        delete_losses_and_contract,
+                                        remove_planted_root)
 
 
 __author__ = "David Schaller"
 
 
 # --------------------------------------------------------------------------
-#                    CONSTRUCTION OF THE SPECIES TREE
-#
-# --------------------------------------------------------------------------
-
-def simulate_species_tree(N, model='innovations',
-                          non_binary_prob=0.0,
-                          planted=True,
-                          remove_extinct=False,
-                          rescale_to_height=None,
-                          **kwargs):
-    """Simulates a species tree S with N leaves.
-    
-    Keyword parameters:
-        model -- simulation model to be applied; default is 'innovations'
-        non_binary_prob -- probability that an inner edge is contracted;
-            results in non-binary tree; default is 0.0
-        planted -- add a planted root that has the canonical root as its
-            single neighbor; default is True
-        remove_extinct -- remove all branches that lead to extinctions, only
-            relevant for some models; default is False
-        rescale_to_height -- determines the final distance from the root to the
-            (surviving) leaves, default is None, i.e. model dependent
-    """
-    
-    # parameter checking
-    if not isinstance(N, int) or N < 0:
-        raise ValueError("N must be an int >=0")
-    elif N == 0:
-        return PhyloTree(None)
-    
-    if not isinstance(model, str):
-        raise ValueError("model must be of type 'str'")
-    
-    if non_binary_prob < 0.0 or non_binary_prob > 1.0:
-        raise ValueError("contraction prob. must be in [0.0, 1.0]")
-        
-    if (rescale_to_height is not None and
-        (not isinstance(rescale_to_height, (int, float)) or
-         rescale_to_height < 0.0)):
-        raise ValueError("height must be a number >=0")
-    elif rescale_to_height is not None and N == 1 and not planted:
-        raise ValueError('rescaling is not applicable to unplanted trees '\
-                         'with only one leaf')
-    
-    # main simulation algorithm
-    if model.lower() in ('innovation', 'innovations'):
-        tree = stm._innovations_model(N, planted)
-    elif model.lower() == 'yule':
-        tree = stm._yule(N, kwargs.get('birth_rate'))
-    elif model.upper() == 'BDP':
-        tree = stm._BDP(N, **kwargs)
-    elif model.upper() == 'EBDP':
-        tree = stm._EBDP(N, **kwargs)
-    else:
-        raise ValueError("model '{}' is not available".format(model))
-        
-    # remove extinct branches for model that include losses
-    if remove_extinct and model.upper() in ('BDP', 'EBDP'):
-        _delete_losses_and_contract(tree, inplace=True)
-        
-    # remove planted edge for models that are planted by construction
-    if not planted and model.upper() in ('YULE', 'BDP', 'EBDP'):
-        _remove_planted_root(tree, inplace=True)
-    
-    # make tree non_binary by random contraction of edges
-    if non_binary_prob > 0.0:
-         edges = _select_edges_for_contraction(tree, non_binary_prob,
-                                               exclude_planted_edge=True)
-         tree.contract(edges)
-        
-    return tree
-
-
-def simulate_species_tree_age(age, model='yule',
-                              non_binary_prob=0.0,
-                              **kwargs):
-    """Simulates a (planted) species tree S of the specified age.
-    
-    Keyword parameters:
-        model -- simulation model to be applied; default is 'yule'
-        non_binary_prob -- probability that an inner edge is contracted;
-                 results in non-binary tree; default is 0.0
-    """
-    
-    # parameter checking
-    if not isinstance(age, (float, int)) or age <= 0.0:
-        raise ValueError('age must be a number >0')
-    elif isinstance(age, int):
-        age = float(age)
-        
-    if not isinstance(model, str):
-        raise ValueError("model must be of type 'str'")
-        
-    if non_binary_prob < 0.0 or non_binary_prob > 1.0:
-        raise ValueError("contraction prob. must be in [0.0, 1.0]")
-    
-    # main simulation algorithm
-    if model.lower() == 'yule':
-        tree = stm._yule_age(age, kwargs.get('birth_rate'))
-    elif model.upper() == 'BDP':
-        tree = stm._BDP_age(age, **kwargs)
-    elif model.upper() == 'EBDP':
-        tree = stm._EBDP_age(age, **kwargs)
-    else:
-        raise ValueError("model '{}' is not available".format(model))
-        
-    # make tree non_binary by random contraction of edges
-    if non_binary_prob > 0.0:
-         edges = _select_edges_for_contraction(tree, non_binary_prob,
-                                               exclude_planted_edge=True)
-         tree.contract(edges)
-        
-    return tree
-
-
-def _rescale(tree, height, inplace=True):
-    
-    if not inplace:
-        tree = tree.copy()
-    
-    old_height = tree.root.tstamp
-    
-    # not available for trees that only consist of a root
-    if old_height <= 0.0:
-        raise RuntimeError("cannot rescale tree of "\
-                           "height '{}'".format(old_height))
-        
-    scaling_factor = height / old_height
-    
-    for v in tree.preorder():
-        v.tstamp *= scaling_factor
-        v.dist   *= scaling_factor
-    
-    return tree
-            
-            
-def _select_edges_for_contraction(tree, p, exclude_planted_edge=True):
-    
-    edges = []
-    
-    for u, v in tree.inner_edges():
-        
-        if exclude_planted_edge and (u is tree.root) and len(u.children) == 1:
-            continue
-        
-        if random.random() < p:
-            edges.append((u,v))
-    
-    return edges
-
-
-# --------------------------------------------------------------------------
 #                    CONSTRUCTION OF THE GENE TREE
-#
 # --------------------------------------------------------------------------
     
 
@@ -561,52 +409,12 @@ class GeneTreeSimulator:
 
 # --------------------------------------------------------------------------
 #                 CONSTRUCTION OF THE OBSERVABLE TREE
-#
 # --------------------------------------------------------------------------
-        
-def _delete_losses_and_contract(tree, inplace=False):
-    
-    if not inplace:
-        tree = tree.copy()
-    
-    loss_nodes = []
-    for node in tree.postorder():
-        if not node.children and node.is_loss():
-            loss_nodes.append(node)
-    
-    # traverse from loss node to root delete if degree <= 1
-    for loss_node in loss_nodes:
-        current = tree.delete_and_reconnect(loss_node,
-                                            add_distances=True,
-                                            keep_transferred=True)
-        
-        while len(current.children) < 2 and current.parent:
-            current = tree.delete_and_reconnect(current,
-                                                add_distances=True,
-                                                keep_transferred=True)
-    
-    return tree
 
-
-def _remove_planted_root(tree, inplace=True):
-    
-    if not inplace:
-        tree = tree.copy()
-        
-    # delete the root if the tree is planted
-    tree.remove_planted_root()
-        
-    if not tree.root.children and not tree.root.label:
-        # no surviving genes --> return empty tree
-        tree.root = None
-    
-    return tree
-    
-    
 def observable_tree(tree):
     
-    obs_tree = _delete_losses_and_contract(tree, inplace=False)
+    obs_tree = delete_losses_and_contract(tree, inplace=False)
     
-    _remove_planted_root(obs_tree, inplace=True)
+    remove_planted_root(obs_tree, inplace=True)
     
     return obs_tree

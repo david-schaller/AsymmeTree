@@ -17,10 +17,10 @@ def simulate(directory, number_of_trees, species_per_tree):
         T_simulator = te.GeneTreeSimulator(S)
         T = T_simulator.simulate((0.0, 0.0, 0.0))   # dupl./loss/HGT disabled
         
-        te.imbalance_tree(T, S, autocorr_variance=0.2)
+        te.assign_rates(T, S, autocorr_variance=0.2)
         
         T_nx = T.to_nx()
-        with open("{}/scenario{}.pickle".format(directory, i), 'wb') as f:
+        with open('{}/scenario{}.pickle'.format(directory, i), 'wb') as f:
             pickle.dump(T_nx, f)
     
        
@@ -30,7 +30,7 @@ def load(directory):
     trees = []
     
     for i in range(len(files)):
-        with open("{}/scenario{}.pickle".format(directory, i), 'rb') as f:
+        with open('{}/scenario{}.pickle'.format(directory, i), 'rb') as f:
             T_nx = pickle.load(f)
             T = PhyloTree.parse_nx(*T_nx)
             trees.append(T)

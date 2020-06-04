@@ -2,7 +2,7 @@
 
 import asymmetree.treeevolve as te
 from asymmetree.best_matches.Quartets import Quartets
-import asymmetree.best_matches.LRTConstructor as lrt
+from asymmetree.best_matches.LRTConstructor import LRT_from_observable_tree
 
 DLH_rates=(1.0, 1.0, 0.0)
 
@@ -22,10 +22,10 @@ TGT_simulator = te.GeneTreeSimulator(S)
 TGT = TGT_simulator.simulate(DLH_rates=DLH_rates,
                              prohibit_extinction='per_species')
 
-TGT = te.imbalance_tree(TGT, S, base_rate=1,
-                        autocorr_variance=0.2,
-                        gamma_param=(0.5, 1.0, 2.2),
-                        CSN_weights=(1, 1, 1))
+TGT = te.assign_rates(TGT, S, base_rate=1,
+                      autocorr_variance=0.2,
+                      gamma_param=(0.5, 1.0, 2.2),
+                      CSN_weights=(1, 1, 1))
 print("------------- TGT -------------")
 print(TGT.to_newick())
 print('All species have at least one copy:', TGT_simulator._assert_no_extinction(TGT))
@@ -42,7 +42,7 @@ print(OGT.to_newick())
 #                       LEAST RESOLVED TREE
 # --------------------------------------------------------------------------
 
-LRT = lrt.LRT_from_observable_tree(OGT)
+LRT = LRT_from_observable_tree(OGT)
 print("------------- LRT -------------")
 print(LRT.to_newick())
 

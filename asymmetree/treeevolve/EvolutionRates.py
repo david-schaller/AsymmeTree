@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 
 """
-Tree Imbalancer.
+Assign asymmetric evolution rates to the branches of a gene tree.
 
 Introduce evolution rate asymmetries and autocorrelation.
 """
 
 import numpy as np
 
-from asymmetree.treeevolve.TreeSimulator import GeneTreeSimulator
+from asymmetree.treeevolve.GeneTree import GeneTreeSimulator
 
 
-__author__ = "David Schaller"
+__author__ = 'David Schaller'
 
 # --------------------------------------------------------------------------
 #                         USER INTERFACE FUNCTION
@@ -20,14 +20,15 @@ __author__ = "David Schaller"
 def simulate_gene_trees(S, N=1,
                         base_rate_distr=('constant', 1.0),
                         **kwargs):
-    """Simulates dated and imbalanced gene trees along a species tree.
+    """Simulates dated gene trees with non-ultrametric edge lengths along a
+    species tree.
     
     Keyword arguments:
         N -- number of gene trees to be simulated, default is 1, in which case
             a tree is returned, otherwise a list is returned
         base_rate_distr -- distribution for the evolution rate at the roots of
             the gene trees, default is ('constant', 1.0)
-        kwargs -- see arguments of GeneTreeSimulator.simulate and imbalance_tree
+        kwargs -- see arguments of GeneTreeSimulator.simulate and assign_rates
         """
     
     gene_trees = []
@@ -42,17 +43,17 @@ def simulate_gene_trees(S, N=1,
     for i in range(N):
         
         TGT = simulator.simulate(**kwargs)
-        imbalance_tree(TGT, S,
-                       base_rate=_get_base_rate(base_rate_distr),
-                       autocorr_factors=autocorr_factors,
-                       **kwargs)
+        assign_rates(TGT, S,
+                     base_rate=_get_base_rate(base_rate_distr),
+                     autocorr_factors=autocorr_factors,
+                     **kwargs)
         gene_trees.append(TGT)
     
     if N == 1:
         return gene_trees[0]
     else:
         return gene_trees
-
+    
 
 def _get_base_rate(distr):
     
@@ -87,14 +88,17 @@ def _get_base_rate(distr):
 # --------------------------------------------------------------------------
 
 
-def imbalance_tree(T, S, base_rate=1.0,
-                   autocorr_factors=None,
-                   autocorr_variance=0.0,
-                   gamma_param=(0.5, 1.0, 2.2),
-                   CSN_weights=(1, 1, 1),
-                   inplace=True,
-                   **kwargs):
-    """Imbalances an (ultrametric) TRUE gene tree.
+def assign_rates(T, S, base_rate=1.0,
+                 autocorr_factors=None,
+                 autocorr_variance=0.0,
+                 gamma_param=(0.5, 1.0, 2.2),
+                 CSN_weights=(1, 1, 1),
+                 inplace=True,
+                 **kwargs):
+    """Assigns realistic evolution rates to a TRUE gene tree.
+    
+    The assigned rates are used to modify the length ('dist') of the edges of
+    the (originally ultrametric) dated gene tree.
     
     Keyword arguments:
     base_rate -- mean of substitution rate for conserved genes
