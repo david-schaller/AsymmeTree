@@ -39,7 +39,7 @@ def symmetric_diff(G1, G2):
     set2 = {x for x in G2.nodes()}
     
     if set1 != set2:
-        raise RuntimeError("graphs do not have the same vertex set")
+        raise RuntimeError('graphs do not have the same vertex set')
         return
     
     sym_diff_number = 0
@@ -384,7 +384,7 @@ def find_all_C6(G, P4_list=None):
                             (not G.has_edge(path1[2], path2[2]))):
                             C6_list.append(path1 + (path2[2], path2[1]))
                             if not validate_C6(G, C6_list[-1]):
-                                raise Exception("Problem in C6 detection")
+                                raise RuntimeError('problem in C6 detection')
                             print(C6_list[-1])
     return C6_list
 
@@ -395,8 +395,8 @@ def graph_type(G):
     C6_list = find_all_C6(G, P4_list=P4_list)
     
     if C6_list:
-        return "C", P4_list, C6_list
+        return 'C', P4_list, C6_list
     elif P4_list:
-        return "B", P4_list, C6_list
+        return 'B', P4_list, C6_list
     else:
-        return "A", P4_list, C6_list
+        return 'A', P4_list, C6_list

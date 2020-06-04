@@ -10,7 +10,7 @@ import asymmetree.seqevolve as se
 from asymmetree.file_io.SeqFileIO import write_alignment, write_fasta
 
 
-__author__ = "David Schaller"
+__author__ = 'David Schaller'
 
 
 class GenomeSimulator:

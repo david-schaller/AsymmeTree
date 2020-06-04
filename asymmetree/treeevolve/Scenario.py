@@ -12,12 +12,13 @@ from asymmetree.treeevolve import TreeSimulator as ts
 from asymmetree.best_matches import TrueBMG
 
 
-__author__ = "David Schaller"
+__author__ = 'David Schaller'
 
 
 class Scenario:
     
     def __init__(self, S, TGT, DLH_rates, OGT=None):
+        
         self.S = S
         self.TGT = TGT
         self.DLH_rates = DLH_rates
@@ -42,13 +43,13 @@ class Scenario:
         self.event_counts = [self.S.number_of_species, 0, 0, 0, 0]    # count S / D / L / H /
                                                                       # ancient duplications                
         for v in self.TGT.preorder():
-            if v.label == "D":
+            if v.label == 'D':
                 self.event_counts[1] += 1
                 if self.S.root.ID == v.color[0]:
                     self.event_counts[4] += 1
             elif v.is_loss():
                 self.event_counts[2] += 1
-            elif v.label == "H":
+            elif v.label == 'H':
                 self.event_counts[3] += 1
     
     

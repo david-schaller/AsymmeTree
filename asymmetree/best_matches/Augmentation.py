@@ -6,7 +6,7 @@ import networkx as nx
 from asymmetree import TreeNode, PhyloTreeNode
 
 
-__author__ = "David Schaller"
+__author__ = 'David Schaller'
 
 
 def augment_and_label(tree, inplace=False):
