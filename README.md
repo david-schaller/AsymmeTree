@@ -14,7 +14,7 @@ Both nucleotide and amino acid sequence simulation with or without indels are su
 
 AsymmeTree requires Python 3.5 or higher. Python 2 is not supported.
 
-#### Easy installation with pip
+#### Easy Installation with pip
 
 The `asymmetree` package is available on PyPI:
 
@@ -37,14 +37,14 @@ I recommend that you compile these tools on your machine, place the binaries int
 
 For a more detailed description of the usage and the implementation of the simulator please read the [manual](https://github.com/david-schaller/AsymmeTree/blob/master/manual/AsymmeTreeManual.pdf).
 
-### Tree data structures
+### Tree Data Structures
 
 The two classes `Tree` and `PhyloTree` implement tree data structures which are essential for most of the modules in the package.
 The latter contains converters and parsers for the Newick format and a NetworkX graph format.
 
-### Simulator for phylogenetic trees
+### Simulation of Phylogenetic Trees
 
-The subpackage `asymmetree.treeevolve` contains modules for the simulation and manipulation of species trees and gene trees.
+The subpackage `treeevolve` contains modules for the simulation and manipulation of species trees and gene trees.
 
 A typical simulation consists of the following steps:
 * dated species tree (models e.g. 'innovation', 'Yule' and '(episodic) birth-death process')
@@ -57,9 +57,9 @@ Such a tree defines a distance matrix on its set of leaves (more precisely, an a
 Noise can be added to this matrix by several methods.
 Alternatively, sequences can be simulated along the tree, from which distances can be reestimated.
 
-### Simulator for sequences
+### Simulation of Sequences
 
-The subpackage `asymmetree.seqevolve` contains modules for the simulation of nucleotide or amino acid sequences along a phylogenetic tree.
+The subpackage `seqevolve` contains modules for the simulation of nucleotide or amino acid sequences along a phylogenetic tree.
 The substitution of sites is modeled by continuous-time Markov chains.
 These models typically take a substitution-rate matrix and the equilibrium frequencies of the states (i.e. the nucleotides or amino acids as input).
 Moreover, insertions and deletions (indels) and heterogeneity among the sites can be simulated.
@@ -69,31 +69,40 @@ A typical simulation therefore is run with the following components (only the su
 * indel model (based on the tool 'Dawg' by Cartwright 2005)
 * heterogeneity model (constant / sitewise / number of classes; proportion of invariant sites)
 
+Functions for outputting the true alignment are provided for several formats incl. phylip and clustal.
 
+### Simulation of Genomes
 
-### Best Match inference
+The module `genome.GenomeSimulation` provides functions that combine the simulation of phylogenetic trees and sequences.
+This way, whole genomes/proteomes can be simulated conveniently.
+The (optional) output directory contains serialized trees, fasta files and the true alignments.
+
+### Best Match Inference
 
 Phylogenetic best matches of a gene x of species X are defined as those genes y of another species Y that share the lowest common ancestor with x in the gene tree among all genes in that species. In contrast, two genes are orthologs if their last common ancestor was a speciation event. Orthology and reciprocal best matches are closely related.
 
-The subpackage `asymmetree.best_matches` contains functions to compute both relations.
+The subpackage `best_matches` contains functions to compute both relations.
 If the true (observable) gene tree is known (as e.g. the case in simulations), best matches and orthologs can be computed using the module `TrueBMG`. If only distance data is available, best matches have to be estimated (from distance data on a set of genes). AsymmeTree currently implements three different methods that are described by Stadler et al. (2020).
 
-### Supertree computation
+### Supertree Computation
 
-Implementation of the BuildST algorithm described by Deng & Fernández-Baca (2016) to compute a supertree from a given list of tree based on the leaf labels. The algorithm uses the dynamic graph data structure described by Holm, de Lichtenberg and Thorup in 2001 (HDT algorithm).
-* `asymmetree.tools.BuildST`
-* `asymmetree.tools.hdtgraph.DynamicGraph`
+Implementation of the BuildST algorithm described by Deng & Fernández-Baca (2016) to compute a supertree from a given list of tree based on the leaf labels. The algorithm uses the dynamic graph data structure described by Holm, de Lichtenberg and Thorup in 2001 (HDT algorithm). Subpackages:
+* `tools.BuildST`
+* `tools.hdtgraph.DynamicGraph`
 
-### Cograph editing and ParaPhylo
+### Cograph Editing and ParaPhylo
 
-The subpackages `asymmetree.cograph` and `asymmetree.paraphylo` contain heuristics for cograph editing and a method to compute rooted species tree from orthology/paralogy relations.
+The subpackages `cograph` and `paraphylo` contain heuristics for cograph editing and a method to compute rooted species tree from orthology/paralogy relations.
 The latter is a reimplementation of [ParaPhylo](http://pacosy.informatik.uni-leipzig.de/208-0-ParaPhylo.html) which uses heuristics for the NP-hard steps instead of exact ILP solutions.
 
 
-## Citation and references
+## Citation and References
 
 If you use AsymmeTree in your project or code from it, please cite:
 
 * **Stadler, P. F., Geiß, M., Schaller, D., López Sánchez, A., González Laffitte, M., Valdivia, D., Hellmuth, M., and Hernández Rosales, M. (2019) From Best Hits to Best Matches. Submitted to Algorithms for Molecular Biology.**
 
 For references to concepts and algorithms that were implemented please see the [manual](https://github.com/david-schaller/AsymmeTree/blob/master/manual/AsymmeTreeManual.pdf).
+
+Please report any bugs and questions in the [Issues](https://github.com/david-schaller/AsymmeTree/issues) section.
+Also, feel free to make suggestions for improvement and/or new functionalities.
