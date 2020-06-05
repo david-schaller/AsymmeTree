@@ -255,7 +255,7 @@ tree = PhyloTree.load("tree.json")
 \end{minted}
 \end{adjustwidth}
 
-\subsection{Simulator for Species and Gene Trees}
+\subsection{Simulation of Species and Gene Trees}
 
 The subpackage \texttt{asymmetree.treeevolve} contains modules for the simulation of dated species and gene trees.
 In terms of divergence time, these trees define an ultrametric on the set of their (extant) leaves.
@@ -312,10 +312,10 @@ Example usage:
 \begin{minted}[fontsize=\footnotesize]{python}
 import asymmetree.treeevolve as te
 
-S1 = ts.simulate_species_tree(10, planted=True, non_binary_prob=0.2)
+S1 = te.simulate_species_tree(10, planted=True, non_binary_prob=0.2)
 print(S1.to_newick())
 
-S1 = ts.simulate_species_tree(10, model="EBDP",
+S1 = te.simulate_species_tree(10, model="EBDP",
                               episodes=[(1.0, 0.3, 0.8, 0.0),
                                         (0.9, 0.4, 0.6, 0.3)])
 print(S2.to_newick())
@@ -325,31 +325,35 @@ print(S2.to_newick())
 
 \subsubsection{Gene Trees}
 
-Dated gene trees are simulated along a given species tree \texttt{S} with a variant of the Gillespie algorithm \citep{gillespie1976}.
-To this end, an instance of the class \texttt{GeneTreeSimulator} must be initialized with a species tree of type \texttt{PhyloTree}.
-The following parameters are available (keyword arguments are indicated by \texttt{=default}):
+Dated gene trees are simulated along a given species tree \texttt{S} with a variant of the birth-death, resp., Gillespie algorithm \citep{kendall1948,gillespie1976}.
+To this end, use the class \texttt{GeneTreeSimulator} or the function \texttt{simulate\_dated\_gene\_tree(S, **kwargs)} with a species tree of type \texttt{PhyloTree}.
+The following parameters are available:
 
 \vspace{3mm}
 {\small\centering
-\begin{longtable}{ p{3.5cm} p{10cm} }
-	\texttt{DLH\_rates} & a \texttt{tuple} of three \texttt{float}s, rates for duplication, loss and HGT events in the Gillespie algorithm\\
+\begin{longtable}{ p{4.0cm} p{9cm} }
+	\texttt{DLH\_rates=\newline (0.0, 0.0, 0.0)} & a \texttt{tuple} of three \texttt{float}s, rates for duplication, loss and horizontal gene transfer (HGT) events\\
 	\texttt{dupl\_polytomy=0.0}  & allows non-binary duplication events by specifying
-	the lambda parameter for a poisson distribution (copy number = drawn number + 2)\\
+	the parameter~$\lambda$ of a Poisson distribution (copy number = 2 + drawn number)\\
+	\texttt{prohibit\_extinction=\newline "per\_species"}  & avoid loss events for genes that are the last survivor in their species branch (\texttt{"per\_species"}), the last survivor of the whole family (\texttt{"per\_family"}); or no constraints  (\texttt{False})
 \end{longtable}
 }
 \vspace{3mm}
 
-At the moment, loss events in a branch are suppressed whenever this branch is the last survivor in its species branch (by setting the loss rate in the branch to zero).
-The behaviour is intended to be made optional in future releases.
+\noindent
+For the constraints to avoid extinction, the loss rate in the respective branches are temporarily set to zero.
 Example usage:
 
 \begin{adjustwidth}{1cm}{1cm}\vspace{2mm}
 \begin{minted}[fontsize=\footnotesize]{python}
-import asymmetree.simulator.TreeSimulator as ts
+import asymmetree.treeevolve as te
 
 # S is a species tree of type PhyloTree
-TGT_simulator = ts.GeneTreeSimulator(S)
-TGT = TGT_simulator.simulate(DLH_rates=(1.0, 0.5, 0.1))
+tree_simulator = te.GeneTreeSimulator(S)
+tree = tree_simulator.simulate(DLH_rates=(1.0, 0.5, 0.1))
+
+# or
+tree = te.simulate_dated_gene_tree(S, DLH_rates=(1.0, 0.5, 0.1))
 \end{minted}
 \end{adjustwidth}
 
@@ -359,65 +363,81 @@ Example usage:
 \begin{adjustwidth}{1cm}{1cm}\vspace{2mm}
 \begin{minted}[fontsize=\footnotesize]{python}
 # observable gene tree
-OGT = ts.observable_tree(TGT)
+ogt = ts.observable_tree(tree)
 \end{minted}
 \end{adjustwidth}
 
 
 \subsubsection{Assignment of Variable Evolution Rates}
 
-The module \texttt{TreeImbalancer} contains a function to model realistic (asymmetric) evolution rates for a given gene tree.
-Moreover, correlation in the evolution rate between genes of the same (and closely related) species is introduced (autocorrelation).
-The function \texttt{imbalance\_tree(T, S)} takes a gene tree \texttt{T} and the \textbf{corresponding} species tree \texttt{S} as input and manipulated the branch length of the species tree.
+The module \texttt{EvolutionRates} contains functions to model realistic (asymmetric) evolution rates for a given gene tree.
+Moreover, correlation of the evolution rates between genes of the same (and closely related) species is introduced (autocorrelation, \citep{kishino2001}).
+The function \texttt{assign\_rates(T, S)} takes a gene tree \texttt{T} and the \textbf{corresponding} species tree \texttt{S} as input, and manipulates the branch length of the gene tree.
 The following keyword parameters (with their default values) are available:
 
 \vspace{3mm}
 {\small\centering
 \begin{longtable}{ p{4.0cm} p{9cm} }
 	\texttt{base\_rate=1.0} & starting value for the substitution rate (per time unit) and expected value for conserved genes\\
-	\texttt{autocorr\_variance=0.0}  & variance factor for a lognormal distribution that controls autocorrelation between genes of the same (and closely related) species, the higher the lower the auto\-corre\-la\-tion\\
-	\texttt{gamma\_param=(0.5, 1.0, 2.2)}  & parameter the for Gamma distribution (\texttt{a, loc, scale}) from which rate factors for divergent are drawn, the default values are chosen to fit observed asymmetries between paralogs in yeast data \citep{byrne2007}\\
-	\texttt{weights=(1, 1, 1)}  & weights for choice between conservation,
+	\texttt{autocorr\_factors=None}  & a dictionary containing rate factors for the edges of the species tree\\
+	\texttt{autocorr\_variance=0.0}  & variance factor for a lognormal distribution that controls autocorrelation between genes of the same (and closely related) species, the higher the lower the auto\-corre\-la\-tion; only relevant if \texttt{autocorr\_factors} is not directly supplied\\
+	\texttt{gamma\_param=\newline (0.5, 1.0, 2.2)}  & parameter the for Gamma distribution (\texttt{a, loc, scale}) from which rate factors for divergent are drawn, the default values are chosen to fit observed asymmetries between paralogs in yeast data \citep{byrne2007}\\
+	\texttt{CSN\_weights=(1, 1, 1)}  & weights for choice between conservation,
 	subfunctionalization and neofunctionalization after a duplication event\\
 	\texttt{inplace=True}  & manipulate edge lengths (\texttt{dist}) of the gene tree in-place, otherwise copy the tree\\
 \end{longtable}
 }
 \vspace{3mm}
 
-In is recommended to apply the imbalancing to the true gene tree that still contains loss events.
+\noindent
+It is recommended to apply the rate assignment to the true gene tree that still contains loss events.
+Note that the rates are used to manipulate the \texttt{dist} attributes in the gene tree and not returned explicitly.
 Example usage:
 \begin{adjustwidth}{1cm}{1cm}\vspace{2mm}
 \begin{minted}[fontsize=\footnotesize]{python}
-import asymmetree.simulator.TreeSimulator as ts
-import asymmetree.simulator.TreeImbalancer as tm
+import asymmetree.treeevolve as te
 
-S = ts.simulate_species_tree(10)
+S = te.simulate_species_tree(10)
 
 # true gene tree (with losses)
-TGT_simulator = ts.GeneTreeSimulator(S)
-TGT = TGT_simulator.simulate(DLH_rates=(0.5, 0.5, 0.5))
-
-# imbalancing
-TGT = tm.imbalance_tree(TGT, S, base_rate=1,
-                        autocorr_variance=0.2,
-                        gamma_param=(0.5, 1.0, 2.2),
-                        weights=(1, 1, 1))
+tree = te.simulate_dated_gene_tree(S, DLH_rates=(0.5, 0.5, 0.5))
+te.assign_rates(tree, S, base_rate=1,
+                autocorr_variance=0.2,
+                gamma_param=(0.5, 1.0, 2.2))
+                
+# or in a single step
+tree = simulate_gene_trees(S, N=1,
+                           DLH_rates=(0.5, 0.5, 0.5)
+                           base_rate_distr=('constant', 1.0),
+                           autocorr_variance=0.2,
+                           gamma_param=(0.5, 1.0, 2.2))
 
 # observable gene tree
-OGT = ts.observable_tree(TGT)
+ogt = ts.observable_tree(tree)
 \end{minted}
 \end{adjustwidth}
+
+\noindent
+The function \texttt{simulate\_gene\_trees(S)} combines the simulation of dated gene trees and the rate assignment into one step.
+If \texttt{N=1}, a single gene tree is returned.
+Otherwise, a list of gene trees is returned that shared the same rate factors for the branches in the species tree (autocorrelation factors) in the rate assignment procedure.
+Moreover, a distribution for the base rate (assigned the planted edge of the gene tree) can be specified with the parameter \texttt{base\_rate\_distr}.
+Available are e.g.\ \texttt{("constant", rate)} and \texttt{("gamma", shape, scale)}.
 
 
 \subsubsection{Distance Matrix and Noise}
 
-The additive distance from an \textbf{observable} gene tree can be computed using the function \texttt{distance\_matrix()} of a \texttt{PhyloTree} instance.
-It returns a tuple containing a list of leaves in the tree (specifying the indexing) and the distance matrix as a 2-dimensional \texttt{numpy} array.
+Distances derived from (real-life) gene or protein sequences are always burdened with noise.
+Such data can either be modeled by simulating sequences, or by disturbing the distances specified by a given tree directly.
+The latter alternatively is described briefly in this section.
+
+The additive (i.e.\ noiseless) distance from an \textbf{observable} gene tree can be computed using the function \texttt{distance\_matrix()} of a \texttt{PhyloTree} instance.
+It returns a tuple containing a list of leaves in the tree (corresponding to the row/column order) and the distance matrix as a 2-dimensional \texttt{numpy} array.
 
 \begin{adjustwidth}{1cm}{1cm}\vspace{2mm}
 \begin{minted}[fontsize=\footnotesize]{python}
-# T is an observable gene tree
-leaves, D = T.distance_matrix()
+# tree is an observable gene tree
+leaves, D = tree.distance_matrix()
 leaf_index_dict = {leaf: i for i, leaf in leaves}
 \end{minted}
 \end{adjustwidth}
@@ -431,7 +451,7 @@ The following parameters are available (keyword arguments are indicated by their
 \begin{longtable}{ p{4.5cm} p{9cm} }
 	\texttt{orig\_matrix} & original matrix to be disturbed\\
 	\texttt{sd}  & standard deviation of a normal distribution with mean 1 from which noise factors are drawn\\
-	\texttt{metric\_repair="reject"}  & method to ensure that the resulting distance matrix is still a metric, available are \texttt{"reject"}, \texttt{"DOMR"} and \texttt{"general"} (see Section~\ref{sec:measurement_noise})\\
+	\texttt{metric\_repair="reject"}  & method to ensure that the resulting distance matrix is still a metric, available are the rejection of noise steps that violate the metric property (\texttt{"reject"}), the decrease-only metric repair (\texttt{"DOMR"}) and the general metric repair (\texttt{"general"}) algorithm\\
 \end{longtable}
 }
 \vspace{3mm}
@@ -440,29 +460,46 @@ Alternatively, the function \texttt{convex\_linear\_comb(D1, D2)} can be used to
 The function thus takes two distance matrices (\texttt{numpy} arrays) not necessarily of the same size as input and disturbs them with one another.
 The contribution of the respective disturbance matrix is controlled by the keyword parameter \texttt{alpha} (default is \texttt{0.5}).
 If the keyword parameter \texttt{first\_only} is specified as \texttt{True}, only the first disturbed matrix is returned.
-Otherwise both are returned in a tuple.
+Otherwise, both are returned in a tuple.
+
+
+\subsection{Simulation of Sequences}
+
+AsymmeTree supports the simulation of nucleic and amino acid sequences using time-continuous Markov models, as usually applied for this purpose \citep[for textbooks, see e.g.][]{felsenstein2004,yang2006,yang2014}.
+The subpackage \texttt{asymmetree.seqevolve} contains the modules and functions for this task.
+
+The class \texttt{Evolver} takes several model as parameters for its initialization:
+\begin{itemize}
+	\item a \textbf{subtitution} model (\texttt{SubstModel}, required) for the substitution of single bases or amino acids,
+	\item an \textbf{indel} model (\texttt{IndelModel}, optional) for the simulation of insertions and/or deletion, and
+	\item a model for rate \textbf{heterogeneity} (\texttt{HetModel}, optional) among the sites of the sequence under evolution 
+\end{itemize}
+
+A substitution model usually comprises an exchangeability matrix $S$ and a vector $\pi$ containing the equilibrium frequencies of the alphabet $A$ of nucleobases, amino acids et cetera.
+From this, the rate matrix $Q$ can be computed as $S\Pi$ where $\Pi=\textrm{diag}\{\pi_1,\dots,\pi_{|A|}\}$ \citep{yang2006}.
+The substitution probability matrix, in turn, is given by \[P=e^{Qt}\] which is computed efficiently by AsymmeTree using matrix diagonalization.
+
 
 
 \subsection{Best Match Inference}
 
 Phylogenetic best matches of a gene $x$ of species $X$ are defined as those genes $y$ of another species $Y\ne X$ that share the lowest common ancestor with $x$ in the gene tree among all genes in that species \citep{geiss2019a,geiss2020b,geiss2020c}.
 In contrast, two genes are orthologs if their last common ancestor was a speciation event.
-Orthology and reciprocal best matches are closely related \citep{geiss2020c}.
+Orthology and reciprocal best matches are closely related~\citep{geiss2020c}.
 
-The subpackage \texttt{asymmetree.best\_matches} contains functions to compute both relations from a given gene tree or to estimate them from distance data on a set of genes \citep{stadler2020}.
-
+The subpackage \texttt{asymmetree.best\_matches} contains functions to compute both relations from a given gene tree or to estimate them from distance data on a set of genes~\citep{stadler2020}.
 If the true (observable) gene tree is known (as e.g.\ the case in simulations), best matches and orthologs can be computed using the module \texttt{TrueBMG}.
-The functions \texttt{best\_match\_ graphs(tree)} and \texttt{true\_orthology\_graph(tree)} return the respective graph representation as NetworkX (di)graphs:
+The functions \texttt{BMG\_from\_tree()} and \texttt{orthology\_from\_tree()} return the respective graph representation as NetworkX (Di)Graphs:
 
 \begin{adjustwidth}{1cm}{1cm}\vspace{2mm}
 \begin{minted}[fontsize=\footnotesize]{python}
-from asymmetree.best_matches.TrueBMG import orthology_from_tree, best_match_graphs
+from asymmetree.best_matches import orthology_from_tree, BMG_from_tree
 
-# T is an observable gene tree
-orthology_graph = orthology_from_tree(T)
+# tree is an observable gene tree
+orthology_graph = orthology_from_tree(tree)
 
 # Best Match Graph and Reciprocal Best Match Graph as a tuple
-BMG, RBMG = best_match_graphs(T)
+bmg, rbmg = BMG_from_tree(tree, supply_RBMG=True)
 \end{minted}
 \end{adjustwidth}
 
@@ -471,7 +508,7 @@ If only distance data is available, best matches have to be estimated.
 AsymmeTree currently implements three different methods that are described by \citet{stadler2020}:
 \begin{itemize}
 	\item Extended Best Hits (module \texttt{ExtBestHits})
-	\item Neighborjoining and midpoint rooting (module \texttt{TreeReconstruction}, requires the installation and accessibility of \texttt{RapidNJ} \citep{simonsen2008})
+	\item Neighborjoining \cite{saitou1987} and midpoint rooting (module \texttt{TreeReconstruction}, requires the installation and accessibility of \texttt{RapidNJ} \citep{simonsen2008})
 	\item Quartet method (module \texttt{Quartets}, Python implementation and wrapper for the C++ tool \texttt{qinfer})
 \end{itemize}
 
@@ -483,26 +520,31 @@ Please see the file \texttt{examples/best\_match\_infer.py} in the GitHub repo f
 
 The module \texttt{BuildST} contains an implementation of the BuildST algorithm described by \citet{deng2016} to compute a supertree from a given list of tree based on the leaf labels.
 The algorithm uses the dynamic graph data structure described by \citet{henzinger1995} and \citet{holm2001}.
-The latter can also be used separately (see module \texttt{asymmetree.tools.hdtgraph.DynamicGraph})
+The latter can also be used separately:
+
+\begin{adjustwidth}{1cm}{1cm}\vspace{2mm}
+\begin{minted}[fontsize=\footnotesize]{python}
+from asymmetree.tools import HDTGraph
+\end{minted}
+\end{adjustwidth}
 
 The class \texttt{BuildST} is initialized with a list of trees that are of type \texttt{Tree} (thus also \texttt{PhyloTree} is allowed).
-The method \texttt{run()} then return a supertree if the trees in the list are compatible \emph{and} they overlap in their sets of leaf labels.
-More precisely, the graph on the set of input trees in which two trees are connected by an edge if and only if they have at least one leaf label in common must be connected.
-
+The method \texttt{run()} then returns a supertree if the trees in the list are compatible \emph{and} they overlap in their sets of leaf labels.
+More precisely, the graph on the set of input trees, in which two trees are connected by an edge if and only if they have at least one leaf label in common, must be connected.
 Example usage:
 
 \begin{adjustwidth}{1cm}{1cm}\vspace{2mm}
 \begin{minted}[fontsize=\footnotesize]{python}
-from asymmetree.tools.BuildST import BuildST
+from asymmetree.tools import BuildST
 
-# tree_list is a list of Tree instances
+# tree_list is a list of 'Tree' instances
 st_builder = BuildST(tree_list)
 supertree = st_builder.run()
 
 if supertree:
-	print(supertree.to_newick())
+    print(supertree.to_newick())
 else:
-	print("Could not build a supertree!")
+    print('could not build a supertree')
 \end{minted}
 \end{adjustwidth}
 
@@ -526,7 +568,7 @@ Example usage:
 
 \begin{adjustwidth}{1cm}{1cm}\vspace{2mm}
 \begin{minted}[fontsize=\footnotesize]{python}
-from asymmetree.paraphylo.SpeciesTreeFromParalogs import TreeReconstructor
+from asymmetree.paraphylo import TreeReconstructor
 
 tree_reconstr = TreeReconstructor()
 
@@ -534,13 +576,13 @@ tree_reconstr = TreeReconstructor()
 for graph in ortho_relations:
     tree_reconstr.add_ortho_graph(graph)
     
-# finally the tree can be computed
-S_estimate = tr.build_species_tree(mode="BPMF")
-print(S_estimate.to_newick())
+# finally an estimate the species tree can be computed
+tree = tr.build_species_tree(mode="BPMF")
+print(tree.to_newick())
 \end{minted}
 \end{adjustwidth}
 
-The module \texttt{SpeciesTreeFromPO} contains functions to estimate a species tree from a \texttt{ProteinOrtho} output file. For example, the function \texttt{reconstruct\_from\_PO(filename, triple\_mode="BPMF")} takes the filename to the \texttt{ProteinOrtho} output file and optionally the triple heuristic as input, and returns a tuple consisting of the estimated species tree (\texttt{PhyloTree}) and a Newick representation (\texttt{str}) containing support values for the inner nodes.
+The module \texttt{SpeciesTreeFromProteinOrtho} contains functions to estimate a species tree from a \texttt{ProteinOrtho} \citep{lechner2011} output file. For example, the function \texttt{reconstruct\_from\_ proteinortho(filename, triple\_mode="BPMF")} takes the filename to the output file and optionally the triple heuristic as input, and returns a tuple consisting of the estimated species tree (\texttt{PhyloTree}) and a Newick representation (\texttt{str}) containing support values for the inner nodes.
 
 \bibliographystyle{plainnatnourl}
 \bibliography{references}
