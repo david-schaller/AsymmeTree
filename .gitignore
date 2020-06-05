@@ -50,6 +50,7 @@ bin/
 *.blg
 *.lof
 *.toc
+_minted*/
 
 # others
 examples/results/*
