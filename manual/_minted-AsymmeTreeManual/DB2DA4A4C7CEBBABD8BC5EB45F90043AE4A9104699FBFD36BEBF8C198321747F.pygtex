@@ -1,7 +1,0 @@
-\begin{Verbatim}[commandchars=\\\{\}]
-\PYG{k+kn}{import} \PYG{n+nn}{asymmetree.simulator.TreeSimulator} \PYG{k+kn}{as} \PYG{n+nn}{ts}
-
-\PYG{c+c1}{\PYGZsh{} S is a species tree of type PhyloTree}
-\PYG{n}{TGT\PYGZus{}simulator} \PYG{o}{=} \PYG{n}{ts}\PYG{o}{.}\PYG{n}{GeneTreeSimulator}\PYG{p}{(}\PYG{n}{S}\PYG{p}{)}
-\PYG{n}{TGT} \PYG{o}{=} \PYG{n}{TGT\PYGZus{}simulator}\PYG{o}{.}\PYG{n}{simulate}\PYG{p}{(}\PYG{n}{DLH\PYGZus{}rates}\PYG{o}{=}\PYG{p}{(}\PYG{l+m+mf}{1.0}\PYG{p}{,} \PYG{l+m+mf}{0.5}\PYG{p}{,} \PYG{l+m+mf}{0.1}\PYG{p}{))}
-\end{Verbatim}

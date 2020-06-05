@@ -1,4 +1,0 @@
-\begin{Verbatim}[commandchars=\\\{\}]
-\PYG{c+c1}{\PYGZsh{} observable gene tree}
-\PYG{n}{OGT} \PYG{o}{=} \PYG{n}{ts}\PYG{o}{.}\PYG{n}{observable\PYGZus{}tree}\PYG{p}{(}\PYG{n}{TGT}\PYG{p}{)}
-\end{Verbatim}

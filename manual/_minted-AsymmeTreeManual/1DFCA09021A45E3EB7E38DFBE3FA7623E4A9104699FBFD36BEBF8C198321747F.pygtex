@@ -1,5 +1,0 @@
-\begin{Verbatim}[commandchars=\\\{\}]
-\PYG{c+c1}{\PYGZsh{} T is an observable gene tree}
-\PYG{n}{leaves}\PYG{p}{,} \PYG{n}{D} \PYG{o}{=} \PYG{n}{T}\PYG{o}{.}\PYG{n}{distance\PYGZus{}matrix}\PYG{p}{()}
-\PYG{n}{leaf\PYGZus{}index\PYGZus{}dict} \PYG{o}{=} \PYG{p}{\PYGZob{}}\PYG{n}{leaf}\PYG{p}{:} \PYG{n}{i} \PYG{k}{for} \PYG{n}{i}\PYG{p}{,} \PYG{n}{leaf} \PYG{o+ow}{in} \PYG{n}{leaves}\PYG{p}{\PYGZcb{}}
-\end{Verbatim}
