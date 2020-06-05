@@ -2,7 +2,7 @@
 
 from asymmetree.treeevolve import simulate_species_tree
 from asymmetree.genome import GenomeSimulator
-from asymmetree.seqevolve import SubstModel, IndelModel, HeterogeneityModel
+from asymmetree.seqevolve import SubstModel, IndelModel, HetModel
 
 
 __author__ = "David Schaller"

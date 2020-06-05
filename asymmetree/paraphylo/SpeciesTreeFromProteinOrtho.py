@@ -48,7 +48,7 @@ def reconstruct_trees_and_write(infile, outfile, cotree_modes, triple_modes,
             f.write(newick + '\n')
             
             
-def reconstruct_from_PO(filename, triple_mode='BPMF'):
+def reconstruct_from_proteinortho(filename, triple_mode='BPMF'):
     
     G = parse_po_graph(filename)
     tr = TreeReconstructor()

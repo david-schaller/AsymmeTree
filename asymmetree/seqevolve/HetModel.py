@@ -5,10 +5,10 @@ import numpy as np
 from asymmetree.seqevolve.EvolvingSequence import State
 
 
-__author__ = "David Schaller"
+__author__ = 'David Schaller'
 
 
-class HeterogeneityModel:
+class HetModel:
     
     def __init__(self, alpha, classes=5, sitewise=False, invariant=0.0):
         

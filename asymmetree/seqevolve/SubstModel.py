@@ -6,7 +6,7 @@ from scipy import linalg
 from asymmetree.seqevolve.EmpiricalModels import empirical_models
 
 
-__author__ = "David Schaller"
+__author__ = 'David Schaller'
 
 
 class SubstModel:
@@ -131,14 +131,14 @@ class SubstModel:
         try:
             result = [self.alphabet_dict[letter] for letter in sequence]
         except KeyError:
-            raise ValueError("invalid sequence for the specified model")
+            raise ValueError('invalid sequence for the specified model')
             
         return result
     
     
     def to_sequence(self, evoseq):
         
-        return "".join(self.alphabet[x._value] for x in evoseq)
+        return ''.join(self.alphabet[x._value] for x in evoseq)
     
 
 # --------------------------------------------------------------------------

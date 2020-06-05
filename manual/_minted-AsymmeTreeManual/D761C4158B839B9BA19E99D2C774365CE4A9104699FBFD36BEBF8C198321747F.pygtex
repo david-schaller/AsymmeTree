@@ -1,0 +1,5 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{from} \PYG{n+nn}{asymmetree} \PYG{k+kn}{import} \PYG{n}{PhyloTree}
+
+\PYG{n}{tree} \PYG{o}{=} \PYG{n}{PhyloTree}\PYG{o}{.}\PYG{n}{load}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}tree.json\PYGZdq{}}\PYG{p}{)}
+\end{Verbatim}

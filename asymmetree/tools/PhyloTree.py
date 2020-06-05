@@ -4,7 +4,7 @@
 Tree data structure for phylogentic trees.
 """
 
-import collections, itertools, random, re, pickle, json
+import collections, itertools, random, re, pickle, json, os
 import numpy as np
 import networkx as nx
 
@@ -517,9 +517,26 @@ class PhyloTree(Tree):
 # --------------------------------------------------------------------------
 #                           SERIALIZATION
 # --------------------------------------------------------------------------
+    
+    @staticmethod
+    def _infer_serialization_mode(filename):
+        
+        _, file_ext = os.path.splitext(filename)
+        
+        if file_ext in ('.json', '.JSON'):
+            return 'json'
+        elif file_ext in ('.pickle', '.PICKLE'):
+            return 'pickle'
+        else:
+            raise ValueError('serialization format is not supplied and could '\
+                             'not be inferred from file extension')
             
-    def serialize(self, filename, mode='json'):
+            
+    def serialize(self, filename, mode=None):
         """Serialize the tree using pickle."""
+        
+        if not mode:
+            mode = PhyloTree._infer_serialization_mode(filename)
         
         tree_nx, root_id = self.to_nx()
         
@@ -537,10 +554,13 @@ class PhyloTree(Tree):
     
     
     @staticmethod
-    def load(filename, mode='json'):
+    def load(filename, mode=None):
         """Load a phylogenetic tree from a file.
         
         Using either the Python module json or pickle."""
+        
+        if not mode:
+            mode = PhyloTree._infer_serialization_mode(filename)
         
         if mode == 'json':
             with open(filename, 'r') as f:
@@ -714,9 +734,9 @@ if __name__ == '__main__':
     print('--------------------------------------------')
     print( t3.to_newick() )
     
-    t.serialize('testfile_tree.json', mode='json')
-    t.serialize('testfile_tree.pickle', mode='pickle')
+    t.serialize('testfile_tree.json')
+    t.serialize('testfile_tree.pickle')
     
-    t4 = PhyloTree.load('testfile_tree.json', mode='json')
+    t4 = PhyloTree.load('testfile_tree.json')
     print('--------------------------------------------')
     print( t4.to_newick() )

@@ -1,16 +1,13 @@
 # -*- coding: utf-8 -*-
 
-import time, os
+import os
 import numpy as np
 
 from asymmetree.tools import GraphTools
 from asymmetree.file_io import ScenarioFileIO
 import asymmetree.treeevolve as te
 
-from asymmetree.best_matches import TrueBMG
-import asymmetree.best_matches.ExtBestHits as ebh
-import asymmetree.best_matches.TreeReconstruction as tr
-import asymmetree.best_matches.Quartets as qd
+import asymmetree.best_matches as bm
 
 
 class ComparisonAnalysis:
@@ -24,10 +21,11 @@ class ComparisonAnalysis:
 
     def compute_statistics(self):
         
-        matrix_filename = "temp.phylip"
-        species_filename = "temp_species.txt"
-        tree_filename = "temp_tree.txt"
-        ScenarioFileIO.matrix_to_phylip(matrix_filename, self.scenario.genes, self.D)
+        matrix_filename = 'temp.phylip'
+        species_filename = 'temp_species.txt'
+        tree_filename = 'temp_tree.txt'
+        ScenarioFileIO.matrix_to_phylip(matrix_filename, self.scenario.genes,
+                                        self.D)
         ScenarioFileIO.species_to_genes(species_filename, self.scenario)
         ScenarioFileIO.write_newick(tree_filename, self.scenario.S)
         
@@ -36,34 +34,35 @@ class ComparisonAnalysis:
         self.possible_edges_BMG = self.scenario.possible_edges_BMG()
         
         # ---- epsilon method ----
-        start = time.time()
-        BMG_eps, RBMG_eps, self.time_eps = ebh.ebh_qinfer(self.scenario, matrix_filename,
-                                                          species_filename, self.epsilon)
+        BMG_eps, RBMG_eps, self.time_eps = bm.ebh_qinfer(
+                                              self.scenario, matrix_filename,
+                                              species_filename, self.epsilon)
         BMG_eps, RBMG_eps = self.scenario.reduce_to_subtrees(BMG_eps, RBMG_eps)
         self.BMG_eps_stats = GraphTools.performance(BMG, BMG_eps)
         self.RBMG_eps_stats = GraphTools.performance(RBMG, RBMG_eps)
         
         # ---- neighbor-joining + midpoint rooting ----
-        start = time.time()
-        nj_tree = tr.neighbor_joining(self.scenario.genes, self.scenario.gene_index, matrix_filename)
-        tr.midpoint_rooting(nj_tree)
-        BMG_nj, RBMG_nj = TrueBMG.BMG_from_tree(nj_tree, supply_RBMG=True)
-        self.time_nj = time.time() - start
+        BMG_nj, RBMG_nj, self.time_nj = bm.BMG_by_tree_reconstruction(
+                                            self.scenario, matrix_filename,
+                                            supply_RBMG=True,
+                                            return_calltime=True)
         BMG_nj, RBMG_nj = self.scenario.reduce_to_subtrees(BMG_nj, RBMG_nj)
         self.BMG_nj_stats = GraphTools.performance(BMG, BMG_nj)
         self.RBMG_nj_stats = GraphTools.performance(RBMG, RBMG_nj)
         
-        # ---- quadruple method (root subtree outgroups)----
-        BMG_qd, RBMG_qd, self.time_qd = qd.quartet_qinfer(self.scenario, matrix_filename,
-                                                          species_filename, tree_filename)
+        # ---- quartet method (root subtree outgroups)----
+        BMG_qd, RBMG_qd, self.time_qd = bm.quartet_qinfer(
+                                            self.scenario, matrix_filename,
+                                            species_filename, tree_filename)
         self.BMG_qd_stats = GraphTools.performance(BMG, BMG_qd)
         self.RBMG_qd_stats = GraphTools.performance(RBMG, RBMG_qd)
         
-        # ---- quadruple method (all outgroups)----
-        BMG_qd2, RBMG_qd2, self.time_qd2 = qd.quartet_qinfer(self.scenario, matrix_filename,
-                                                             species_filename, tree_filename,
-                                                             closest_outgroups=True,
-                                                             incongruence_threshold=0.2)
+        # ---- quartet method (all outgroups)----
+        BMG_qd2, RBMG_qd2, self.time_qd2 = bm.quartet_qinfer(
+                                               self.scenario, matrix_filename,
+                                               species_filename, tree_filename,
+                                               closest_outgroups=True,
+                                               incongruence_threshold=0.2)
         self.BMG_qd2_stats = GraphTools.performance(BMG, BMG_qd2)
         self.RBMG_qd2_stats = GraphTools.performance(RBMG, RBMG_qd2)
         
@@ -75,7 +74,8 @@ class ComparisonAnalysis:
     def summary_line(self):
         data = [*self.scenario.rates_and_counts(),
                 self.epsilon,
-                self.scenario.BMG_subtrees.size(), self.scenario.RBMG_subtrees.size(),
+                self.scenario.BMG_subtrees.size(),
+                self.scenario.RBMG_subtrees.size(),
                 self.possible_edges_BMG,
                 *self.BMG_eps_stats, *self.RBMG_eps_stats,
                 *self.BMG_nj_stats, *self.RBMG_nj_stats,
@@ -83,41 +83,42 @@ class ComparisonAnalysis:
                 *self.BMG_qd2_stats, *self.RBMG_qd2_stats,
                 self.time_eps, self.time_nj, self.time_qd, self.time_qd2]
         
-        line = "{}" + (len(data)-1) * "\t{}"
+        line = '{}' + (len(data)-1) * '\t{}'
         line = line.format(*data)
         return line
     
     
     def write_summary_line(self, filename, *first_columns):
-        line = "\n" + (len(first_columns)) * "{}\t"
+        line = '\n' + (len(first_columns)) * '{}\t'
         line = line.format(*first_columns) + self.summary_line()
-        with open(filename, "a") as f:
+        with open(filename, 'a') as f:
             f.write(line)
         
     
     @staticmethod
     def summary_header():
-        data = ["D_rate", "L_rate", "H_rate",
-                "S_count", "D_count", "L_count", "H_count", "ancient_dupl",
-                "epsilon",
-                "BMG_size", "RBMG_size",
-                "possible_edges_BMG"]
-        for mode in ("eps", "nj", "qd", "qd2"):
-            for graph_type in ("BMG", "RBMG"):
-                for stat in ("order", "size", "tp", "tn", "fp", "fn", "acc", "prec", "recall"):
+        data = ['D_rate', 'L_rate', 'H_rate',
+                'S_count', 'D_count', 'L_count', 'H_count', 'ancient_dupl',
+                'epsilon',
+                'BMG_size', 'RBMG_size',
+                'possible_edges_BMG']
+        for mode in ('eps', 'nj', 'qd', 'qd2'):
+            for graph_type in ('BMG', 'RBMG'):
+                for stat in ('order', 'size', 'tp', 'tn', 'fp', 'fn',
+                             'acc', 'prec', 'recall'):
                     data.append(graph_type + "_" + mode + "_" + stat)
-        data.extend(["time_eps", "time_nj", "time_qd", "time_qd2"])
+        data.extend(['time_eps', 'time_nj', 'time_qd', 'time_qd2'])
         
-        header = "{}" + (len(data)-1) * "\t{}"
+        header = '{}' + (len(data)-1) * '\t{}'
         header = header.format(*data)
         return header
     
     
     @staticmethod
     def write_header(filename, *first_columns):
-        line = (len(first_columns)) * "{}\t"
+        line = (len(first_columns)) * '{}\t'
         line = line.format(*first_columns) + ComparisonAnalysis.summary_header()
-        with open(filename, "w") as f:
+        with open(filename, 'w') as f:
             f.write(line)
 
 
@@ -136,10 +137,11 @@ noise_alphas = []#[0.0, 0.02, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
 
 sim_ID = 0
 
-stats_file = "results/method_comparison.csv"
+stats_file = 'results/method_comparison.csv'
 
 # write header of the main statistics file
-ComparisonAnalysis.write_header(stats_file, "SCEN_ID", "noise_type", "sd", "true_sd", "alpha")
+ComparisonAnalysis.write_header(stats_file, 'SCEN_ID',
+                                'noise_type', 'sd', 'true_sd', 'alpha')
 
 
 for rep in range(repeats):
@@ -177,13 +179,15 @@ for rep in range(repeats):
         
         summary1 = ComparisonAnalysis(scenario1, D1_noisy, epsilon=epsilon)
         summary1.compute_statistics()
-        summary1.write_summary_line(stats_file, sim_ID, "no_bias", noise_sd, true_sd1, 0.0)
+        summary1.write_summary_line(stats_file, sim_ID,
+                                    'no_bias', noise_sd, true_sd1, 0.0)
         
         summary2 = ComparisonAnalysis(scenario2, D2_noisy, epsilon=epsilon)
         summary2.compute_statistics()
-        summary2.write_summary_line(stats_file, sim_ID+1, "no_bias", noise_sd, true_sd2, 0.0)
+        summary2.write_summary_line(stats_file, sim_ID+1,
+                                    'no_bias', noise_sd, true_sd2, 0.0)
         
-        print(sim_ID/ (2*repeats), "Noise:", noise_sd)
+        print(sim_ID/ (2*repeats), 'Noise:', noise_sd)
     
     for noise_alpha in noise_alphas:
         D1_noisy, D2_noisy = te.convex_linear_comb(D1, D2, alpha=noise_alpha)
@@ -192,13 +196,15 @@ for rep in range(repeats):
         
         summary1 = ComparisonAnalysis(scenario1, D1_noisy, epsilon=epsilon)
         summary1.compute_statistics()
-        summary1.write_summary_line(stats_file, sim_ID, "bias", 0.0, true_sd1, noise_alpha)
+        summary1.write_summary_line(stats_file, sim_ID,
+                                    'bias', 0.0, true_sd1, noise_alpha)
         
         summary2 = ComparisonAnalysis(scenario2, D2_noisy, epsilon=epsilon)
         summary2.compute_statistics()
-        summary2.write_summary_line(stats_file, sim_ID+1, "bias", 0.0, true_sd2, noise_alpha)
+        summary2.write_summary_line(stats_file, sim_ID+1,
+                                    'bias', 0.0, true_sd2, noise_alpha)
         
-        print(sim_ID/ (2*repeats), "alpha:", noise_alpha)
+        print(sim_ID/ (2*repeats), 'alpha:', noise_alpha)
     
     sim_ID += 2
     

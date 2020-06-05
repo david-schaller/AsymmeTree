@@ -18,6 +18,14 @@ from asymmetree.cograph.Cograph import Cotree, CotreeNode
 __author__ = 'David Schaller'
 
 
+def edit_to_cograph(G, run_number=10):
+    
+    ce = CographEditor(G)
+    best_cotree = ce.cograph_edit()
+    
+    return best_cotree.to_cograph()
+
+
 class CographEditor:
     
     def __init__(self, G):

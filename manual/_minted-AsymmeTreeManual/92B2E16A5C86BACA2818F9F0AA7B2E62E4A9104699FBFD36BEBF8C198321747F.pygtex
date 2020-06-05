@@ -1,0 +1,6 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+c1}{\PYGZsh{} tree is of type \PYGZsq{}PhyloTree\PYGZsq{}}
+\PYG{n}{tree}\PYG{o}{.}\PYG{n}{serialize}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}tree.pickle\PYGZdq{}}\PYG{p}{)}
+\PYG{c+c1}{\PYGZsh{} or}
+\PYG{n}{tree}\PYG{o}{.}\PYG{n}{serialize}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}tree.json\PYGZdq{}}\PYG{p}{)}
+\end{Verbatim}

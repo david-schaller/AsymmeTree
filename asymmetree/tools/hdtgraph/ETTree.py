@@ -15,7 +15,7 @@ References:
 from asymmetree.tools.DoublyLinkedList import DLList
 
 
-__author__ = "David Schaller"
+__author__ = 'David Schaller'
 
 
 class DGNode:

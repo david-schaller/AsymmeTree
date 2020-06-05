@@ -1,0 +1,12 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{from} \PYG{n+nn}{asymmetree.tools.BuildST} \PYG{k+kn}{import} \PYG{n}{BuildST}
+
+\PYG{c+c1}{\PYGZsh{} tree\PYGZus{}list is a list of Tree instances}
+\PYG{n}{st\PYGZus{}builder} \PYG{o}{=} \PYG{n}{BuildST}\PYG{p}{(}\PYG{n}{tree\PYGZus{}list}\PYG{p}{)}
+\PYG{n}{supertree} \PYG{o}{=} \PYG{n}{st\PYGZus{}builder}\PYG{o}{.}\PYG{n}{run}\PYG{p}{()}
+
+\PYG{k}{if} \PYG{n}{supertree}\PYG{p}{:}
+	\PYG{k}{print}\PYG{p}{(}\PYG{n}{supertree}\PYG{o}{.}\PYG{n}{to\PYGZus{}newick}\PYG{p}{())}
+\PYG{k}{else}\PYG{p}{:}
+	\PYG{k}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}Could not build a supertree!\PYGZdq{}}\PYG{p}{)}
+\end{Verbatim}

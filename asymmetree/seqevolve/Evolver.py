@@ -8,7 +8,7 @@ from asymmetree.seqevolve.Alignment import AlignmentBuilder
 from asymmetree.file_io.SeqFileIO import write_alignment
 
 
-__author__ = "David Schaller"
+__author__ = 'David Schaller'
 
 
 class Evolver:

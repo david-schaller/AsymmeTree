@@ -2,17 +2,35 @@
 
 import os, subprocess, itertools, time
 
+from asymmetree.best_matches.TrueBMG import BMG_from_tree
 from asymmetree.file_io.ScenarioFileIO import matrix_to_phylip
 from asymmetree import PhyloTree, PhyloTreeNode
 
 
-__author__ = "David Schaller"
+__author__ = 'David Schaller'
 
 
 # --------------------------------------------------------------------------
 #                            TREE RECONSTRUCTION
 #
 # --------------------------------------------------------------------------
+
+def BMG_by_tree_reconstruction(scenario, matrix_filename,
+                               supply_RBMG=True, return_calltime=False):
+    
+    if return_calltime:
+        start_time = time.time()
+    
+    nj_tree = neighbor_joining(scenario.genes, scenario.gene_index, matrix_filename)
+    midpoint_rooting(nj_tree)
+    BMG, RBMG = BMG_from_tree(nj_tree, supply_RBMG=supply_RBMG)
+    
+    if return_calltime:
+        return BMG, RBMG, time.time() - start_time
+    else:
+        return BMG, RBMG
+        
+        
 
 def neighbor_joining(leaves, leaf_index, matrix_filename,
                      return_calltime=False,
@@ -29,7 +47,8 @@ def neighbor_joining(leaves, leaf_index, matrix_filename,
     elif os.path.exists(binary_path):
          nj_command = binary_path
     else:
-        raise FileNotFoundError("path to RapidNJ binary file '{}' does not exist".format(binary_path))
+        raise FileNotFoundError("path to RapidNJ binary file '{}' does not "\
+                                "exist".format(binary_path))
             
     start_time = time.time()
     
@@ -138,7 +157,7 @@ def midpoint_rooting(tree):
         
 
 def nj_from_numpy_matrix(leaves, leaf_index, matrix,
-                         filename="temp.phylip"):
+                         filename='temp.phylip'):
 
     matrix_to_phylip(filename, leaves, matrix)
     tree = neighbor_joining(leaves, leaf_index, filename)

@@ -11,7 +11,7 @@ nodes are connected.
 Classes in this module:
     - Edge
     - Level
-    - Graph
+    - HDTGraph
 
 References:
     - Jacob Holm, Kristian de Lichtenberg, and Mikkel Thorup. 
@@ -27,7 +27,7 @@ from asymmetree.tools.hdtgraph.ETTree import ETTree, ETTreeNode, DGNode
 from asymmetree.tools.Tree import Tree
 
 
-__author__ = "David Schaller"
+__author__ = 'David Schaller'
 
 
 class Edge:
@@ -35,6 +35,7 @@ class Edge:
     __slots__ = ['e', 'level', 'tree_edge', 'dllist_entries']
     
     def __init__(self, e, level=0, tree_edge=False):
+        
         self.e = e                      # edge as tuple (u, v)
         self.level = level              # current level of this edge
         self.tree_edge = tree_edge      # is it a tree edge
@@ -43,16 +44,19 @@ class Edge:
         
         
     def __eq__(self, other):
+        
         return (self.e == other.e)
     
     
     def __hash__(self):
+        
         return hash( self.e )
     
     
     def __repr__(self):
-        tree = " tree" if self.tree_edge else ""
-        return str(self.e) + "," + str(self.level) + tree
+        
+        tree = ' tree' if self.tree_edge else ''
+        return '{},{}{}'.format(self.e, self.level, tree)
     
 
 class Level:
@@ -147,7 +151,7 @@ class Level:
         return True
         
         
-class Graph:
+class HDTGraph:
     
     def __init__(self):
         
@@ -394,7 +398,7 @@ class Graph:
         
         if level == "all":
             for l in self.levels:
-                print("----- Level", l.index, "-----")
+                print('----- Level {} -----'.format(l.index))
                 for ett in l.forest:
                     print(ett.ET_to_list(), ett.get_size())
         else:
@@ -402,9 +406,9 @@ class Graph:
                 print(ett.ET_to_list(), ett.get_size())
     
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     
-    graph = Graph()
+    graph = HDTGraph()
     
     import random
     insert = []
@@ -418,7 +422,7 @@ if __name__ == "__main__":
         graph.insert_edge(e[0], e[1])
 
     for e in random.sample(insert, 30):
-        print("edge", e[0], e[1])
+        print('edge', e[0], e[1])
         graph.delete_edge(e[0], e[1])
 
-    graph.print_ett_forest(level="all")
+    graph.print_ett_forest(level='all')

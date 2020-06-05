@@ -4,7 +4,7 @@ import numpy as np
 from scipy.special import zeta
 
 
-__author__ = "David Schaller"
+__author__ = 'David Schaller'
 
 
 class IndelModel:

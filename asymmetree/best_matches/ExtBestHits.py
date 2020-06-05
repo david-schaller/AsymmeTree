@@ -10,7 +10,7 @@ import os, subprocess, time
 import networkx as nx
 
 from asymmetree.file_io.ScenarioFileIO import parse_BMG_edges, matrix_to_phylip, species_to_genes
-from asymmetree.best_matches import TrueBMG
+from asymmetree.tools.GraphTools import symmetric_part
 
 
 __author__ = "David Schaller"
@@ -109,7 +109,7 @@ def ebh_qinfer(scenario,
         raise Exception("no output from qinfer")
     
     BMG = parse_BMG_edges(output.stdout.decode(), scenario)
-    RBMG = TrueBMG.RBMG_from_BMG(BMG)
+    RBMG = symmetric_part(BMG)
     
     return BMG, RBMG, exec_time
 

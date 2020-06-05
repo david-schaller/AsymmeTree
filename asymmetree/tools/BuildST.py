@@ -18,10 +18,10 @@ from collections import deque
 
 from asymmetree.tools.Tree import Tree, TreeNode
 from asymmetree.tools.DoublyLinkedList import DLList
-from asymmetree.tools.hdtgraph.DynamicGraph import Graph as HDTGraph
+from asymmetree.tools.hdtgraph.DynamicGraph import HDTGraph
 
 
-__author__ = "David Schaller"
+__author__ = 'David Schaller'
 
 
 class BuildST:
@@ -477,7 +477,7 @@ class ConnectedComp_simple:
         return [node for node in self.component.keys() if isinstance(node, XpNode)]
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     
     # ----- TESTING THIS MODULE -----
     
@@ -498,7 +498,7 @@ if __name__ == "__main__":
         for v in t.preorder():
             if not v.children:
                 if j in mark:
-                    v.label = "*"
+                    v.label = '*'
                 else:
                     v.label = str(v.ID)
                 j += 1

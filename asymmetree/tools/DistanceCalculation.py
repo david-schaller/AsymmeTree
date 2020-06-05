@@ -13,7 +13,7 @@ References:
 """
 
 
-__author__ = "David Schaller"
+__author__ = 'David Schaller'
 
 
 MIN_LENGTH = 1e-6

@@ -19,7 +19,18 @@ from asymmetree.cograph.Cograph import Cotree, CotreeNode
 __author__ = 'David Schaller'
 
 
-class LCD:
+def linear_cograph_detection(G, return_cotree=True):
+    
+    lcd = LinearCographDetector(G)
+    cotree = lcd.recognition()
+    
+    if not cotree:
+        return False
+    else:
+        return cotree if return_cotree else True
+
+
+class LinearCographDetector:
     
     def __init__(self, G):
         
@@ -42,7 +53,7 @@ class LCD:
         self.error_message = ''
     
     
-    def cograph_recognition(self):
+    def recognition(self):
         
         if len(self.V) == 0:
             raise RuntimeError('empty graph in cograph recognition')
@@ -304,8 +315,7 @@ if __name__ == '__main__':
     print(cotree.to_newick())
     cograph = cotree.to_cograph()
     
-    LCD = LCD(cograph)
-    cotree2 = LCD.cograph_recognition()
+    cotree2 = linear_cograph_detection(cograph)
     print('done')
     if cotree2:
         cograph2 = cotree2.to_cograph()
@@ -313,8 +323,8 @@ if __name__ == '__main__':
     else:
         print('Not a cograph!')
         
-    cograph3 = gt.random_graph(19, p=0.5)
-    cotree3 = Cotree.cotree(cograph3)
+    cograph3 = gt.random_graph(10, p=0.5)
+    cotree3 = linear_cograph_detection(cograph3)
     if cotree3:
         print(cotree3.to_newick())
     else:

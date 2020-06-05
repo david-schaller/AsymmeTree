@@ -3,7 +3,7 @@
 from asymmetree import TreeNode
 
 
-__author__ = "David Schaller"
+__author__ = 'David Schaller'
 
 
 # ------------------------------------------------------------------------------
@@ -44,12 +44,12 @@ def write_fasta(filename, sequences):
         
         for label, seq in sequences:
             
-            f.write(">{}\n".format(label))
+            f.write('>{}\n'.format(label))
             pos = 0
             while pos < len(seq):
                 f.write(seq[pos:min(pos+80, len(seq))])
                 pos += 80
-                f.write("\n")
+                f.write('\n')
 
 
 # ------------------------------------------------------------------------------
@@ -72,7 +72,8 @@ def write_alignment(filename, alignment, alignment_format='phylip'):
             _write_pretty(f, alignment)
             
         else:
-            raise ValueError("alignment format '{}' is not available".format(alignment_format))
+            raise ValueError("alignment format '{}' is not "\
+                             "available".format(alignment_format))
             
 
 def _check_alignment(alignment):
@@ -87,7 +88,7 @@ def _check_alignment(alignment):
         if seq_length is None:
             seq_length = len(seq)
         elif seq_length != len(seq):
-            raise ValueError("aligned sequences must have the same length")
+            raise ValueError('aligned sequences must have the same length')
             
     return max_length, seq_length
             
@@ -98,7 +99,7 @@ def _write_phylip(f, alignment):
     max_length = max(max_length, 9)
     
     
-    f.write("  {} {} i".format(len(alignment), seq_length))
+    f.write('  {} {} i'.format(len(alignment), seq_length))
     
     format_str = '\n{:' + str(max_length+1) + '}'
     current = 0
@@ -161,9 +162,9 @@ def _write_pretty(f, alignment):
             
             count = end - current - seq[current:end].count('-')
             seq_string = ' '.join( seq[i:min(i+10,end)] for i in range(current, end, 10) )
-            f.write("\n  {:54}{:>6} {}".format(seq_string, count, label))
+            f.write('\n  {:54}{:>6} {}'.format(seq_string, count, label))
                 
         if end != seq_length:
-            f.write("\n\n\n")
+            f.write('\n\n\n')
         
         current += 50

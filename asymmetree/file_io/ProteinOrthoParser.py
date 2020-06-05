@@ -16,19 +16,19 @@ References:
 import networkx as nx   
 
 
-__author__ = "David Schaller"
+__author__ = 'David Schaller'
 
 
 def parse_po_graph(filename):
     
     G = nx.Graph()
     
-    with open(filename, "r") as f:
+    with open(filename, 'r') as f:
         
         # skip the first two lines
         f.readline(); f.readline
         
-        col_a, col_b= "unknown", "unknown"
+        col_a, col_b = 'unknown', 'unknown'
         line = f.readline().strip()
         
         while line:
@@ -36,15 +36,15 @@ def parse_po_graph(filename):
             line = line.strip()
             
             # new color pair begins
-            if line and line.startswith("#") and not line.startswith("# Scores:"):
+            if line and line.startswith('#') and not line.startswith('# Scores:'):
                 colors = line.split()
                 if len(colors) == 3:
                     col_a, col_b = colors[1], colors[2]
                 
-            elif line and not line.startswith("#"):
+            elif line and not line.startswith('#'):
                 edge = line.split()
-                id1 = "{}_{}".format(col_a, edge[0])
-                id2 = "{}_{}".format(col_b, edge[1])
+                id1 = '{}_{}'.format(col_a, edge[0])
+                id2 = '{}_{}'.format(col_b, edge[1])
                 if id1 not in G:
                     G.add_node(id1, color=col_a)
                 if id2 not in G:
@@ -68,7 +68,7 @@ def parse_po_graph(filename):
                                evalue_ba = float(edge[4]),
                                bitscore_ba = float(edge[5]))
                 else:
-                    print("Check file format!", edge)
+                    print('Check file format!', edge)
                     continue
                 
             line = f.readline()
@@ -87,7 +87,7 @@ def parse_best_match_candidates(filename):
 #    else:
 #        raise ValueError("could not extract species from filename '{}'".format(filename))
     
-    with open(filename, "r") as f:
+    with open(filename, 'r') as f:
         
         line = f.readline()
         
@@ -101,7 +101,7 @@ def parse_best_match_candidates(filename):
             data = line.split()
             
             if len(data) != 6:
-                print("Check file format: {}, line {}".format(filename, line))
+                print('Check file format: {}, line {}'.format(filename, line))
                 continue
                 
             color      = data[0]
@@ -126,7 +126,7 @@ def parse_best_matches(filename):
     
     G = nx.DiGraph()
     
-    with open(filename, "r") as f:
+    with open(filename, 'r') as f:
         
         line = f.readline()
         
@@ -137,8 +137,8 @@ def parse_best_matches(filename):
             if len(line) == 4:
                 
                 col1, col2 = line[2], line[3]
-                id1 = "{}_{}".format(col1, line[0])
-                id2 = "{}_{}".format(col2, line[1])
+                id1 = '{}_{}'.format(col1, line[0])
+                id2 = '{}_{}'.format(col2, line[1])
                 if id1 not in G:
                     G.add_node(id1, color=col1)
                 if id2 not in G:

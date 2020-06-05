@@ -11,6 +11,8 @@ import itertools
 
 import networkx as nx
 
+from asymmetree.tools.GraphTools import symmetric_part
+
 
 __author__ = 'David Schaller'
 
@@ -66,17 +68,4 @@ def BMG_from_tree(tree, supply_RBMG=False):
     if not supply_RBMG:
         return BMG
     else:
-        return BMG, RBMG_from_BMG(BMG)
-
-
-def RBMG_from_BMG(BMG):
-    
-    RBMG = nx.Graph()
-    RBMG.add_nodes_from(BMG.nodes(data=True))
-    
-    for x, neighbors in BMG.adjacency():
-        for y in neighbors:
-            if BMG.has_edge(y,x):
-                RBMG.add_edge(x,y)
-                
-    return RBMG
+        return BMG, symmetric_part(BMG)

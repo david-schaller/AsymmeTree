@@ -1,0 +1,9 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{from} \PYG{n+nn}{asymmetree.best\PYGZus{}matches.TrueBMG} \PYG{k+kn}{import} \PYG{n}{orthology\PYGZus{}from\PYGZus{}tree}\PYG{p}{,} \PYG{n}{best\PYGZus{}match\PYGZus{}graphs}
+
+\PYG{c+c1}{\PYGZsh{} T is an observable gene tree}
+\PYG{n}{orthology\PYGZus{}graph} \PYG{o}{=} \PYG{n}{orthology\PYGZus{}from\PYGZus{}tree}\PYG{p}{(}\PYG{n}{T}\PYG{p}{)}
+
+\PYG{c+c1}{\PYGZsh{} Best Match Graph and Reciprocal Best Match Graph as a tuple}
+\PYG{n}{BMG}\PYG{p}{,} \PYG{n}{RBMG} \PYG{o}{=} \PYG{n}{best\PYGZus{}match\PYGZus{}graphs}\PYG{p}{(}\PYG{n}{T}\PYG{p}{)}
+\end{Verbatim}

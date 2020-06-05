@@ -9,7 +9,7 @@ import numpy as np
 import networkx as nx
 
 
-__author__ = "David Schaller"
+__author__ = 'David Schaller'
 
 
 # --------------------------------------------------------------------------
@@ -30,6 +30,23 @@ def graphs_equal(G1, G2):
             return False
     
     return True
+
+
+def symmetric_part(G):
+    """Returns the (undirected) symmetric part of a directed graph."""
+    
+    if not isinstance(G, nx.DiGraph):
+        raise TypeError('directed graph required')
+    
+    G_sym = nx.Graph()
+    G_sym.add_nodes_from(G.nodes(data=True))
+    
+    for x, neighbors in G.adjacency():
+        for y in neighbors:
+            if G.has_edge(y,x):
+                G_sym.add_edge(x,y)
+                
+    return G_sym
 
 
 def symmetric_diff(G1, G2):
@@ -125,12 +142,13 @@ def false_edges(true_graph, graph):
 def build_adjacency_matrix(G):
     """Return an adjacency matrix."""
     
-    index = {node: i for i, node in enumerate(G.nodes())}   # maps node --> row/column index
+    # maps node --> row/column index
+    index = {node: i for i, node in enumerate(G.nodes())}
     M = np.zeros( (len(index), len(index)), dtype=np.int8)
     
     for x, neighbors in G.adjacency():
         for y in neighbors:
-            M[index[x], index[y]] = 1                       # add out-neighbor key_j to key_i
+            M[index[x], index[y]] = 1
             
     return M
 
@@ -231,7 +249,9 @@ def count_good_ugly_bad(BMG, RBMG, fp):
     
     for x, y in fp.edges():
         
-        if fp.edges[x, y]['middle_in_good'] and fp.edges[x, y]['first_in_ugly'] and fp.edges[x, y]['first_in_bad']:
+        if (fp.edges[x, y]['middle_in_good'] and
+            fp.edges[x, y]['first_in_ugly'] and
+            fp.edges[x, y]['first_in_bad']):
             gub += 1
             gu += 1
             gb += 1
@@ -290,24 +310,10 @@ def find_all_P4(G):
     return P4_list
 
 
-def is_good_quartet_OLD(path, BMG):
+def is_good_quartet(path, BMG):
     """Determine whether an induced P4 is a good quartet in the BMG."""
     if (BMG.has_edge(path[0], path[2]) and 
         BMG.has_edge(path[3], path[1]) and
-        BMG.nodes[path[0]]['color'] == BMG.nodes[path[3]]['color']):
-        return True
-    else:
-        return False
-
-
-def is_good_quartet(path, BMG):
-    """Determine whether an induced P4 is a good quartet in the BMG."""
-    induced = BMG.subgraph(path)
-    degrees = [(induced.out_degree(v), induced.in_degree(v)) for v in induced]
-    if (degrees[0] == (2,1) and 
-        degrees[1] == (2,3) and
-        degrees[2] == (2,3) and 
-        degrees[3] == (2,1) and
         BMG.nodes[path[0]]['color'] == BMG.nodes[path[3]]['color']):
         return True
     else:

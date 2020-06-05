@@ -14,7 +14,7 @@ from enum import Enum, auto
 from asymmetree.tools.DoublyLinkedList import DLList, DLListElement, DLListIterator
 
 
-__author__ = "David Schaller"
+__author__ = 'David Schaller'
 
 
 class State(Enum):

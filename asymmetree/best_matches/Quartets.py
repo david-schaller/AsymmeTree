@@ -9,11 +9,11 @@ import itertools, random,  subprocess, time, os
 import numpy as np
 import networkx as nx
 
-from asymmetree.best_matches import TrueBMG
+from asymmetree.tools.GraphTools import symmetric_part
 from asymmetree.file_io.ScenarioFileIO import parse_BMG_edges, matrix_to_phylip, species_to_genes, write_newick
 
 
-__author__ = "David Schaller"
+__author__ = 'David Schaller'
 
 
 # --------------------------------------------------------------------------
@@ -30,7 +30,7 @@ class Quartets:
     """Implementation of the Quartet approach for best match inference."""
     
     def __init__(self, scenario, distance_matrix,
-                 voting_mode="majority",
+                 voting_mode='majority',
                  use_distant_genes=False,
                  insecurity_factor=0.0,
                  y_candidates=None,
@@ -72,6 +72,7 @@ class Quartets:
     
     
     def compute_lcas_in_S(self):
+        
         self.S.supply_leaves()
         N = len(self.S.root.leaves)
         self.S_leaf_index = {leaf.ID: i for i, leaf in enumerate(self.S.root.leaves)}
@@ -99,6 +100,7 @@ class Quartets:
     
     
     def compute_outgroup_species(self):
+        
         self.lca_to_outgroups = {key: set() for key in self.subtree_species}
         
         root_done = False
@@ -324,7 +326,7 @@ class Quartets:
                                 self.BMG.add_edge(x.ID, y.ID)
                     i = j
         
-        self.RBMG = TrueBMG.RBMG_from_BMG(self.BMG)
+        self.RBMG = symmetric_part(self.BMG)
         return self.BMG, self.RBMG
     
     
@@ -376,7 +378,7 @@ class Quartets:
                                 self.BMG.add_edge(x.ID, y.ID)
                     i = j
                     
-        self.RBMG = TrueBMG.RBMG_from_BMG(self.BMG)
+        self.RBMG = symmetric_part(self.BMG)
         return self.BMG, self.RBMG
     
     
@@ -449,7 +451,7 @@ def quartet_qinfer(scenario,
         raise Exception("no output from qinfer")
     
     BMG = parse_BMG_edges(output.stdout.decode(), scenario)
-    RBMG = TrueBMG.RBMG_from_BMG(BMG)
+    RBMG = symmetric_part(BMG)
     
     return BMG, RBMG, exec_time
 
