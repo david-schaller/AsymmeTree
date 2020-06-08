@@ -154,7 +154,7 @@ class LRTConstructor:
         if len(L) == 1:                                 # trivial case: only one leaf left in L
             leaf = L.pop()
             return PhyloTreeNode(leaf, label=self.G.nodes[leaf]['label'],
-                            color=self.G.nodes[leaf]['color'])
+                                 color=self.G.nodes[leaf]['color'])
             
         help_graph_A = HelpGraph(L, R, self)            # construct the help graph A(R)
                                                         # determine connected components A1, ..., Ak
@@ -259,19 +259,121 @@ class HelpGraph:
             return cut[1]
         
         
+# --------------------------------------------------------------------------
+#                          LRT FROM 2-col. BMG
+#                         (new characterization)
+# --------------------------------------------------------------------------
+            
+class TwoColoredLRT:
+    
+    
+    def __init__(self, digraph):
+        
+        if not isinstance(digraph, nx.DiGraph):
+            raise TypeError('not a digraph')
+            
+        self.digraph = digraph
+        self._color_list()
+        
+        
+    def _color_list(self):
+        
+        self.colors = []
+        
+        for v in self.digraph.nodes():
+            col = self.digraph.nodes[v]['color']
+            if col not in self.colors and len(self.colors) < 2:
+                self.colors.append(col)
+            elif col not in self.colors:
+                raise RuntimeError('more than 2 colors in digraph')
+        
+    
+    def _color_count(self, G):
+        
+        color_count = [0 for _ in range(2)]
+        
+        for v in G.nodes():
+            color_count[self.colors.index(G.nodes[v]['color'])] += 1
+        
+        return color_count
+                
+    
+    def build(self):
+        
+        def _build_tree(G):
+            
+            root_leaves = []
+            color_count = self._color_count(G)
+            
+            for v in G.nodes():
+                col_idx = self.colors.index(G.nodes[v]['color'])
+                
+                if color_count[(col_idx + 1) % 2] == G.out_degree(v):
+                    valid = True
+                    for v2 in G.predecessors(v):
+                        if color_count[col_idx % 2] != G.out_degree(v2):
+                            valid = False
+                    if valid:
+                        root_leaves.append(v)
+                    
+            if not root_leaves and nx.is_weakly_connected(G):
+                return False
+                
+            node = PhyloTreeNode(0, label='')
+            for v in root_leaves:
+                node.add_child(PhyloTreeNode(v, label=str(v),
+                                             color=G.nodes[v]['color']))
+                G.remove_node(v)
+            
+            for wcc in nx.weakly_connected_components(G):
+                child = _build_tree(G.subgraph(wcc).copy())
+                
+                if not child:
+                    return False
+                else:
+                    node.add_child(child)
+                    
+            return node
+        
+        root = _build_tree(self.digraph.copy())
+        if not root:
+            return False
+        else:
+            return PhyloTree(root) 
+
+        
+        
 if __name__ == '__main__':
     
-    T = PhyloTree.random_colored_tree(30, 5)
+    import time
+    
+    N = 100
+    
+    T = PhyloTree.random_colored_tree(N, 2)
     print('--- T ---\n', T.to_newick())
     
-    BMG = TrueBMG.BMG_from_tree(T)
+    bmg = TrueBMG.BMG_from_tree(T)
     
-    lrt_constr = LRTConstructor(BMG, mincut=False)
+    start_time1 = time.time()
+    lrt_constr = LRTConstructor(bmg, mincut=False)
     LRT1 = lrt_constr.build_tree()
+    end_time1 = time.time()
     
     LRT2 = LRT_from_observable_tree(T)
     
     print('--- LRT1 ---\n', LRT1.to_newick())
     print('--- LRT2 ---\n', LRT2.to_newick())
-    
     print('LRTs equal: {}'.format( LRT1.compare_topology(LRT2) ))
+    
+    bmg = TrueBMG.BMG_from_tree(T)
+    
+    start_time2 = time.time()
+    tc = TwoColoredLRT(bmg)
+    LRT3 = tc.build()
+    end_time2 = time.time()
+    
+    LRT4 = LRT_from_observable_tree(T)
+    print('--- LRT3 ---\n', LRT3.to_newick())
+    print('--- LRT4 ---\n', LRT4.to_newick())
+    print('LRTs equal: {}'.format( LRT3.compare_topology(LRT4) ))
+    print(end_time1 - start_time1, end_time2 - start_time2)
