@@ -315,6 +315,8 @@ if __name__ == '__main__':
     import asymmetree.treeevolve as te
     
     subst_model = SubstModel('a', 'WAG')
+    subst_model = SubstModel('a', 'CUSTOM',
+                             filename='../../resources/subst_matrices/WAG.paml')
     indel_model = IndelModel(0.01, 0.01, length_model='zipf')
     
     evolver = Evolver(subst_model, indel_model=indel_model, jump_chain=False)

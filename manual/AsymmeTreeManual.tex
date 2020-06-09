@@ -141,7 +141,7 @@ If you use AsymmeTree in your project or code from it, please cite:
 
 \vspace{3mm}
 \begin{adjustwidth}{1cm}{1cm}
-	Peter F. Stadler, Manuela Gei{\ss}, David Schaller, Alitzel L{\'o}pez S{\'a}nchez, Marcos Gonz{\'a}lez Laffitte, Dulce I. Valdivia, Marc Hellmuth, Maribel Hern{\'a}ndez Rosales (2020). \textbf{From pairs of most similar sequences to phylogenetic best matches.} \textit{Algorithms for Molecular Biology.} doi: 10.1186/s13015-020-00165-2.
+	Peter F. Stadler, Manuela Gei{\ss}, David Schaller, Alitzel L{\'o}pez S{\'a}nchez, Marcos Gonz{\'a}lez Laffitte, Dulce I. Valdivia, Marc Hellmuth, Maribel Hern{\'a}ndez Rosales (2020). \textbf{From pairs of most similar sequences to phylogenetic best matches.} \textit{Algorithms for Molecular Biology.} doi: 10.1186/s13015-020-00165-2. \citep{stadler2020}.
 \end{adjustwidth}
 \vspace{3mm}
 
@@ -236,9 +236,9 @@ Moreover, phylogenetic trees can easily be serialized in \texttt{json} or \textt
 \begin{adjustwidth}{1cm}{1cm}\vspace{2mm}
 \begin{minted}[fontsize=\footnotesize]{python}
 # tree is of type 'PhyloTree'
-tree.serialize("tree.pickle")
+tree.serialize('tree.pickle')
 # or
-tree.serialize("tree.json")
+tree.serialize('tree.json')
 \end{minted}
 \end{adjustwidth}
 
@@ -251,7 +251,7 @@ To load a tree that was serialized this way, use:
 \begin{minted}[fontsize=\footnotesize]{python}
 from asymmetree import PhyloTree
 
-tree = PhyloTree.load("tree.json")
+tree = PhyloTree.load('tree.json')
 \end{minted}
 \end{adjustwidth}
 
@@ -315,7 +315,7 @@ import asymmetree.treeevolve as te
 S1 = te.simulate_species_tree(10, planted=True, non_binary_prob=0.2)
 print(S1.to_newick())
 
-S1 = te.simulate_species_tree(10, model="EBDP",
+S1 = te.simulate_species_tree(10, model='EBDP',
                               episodes=[(1.0, 0.3, 0.8, 0.0),
                                         (0.9, 0.4, 0.6, 0.3)])
 print(S2.to_newick())
@@ -475,9 +475,112 @@ The class \texttt{Evolver} takes several model as parameters for its initializat
 	\item a model for rate \textbf{heterogeneity} (\texttt{HetModel}, optional) among the sites of the sequence under evolution 
 \end{itemize}
 
+\subsubsection{Substitution Model}
+
 A substitution model usually comprises an exchangeability matrix $S$ and a vector $\pi$ containing the equilibrium frequencies of the alphabet $A$ of nucleobases, amino acids et cetera.
 From this, the rate matrix $Q$ can be computed as $S\Pi$ where $\Pi=\textrm{diag}\{\pi_1,\dots,\pi_{|A|}\}$ \citep{yang2006}.
 The substitution probability matrix, in turn, is given by \[P=e^{Qt}\] which is computed efficiently by AsymmeTree using matrix diagonalization.
+
+The following models for nucleotide (\texttt{n}) and amino acid (\texttt{a}) substitution are currently available (codon models are not supported at the moment):
+
+\vspace{3mm}
+{\small\centering
+	\begin{longtable}{ p{1.5cm} p{1.0cm} p{5.5cm} p{5.5cm}}
+		% ---------------------------------------------------
+		model & type & reference & required parameters (\texttt{kwargs})\\
+		% ---------------------------------------------------
+		\texttt{JC96} & \texttt{n}/\texttt{a} & Jukes \& Cantor 1969 \citep{jukes1969} & \texttt{-}\\
+		% ---------------------------------------------------
+		\texttt{K80} & \texttt{n} & Kimura 1980 \citep{kimura1980} & \texttt{kappa} (transition/transversion rate ratio)\\
+		% ---------------------------------------------------
+		\texttt{GTR} & \texttt{n} & general time-reversable model (GTR) 1986 \citep{tavare1986} & \texttt{abcdef} (list of rates (a) $C\leftrightarrow T$, (b) $A\leftrightarrow T$, (c) $G\leftrightarrow T$, (d) $A\leftrightarrow C$, (e) $C\leftrightarrow G$, (f) $A\leftrightarrow G$);\newline
+		\texttt{f} (list of equilibrium frequencies $A/C/G/T$)\\
+		% ---------------------------------------------------
+		\texttt{DAYHOFF} & \texttt{a} & Dayhoff 1978 \citep{dayhoff1978} & \texttt{-}\\
+		% ---------------------------------------------------
+		\texttt{BLOSUM62} & \texttt{a} & BLOSUM62 1992 \citep{henikoff1992} & \texttt{-}\\
+		% ---------------------------------------------------
+		\texttt{JTT} & \texttt{a} & Jones, Taylor \& Thornton 1992 \citep{jones1992} & \texttt{-}\\
+		% ---------------------------------------------------
+		\texttt{WAG} & \texttt{a} & Whelan \& Goldman 2001 \citep{whelan2001} & \texttt{-}\\
+		% ---------------------------------------------------
+		\texttt{LG} & \texttt{a} & Le \& Gascuel 2008 \citep{le2008} & \texttt{-}\\
+		% ---------------------------------------------------
+		\texttt{CUSTOM} & \texttt{n}/\texttt{a} & \texttt{-} & \texttt{filename} (path to a file with a model in PAML \citep{yang1997} format)\\
+		% ---------------------------------------------------
+	\end{longtable}
+}
+\vspace{3mm}
+
+Note that a custom substitution model can be specified via \texttt{model\_name="CUSTOM"}.
+In this case, the path to the model in PAML \citep{yang1997} format must be supplied.
+Moreover, the model type (\texttt{n}/\texttt{a}) must fit this model.
+Example usage:
+
+\begin{adjustwidth}{1cm}{1cm}\vspace{2mm}
+\begin{minted}[fontsize=\footnotesize]{python}
+from asymmetree.seqevolve import SubstModel
+
+# non-empirical model
+subst_model_jc69 = SubstModel('n', 'K80', kappa=2.0)
+
+# empirical model
+subst_model_jtt = SubstModel('a', 'JTT')
+
+# custom model
+subst_model_custom = SubstModel('a', 'CUSTOM', filename='path/to/custom.paml')
+\end{minted}
+\end{adjustwidth}
+
+
+\subsubsection{Indel Model}
+
+Insertions and deletions are modeled based on \texttt{Dawg} \citep{cartwright2005}.
+An indel model requires sitewise rates for insertion \texttt{insertion\_rate} and deletion \texttt{deletion\_rate}.
+Moreover, the following parameters are available (with default values):
+
+\vspace{3mm}
+{\small\centering
+\begin{longtable}{ p{4.5cm} p{9cm} }
+	\texttt{length\_model="zipf"} & distribution of indel length\\
+	\texttt{max\_length=False} & integer max.\ value at which the specified distribution is truncated, must be greater than the expected value of the distribution, \texttt{False} means no limit\\
+\end{longtable}
+}
+\vspace{3mm}
+
+\noindent
+The following models for indel length are available:
+
+\vspace{3mm}
+{\small\centering
+	\begin{longtable}{ p{3.5cm} p{3.5cm} p{5cm}}
+		% ---------------------------------------------------
+		model & distribution & required parameters (\texttt{kwargs}, with default values)\\
+		% ---------------------------------------------------
+		\texttt{zipf} & Zipf & \texttt{a=1.821} \citep{chang2004} (parameter $a$ of the Zipf distribution)\\
+		% ---------------------------------------------------
+		\texttt{negative\_binomial} & negative binomial & \texttt{r=1.0} and \texttt{q=0.5} (parameters $r$ and $q$ of the negative binomial distribution)\\
+		% ---------------------------------------------------
+	\end{longtable}
+}
+\vspace{3mm}
+
+\noindent
+Example usage:
+
+\begin{adjustwidth}{1cm}{1cm}\vspace{2mm}
+\begin{minted}[fontsize=\footnotesize]{python}
+from asymmetree.seqevolve import IndelModel
+
+# sitewise insertion rate 0.01 and deletion rate 0.008
+indel_model = IndelModel(0.01, 0.008, length_model='zipf', a=2.0)
+\end{minted}
+\end{adjustwidth}
+
+
+\subsubsection{Heterogeneity Model}
+
+
 
 
 
@@ -577,7 +680,7 @@ for graph in ortho_relations:
     tree_reconstr.add_ortho_graph(graph)
     
 # finally an estimate the species tree can be computed
-tree = tr.build_species_tree(mode="BPMF")
+tree = tr.build_species_tree(mode='BPMF')
 print(tree.to_newick())
 \end{minted}
 \end{adjustwidth}
@@ -585,7 +688,7 @@ print(tree.to_newick())
 The module \texttt{SpeciesTreeFromProteinOrtho} contains functions to estimate a species tree from a \texttt{ProteinOrtho} \citep{lechner2011} output file. For example, the function \texttt{reconstruct\_from\_ proteinortho(filename, triple\_mode="BPMF")} takes the filename to the output file and optionally the triple heuristic as input, and returns a tuple consisting of the estimated species tree (\texttt{PhyloTree}) and a Newick representation (\texttt{str}) containing support values for the inner nodes.
 
 \bibliographystyle{plainnatnourl}
-\bibliography{references}
+\bibliography{AsymmeTree}
 
 \newpage
 

@@ -4,6 +4,7 @@ import numpy as np
 from scipy import linalg
 
 from asymmetree.seqevolve.EmpiricalModels import empirical_models
+from asymmetree.file_io.SubstModelIO import parse_paml
 
 
 __author__ = 'David Schaller'
@@ -12,8 +13,8 @@ __author__ = 'David Schaller'
 class SubstModel:
     
     
-    nuc_models = {'JC69', 'K80', 'GTR'}
-    aa_models = {'JC69'}
+    nuc_models = {'JC69', 'K80', 'GTR', 'CUSTOM'}
+    aa_models = {'JC69', 'CUSTOM'}
     
     nucleotides = 'ACGT'
     amino_acids = 'ARNDCQEGHILKMFPSTWYV'
@@ -41,7 +42,8 @@ class SubstModel:
             self.alphabet = SubstModel.amino_acids
                 
         else:
-            raise ValueError("model '{}', '{}' is not available".format(model_type, model_name))
+            raise ValueError("model '{}', '{}' is not "\
+                             "available".format(model_type, model_name))
         
         self.alphabet_dict = {item: index for index, item in enumerate(self.alphabet)}
         
@@ -52,7 +54,19 @@ class SubstModel:
     def _load_exchangeability_and_freqs(self):
         """Load the exchangeability matrix S and the stationary frequencies pi."""
         
-        if self.model_type == 'n':
+        # a custom model (via a paml file) was specified
+        if self.model_name == 'CUSTOM':
+            
+            if self._params is None or 'filename' not in self._params:
+                    raise ValueError("custom model requires the parameter "\
+                                     "'filename'")
+            
+            S, freqs = parse_paml(self._params['filename'],
+                                  model_type=self.model_type)
+            self.S, self.freqs = np.asarray(S), np.asarray(freqs)
+        
+        # non-empirical nucleotide models
+        elif self.model_type == 'n':
             
             if self.model_name == 'JC69':
                 self.S, self.freqs = _JC69_nuc()
@@ -67,11 +81,13 @@ class SubstModel:
             elif self.model_name == 'GTR':
                 
                 if self._params is None or 'abcdef' not in self._params or 'f' not in self._params:
-                    raise ValueError("model 'GTR' requires the parameters 'abcdef' and 'f'")
+                    raise ValueError("model 'GTR' requires the parameters "\
+                                     "'abcdef' and 'f'")
                 
                 self.S, self.freqs = _GTR_nuc(self._params['abcdef'],
                                               self._params['f'])
         
+        # non-empirical and empirical amino acid models
         elif self.model_type == 'a':
             
             if self.model_name == 'JC69':
