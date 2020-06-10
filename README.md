@@ -5,14 +5,16 @@
 [![pypi version](https://img.shields.io/badge/pypi-v0.1.0-blue.svg)](https://pypi.org/project/asymmetree/)
 
 AsymmeTree is an open-source Python library for the simulation and analysis of phylogenetic scenarios.
-It includes a simulator for species and gene trees with asymmetric evolution rates, tools for the inference and analysis of phylogenetic Best Matches (resp. best hits) from known gene trees or evolutionary distances. Moreover, it includes an algorithm to compute supertrees and a method to estimate rooted species trees from an ensemble of orthology/paralogy relations.
+It includes a simulator for species and gene trees with heterogeneous evolution rates, nucleotide and amino acid sequences with or without indels, as well as whole genomes/proteomes.
 
-The library, and especially the simulator, was primarily designed to be able to validate mathematical concepts and test inference methods for various steps on the way to more realistically available data, i.e., dated gene trees, additive distances of gene sets, noisy distances and finally sequences.
-Both nucleotide and amino acid sequence simulation with or without indels are supported. In both cases, several substitution models are available.
+Moreover, it includes tools for the inference and analysis of orthology and phylogenetic best matches (resp. best hits) from known gene trees or evolutionary distances, an algorithm to compute supertrees, and a method to estimate rooted species trees from an ensemble of orthology/paralogy relations.
+
+The library was originally designed to validate mathematical concepts and test inference methods for various steps on the way to more realistically-available data, i.e., dated gene trees, additive distances of gene sets, noisy distances and finally sequences.
+
 
 ## Installation
 
-AsymmeTree requires Python 3.5 or higher. Python 2 is not supported.
+AsymmeTree requires Python 3.5 or higher.
 
 #### Easy Installation with pip
 
