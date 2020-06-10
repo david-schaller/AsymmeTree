@@ -223,7 +223,7 @@ In case of a gene tree, the color is represented in brackets, e.g.
 
 \begin{adjustwidth}{1cm}{1cm}\vspace{2mm}
 \begin{minted}[fontsize=\footnotesize]{python}
->>> "(3<1>:0.534,2<2>:0.762)S<0>:0.273"
+>>> '(3<1>:0.534,2<2>:0.762)S<0>:0.273'
 \end{minted}
 \end{adjustwidth}
 
@@ -553,15 +553,15 @@ The following models for indel length are available:
 
 \vspace{3mm}
 {\small\centering
-	\begin{longtable}{ p{3.5cm} p{3.5cm} p{5cm}}
-		% ---------------------------------------------------
-		model & distribution & required parameters (\texttt{kwargs}, with default values)\\
-		% ---------------------------------------------------
-		\texttt{zipf} & Zipf & \texttt{a=1.821} \citep{chang2004} (parameter $a$ of the Zipf distribution)\\
-		% ---------------------------------------------------
-		\texttt{negative\_binomial} & negative binomial & \texttt{r=1.0} and \texttt{q=0.5} (parameters $r$ and $q$ of the negative binomial distribution)\\
-		% ---------------------------------------------------
-	\end{longtable}
+\begin{longtable}{ p{3.5cm} p{3.5cm} p{5cm}}
+	% ---------------------------------------------------
+	model & distribution & required parameters (\texttt{kwargs}, with default values)\\
+	% ---------------------------------------------------
+	\texttt{zipf} & Zipf & \texttt{a=1.821} \citep{chang2004} (parameter $a$ of the Zipf distribution)\\
+	% ---------------------------------------------------
+	\texttt{negative\_binomial} & negative binomial & \texttt{r=1.0} and \texttt{q=0.5} (parameters $r$ and $q$ of the negative binomial distribution)\\
+	% ---------------------------------------------------
+\end{longtable}
 }
 \vspace{3mm}
 
@@ -580,8 +580,132 @@ indel_model = IndelModel(0.01, 0.008, length_model='zipf', a=2.0)
 
 \subsubsection{Heterogeneity Model}
 
+Selective pressure usually varies among the sites of a sequence under evolution.
+To model this, rate factors $r$ for single sites or groups of sites are commonly drawn from a Gamma distribution (`$+\Gamma$') with mean 1 and parameter $\alpha$ \citep{cartwright2005,fletcher2009,dalquen2012}.
+The rate matrix $rQ$ is then used instead of $Q$.
+Note that smaller values for $\alpha$ correspond to higher heterogeneity.
+
+AsymmeTree supports two modes of the `$+\Gamma$'-model.
+You can specify a number of classes to which the sites are assigned randomly and uniformly distributed.
+Sites of the same class share a common factor $r$.
+The other possibility is a sitewise heterogeneity, i.e., every site has its own rate.
+In both cases, the rate or class membership is inherited from the parent sites during the evolution along a tree.
+Note that the sitewise mode is expected to have a longer running time.
+
+An other aspect of among site heterogeneity is the modeling of invariant sites (`$+I$'), i.e., sites that never mutate at all as a result of very strong selective pressure.
+The (expected) proportion $p$ of invariant sites can be specified by the user, and sites are assigned as \texttt{"invariant"} with probability $p$.
+Note that $p>0$ affects the overall substitution rate.
+In other words, the rates of the non-invariant sites are \textbf{not} adjusted to compensate the decreased number of expected substitution over all sites.
+
+To summarize, the following parameters are available for the class \texttt{HetModel} (keyword arguments are indicated by their default value):
+
+\vspace{3mm}
+{\small\centering
+\begin{longtable}{ p{4.5cm} p{9cm} }
+	\texttt{alpha} & parameter $\alpha$ of the Gamma distribution\\
+	\texttt{classes=5} & number of classes; sites in the same class share the same rate factor\\
+	\texttt{sitewise=False} & if \texttt{True}, factors are drawn sitewise; the number of classes is ignored in this case\\
+	\texttt{invariant=0.0} & (expected) proportion $p$ of invariant sites\\
+\end{longtable}
+}
+\vspace{3mm}
+
+Note that the `$+I$'-model can be used without the `$+\Gamma$'-model by setting \texttt{classes=1} (the single class will have a factor of 1) and \texttt{invariant} to some proportion greater than~0.
+Example usage:
+
+\begin{adjustwidth}{1cm}{1cm}\vspace{2mm}
+\begin{minted}[fontsize=\footnotesize]{python}
+from asymmetree.seqevolve import HetModel
+
+# +G
+het_model_g  = HetModel(1.5, classes=10)
+
+# +G +I
+het_model_gi = HetModel(2.0, sitewise=True, invariant=0.2)
+
+# +I (value of alpha is irrelevant)
+het_model_i  = HetModel(1.0, classes=1, invariant=0.25)
+\end{minted}
+\end{adjustwidth}
 
 
+\subsubsection{The Class \texttt{Evolver}}
+
+The class \texttt{Evolver} evolves a sequence according to the specified models (see previous sections) along a phylogenetic tree.
+In AsymmeTree, the \textbf{\texttt{dist}} attribute of the vertex $v$ in an edge $uv$ of the tree ($u$ is closer to the root) is always used as the \textbf{expected number of substitutions} along this edge.
+Thus, PAM distances as e.g.\ used optionally in \citep{dalquen2012} are not supported.
+The \texttt{dist} attribute is also used as the duration of the Markov process in which insertions and deletions are drawn.
+
+The following parameters are available for the initialization of an \texttt{Evolver} instance (keyword arguments are indicated by their default value):
+
+\vspace{3mm}
+{\small\centering
+	\begin{longtable}{ p{4.5cm} p{9cm} }
+		\texttt{subst\_model} & substitution model; instance of \texttt{SubstModel}\\
+		\texttt{indel\_model=None} & model for insertions and deletions; instance of \texttt{IndelModel}\\
+		\texttt{het\_model=None} & model for among site heterogeneity and invariant sites; instance of \texttt{HetModel}\\
+		\texttt{jump\_chain=False} & if \texttt{True}, an alternative Gillespie-like \citep{gillespie1976} algorithm is applied for the substitution process instead of the computation of $P=e^{Qt}$ \\
+	\end{longtable}
+}
+\vspace{3mm}
+
+Once the \texttt{Evolver} is initialized, its function \texttt{evolve\_along\_tree()} can be called to evolve a sequence along a tree.
+The following parameters are available for this function (keyword arguments are indicated by their default value):
+
+\vspace{3mm}
+{\small\centering
+	\begin{longtable}{ p{4.5cm} p{9cm} }
+		\texttt{tree} & phylogenetic tree; instance of \texttt{PhyloTree}\\
+		\texttt{start\_length=200} & length of the root sequence which is randomly drawn from the equilibrium frequencies in the specified substitution model\\
+		\texttt{start\_seq=None} & root sequence (\texttt{str}); must be compatible with the specified substitution model (\texttt{model\_type="n"/"a"}); if supplied, the \texttt{start\_length} attribute is ignored\\
+	\end{longtable}
+}
+\vspace{3mm}
+
+\noindent
+The sequences of a simulation run are returned by this function (and also available via the attribute \texttt{sequences} as long as the function has not been called again), which is a \texttt{dict} containing the nodes (inner and leaf nodes) as keys and instances of type \texttt{EvoSeq} as values.
+The latter can be converted into \texttt{str} using \texttt{subst\_model.to\_sequence(evo\_seq)}.
+
+The function \texttt{true\_alignment()} can be used to compute (and optionally write into a file) the `true' alignment of a simulation run.
+The following keyword parameters are available:
+
+\vspace{3mm}
+{\small\centering
+	\begin{longtable}{ p{4.5cm} p{9cm} }
+		\texttt{include\_inner=True} & if \texttt{True}, include also inner nodes in the alignment; otherwise only sequences of leaf nodes are aligned\\
+		\texttt{write\_to=None} & path and filename for the output\\
+		\texttt{alignment\_format=\newline "phylip"} & format of the alignment file; available are \texttt{"phylip"}, \texttt{"clustal"} and \texttt{"pretty"}\\
+	\end{longtable}
+}
+\vspace{3mm}
+
+Example usage of the class \texttt{Evolver}:
+
+\begin{adjustwidth}{1cm}{1cm}\vspace{2mm}
+\begin{minted}[fontsize=\footnotesize]{python}
+from asymmetree.seqevolve import Evolver, SubstModel, IndelModel, HetModel
+
+# specify models (only 'SubstModel' is mandatory)
+subst_model = SubstModel('a', 'WAG')
+indel_model = IndelModel(0.01, 0.01, length_model='zipf')
+het_model  = HetModel(2.0, classes=7, invariant=0.1)
+
+# evolve sequences along a phylogenetic tree 'tree'
+evolver = Evolver(subst_model, indel_model=indel_model, het_model=het_model)
+evolver.evolve_along_tree(tree, start_length=150)
+
+# print resulting sequences
+for node, evo_seq in evolver.sequences.items():
+    print(node.label, subst_model.to_sequence(evo_seq))
+
+# output true alignment
+evolver.true_alignment(write_to='path/to/alignment.phylip',
+                       alignment_format='phylip')
+\end{minted}
+\end{adjustwidth}
+
+
+\subsection{Simulation of Genomes}
 
 
 \subsection{Best Match Inference}

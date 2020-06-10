@@ -28,9 +28,9 @@ class Evolver:
             self._jump_chain = False
         
     
-    def evolve_along_tree(self, T, start_length=200, start_seq=None):
+    def evolve_along_tree(self, tree, start_length=200, start_seq=None):
         
-        self.T = T
+        self.tree = tree
         self.site_counter = 0
         self.sequences = {}
         
@@ -42,12 +42,14 @@ class Evolver:
         if self.het_model:
             self.het_model.assign(root_seq)
         
-        for v in T.preorder():
+        for v in tree.preorder():
             
             if v.parent is None:
                 self.sequences[v] = root_seq
             else:
                 self.sequences[v] = self._evolve(self.sequences[v.parent], v.dist)
+                
+        return self.sequences
           
             
     def _random_positions(self, n):
@@ -99,7 +101,7 @@ class Evolver:
     def true_alignment(self, include_inner=True, write_to=None,
                        alignment_format='phylip'):
         
-        alg_builder = AlignmentBuilder(self.T, self.sequences,
+        alg_builder = AlignmentBuilder(self.tree, self.sequences,
                                        self.subst_model.alphabet,
                                        include_inner=include_inner)
         
