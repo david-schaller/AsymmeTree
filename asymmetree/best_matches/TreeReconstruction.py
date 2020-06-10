@@ -2,7 +2,7 @@
 
 import os, subprocess, itertools, time
 
-from asymmetree.best_matches.TrueBMG import BMG_from_tree
+from asymmetree.best_matches.TrueBMG import bmg_from_tree
 from asymmetree.file_io.ScenarioFileIO import matrix_to_phylip
 from asymmetree import PhyloTree, PhyloTreeNode
 
@@ -15,20 +15,20 @@ __author__ = 'David Schaller'
 #
 # --------------------------------------------------------------------------
 
-def BMG_by_tree_reconstruction(scenario, matrix_filename,
-                               supply_RBMG=True, return_calltime=False):
+def bmg_by_tree_reconstruction(scenario, matrix_filename,
+                               supply_rbmg=True, return_calltime=False):
     
     if return_calltime:
         start_time = time.time()
     
     nj_tree = neighbor_joining(scenario.genes, scenario.gene_index, matrix_filename)
     midpoint_rooting(nj_tree)
-    BMG, RBMG = BMG_from_tree(nj_tree, supply_RBMG=supply_RBMG)
+    bmg, rbmg = bmg_from_tree(nj_tree, supply_rbmg=supply_rbmg)
     
     if return_calltime:
-        return BMG, RBMG, time.time() - start_time
+        return bmg, rbmg, time.time() - start_time
     else:
-        return BMG, RBMG
+        return bmg, rbmg
         
         
 

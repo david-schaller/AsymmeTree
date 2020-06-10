@@ -140,7 +140,9 @@ class Cotree(Tree.Tree):
         
         while leaf_count < N_leaves:
             node = random.choice(node_list)
-            if not node.children:                       # avoid nodes with outdegree 1
+            
+            # avoid nodes with outdegree 1
+            if not node.children:
                 new_child1 = CotreeNode(nr)
                 new_child2 = CotreeNode(nr+1)
                 node.add_child(new_child1)
@@ -148,14 +150,17 @@ class Cotree(Tree.Tree):
                 node_list.extend(node.children)
                 nr += 2
                 leaf_count += 1
-            elif node.children:                         # add only one child if there are already children
+                
+            # add only one child if there are already children
+            elif node.children:
                 new_child = CotreeNode(nr)
                 node.add_child(new_child)
                 node_list.append(new_child)
                 nr += 1
                 leaf_count += 1
-                
-        for v in cotree.preorder():                     # assign labels ('series', 'parallel', 'leaf')
+        
+        # assign labels ('series', 'parallel', 'leaf')
+        for v in cotree.preorder():
             if not v.children:
                 v.label == 'leaf'
             elif v.parent is None:

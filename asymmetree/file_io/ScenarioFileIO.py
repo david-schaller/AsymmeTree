@@ -73,12 +73,12 @@ def species_in_subtree(filename, scenario):
                 f.write("\t".join([str(item) for item in sp_list]))
 
 
-def subtree_BMG(filename, scenario):
+def subtree_bmg(filename, scenario):
     """Write the (subgraph of) BMG."""
     
     with open(filename, "w") as f:
         begin = True
-        for u, v in scenario.BMG_subtrees.edges:
+        for u, v in scenario.bmg_subtrees.edges:
             if begin:
                 f.write(str(u) + "\t" + str(v))
                 begin = False
@@ -86,13 +86,13 @@ def subtree_BMG(filename, scenario):
                 f.write("\n" + str(u) + "\t" + str(v))
 
 
-def parse_BMG_edges(output, scenario):
+def parse_bmg_edges(output, scenario):
     """Parse edge output from external program to a graph
     
     (converts keys to ints if possible)."""
     
-    BMG = nx.DiGraph()
-    BMG.add_nodes_from(scenario.BMG.nodes(data=True))
+    bmg = nx.DiGraph()
+    bmg.add_nodes_from(scenario.bmg.nodes(data=True))
     
     for line in output.split("\n"):
         if line:
@@ -100,13 +100,13 @@ def parse_BMG_edges(output, scenario):
             if len(edge) >= 2:
                 u = int(edge[0]) if edge[0].isdigit() else edge[0]
                 v = int(edge[1]) if edge[1].isdigit() else edge[1]
-                if v not in BMG.nodes:
+                if v not in bmg.nodes:
                     print("Not in BMG", v)
-                if u not in BMG.nodes:
+                if u not in bmg.nodes:
                     print("Not in BMG", u)
-                BMG.add_edge(u, v)
+                bmg.add_edge(u, v)
                 
-    return BMG          
+    return bmg
 
 
 def write_newick(filename, tree):
@@ -165,11 +165,11 @@ if __name__ == "__main__":
     # write species in root subtrees
     species_in_subtree(subtrees_file, scenario)
     # write the BMG
-    subtree_BMG(bmg_file, scenario)
+    subtree_bmg(bmg_file, scenario)
     # write species tree to newick format
     write_newick(tree_file, S)
     
     # test reading input
     with open(bmg_file, "r") as f:
-        BMG = parse_BMG_edges(f.read(), scenario)
-        #print(BMG.edges)
+        bmg = parse_bmg_edges(f.read(), scenario)
+        #print(bmg.edges)

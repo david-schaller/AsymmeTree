@@ -33,9 +33,9 @@ class Scenario:
         self._sort_genes_to_species()
         
         self.TOG = TrueBMG.orthology_from_tree(self.OGT)
-        self.BMG, self.RBMG = TrueBMG.BMG_from_tree(self.OGT, supply_RBMG=True)
+        self.bmg, self.rbmg = TrueBMG.bmg_from_tree(self.OGT, supply_rbmg=True)
         
-        self.BMG_subtrees, self.RBMG_subtrees = self.reduce_to_subtrees(self.BMG, self.RBMG)
+        self.bmg_subtrees, self.rbmg_subtrees = self.reduce_to_subtrees(self.bmg, self.rbmg)
     
     
     def _count_events(self):
@@ -93,15 +93,15 @@ class Scenario:
         return list(self.DLH_rates) + self.event_counts
     
     
-    def reduce_to_subtrees(self, full_BMG, full_RBMG):
+    def reduce_to_subtrees(self, full_bmg, full_rbmg):
         """Return a subgraph of the true RBMG with edges {u,v} for which the
         corresponding species (colors) are in the same subtree of root(S)."""
         
-        BMG_subtrees = nx.DiGraph()
-        RBMG_subtrees = nx.Graph()
+        bmg_subtrees = nx.DiGraph()
+        rbmg_subtrees = nx.Graph()
         
-        for G_subtrees, true_G in [(BMG_subtrees, full_BMG),
-                                   (RBMG_subtrees, full_RBMG)]:
+        for G_subtrees, true_G in [(bmg_subtrees, full_bmg),
+                                   (rbmg_subtrees, full_rbmg)]:
             G_subtrees.add_nodes_from(true_G.nodes(data=True))
             for u, v in true_G.edges:
                 u_col = true_G.nodes[u]['color']
@@ -110,7 +110,7 @@ class Scenario:
                 if self.subtree_index[u_col] == self.subtree_index[v_col]:
                     G_subtrees.add_edge(u, v)
         
-        return BMG_subtrees, RBMG_subtrees
+        return bmg_subtrees, rbmg_subtrees
     
     
     def get_distance_matrix(self):
@@ -120,7 +120,7 @@ class Scenario:
         return D
     
     
-    def possible_edges_BMG(self):
+    def possible_edges_bmg(self):
         """Return the number of possible edges in the BMG i.e. for gene pairs for
         which an outgroup is available in S."""
         

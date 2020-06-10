@@ -30,41 +30,41 @@ class ComparisonAnalysis:
         ScenarioFileIO.write_newick(tree_filename, self.scenario.S)
         
         # ---- true BMG, RBMG (based on l.c.a.) ----
-        BMG, RBMG = self.scenario.BMG_subtrees, self.scenario.RBMG_subtrees
-        self.possible_edges_BMG = self.scenario.possible_edges_BMG()
+        bmg, rbmg = self.scenario.bmg_subtrees, self.scenario.rbmg_subtrees
+        self.possible_edges_bmg = self.scenario.possible_edges_bmg()
         
         # ---- epsilon method ----
-        BMG_eps, RBMG_eps, self.time_eps = bm.ebh_qinfer(
+        bmg_eps, rbmg_eps, self.time_eps = bm.ebh_qinfer(
                                               self.scenario, matrix_filename,
                                               species_filename, self.epsilon)
-        BMG_eps, RBMG_eps = self.scenario.reduce_to_subtrees(BMG_eps, RBMG_eps)
-        self.BMG_eps_stats = GraphTools.performance(BMG, BMG_eps)
-        self.RBMG_eps_stats = GraphTools.performance(RBMG, RBMG_eps)
+        bmg_eps, rbmg_eps = self.scenario.reduce_to_subtrees(bmg_eps, rbmg_eps)
+        self.bmg_eps_stats = GraphTools.performance(bmg, bmg_eps)
+        self.rbmg_eps_stats = GraphTools.performance(rbmg, rbmg_eps)
         
         # ---- neighbor-joining + midpoint rooting ----
-        BMG_nj, RBMG_nj, self.time_nj = bm.BMG_by_tree_reconstruction(
+        bmg_nj, rbmg_nj, self.time_nj = bm.bmg_by_tree_reconstruction(
                                             self.scenario, matrix_filename,
-                                            supply_RBMG=True,
+                                            supply_rbmg=True,
                                             return_calltime=True)
-        BMG_nj, RBMG_nj = self.scenario.reduce_to_subtrees(BMG_nj, RBMG_nj)
-        self.BMG_nj_stats = GraphTools.performance(BMG, BMG_nj)
-        self.RBMG_nj_stats = GraphTools.performance(RBMG, RBMG_nj)
+        bmg_nj, rbmg_nj = self.scenario.reduce_to_subtrees(bmg_nj, rbmg_nj)
+        self.bmg_nj_stats = GraphTools.performance(bmg, bmg_nj)
+        self.rbmg_nj_stats = GraphTools.performance(rbmg, rbmg_nj)
         
         # ---- quartet method (root subtree outgroups)----
-        BMG_qd, RBMG_qd, self.time_qd = bm.quartet_qinfer(
+        bmg_qd, rbmg_qd, self.time_qd = bm.quartet_qinfer(
                                             self.scenario, matrix_filename,
                                             species_filename, tree_filename)
-        self.BMG_qd_stats = GraphTools.performance(BMG, BMG_qd)
-        self.RBMG_qd_stats = GraphTools.performance(RBMG, RBMG_qd)
+        self.bmg_qd_stats = GraphTools.performance(bmg, bmg_qd)
+        self.rbmg_qd_stats = GraphTools.performance(rbmg, rbmg_qd)
         
         # ---- quartet method (all outgroups)----
-        BMG_qd2, RBMG_qd2, self.time_qd2 = bm.quartet_qinfer(
+        bmg_qd2, rbmg_qd2, self.time_qd2 = bm.quartet_qinfer(
                                                self.scenario, matrix_filename,
                                                species_filename, tree_filename,
                                                closest_outgroups=True,
                                                incongruence_threshold=0.2)
-        self.BMG_qd2_stats = GraphTools.performance(BMG, BMG_qd2)
-        self.RBMG_qd2_stats = GraphTools.performance(RBMG, RBMG_qd2)
+        self.bmg_qd2_stats = GraphTools.performance(bmg, bmg_qd2)
+        self.rbmg_qd2_stats = GraphTools.performance(rbmg, rbmg_qd2)
         
         os.remove(matrix_filename)
         os.remove(species_filename)
@@ -74,13 +74,13 @@ class ComparisonAnalysis:
     def summary_line(self):
         data = [*self.scenario.rates_and_counts(),
                 self.epsilon,
-                self.scenario.BMG_subtrees.size(),
-                self.scenario.RBMG_subtrees.size(),
-                self.possible_edges_BMG,
-                *self.BMG_eps_stats, *self.RBMG_eps_stats,
-                *self.BMG_nj_stats, *self.RBMG_nj_stats,
-                *self.BMG_qd_stats, *self.RBMG_qd_stats,
-                *self.BMG_qd2_stats, *self.RBMG_qd2_stats,
+                self.scenario.bmg_subtrees.size(),
+                self.scenario.rbmg_subtrees.size(),
+                self.possible_edges_bmg,
+                *self.bmg_eps_stats, *self.rbmg_eps_stats,
+                *self.bmg_nj_stats, *self.rbmg_nj_stats,
+                *self.bmg_qd_stats, *self.rbmg_qd_stats,
+                *self.bmg_qd2_stats, *self.rbmg_qd2_stats,
                 self.time_eps, self.time_nj, self.time_qd, self.time_qd2]
         
         line = '{}' + (len(data)-1) * '\t{}'

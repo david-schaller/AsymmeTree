@@ -42,16 +42,16 @@ def orthology_from_tree(tree):
     return TOG
 
 
-def BMG_from_tree(tree, supply_RBMG=False):
+def bmg_from_tree(tree, supply_rbmg=False):
     """Create an n-colored BMG (and optionally RBMG) from a given tree."""
     
     tree.supply_leaves()                                # assign list of leaves to each node
-    BMG = nx.DiGraph()
+    bmg = nx.DiGraph()
     colors = set()
     
     for v in tree.root.leaves:
         colors.add(v.color)
-        BMG.add_node(v.ID, label=v.label, color=v.color)
+        bmg.add_node(v.ID, label=v.label, color=v.color)
     
     for u in tree.root.leaves:
         remaining = colors - set([u.color])             # colors to which no best match has yet been found
@@ -61,11 +61,11 @@ def BMG_from_tree(tree, supply_RBMG=False):
             for v in parent.leaves:
                 if v.color in remaining:                # best match found
                     colors_here.add(v.color)
-                    BMG.add_edge(u.ID, v.ID)            # insert edge (u,v)
+                    bmg.add_edge(u.ID, v.ID)            # insert edge (u,v)
             remaining -= colors_here                    # update remaining colors
             parent = parent.parent
     
-    if not supply_RBMG:
-        return BMG
+    if not supply_rbmg:
+        return bmg
     else:
-        return BMG, symmetric_part(BMG)
+        return bmg, symmetric_part(bmg)

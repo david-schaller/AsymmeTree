@@ -64,11 +64,11 @@ qu = Quartets(scenario, D, voting_mode='majority',      # inititialize 'Quartets
 qu.build_graphs()                                       # build BMG
 
 print('no. of edges in the true graph:',
-      scenario.BMG_subtrees.size())
+      scenario.bmg_subtrees.size())
 
 print('no. of edges in inferred graph:',
-      qu.BMG.size())
+      qu.bmg.size())
 
-for e in scenario.BMG_subtrees.edges:                # print missing edges
-    if not qu.BMG.has_edge(*e):
+for e in scenario.bmg_subtrees.edges:                # print missing edges
+    if not qu.bmg.has_edge(*e):
         print('edge {} is missing'.format(e))

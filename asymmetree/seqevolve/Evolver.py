@@ -13,7 +13,10 @@ __author__ = 'David Schaller'
 
 class Evolver:
     
-    def __init__(self, subst_model, indel_model=None, het_model=None, jump_chain=False):
+    def __init__(self, subst_model,
+                 indel_model=None, het_model=None,
+                 jump_chain=False,
+                 **kwargs):
         
         self.subst_model = subst_model
         

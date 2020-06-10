@@ -369,6 +369,7 @@ ogt = ts.observable_tree(tree)
 
 
 \subsubsection{Assignment of Variable Evolution Rates}
+\label{sec:evolution_rates}
 
 The module \texttt{EvolutionRates} contains functions to model realistic (asymmetric) evolution rates for a given gene tree.
 Moreover, correlation of the evolution rates between genes of the same (and closely related) species is introduced (autocorrelation, \citep{kishino2001}).
@@ -459,7 +460,7 @@ The following parameters are available (keyword arguments are indicated by their
 Alternatively, the function \texttt{convex\_linear\_comb(D1, D2)} can be used to simulate systematically biased noise by computing a linear convex combination with a disturbance matrix.
 The function thus takes two distance matrices (\texttt{numpy} arrays) not necessarily of the same size as input and disturbs them with one another.
 The contribution of the respective disturbance matrix is controlled by the keyword parameter \texttt{alpha} (default is \texttt{0.5}).
-If the keyword parameter \texttt{first\_only} is specified as \texttt{True}, only the first disturbed matrix is returned.
+If the keyword parameter \texttt{first\_only} is \texttt{True}, only the first disturbed matrix is returned.
 Otherwise, both are returned in a tuple.
 
 
@@ -707,6 +708,71 @@ evolver.true_alignment(write_to='path/to/alignment.phylip',
 
 \subsection{Simulation of Genomes}
 
+The class \texttt{GenomeSimulator} combines multiple steps described in the previous section in order to conveniently simulate whole genomes/proteomes.
+An instance of this class is initialized with a species tree (of type \texttt{PhyloTree}), and optionally the path to an output directory (\texttt{outdir=...}) if the user wants to save the results.
+The gene trees and the sequences are simulated in subsequent steps using the classes' function
+\begin{enumerate}[label=(\roman*)]
+	\item \texttt{simulate\_gene\_trees(N, **kwargs)}, and
+	\item \texttt{simulate\_sequences(subst\_model, **kwargs)}.
+\end{enumerate}
+
+\noindent
+The first step (i) takes the same keyword parameters as input as the function \texttt{simulate\_ gene\_trees()} in Section~\ref{sec:evolution_rates}, where \texttt{N} is the number of gene families to be simulated.
+Thus, rates for the three event types (\texttt{DLH\_rates}), autocorrelation (\texttt{autocorr\_variance}), the distribution of base rates (\texttt{base\_rate\_distr}) etc.\ can be specified. 
+
+The second step (ii) simulates the sequences along the observable part (without loss branches) of the simulated gene trees.
+The function takes the following parameters as input (keyword arguments are indicated by their default value):
+
+\vspace{3mm}
+{\small\centering
+\begin{longtable}{ p{4.5cm} p{9cm} }
+	\texttt{subst\_model} & substitution model; instance of \texttt{SubstModel}\\
+	\texttt{indel\_model=None} & model for insertions and deletions; instance of \texttt{IndelModel}\\
+	\texttt{het\_model=None} & model for among site heterogeneity and invariant sites; instance of \texttt{HetModel}\\
+	\texttt{root\_genome=None} & list of sequences for the roots of the gene trees; must contain the same number of \texttt{str} sequences as trees were simulated in step (i) i.e.\ \texttt{N};
+	sequences must be compatible with the specified substitution model (\texttt{model\_type="n"/"a"})\\
+	\texttt{length\_distr=\newline ("constant", 200)} & distribution of the length of the root sequences if \texttt{root\_genome} is not supplied; available are \texttt{("constant", n)}, \texttt{("gamma", shape, scale)} and \texttt{("gamma\_mean", mean)}, for the latter the shape parameter $k=1$\\
+	\texttt{min\_length=10} & minimal length at which the distribution of lengths is truncated; must be less than the mean of this distribution\\
+	\texttt{write\_fastas=True} & if \texttt{True} and an output directory was specified, write the \textbf{sequences} (one file \textbf{per species}) into the directory \texttt{fasta\_files} in the output directory\\
+	\texttt{write\_alignments=True} & if \texttt{True} and an output directory was specified, write the \textbf{true alignments} (one file \textbf{per gene tree}) into the directory \texttt{alignments} in the output directory\\
+\end{longtable}
+}
+\vspace{3mm}
+
+After step (i), the \texttt{list}s of full and observable gene trees are accessible via the attributes \texttt{true\_gene\_trees} and \texttt{observable\_gene\_trees}, respectively.
+Moreover, the full gene trees are serialized into the directory \texttt{true\_gene\_trees} if an output directory was specified.
+After step (ii), the \texttt{list}s of sequence \texttt{dict}ionaries are accessible via the attribute \texttt{sequence\_dicts}.
+
+Example usage:
+
+\begin{adjustwidth}{1cm}{1cm}\vspace{2mm}
+\begin{minted}[fontsize=\footnotesize]{python}
+from asymmetree.genome import GenomeSimulator
+from asymmetree.treeevolve import simulate_species_tree
+from asymmetree.seqevolve import SubstModel, IndelModel
+
+# simulate a species tree
+species_tree = simulate_species_tree(10, model="yule")
+
+# specify models (heterogeneity omitted)
+subst_model = SubstModel('n', 'JC69')
+indel_model = IndelModel(0.015, 0.012)
+
+# simulate 50 gene families incl. sequences
+gs = GenomeSimulator(species_tree, outdir='path/to/genome_directory')
+gs.simulate_gene_trees(50, DLH_rates=(1.0, 0.5, 0.0),
+                       base_rate_distr=('gamma', 1.0, 1.0),
+                       prohibit_extinction='per_species')
+gs.simulate_sequences(subst_model,
+                      indel_model=indel_model,
+                      length_distr=('constant', 200))
+                      
+# results have been written to directories 'true_gene_trees',
+# 'fasta_files' and 'alignments' in 'path/to/genome_directory'
+\end{minted}
+\end{adjustwidth}
+
+
 
 \subsection{Best Match Inference}
 
@@ -716,17 +782,17 @@ Orthology and reciprocal best matches are closely related~\citep{geiss2020c}.
 
 The subpackage \texttt{asymmetree.best\_matches} contains functions to compute both relations from a given gene tree or to estimate them from distance data on a set of genes~\citep{stadler2020}.
 If the true (observable) gene tree is known (as e.g.\ the case in simulations), best matches and orthologs can be computed using the module \texttt{TrueBMG}.
-The functions \texttt{BMG\_from\_tree()} and \texttt{orthology\_from\_tree()} return the respective graph representation as NetworkX (Di)Graphs:
+The functions \texttt{bmg\_from\_tree()} and \texttt{orthology\_from\_tree()} return the respective graph representation as NetworkX (Di)Graphs:
 
 \begin{adjustwidth}{1cm}{1cm}\vspace{2mm}
 \begin{minted}[fontsize=\footnotesize]{python}
-from asymmetree.best_matches import orthology_from_tree, BMG_from_tree
+from asymmetree.best_matches import orthology_from_tree, bmg_from_tree
 
 # tree is an observable gene tree
 orthology_graph = orthology_from_tree(tree)
 
 # Best Match Graph and Reciprocal Best Match Graph as a tuple
-bmg, rbmg = BMG_from_tree(tree, supply_RBMG=True)
+bmg, rbmg = bmg_from_tree(tree, supply_rbmg=True)
 \end{minted}
 \end{adjustwidth}
 
@@ -783,11 +849,16 @@ The subpackages \texttt{asymmetree.cograph} and \texttt{asymmetree.proteinortho}
 The latter is a reimplementation of \href{http://pacosy.informatik.uni-leipzig.de/208-0-ParaPhylo.html}{ParaPhylo} \citep{hellmuth2015} which uses heuristics for the NP-hard steps instead of exact ILP solutions.
 For cograph editing, the $\mathcal{O}(n^2)$ algorithm (where $n$ is the number of vertices in a connected graph) by \citet{crespelle2019} is applied.
 For the Maximum Consistent Triple Set problem, tree different heuristics are available:
-\begin{itemize}
-	\item \texttt{BPMF}: Best-Pair-Merge-First \citep{wu2004} (modified for weighted triples)
-	\item \texttt{MINCUT}: Aho's \texttt{BUILD} with weighted MinCut \citep{aho1981,byrka2010}
-	\item \texttt{GREEDY}: a greedy approch based on Aho's \texttt{BUILD}
-\end{itemize}
+
+\vspace{3mm}
+{\small\centering
+\begin{longtable}{ p{2.5cm} p{9cm} }
+	\texttt{BPMF} & Best-Pair-Merge-First \citep{wu2004} (modified for weighted triples)\\
+	\texttt{MINCUT} & Aho's \texttt{BUILD} with weighted MinCut \citep{aho1981,byrka2010}\\
+	\texttt{GREEDY} & a greedy approch based on Aho's \texttt{BUILD}\\
+\end{longtable}
+}
+\vspace{3mm}
 
 The class \texttt{TreeReconstructor} in the module \texttt{SpeciesTreeFromParalogs} computes a species tree after it is provides with one or more NetworkX graphs that represent (estimated) orthology relations.
 To this end, the nodes in these graph must have a \texttt{"color"} attribute, since these will be the leaf labels in the reconstructed species tree.

@@ -406,8 +406,8 @@ if __name__ == '__main__':
     #    ortho_graph = TrueBMG.orthology_from_tree(OGT)
     #    tr.add_ortho_graph(ortho_graph)
         
-        _, RBMG = TrueBMG.BMG_from_tree(OGT, supply_RBMG=True)
-        tr.add_ortho_graph(RBMG)
+        _, rbmg = TrueBMG.bmg_from_tree(OGT, supply_rbmg=True)
+        tr.add_ortho_graph(rbmg)
         
         
     S_estimate = tr.build_species_tree(mode='mincut')

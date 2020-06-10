@@ -184,11 +184,11 @@ class LRTConstructor:
     
     
     @staticmethod
-    def correct_BMG(BMG_original):
+    def correct_bmg(bmg_original):
         """Build the LRT (using Mincut in Aho algorithm and return its BMG and RBMG."""
         
         subtrees = []
-        for sg in (BMG_original.subgraph(c) for c in nx.weakly_connected_components(BMG_original)):
+        for sg in (bmg_original.subgraph(c) for c in nx.weakly_connected_components(bmg_original)):
             lrt_constructor = LRTConstructor(sg, mincut=True)
             tree = lrt_constructor.build_tree()
             if tree:
@@ -203,7 +203,7 @@ class LRTConstructor:
             for subtree in subtrees:
                 tree.root.add_child(subtree.root)
         
-        return TrueBMG.BMG_from_tree(tree)
+        return TrueBMG.bmg_from_tree(tree)
 
 
 class HelpGraph:
@@ -352,7 +352,7 @@ if __name__ == '__main__':
     T = PhyloTree.random_colored_tree(N, 2)
     print('--- T ---\n', T.to_newick())
     
-    bmg = TrueBMG.BMG_from_tree(T)
+    bmg = TrueBMG.bmg_from_tree(T)
     
     start_time1 = time.time()
     lrt_constr = LRTConstructor(bmg, mincut=False)
@@ -365,7 +365,7 @@ if __name__ == '__main__':
     print('--- LRT2 ---\n', LRT2.to_newick())
     print('LRTs equal: {}'.format( LRT1.compare_topology(LRT2) ))
     
-    bmg = TrueBMG.BMG_from_tree(T)
+    bmg = TrueBMG.bmg_from_tree(T)
     
     start_time2 = time.time()
     tc = TwoColoredLRT(bmg)

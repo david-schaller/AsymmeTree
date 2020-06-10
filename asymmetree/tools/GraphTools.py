@@ -168,51 +168,51 @@ def sort_by_colors(graph):
     return color_dict
             
 
-def classify_good_ugly(BMG, RBMG, fp):
+def classify_good_ugly(bmg, rbmg, fp):
     
     for x, y in fp.edges():
         fp.edges[x, y]['middle_in_good'] = False
         fp.edges[x, y]['first_in_ugly'] = False
         fp.edges[x, y]['first_in_bad'] = False
         
-    color_dict = sort_by_colors(BMG)
+    color_dict = sort_by_colors(bmg)
     
     for x, y in fp.edges():
         
         # middle edges of good quartets
         for c in color_dict:
             
-            if c == BMG.nodes[x]['color'] or c == BMG.nodes[y]['color']:
+            if c == bmg.nodes[x]['color'] or c == bmg.nodes[y]['color']:
                 continue
             
             for z1, z2 in itertools.permutations(color_dict[c], 2):
                 
-                if (RBMG.has_edge(z1, x) and RBMG.has_edge(z2, y) and
-                    BMG.has_edge(z1, y) and not BMG.has_edge(y, z1) and
-                    BMG.has_edge(z2, x) and not BMG.has_edge(x, z2)):
+                if (rbmg.has_edge(z1, x) and rbmg.has_edge(z2, y) and
+                    bmg.has_edge(z1, y) and not bmg.has_edge(y, z1) and
+                    bmg.has_edge(z2, x) and not bmg.has_edge(x, z2)):
                     
                     fp.edges[x, y]['middle_in_good'] = True
         
         # first edges of ugly/bad quartets          
         for _ in range(2):
             
-            for x2 in color_dict[BMG.nodes[x]['color']]:
+            for x2 in color_dict[bmg.nodes[x]['color']]:
                 if x == x2:
                     continue
                 
-                for z in RBMG.neighbors(x2):
+                for z in rbmg.neighbors(x2):
                     
-                    if (BMG.nodes[z]['color'] == BMG.nodes[x]['color'] or
-                        BMG.nodes[z]['color'] == BMG.nodes[y]['color']):
+                    if (bmg.nodes[z]['color'] == bmg.nodes[x]['color'] or
+                        bmg.nodes[z]['color'] == bmg.nodes[y]['color']):
                         continue
                     # first edges of ugly quartets
-                    if (RBMG.has_edge(y, x2) and not RBMG.has_edge(z, y) and
-                        not RBMG.has_edge(z, x)):
+                    if (rbmg.has_edge(y, x2) and not rbmg.has_edge(z, y) and
+                        not rbmg.has_edge(z, x)):
                         fp.edges[x, y]['first_in_ugly'] = True
                     
                     # first edges of bad quartets
-                    elif (not RBMG.has_edge(y, x2) and RBMG.has_edge(z, y) and
-                          not BMG.has_edge(x, z)):
+                    elif (not rbmg.has_edge(y, x2) and rbmg.has_edge(z, y) and
+                          not bmg.has_edge(x, z)):
                         fp.edges[x, y]['first_in_bad'] = True
             
             # swap for second iteration
@@ -221,9 +221,9 @@ def classify_good_ugly(BMG, RBMG, fp):
     return fp   
 
 
-def count_good_ugly(BMG, RBMG, fp):
+def count_good_ugly(bmg, rbmg, fp):
     
-    classify_good_ugly(BMG, RBMG, fp)
+    classify_good_ugly(bmg, rbmg, fp)
     
     good, ugly, both = 0, 0, 0
     
@@ -241,9 +241,9 @@ def count_good_ugly(BMG, RBMG, fp):
     return good, ugly, both
 
 
-def count_good_ugly_bad(BMG, RBMG, fp):
+def count_good_ugly_bad(bmg, rbmg, fp):
     
-    classify_good_ugly(BMG, RBMG, fp)
+    classify_good_ugly(bmg, rbmg, fp)
     
     gub, gu, gb, ub, g, u, b = 0, 0, 0, 0, 0, 0, 0
     
@@ -310,25 +310,25 @@ def find_all_P4(G):
     return P4_list
 
 
-def is_good_quartet(path, BMG):
-    """Determine whether an induced P4 is a good quartet in the BMG."""
-    if (BMG.has_edge(path[0], path[2]) and 
-        BMG.has_edge(path[3], path[1]) and
-        BMG.nodes[path[0]]['color'] == BMG.nodes[path[3]]['color']):
+def is_good_quartet(path, bmg):
+    """Determine whether an induced P4 is a good quartet in the bmg."""
+    if (bmg.has_edge(path[0], path[2]) and 
+        bmg.has_edge(path[3], path[1]) and
+        bmg.nodes[path[0]]['color'] == bmg.nodes[path[3]]['color']):
         return True
     else:
         return False
     
 
-def remove_all_P4(RBMG, BMG, P4_list=None):
+def remove_all_P4(rbmg, bmg, P4_list=None):
     """Find all good quartets and removes the middle edges."""
-    GP4 = RBMG.copy()
+    GP4 = rbmg.copy()
     
     if P4_list is None:
         P4_list = find_all_P4(GP4)
 
     for path in P4_list:
-        if is_good_quartet(path, BMG) and GP4.has_edge(path[1], path[2]):
+        if is_good_quartet(path, bmg) and GP4.has_edge(path[1], path[2]):
             GP4.remove_edge(path[1], path[2])
             print(path[1], "-|-", path[2])
     

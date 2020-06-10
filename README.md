@@ -86,9 +86,7 @@ If the true (observable) gene tree is known (as e.g. the case in simulations), b
 
 ### Supertree Computation
 
-Implementation of the BuildST algorithm described by Deng & Fernández-Baca (2016) to compute a supertree from a given list of tree based on the leaf labels. The algorithm uses the dynamic graph data structure described by Holm, de Lichtenberg and Thorup in 2001 (HDT algorithm). Subpackages:
-* `tools.BuildST`
-* `tools.hdtgraph.DynamicGraph`
+Implementation of the BuildST algorithm described by Deng & Fernández-Baca (2016) to compute a supertree from a given list of tree based on the leaf labels. The algorithm uses the dynamic graph data structure described by Holm, de Lichtenberg and Thorup in 2001 (HDT algorithm). The classes `HDTGraph` and `BuildST` can be imported from the subpackage `tools`.
 
 ### Cograph Editing and ParaPhylo
 

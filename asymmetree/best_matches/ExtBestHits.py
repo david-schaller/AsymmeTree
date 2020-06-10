@@ -9,7 +9,7 @@ Implementation of the Extended Best Hits method for best match inference.
 import os, subprocess, time
 import networkx as nx
 
-from asymmetree.file_io.ScenarioFileIO import parse_BMG_edges, matrix_to_phylip, species_to_genes
+from asymmetree.file_io.ScenarioFileIO import parse_bmg_edges, matrix_to_phylip, species_to_genes
 from asymmetree.tools.GraphTools import symmetric_part
 
 
@@ -30,13 +30,13 @@ def ebh(leaves, D, epsilon=1e-8):
                    default=1e-8 (for limited float precision).
     """
     
-    BMG, RBMG = nx.DiGraph(), nx.Graph()
+    bmg, rbmg = nx.DiGraph(), nx.Graph()
     colors = set()
     relative_threshold = 1 + epsilon
     
     for v in leaves:
-        BMG.add_node(v.ID, label=v.label, color=v.color)
-        RBMG.add_node(v.ID, label=v.label, color=v.color)
+        bmg.add_node(v.ID, label=v.label, color=v.color)
+        rbmg.add_node(v.ID, label=v.label, color=v.color)
         colors.add(v.color)
     
     # ---- build BMG ----
@@ -48,15 +48,9 @@ def ebh(leaves, D, epsilon=1e-8):
         for v in range(len(leaves)):
             if (leaves[u].color != leaves[v].color and
                 D[u,v] <= relative_threshold * minima[leaves[v].color]):
-                BMG.add_edge(leaves[u].ID, leaves[v].ID, distance = D[u,v])
+                bmg.add_edge(leaves[u].ID, leaves[v].ID, distance = D[u,v])
     
-    # ---- build RBMG as symmetric part of the BMG ----
-    for x, neighbors in BMG.adjacency():
-        for y in neighbors:
-            if BMG.has_edge(y,x):
-                RBMG.add_edge(x,y)
-    
-    return BMG, RBMG
+    return bmg, symmetric_part(bmg)
 
 
 # --------------------------------------------------------------------------
@@ -108,10 +102,9 @@ def ebh_qinfer(scenario,
     if output == -1:
         raise Exception("no output from qinfer")
     
-    BMG = parse_BMG_edges(output.stdout.decode(), scenario)
-    RBMG = symmetric_part(BMG)
+    bmg = parse_bmg_edges(output.stdout.decode(), scenario)
     
-    return BMG, RBMG, exec_time
+    return bmg, symmetric_part(bmg), exec_time
 
 
 def ebh_from_scenario(scenario, epsilon=0.5):
@@ -130,11 +123,11 @@ def ebh_from_scenario(scenario, epsilon=0.5):
     matrix_to_phylip(matrix_filename, scenario.genes, matrix)
     species_to_genes(species_filename, scenario)
     
-    BMG, RBMG, exec_time = ebh_qinfer(scenario,
+    bmg, rbmg, exec_time = ebh_qinfer(scenario,
                                       matrix_filename, species_filename,
                                       epsilon=epsilon)
     
     os.remove(matrix_filename)
     os.remove(species_filename)
     
-    return BMG, RBMG, exec_time
+    return bmg, rbmg, exec_time

@@ -10,7 +10,7 @@ import numpy as np
 import networkx as nx
 
 from asymmetree.tools.GraphTools import symmetric_part
-from asymmetree.file_io.ScenarioFileIO import parse_BMG_edges, matrix_to_phylip, species_to_genes, write_newick
+from asymmetree.file_io.ScenarioFileIO import parse_bmg_edges, matrix_to_phylip, species_to_genes, write_newick
 
 
 __author__ = 'David Schaller'
@@ -283,9 +283,9 @@ class Quartets:
         if self.use_distant_genes:
             self.build_matrix_I()  
         
-        self.BMG = nx.DiGraph()
+        self.bmg = nx.DiGraph()
         for g in self.genes:
-            self.BMG.add_node(g.ID, label=g.label, color=g.color)
+            self.bmg.add_node(g.ID, label=g.label, color=g.color)
         
         # consider all genes of other color as potential best matches
         if self.y_candidates is None:
@@ -298,11 +298,11 @@ class Quartets:
                     if species == x.color:
                         continue
                     elif len(Y) == 1:
-                        self.BMG.add_edge(x.ID, Y[0].ID)
+                        self.bmg.add_edge(x.ID, Y[0].ID)
                     elif len(Y) > 1:
                         best_matches = self.find_best_matches(x, Y, Z)
                         for y in best_matches:
-                            self.BMG.add_edge(x.ID, y.ID)
+                            self.bmg.add_edge(x.ID, y.ID)
                             
         # consider only a given subset as best matches
         else:
@@ -319,15 +319,15 @@ class Quartets:
                         j += 1
                     if self.subtree_index[x.color] == self.subtree_index[Y[i].color]:
                         if i == j-1:
-                            self.BMG.add_edge(x.ID, Y[i].ID)
+                            self.bmg.add_edge(x.ID, Y[i].ID)
                         else:
                             best_matches = self.find_best_matches(x, Y[i:j], Z)
                             for y in best_matches:
-                                self.BMG.add_edge(x.ID, y.ID)
+                                self.bmg.add_edge(x.ID, y.ID)
                     i = j
         
-        self.RBMG = symmetric_part(self.BMG)
-        return self.BMG, self.RBMG
+        self.rbmg = symmetric_part(self.bmg)
+        return self.bmg, self.rbmg
     
     
     def build_graphs_closest_outgroups(self):
@@ -336,9 +336,9 @@ class Quartets:
         self.compute_outgroup_species()
         self.build_matrix_I()
         
-        self.BMG = nx.DiGraph()
+        self.bmg = nx.DiGraph()
         for g in self.genes:
-            self.BMG.add_node(g.ID, label=g.label, color=g.color)
+            self.bmg.add_node(g.ID, label=g.label, color=g.color)
         
         # consider all genes of other color as potential best matches
         if self.y_candidates is None:
@@ -349,12 +349,12 @@ class Quartets:
                     if species == x.color:
                         continue
                     elif len(Y) == 1:
-                        self.BMG.add_edge(x.ID, Y[0].ID)
+                        self.bmg.add_edge(x.ID, Y[0].ID)
                     elif len(Y) > 1:
                         Z = self.get_outgroups_closest(x, Y[0].color)
                         best_matches = self.find_best_matches(x, Y, Z)
                         for y in best_matches:
-                            self.BMG.add_edge(x.ID, y.ID)
+                            self.bmg.add_edge(x.ID, y.ID)
                             
         # consider only a given subset as best matches
         else:
@@ -370,16 +370,16 @@ class Quartets:
                         j += 1
                     if self.subtree_index[x.color] == self.subtree_index[Y[i].color]:
                         if i == j-1:
-                            self.BMG.add_edge(x.ID, Y[i].ID)
+                            self.bmg.add_edge(x.ID, Y[i].ID)
                         else:
                             Z = self.get_outgroups_closest(x, Y[i].color)
                             best_matches = self.find_best_matches(x, Y[i:j], Z)
                             for y in best_matches:
-                                self.BMG.add_edge(x.ID, y.ID)
+                                self.bmg.add_edge(x.ID, y.ID)
                     i = j
                     
-        self.RBMG = symmetric_part(self.BMG)
-        return self.BMG, self.RBMG
+        self.rbmg = symmetric_part(self.bmg)
+        return self.bmg, self.rbmg
     
     
     def build_graphs(self):
@@ -450,10 +450,10 @@ def quartet_qinfer(scenario,
     if output == -1:
         raise Exception("no output from qinfer")
     
-    BMG = parse_BMG_edges(output.stdout.decode(), scenario)
-    RBMG = symmetric_part(BMG)
+    bmg = parse_bmg_edges(output.stdout.decode(), scenario)
+    rbmg = symmetric_part(bmg)
     
-    return BMG, RBMG, exec_time
+    return bmg, rbmg, exec_time
 
 
 def quartet_from_scenario(scenario, epsilon=-1,
@@ -483,7 +483,7 @@ def quartet_from_scenario(scenario, epsilon=-1,
     species_to_genes(species_filename, scenario)
     write_newick(tree_filename, scenario.S)
     
-    BMG, RBMG, exec_time = quartet_qinfer(scenario,
+    bmg, rbmg, exec_time = quartet_qinfer(scenario,
                                           matrix_filename, species_filename, tree_filename,
                                           epsilon=epsilon,
                                           closest_outgroups=closest_outgroups,
@@ -494,4 +494,4 @@ def quartet_from_scenario(scenario, epsilon=-1,
     os.remove(species_filename)
     os.remove(tree_filename)
     
-    return BMG, RBMG, exec_time
+    return bmg, rbmg, exec_time
