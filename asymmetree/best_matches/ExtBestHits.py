@@ -13,7 +13,7 @@ from asymmetree.file_io.ScenarioFileIO import parse_bmg_edges, matrix_to_phylip,
 from asymmetree.tools.GraphTools import symmetric_part
 
 
-__author__ = "David Schaller"
+__author__ = 'David Schaller'
 
 
 # --------------------------------------------------------------------------

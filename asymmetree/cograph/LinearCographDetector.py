@@ -305,28 +305,4 @@ class LinearCographDetector:
             w = u                       # rest w for next choice of marked vertex
         
         return u
-
-
-if __name__ == '__main__':
-    
-    import asymmetree.tools.GraphTools as gt
-    
-    cotree = Cotree.random_cotree(100)
-    print(cotree.to_newick())
-    cograph = cotree.to_cograph()
-    
-    cotree2 = linear_cograph_detection(cograph)
-    print('done')
-    if cotree2:
-        cograph2 = cotree2.to_cograph()
-        print(gt.graphs_equal(cograph, cograph2))
-    else:
-        print('Not a cograph!')
-        
-    cograph3 = gt.random_graph(10, p=0.5)
-    cotree3 = linear_cograph_detection(cograph3)
-    if cotree3:
-        print(cotree3.to_newick())
-    else:
-        print('Not a cograph!')
     

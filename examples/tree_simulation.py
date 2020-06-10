@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import asymmetree.treeevolve as te
-from asymmetree.best_matches import LRT_from_observable_tree,Quartets
+from asymmetree.best_matches import lrt_from_observable_tree, Quartets
 
 
 DLH_rates=(1.0, 1.0, 0.0)
@@ -42,9 +42,9 @@ print(OGT.to_newick())
 #                       LEAST RESOLVED TREE
 # --------------------------------------------------------------------------
 
-LRT = LRT_from_observable_tree(OGT)
+lrt = lrt_from_observable_tree(OGT)
 print('------------- LRT -------------')
-print(LRT.to_newick())
+print(lrt.to_newick())
 
 # --------------------------------------------------------------------------
 #                              SCENARIO

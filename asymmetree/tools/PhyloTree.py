@@ -11,7 +11,7 @@ import networkx as nx
 from asymmetree.tools.Tree import Tree, TreeNode
 
 
-__author__ = "David Schaller"
+__author__ = 'David Schaller'
 
 
 class PhyloTreeNode(TreeNode):
@@ -36,17 +36,17 @@ class PhyloTreeNode(TreeNode):
     
     def __repr__(self):
         
-        return "<PhyloTN: {}>".format(self.ID)
+        return '<PhyloTN: {}>'.format(self.ID)
     
     
     def __str__(self):
         
         if isinstance(self.color, (tuple, list)):
-            return "{}<{}-{}>:{}".format(self.label, *self.color, self.dist)
+            return '{}<{}-{}>:{}'.format(self.label, *self.color, self.dist)
         elif self.color:
-            return "{}<{}>:{}".format(self.label, self.color, self.dist)
+            return '{}<{}>:{}'.format(self.label, self.color, self.dist)
         else:
-            return "{}:{}".format(self.label, self.dist)
+            return '{}:{}'.format(self.label, self.dist)
         
     
     def is_loss(self):
@@ -286,7 +286,7 @@ class PhyloTree(Tree):
                 if label:
                     token += str(node.label)
                 if color and node.color:
-                    token += "<{}-{}>".format(*node.color) if isinstance(node.color, (tuple, list)) else "<{}>".format(node.color)
+                    token += '<{}-{}>'.format(*node.color) if isinstance(node.color, (tuple, list)) else '<{}>'.format(node.color)
                 if distance:
                     token += ":{}".format(node.dist)
                 return token
@@ -298,10 +298,10 @@ class PhyloTree(Tree):
                 if label and label_inner:
                     token += str(node.label)
                 if color_inner and node.color:
-                    token += "<{}-{}>".format(*node.color) if isinstance(node.color, (tuple, list)) else "<{}>".format(node.color)
+                    token += '<{}-{}>'.format(*node.color) if isinstance(node.color, (tuple, list)) else '<{}>'.format(node.color)
                 if distance:
-                    token += ":{}".format(node.dist)
-                return "({}){}".format(s[:-1], token)
+                    token += ':{}'.format(node.dist)
+                return '({}){}'.format(s[:-1], token)
         
         
         if self.root:
@@ -660,17 +660,6 @@ class PhyloTree(Tree):
                 node.color = random.choice(colors)
                 
         return tree
-    
-    
-    def _assert_integrity(self):
-        
-        for v in self.preorder():
-            for child in v.children:
-                if child is v:
-                    raise RuntimeError('loop at {}'.format(v))
-                if child.parent is not v:
-                    raise RuntimeError('PhyloTree invalid for '\
-                                       '{} and {}'.format(v, child))
    
      
 # --------------------------------------------------------------------------
@@ -714,29 +703,3 @@ def remove_planted_root(tree, inplace=True):
         tree.root = None
     
     return tree
-
-    
-if __name__ == '__main__':
-    
-    colors = ('s', 't', 'v', 'w')
-    N = 20
-    
-    t = PhyloTree.random_colored_tree(N, colors)
-    print('------------- Random tree test -------------')
-    print( t.to_newick() )
-    print('--------------------------------------------')
-    
-    t2 = PhyloTree.parse_newick(t.to_newick())
-    print( t2.to_newick() )
-    
-    nx_tree, nx_root = t.to_nx()
-    t3 = PhyloTree.parse_nx(nx_tree, nx_root)
-    print('--------------------------------------------')
-    print( t3.to_newick() )
-    
-    t.serialize('testfile_tree.json')
-    t.serialize('testfile_tree.pickle')
-    
-    t4 = PhyloTree.load('testfile_tree.json')
-    print('--------------------------------------------')
-    print( t4.to_newick() )

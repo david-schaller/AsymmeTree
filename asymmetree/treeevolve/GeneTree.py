@@ -16,7 +16,7 @@ from asymmetree.tools.PhyloTree import (PhyloTree, PhyloTreeNode,
                                         remove_planted_root)
 
 
-__author__ = "David Schaller"
+__author__ = 'David Schaller'
 
 
 # --------------------------------------------------------------------------

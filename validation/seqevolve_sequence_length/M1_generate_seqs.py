@@ -107,7 +107,7 @@ def calculate_distances(outfile):
             
         
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     
 #    simulate()
     

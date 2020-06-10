@@ -22,33 +22,33 @@ __author__ = 'David Schaller'
 #                      LRT FROM OBSERVABLE GENE TREE
 # --------------------------------------------------------------------------
 
-def LRT_from_observable_tree(T):
+def lrt_from_observable_tree(T):
     """Computes the Least Resolved Tree from a tree.
     
     The unique Least Resolved Tree from a leaf-colored (observable)
     gene tree is computed by contraction of all redundant edges.
     """
     
-    LRT = T.copy()
-    if not LRT.root:
-        return LRT
+    lrt = T.copy()
+    if not lrt.root:
+        return lrt
     
     # remove planted root if existent
-    LRT.remove_planted_root()
+    lrt.remove_planted_root()
     
     # assign list of leaves to each node
-    LRT.supply_leaves()
+    lrt.supply_leaves()
     
     subtree_colors = {}
-    for v in LRT.preorder():
+    for v in lrt.preorder():
         subtree_colors[v] = {leaf.color for leaf in v.leaves}
         
-    arc_colors = _arc_colors(LRT, subtree_colors)
-    redundant_edges = _redundant_edges(LRT, subtree_colors, arc_colors)
-    LRT.contract(redundant_edges)
-    LRT = LRT.topology_only()
+    arc_colors = _arc_colors(lrt, subtree_colors)
+    redundant_edges = _redundant_edges(lrt, subtree_colors, arc_colors)
+    lrt.contract(redundant_edges)
+    lrt = lrt.topology_only()
     
-    return LRT
+    return lrt
 
 
 def _arc_colors(T, subtree_colors):
@@ -356,24 +356,24 @@ if __name__ == '__main__':
     
     start_time1 = time.time()
     lrt_constr = LRTConstructor(bmg, mincut=False)
-    LRT1 = lrt_constr.build_tree()
+    lrt1 = lrt_constr.build_tree()
     end_time1 = time.time()
     
-    LRT2 = LRT_from_observable_tree(T)
+    lrt2 = lrt_from_observable_tree(T)
     
-    print('--- LRT1 ---\n', LRT1.to_newick())
-    print('--- LRT2 ---\n', LRT2.to_newick())
-    print('LRTs equal: {}'.format( LRT1.compare_topology(LRT2) ))
+    print('--- LRT1 ---\n', lrt1.to_newick())
+    print('--- LRT2 ---\n', lrt2.to_newick())
+    print('LRTs equal: {}'.format( lrt1.compare_topology(lrt2) ))
     
     bmg = TrueBMG.bmg_from_tree(T)
     
     start_time2 = time.time()
     tc = TwoColoredLRT(bmg)
-    LRT3 = tc.build()
+    lrt3 = tc.build()
     end_time2 = time.time()
     
-    LRT4 = LRT_from_observable_tree(T)
-    print('--- LRT3 ---\n', LRT3.to_newick())
-    print('--- LRT4 ---\n', LRT4.to_newick())
-    print('LRTs equal: {}'.format( LRT3.compare_topology(LRT4) ))
+    lrt4 = lrt_from_observable_tree(T)
+    print('--- LRT3 ---\n', lrt3.to_newick())
+    print('--- LRT4 ---\n', lrt4.to_newick())
+    print('LRTs equal: {}'.format( lrt3.compare_topology(lrt4) ))
     print(end_time1 - start_time1, end_time2 - start_time2)

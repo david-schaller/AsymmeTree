@@ -667,26 +667,3 @@ def _EBDP_age_forward(age, episodes):
         v.tstamp = age - v.tstamp
     
     return tree
-    
-
-
-if __name__ == '__main__':
-    
-    print('Yule ------------------------')
-    T = _yule(10, 1.0)
-    print(T.to_newick())
-    
-    print('EBDP ------------------------')
-    T2 = _EBDP(10, episodes=[(1.0, 0.3, 0.8, 0.0), (0.9, 0.4, 0.6, 0.3)])
-#    T2 = _EBDP(10, birth_rate=1, death_rate=0.5)
-    print(T2.to_newick())
-    
-    print('Yule age ------------------------')
-    T3 = _yule_age(2.0, 1.0)
-    print(T3.to_newick())
-    
-    print('EBDP age ------------------------')
-    T4 = _EBDP_age(2.0, episodes=[(1.0, 0.3, 0.8, 0.0), (0.9, 0.4, 0.6, 0.3)])
-#    T4 = _EBDP_age(2.0, birth_rate=1, death_rate=0.5)
-    print(T4.to_newick())
-    

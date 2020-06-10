@@ -17,7 +17,7 @@ class HetModel:
         self._alpha = alpha
         
         
-        if not isinstance(classes, float) or classes <= 0:
+        if not isinstance(classes, int) or classes <= 0:
             raise ValueError('number of classes must be an int >0')
         self.classes = classes
         

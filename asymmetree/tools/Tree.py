@@ -5,7 +5,7 @@ import itertools, random
 import asymmetree.tools.DoublyLinkedList as dll
 
 
-__author__ = "David Schaller"
+__author__ = 'David Schaller'
 
 
 class TreeNode:
@@ -15,8 +15,8 @@ class TreeNode:
     reference to the parent node.
     """
     
-    __slots__ = ['ID', 'label', 'parent', 'parent_dll_element',
-                 'children', 'leaves']
+    __slots__ = ('ID', 'label', 'parent', 'parent_dll_element',
+                 'children', 'leaves')
     
     
     def __init__(self, ID, label=""):
@@ -320,6 +320,19 @@ class Tree:
         return True
     
     
+    def _assert_integrity(self):
+        
+        for v in self.preorder():
+            for child in v.children:
+                if child is v:
+                    raise RuntimeError('loop at {}'.format(v))
+                if child.parent is not v:
+                    raise RuntimeError('Tree invalid for '\
+                                       '{} and {}'.format(v, child))
+        
+        return True
+    
+    
     @staticmethod
     def random_tree(N, binary=False):
         """Creates a random tree.
@@ -337,7 +350,6 @@ class Tree:
         root = TreeNode(0, label='0')
         tree = Tree(root)
         node_list = [root]
-        break_prob = [0.5, 0.5]
         nr, leaf_count = 1, 1
         
         while leaf_count < N:
@@ -354,14 +366,6 @@ class Tree:
                 leaf_count += 1
             elif node.children and not binary:
                 # add only one child if there are already children
-                
-                # probability to add another child (decraeses exponentially)
-                break_prob[0] = 1 / 1.4**len(node.children)
-                # probability to choose another node
-                break_prob[1] = 1 - break_prob[0]
-                if random.choices( (0,1), weights=break_prob )[0] == 1:
-                    continue
-                
                 new_child = TreeNode(nr, label=str(nr))
                 node.add_child(new_child)
                 node_list.append(new_child)

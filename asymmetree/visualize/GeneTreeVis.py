@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
 
-__author__ = "David Schaller"
+__author__ = 'David Schaller'
 
 
 class GeneTreeVis:
@@ -60,15 +60,15 @@ class GeneTreeVis:
         xmax = 0.0
         
         for v in self.tree.preorder():
-            if distance == "evolutionary":
+            if distance == 'evolutionary':
                 if not v.parent:
                     self.distance_dict[v] = 0.0
                 else:
                     self.distance_dict[v] = self.distance_dict[v.parent] + v.dist
                     if self.distance_dict[v] > xmax:
                         xmax = self.distance_dict[v]
-            elif distance == "divtime":
-                raise ValueError("divergence time not yet implemented")
+            elif distance == 'divtime':
+                raise ValueError('divergence time not yet implemented')
             else:
                 raise ValueError("distance mode '{}' not supported".format(distance))
             if not v.children:
@@ -248,7 +248,7 @@ class GeneTreeVis:
                      verticalalignment='center')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     
     import asymmetree.treeevolve as te
     

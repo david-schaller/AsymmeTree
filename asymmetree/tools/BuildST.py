@@ -486,7 +486,7 @@ if __name__ == '__main__':
     from asymmetree.treeevolve import observable_tree
     
     N = 20
-    t = PhyloTree.random_colored_tree(N, [1,2,3], binary=False)
+    t = PhyloTree.random_colored_tree(N, 3, binary=False)
     print(t.to_newick(color=False, distance=False, label_inner=False))
     
     partial_trees = []
@@ -514,4 +514,5 @@ if __name__ == '__main__':
         
     print(supertree.to_newick())
     
+    # randomly True or False
     print(t.compare_topology(supertree))

@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-
 import numpy as np
 
 from asymmetree.seqevolve.EvolvingSequence import EvoSeq, State
@@ -311,29 +310,3 @@ class Evolver:
             pos = 0
             
         sequence.remove_range(pos, d)
-
- 
-if __name__ == '__main__':
-    
-    from SubstModel import SubstModel
-    from IndelModel import IndelModel
-    import asymmetree.treeevolve as te
-    
-    subst_model = SubstModel('a', 'WAG')
-    subst_model = SubstModel('a', 'CUSTOM',
-                             filename='../../resources/subst_matrices/WAG.paml')
-    indel_model = IndelModel(0.01, 0.01, length_model='zipf')
-    
-    evolver = Evolver(subst_model, indel_model=indel_model, jump_chain=False)
-    print(evolver.subst_model.Q)
-    
-    T = te.simulate_species_tree(5)
-    evolver.evolve_along_tree(T, start_length=150)
-    
-    for node, sequence in evolver.sequences.items():
-        print(node.label, subst_model.to_sequence(sequence))
-        
-    alg_seq = evolver.true_alignment(write_to='../../validation/testfile.alignment')
-    for node, sequence in alg_seq.items():
-        print(node.label, sequence)
-        

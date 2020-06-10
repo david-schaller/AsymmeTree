@@ -2,7 +2,7 @@
 
 # best match computation
 from asymmetree.best_matches.TrueBMG import orthology_from_tree, bmg_from_tree
-from asymmetree.best_matches.LRTConstructor import LRT_from_observable_tree, LRTConstructor
+from asymmetree.best_matches.LRTConstructor import lrt_from_observable_tree, LRTConstructor
 from asymmetree.best_matches.Augmentation import augment_and_label
 
 # best match estimation

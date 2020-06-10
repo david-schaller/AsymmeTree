@@ -10,7 +10,7 @@ to single list elements in order to modify/delete values in constant time.
 import collections
 
 
-__author__ = "David Schaller"
+__author__ = 'David Schaller'
 
 
 class DLListElement:
@@ -301,17 +301,3 @@ class DLListIterator:
             return x._value
         else:
             raise StopIteration
-        
-
-if __name__ == "__main__":
-    dllist = DLList([7, 8, 9])
-    dllist.append(1)
-    dllist.append(2)
-    dllist.append(3)
-    dllist.append(4)
-    dllist.append(5)
-    dllist.remove(3)
-    dllist.append_left(30)
-    for x in dllist:
-        print(x, end=" ")
-    print("\n", dllist[0], dllist[1], dllist[2], dllist[3], dllist[-1])

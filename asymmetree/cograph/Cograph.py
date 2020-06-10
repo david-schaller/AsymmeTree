@@ -172,37 +172,3 @@ class Cotree(Tree.Tree):
                 v.label = 'series' if v.parent.label == 'parallel' else 'parallel'
                 
         return cotree
-    
-    
-if __name__ == '__main__':
-    
-    import asymmetree.tools.GraphTools as gt
-    from pprint import pprint
-    
-    cotree = Cotree.random_cotree(100)
-    print(cotree.to_newick())
-    cograph = cotree.to_cograph()
-    #pprint(cograph.adj_list)
-    
-    cotree2 = Cotree.cotree(cograph)
-    print(cotree2.to_newick())
-    cograph2 = cotree2.to_cograph()
-    #pprint(cograph2.adj_list)
-    
-    print(gt.graphs_equal(cograph,cograph2))
-    
-    cograph3 = nx.Graph()
-    cograph3.add_edge('a', 'b')
-    cograph3.add_edge('b', 'd')
-    cograph3.add_edge('c', 'd')
-    cograph3.add_edge('b', 'c')
-    cotree3 = Cotree.cotree(cograph3)
-    print(cotree3.to_newick())
-    
-    cograph4 = gt.random_graph(4, p=0.5)
-    pprint(cograph4.edges())
-    cotree4 = Cotree.cotree(cograph4)
-    if cotree4:
-        print(cotree4.to_newick())
-    else:
-        print('Not a cograph!')

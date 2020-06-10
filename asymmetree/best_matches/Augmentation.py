@@ -69,13 +69,13 @@ def _color_intersection_components(u):
 if __name__ == '__main__':
     
     from asymmetree import PhyloTree
-    from asymmetree.best_matches.LRTConstructor import LRT_from_observable_tree
+    from asymmetree.best_matches.LRTConstructor import lrt_from_observable_tree
     
     T = PhyloTree.random_colored_tree(30, 5)
     print('--- T ---\n', T.to_newick())
     
-    LRT = LRT_from_observable_tree(T)
-    print('--- LRT ---\n', LRT.to_newick())
+    lrt = lrt_from_observable_tree(T)
+    print('--- LRT ---\n', lrt.to_newick())
     
-    aug_tree = augment_and_label(LRT)
+    aug_tree = augment_and_label(lrt)
     print('--- Augmented tree ---\n', aug_tree.to_newick())

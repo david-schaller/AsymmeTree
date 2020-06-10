@@ -9,31 +9,31 @@ import itertools
 import networkx as nx
 
 
-__author__ = "David Schaller"
+__author__ = 'David Schaller'
 
 
 def matrix_to_phylip(filename, leaves, matrix):
     """Write the distance matrix in phylip format."""
     
-    with open(filename, "w") as f:
+    with open(filename, 'w') as f:
         f.write(str(len(leaves)))
         for i in range(len(leaves)):
-            f.write("\n" + str(leaves[i].ID))
+            f.write('\n' + str(leaves[i].ID))
             for j in range(len(leaves)):
-                f.write("\t" + str(matrix[i,j]))
+                f.write('\t' + str(matrix[i,j]))
 
 
 def species_to_genes(filename, scenario):
     """Write the species and corresponding genes file."""
     
-    with open(filename, "w") as f:
+    with open(filename, 'w') as f:
         species = list(scenario.color_dict)
         for i in range(len(species)):
             f.write(str(species[i]))
             for gene in scenario.color_dict[species[i]]:
-                f.write("\t" + str(gene.ID))
+                f.write('\t' + str(gene.ID))
             if i < len(species)-1:
-                f.write("\n")
+                f.write('\n')
 
 
 def species_pairs_outgroups(filename, scenario):
@@ -41,20 +41,20 @@ def species_pairs_outgroups(filename, scenario):
     
     ("ok-species" file)."""
     
-    with open(filename, "w") as f:
+    with open(filename, 'w') as f:
         begin = True
         for i in range(len(scenario.subtree_list)):
             for speciesX, speciesY in itertools.combinations(scenario.subtree_list[i], 2):
                 if begin:
-                    f.write(str(speciesX) + "\t" + str(speciesY))
+                    f.write('{}\t{}'.format(speciesX, speciesY))
                     begin = False
                 else:
-                    f.write("\n" + str(speciesX) + "\t" + str(speciesY))
+                    f.write('\n{}\t{}'.format(speciesX, speciesY))
                 for j in range(len(scenario.subtree_list)):
                     if i == j:
                         continue
                     for outgroup_species in scenario.subtree_list[j]:
-                        f.write("\t" + str(outgroup_species))
+                        f.write('\t' + str(outgroup_species))
    
                  
 def species_in_subtree(filename, scenario):
@@ -62,28 +62,28 @@ def species_in_subtree(filename, scenario):
     
     (one line per subtree)."""
     
-    with open(filename, "w") as f:
+    with open(filename, 'w') as f:
         begin = True
         for sp_list in scenario.subtree_list:
             if begin:
-                f.write("\t".join([str(item) for item in sp_list]))
+                f.write('\t'.join([str(item) for item in sp_list]))
                 begin = False
             else:
-                f.write("\n")
-                f.write("\t".join([str(item) for item in sp_list]))
+                f.write('\n')
+                f.write('\t'.join([str(item) for item in sp_list]))
 
 
 def subtree_bmg(filename, scenario):
     """Write the (subgraph of) BMG."""
     
-    with open(filename, "w") as f:
+    with open(filename, 'w') as f:
         begin = True
         for u, v in scenario.bmg_subtrees.edges:
             if begin:
-                f.write(str(u) + "\t" + str(v))
+                f.write('{}\t{}'.format(u, v))
                 begin = False
             else:
-                f.write("\n" + str(u) + "\t" + str(v))
+                f.write('\n{}\t{}'.format(u, v))
 
 
 def parse_bmg_edges(output, scenario):
@@ -101,9 +101,9 @@ def parse_bmg_edges(output, scenario):
                 u = int(edge[0]) if edge[0].isdigit() else edge[0]
                 v = int(edge[1]) if edge[1].isdigit() else edge[1]
                 if v not in bmg.nodes:
-                    print("Not in BMG", v)
+                    print('Not in BMG', v)
                 if u not in bmg.nodes:
-                    print("Not in BMG", u)
+                    print('Not in BMG', u)
                 bmg.add_edge(u, v)
                 
     return bmg
@@ -112,64 +112,5 @@ def parse_bmg_edges(output, scenario):
 def write_newick(filename, tree):
     """Write Newick tree."""
     
-    with open(filename, "w") as f:
+    with open(filename, 'w') as f:
         f.write(tree.to_newick())
-
-
-if __name__ == "__main__":
-    
-    # generate new files in folder "testfiles"
-    import os
-    
-    import asymmetree.treeevolve as te
-    from asymmetree.tools.PhyloTree import PhyloTree
-    
-    directory = 'testfiles'
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-    
-    matrix_file =   os.path.join(directory, 'matrix.phylip')
-    species_file =  os.path.join(directory, 'spec_genes.txt')
-    outgroup_file = os.path.join(directory, 'outgroups.txt')
-    subtrees_file = os.path.join(directory, 'species_subtrees.txt')
-    bmg_file =      os.path.join(directory, 'bmg.txt')
-    tree_file =     os.path.join(directory, 'species_tree.txt')
-    
-    DLH_rates=(1,1,0)
-    
-    #S = te.simulate_species_tree(10, planted=True)
-    S = PhyloTree.parse_newick("(((8:0.08603999468839801,(10:0.06055381385164242,(12:0.02750356935270675,(14:0.0071494825768602215,15:0.0071494825768602215)13:0.02035408677584653)11:0.03305024449893567)9:0.025486180836755596)2:0.34305906001624026,(((16:0.036223587639635554,(18:0.032127988304223636,19:0.032127988304223636)17:0.0040955993354119214)6:0.1114990457717915,7:0.14772263341142705)4:0.03331012904283408,5:0.18103276245426114)3:0.24806629225037713)1:0.5709009452953617)0:0.0")
-    S.reconstruct_IDs()
-    S.reconstruct_timestamps()
-    print("------------- S -------------")
-    print(S.to_newick())
-    
-    TGT_simulator = te.GeneTreeSimulator(S)
-    TGT = TGT_simulator.simulate(DLH_rates=DLH_rates)
-    print("done")
-    TGT = te.assign_rates(TGT, S)
-    
-    print("------------- TGT -------------")
-    print(TGT.to_newick())
-    
-    scenario = te.Scenario(S, TGT, DLH_rates)
-    print(scenario.subtree_list)
-    D = scenario.get_distance_matrix()
-    
-    # write the distance matrix
-    matrix_to_phylip(matrix_file, scenario.genes, D)
-    # write the species and corresponding genes file
-    species_to_genes(species_file, scenario)
-    # write the "ok-species" files
-    species_pairs_outgroups(outgroup_file, scenario)      
-    # write species in root subtrees
-    species_in_subtree(subtrees_file, scenario)
-    # write the BMG
-    subtree_bmg(bmg_file, scenario)
-    # write species tree to newick format
-    write_newick(tree_file, S)
-    
-    # test reading input
-    with open(bmg_file, "r") as f:
-        bmg = parse_bmg_edges(f.read(), scenario)
-        #print(bmg.edges)

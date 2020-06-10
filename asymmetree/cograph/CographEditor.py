@@ -458,27 +458,3 @@ class CographEditor:
                 new_node.aux_counter = u.aux_counter
 
         return insertion_mincost, x_node
-                
-    
-    
-if __name__ == '__main__':
-    
-    import asymmetree.tools.GraphTools as gt
-    
-    cotree = Cotree.random_cotree(100)
-    print(cotree.to_newick())
-    cograph = cotree.to_cograph()
-    
-    cograph = gt.random_graph(100)
-    
-    CE = CographEditor(cograph)
-    new_cotree = CE.cograph_edit(run_number=10)
-    print('done')
-    
-    if new_cotree:
-        print(new_cotree.to_newick())
-        new_cograph = new_cotree.to_cograph()
-        # editing cost and symmetric difference should be equal
-        print(CE.best_cost, gt.symmetric_diff(cograph, new_cograph))
-    else:
-        print('Not a cograph!')
