@@ -278,6 +278,9 @@ class Evolver:
     def _insertion(self, sequence):
         
         d = self.indel_model.draw_length()
+        if d == 0:
+            return
+        
         pos = np.random.randint(-1, high=len(sequence))
         
         # initialize insertion before the first item
@@ -302,6 +305,9 @@ class Evolver:
     def _deletion(self, sequence):
         
         d = self.indel_model.draw_length()
+        if d == 0:
+            return
+        
         pos = np.random.randint(-d + 1, high=len(sequence))
         
         # deletion begins before or at the start of the sequence

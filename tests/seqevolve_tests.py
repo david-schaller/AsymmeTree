@@ -28,7 +28,7 @@ class TestSeqEvolvePackage(unittest.TestCase):
         species_tree = te.simulate_species_tree(10, model='innovation')
 
         subst_model = se.SubstModel('a', 'JTT')
-        indel_model = se.IndelModel(0.01, 0.01, length_model='zipf')
+        indel_model = se.IndelModel(0.01, 0.01, length_distr=('zipf', 1.821))
         het_model = se.HetModel(2.0, classes=10, invariant=0.1)
         
         evolver = se.Evolver(subst_model,

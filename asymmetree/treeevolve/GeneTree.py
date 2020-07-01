@@ -58,15 +58,19 @@ class GeneTreeSimulator:
                                                         # sort (u,v) by tstamp of u
     
     
-    def simulate(self, DLH_rates=(0.0, 0.0, 0.0),
+    def simulate(self,
+                 dupl_rate=0.0,
+                 loss_rate=0.0,
+                 hgt_rate=0.0,
                  dupl_polytomy=0.0,
                  prohibit_extinction='per_species',
                  **kwargs):
         """Simulate a gene tree along the specified species tree.
         
         Keyword arguments:
-            DLH_rates -- rates for duplications, losses and HGTs, default is
-                (0.0, 0.0, 0.0)
+            dupl_rate -- duplication rate, default is 0.0
+            loss_rate -- loss rate, default is 0.0
+            hgt_rate -- horizontal gene transfer rate, default is 0.0
             dupl_polytomy -- allows non-binary duplication events by specifying
                 the lambda parameter for a poisson distribution (copy number =
                 drawn number + 2); default is 0.0
@@ -76,11 +80,10 @@ class GeneTreeSimulator:
                 'per_species'.
         """
         
-        self.DLH_rates = DLH_rates
-        self.rate_sum = sum(DLH_rates)
-        self.d = DLH_rates[0]
-        self.l = DLH_rates[1]
-        self.h = DLH_rates[2]
+        self.rate_sum = dupl_rate + loss_rate + hgt_rate
+        self.d = dupl_rate
+        self.l = loss_rate
+        self.h = hgt_rate
         
         self._prohibit_extinction = prohibit_extinction
         

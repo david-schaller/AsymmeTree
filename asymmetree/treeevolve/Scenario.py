@@ -17,11 +17,11 @@ __author__ = 'David Schaller'
 
 class Scenario:
     
-    def __init__(self, S, TGT, DLH_rates, OGT=None):
+    def __init__(self, S, TGT, dupl_rate, loss_rate, hgt_rate, OGT=None):
         
         self.S = S
         self.TGT = TGT
-        self.DLH_rates = DLH_rates
+        self.DLH_rates = (dupl_rate, loss_rate, hgt_rate)
         
         self.OGT = OGT if OGT else observable_tree(TGT)
         

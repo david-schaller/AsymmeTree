@@ -2,12 +2,11 @@
 
 import os
 
-import numpy as np
-
 from asymmetree import PhyloTree
 import asymmetree.treeevolve as te
 import asymmetree.seqevolve as se
 from asymmetree.file_io.SeqFileIO import write_alignment, write_fasta
+from asymmetree.tools.Sampling import Sampler
 
 
 __author__ = 'David Schaller'
@@ -77,6 +76,7 @@ class GenomeSimulator:
                            root_genome=None,
                            length_distr=('constant', 200),
                            min_length=10,
+                           max_length=None,
                            write_fastas=True,
                            write_alignments=True,
                            **kwargs):
@@ -93,7 +93,13 @@ class GenomeSimulator:
                 raise ValueError('no. of sequences in root genome does not'\
                                  'match no of gene families')
         else:
-            self._check_distribution(length_distr, min_length)
+            if isinstance(length_distr, Sampler):
+                self.sampler = length_distr
+            else:
+                self.sampler = Sampler(length_distr,
+                                       minimum=min_length,
+                                       maximum=max_length,
+                                       discrete=True)
         
         evolver = se.Evolver(subst_model, **kwargs)
         
@@ -105,8 +111,7 @@ class GenomeSimulator:
                 evolver.evolve_along_tree(OGT, start_seq=root_genome[i].upper())
                 
             else:
-                start_length = self._get_sequence_length()
-                evolver.evolve_along_tree(OGT, start_length=start_length)
+                evolver.evolve_along_tree(OGT, start_length=self.sampler.draw())
                 
             self.sequence_dicts.append(evolver.sequences)
             
@@ -168,74 +173,6 @@ class GenomeSimulator:
             basename = '{}.f{}a'.format(spec, self.subst_model.model_type)
             filename = self._path('fasta_files', basename)
             write_fasta(filename, sequences)
-                
-                
-    def _check_distribution(self, distr, min_length):
-        
-        if not isinstance(min_length, int) or min_length < 0:
-            raise ValueError('minimal sequence length must be an int >=0')
-        self._min_length = min_length
-        
-        if isinstance(distr, int):
-            if min_length > distr:
-                raise ValueError('constant sequence length must be >= '\
-                                 'minimal sequence length')
-                
-            self._length_distr = 'constant'
-            self._seq_length = distr
-            
-        elif distr[0] == 'constant':
-            seq_length = distr[1]
-            if not isinstance(seq_length, int) or min_length > seq_length:
-                raise ValueError('constant sequence length must be an int >= '\
-                                 'minimal sequence length')
-                
-            self._length_distr = 'constant'
-            self._seq_length = seq_length
-            
-        elif distr[0] == 'gamma':
-            shape = distr[1]
-            scale = distr[2]
-            
-            if (not isinstance(shape, float) or shape <= 0.0 or 
-                not isinstance(scale, float) or scale <= 0.0):
-                raise ValueError('scale and shape parameters for gamma '\
-                                 'distribution must be floats >0.0')
-            
-            mean = round(shape * scale, 3)
-            if mean < min_length:
-                raise ValueError('expected value for gamma distribution '\
-                                 '({}) must be >= minimal length'.format(mean))
-            
-            self._length_distr == 'gamma'
-            self._shape = shape
-            self._scale = scale
-            
-        elif distr[0] == 'gamma_mean':
-            mean = distr[1]
-            
-            if not isinstance(mean , (int, float)) or mean < min_length:
-                raise ValueError('mean of gamma distribution must be '\
-                                 '>= minimal length')
-            
-            self._length_distr == 'gamma'
-            self._shape = 1.0
-            self._scale = mean / self._shape
-            
-        else:
-            raise ValueError("length distribution '{}' is not "\
-                             "supported".format(distr))
-            
-    
-    def _get_sequence_length(self):
-        
-        if self._length_distr == 'constant':
-            return self._seq_length
-        elif self._length_distr == 'gamma':
-            length = -1
-            while length < self._min_length:
-                length = round(np.random.gamma(self._shape, scale=self._scale))
-            return length
         
     
     def _compose_label(self, node, family_id):

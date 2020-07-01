@@ -9,6 +9,7 @@ Introduce evolution rate asymmetries and autocorrelation.
 import numpy as np
 
 from asymmetree.treeevolve.GeneTree import GeneTreeSimulator
+from asymmetree.tools.Sampling import Sampler
 
 
 __author__ = 'David Schaller'
@@ -18,7 +19,10 @@ __author__ = 'David Schaller'
 # --------------------------------------------------------------------------
 
 def simulate_gene_trees(S, N=1,
-                        base_rate_distr=('constant', 1.0),
+                        dupl_rate=0.0,
+                        loss_rate=0.0,
+                        hgt_rate=0.0,
+                        base_rate=1.0,
                         **kwargs):
     """Simulates dated gene trees with non-ultrametric edge lengths along a
     species tree.
@@ -26,14 +30,24 @@ def simulate_gene_trees(S, N=1,
     Keyword arguments:
         N -- number of gene trees to be simulated, default is 1, in which case
             a tree is returned, otherwise a list is returned
-        base_rate_distr -- distribution for the evolution rate at the roots of
-            the gene trees, default is ('constant', 1.0)
+        dupl_rate -- (distribution for the) duplication rate,
+            default is constant 0.0
+        loss_rate -- (distribution for the) loss rate,
+            default is constant 0.0
+        hgt_rate -- (distribution for the) HGT rate,
+            default is constant 0.0
+        base_rate -- (distribution for the) evolution rate at the roots of
+            the gene trees, default is constant 1.0
         kwargs -- see arguments of GeneTreeSimulator.simulate and assign_rates
         """
     
     gene_trees = []
-    
     simulator = GeneTreeSimulator(S)
+    
+    dupl_rate_sampler = Sampler(dupl_rate)
+    loss_rate_sampler = Sampler(loss_rate)
+    hgt_rate_sampler = Sampler(hgt_rate)
+    base_rate_sampler = Sampler(dupl_rate)
     
     # autocorrelation between genes of the same or related species
     autocorr_variance = kwargs.pop('autocorr_variance', 0.0)
@@ -42,9 +56,12 @@ def simulate_gene_trees(S, N=1,
     # main simulation and imbalancing
     for i in range(N):
         
-        TGT = simulator.simulate(**kwargs)
+        TGT = simulator.simulate(dupl_rate=dupl_rate_sampler.draw(),
+                                 loss_rate=loss_rate_sampler.draw(),
+                                 hgt_rate=hgt_rate_sampler.draw(),
+                                 **kwargs)
         assign_rates(TGT, S,
-                     base_rate=_get_base_rate(base_rate_distr),
+                     base_rate=base_rate_sampler.draw(),
                      autocorr_factors=autocorr_factors,
                      **kwargs)
         gene_trees.append(TGT)
@@ -55,32 +72,6 @@ def simulate_gene_trees(S, N=1,
         return gene_trees
     
 
-def _get_base_rate(distr):
-    
-    if isinstance(distr, (int, float)) and distr >= 0.0:
-        return float(distr)
-    
-    elif isinstance(distr, (tuple, list)):
-        
-        if (distr[0] == 'constant' and
-            isinstance(distr[1], (int, float)) and
-            distr[1] >= 0.0):
-            return float(distr[1])
-        
-        elif (distr[0] == 'gamma' and
-              isinstance(distr[1], (int, float)) and distr[1] > 0.0 and
-              isinstance(distr[2], (int, float)) and distr[2] > 0.0):
-            shape = float(distr[1])
-            scale = float(distr[2])
-            return np.random.gamma(shape, scale=scale)
-        
-        elif (distr[0] == 'gamma_mean' and
-              isinstance(distr[1], (int, float)) and distr[1] > 0.0):
-            shape = 1.0
-            scale = distr[1] / shape
-            return np.random.gamma(shape, scale=scale)
-        
-    raise ValueError("distribution '{}' not supported".format(distr))
     
 
 # --------------------------------------------------------------------------

@@ -37,7 +37,7 @@ class TestTreeEvolvePackage(unittest.TestCase):
                                                     non_binary=0.2)
             
             gene_tree = te.simulate_dated_gene_tree(species_tree,
-                            DLH_rates=(1.0, 1.0, 0.5),
+                            dupl_rate=1.0, loss_rate=1.0, hgt_rate=0.5,
                             prohibit_extinction='per_species')
             
             # check that there is no extinction in any species
@@ -52,7 +52,7 @@ class TestTreeEvolvePackage(unittest.TestCase):
                 self.assertTrue(leaf_list)
                 
             gene_tree2 = te.simulate_dated_gene_tree(species_tree,
-                             DLH_rates=(1.0, 1.0, 0.5),
+                             dupl_rate=1.0, loss_rate=1.0, hgt_rate=0.5,
                              prohibit_extinction='per_family')
             
             # check that there is no extinction in all species

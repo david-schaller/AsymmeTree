@@ -3,8 +3,10 @@
 import asymmetree.treeevolve as te
 from asymmetree.best_matches import lrt_from_observable_tree, Quartets
 
+D = 1.0
+L = 1.0
+H = 0.0
 
-DLH_rates=(1.0, 1.0, 0.0)
 
 # --------------------------------------------------------------------------
 #                            SPECIES TREE
@@ -19,7 +21,7 @@ print(S.to_newick())
 # --------------------------------------------------------------------------
 
 TGT_simulator = te.GeneTreeSimulator(S)
-TGT = TGT_simulator.simulate(DLH_rates=DLH_rates,
+TGT = TGT_simulator.simulate(dupl_rate=D, loss_rate=L, hgt_rate=H,
                              prohibit_extinction='per_species')
 
 TGT = te.assign_rates(TGT, S, base_rate=1,
@@ -50,7 +52,7 @@ print(lrt.to_newick())
 #                              SCENARIO
 # --------------------------------------------------------------------------
 
-scenario = te.Scenario(S, TGT, DLH_rates, OGT=OGT)      # wrap everything in a scenario
+scenario = te.Scenario(S, TGT, D, L, H, OGT=OGT)      # wrap everything in a scenario
 D = scenario.get_distance_matrix()                      # compute the distance matrix
 
 

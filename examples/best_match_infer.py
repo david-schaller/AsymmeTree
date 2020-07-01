@@ -153,20 +153,20 @@ for rep in range(repeats):
     S = te.simulate_species_tree(np.random.randint(S_min, S_max+1), planted=True)
     
     TGT_simulator = te.GeneTreeSimulator(S)
-    TGT1 = TGT_simulator.simulate(DLH_rates=(D,L,H))
+    TGT1 = TGT_simulator.simulate(dupl_rate=D, loss_rate=L, hgt_rate=H)
     TGT1 = te.assign_rates(TGT1, S, base_rate=1,
                            autocorr_variance=0.2,
                            gamma_param=(0.5, 1.0, 2.2),
                            CSN_weights=(1/3, 1/3, 1/3))
     
-    TGT2 = TGT_simulator.simulate(DLH_rates=(D,L,H))
+    TGT2 = TGT_simulator.simulate(dupl_rate=D, loss_rate=L, hgt_rate=H)
     TGT2 = te.assign_rates(TGT2, S, base_rate=1,
                            autocorr_variance=0.2,
                            gamma_param=(0.5, 1.0, 2.2),
                            CSN_weights=(1/3, 1/3, 1/3))
     
-    scenario1 = te.Scenario(S, TGT1, (D,L,H))
-    scenario2 = te.Scenario(S, TGT2, (D,L,H))
+    scenario1 = te.Scenario(S, TGT1, D, L, H)
+    scenario2 = te.Scenario(S, TGT2, D, L, H)
     
     D1 = scenario1.get_distance_matrix()
     D2 = scenario2.get_distance_matrix()

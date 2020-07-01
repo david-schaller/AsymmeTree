@@ -255,7 +255,9 @@ if __name__ == '__main__':
     S = te.simulate_species_tree(6, planted=True, non_binary_prob=0.2)
     
     TGT_simulator = te.GeneTreeSimulator(S)
-    TGT = TGT_simulator.simulate(DLH_rates=(1.0,1.0,1.0),
+    TGT = TGT_simulator.simulate(dupl_rate=1.0,
+                                 loss_rate=1.0,
+                                 hgt_rate=1.0,
                                  dupl_polytomy=0.5)
     TGT = te.assign_rates(TGT, S)
     

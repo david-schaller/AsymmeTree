@@ -26,7 +26,7 @@ tr = TreeReconstructor(cotree_mode='best')
 
 for i in range(100):
     TGT_simulator = te.GeneTreeSimulator(S)
-    TGT = TGT_simulator.simulate(DLH_rates=(1,1,0))
+    TGT = TGT_simulator.simulate(dupl_rate=1.0, loss_rate=1.0)
     TGT = te.assign_rates(TGT, S, base_rate=1,
                           autocorr_variance=0.2,
                           gamma_param=(0.5, 1.0, 2.2),
