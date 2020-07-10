@@ -60,7 +60,7 @@
 \newtheorem{fact}[theorem]{Observation}
 \def\arrowedvec{\mathaccent"017E}
 \newcommand{\G}{\arrowedvec{G}}
-\newcommand{\unrooted}[1]{\overline{#1}}  
+\newcommand{\unrooted}[1]{\overline{#1}}
 \newcommand{\ROOT}{\circledcirc}
 \newcommand{\LEAF}{\odot}
 \usepackage{wasysym}
@@ -75,7 +75,7 @@
 \newcommand{\AX}[1]{\textnormal{#1}}
 
 \newcommand{\COMMANDLINE}[1]{\begingroup\par\vspace{3mm}\color{darkgrey}\begin{adjustwidth}{1cm}{1cm}\texttt{#1}\end{adjustwidth}\vspace{3mm}\endgroup}
-
+\newcommand{\sq}{\textquotesingle}
 
 % Mark overfull boxes
 \overfullrule=1mm
@@ -88,7 +88,7 @@
 \hypersetup{
 	colorlinks=True,
 	linkcolor=blue,
-	filecolor=magenta,      
+	filecolor=magenta,
 	urlcolor=cyan,
 	citecolor=black,
 }
@@ -103,21 +103,21 @@
 	\end{center}
 	\begin{center}
 		\vspace*{2cm}
-		
+
 		\Huge{\fontfamily{lmtt}
 			AsymmeTree User Manual
 		}
 
 		\vspace{1.5cm}
-		
+
 		\LARGE
 		David Schaller\\
 		\vspace{1cm}
 		\large
 		sdavid@bioinf.uni-leipzig.de
-		
+
 		\vspace{2cm}
-		
+
 	\end{center}
 \end{titlepage}
 
@@ -209,7 +209,9 @@ The vertices of a \texttt{PhyloTree} instance are of type \texttt{PhyloTreeNode}
 {\small\centering
 \begin{longtable}{ p{3.0cm} p{10cm} }
 	\texttt{ID} & vertex ID (\texttt{int})\\
-	\texttt{label}  & label (\texttt{str}), in gene trees: \texttt{"S"} for speciation, \texttt{"D"} for duplication, \texttt{"H"} for horizontal gene transfer, \texttt{"*"} for loss\\
+	\texttt{label}  & label (\texttt{str}), in gene trees: \texttt{\sq S\sq} for
+	speciation, \texttt{\sq D\sq} for duplication, \texttt{\sq H\sq} for
+	horizontal gene transfer, \texttt{\sq *\sq} for loss\\
 	\texttt{color} & only gene trees; species in which the gene resides, i.e., ID of some vertex in a species tree, \texttt{int} for extant genes, can be of type \texttt{tuple} (of two \texttt{int}s) for inner and loss vertices\\
 	\texttt{tstamp} & time stamp of the event (\texttt{double})\\
 	\texttt{dist} & evolutionary distance or divergence time from the parent vertex (\texttt{double})\\
@@ -244,7 +246,8 @@ tree.serialize('tree.json')
 
 \noindent
 By default, the serialization format is inferred from the file extension.
-Alternatively, it can be specified as keyword argument, e.g.\ \texttt{mode="json"}.
+Alternatively, it can be specified as keyword argument, e.g.\ \texttt{mode=\sq
+json\sq}.
 To load a tree that was serialized this way, use:
 
 \begin{adjustwidth}{1cm}{1cm}\vspace{2mm}
@@ -270,10 +273,16 @@ The following models are available:
 \vspace{3mm}
 {\small\centering
 	\begin{longtable}{ p{3.5cm} p{10cm} }
-		\texttt{"innovation"} & Innovation model \citet{keller-schmidt2012}, if not specified the divergence time between the (planted) root and the leaves will be normalized to unity\\
-		\texttt{"yule"}  & standard Yule model \citep{yule1924}, default birth rate is 1.0 \\
-		\texttt{"BDP"} & constant-rate birth-death process \citep[see e.g.][]{kendall1948,hagen2018}, default birth rate is 1.0 and death rate is 0.0 \\
-		\texttt{"EBDP"} & episodic birth-death process, algorithm of \cite{stadler2011} \\
+		\texttt{\sq innovation\sq} & Innovation model \citet{keller-schmidt2012},
+		if not specified the divergence time between the (planted) root and the
+		leaves will be normalized to unity\\
+		\texttt{\sq yule\sq}  & standard Yule model \citep{yule1924}, default birth
+		rate is 1.0 \\
+		\texttt{\sq BDP\sq} & constant-rate birth-death process \citep[see
+		e.g.][]{kendall1948,hagen2018}, default birth rate is 1.0 and death rate is
+		0.0 \\
+		\texttt{\sq EBDP\sq} & episodic birth-death process, algorithm of
+		\cite{stadler2011} \\
 	\end{longtable}
 }
 \vspace{3mm}
@@ -284,7 +293,8 @@ The following keyword parameters (with their default value) are available:
 \vspace{3mm}
 {\small\centering
 \begin{longtable}{ p{3.5cm} p{10cm} }
-	\texttt{model="innovation"}  & model for the species tree simulation, currently only the `innovation model' is available\\
+	\texttt{model=\sq innovation\sq}  & model for the species tree simulation,
+	currently only the `innovation model' is available\\
 	\texttt{non\_binary\_prop=0.0} & probability that an inner edge is contracted,
 	results in a non-binary tree\\
 	\texttt{planted=True} & add a planted root that has the first true speciation node as its
@@ -296,7 +306,8 @@ The following keyword parameters (with their default value) are available:
 \vspace{3mm}
 
 For any model, the root of the resulting tree has the maximal time stamp and all (extant) species have time stamp 0.0.
-The episodes of the \texttt{"EBDP"} model must be supplied as a list of tuples/lists where each episode has the structure
+The episodes of the \texttt{\sq EBDP\sq} model must be supplied as a list of
+tuples/lists where each episode has the structure
 
 \begin{adjustwidth}{1cm}{1cm}\vspace{2mm}
 \begin{minted}[fontsize=\footnotesize]{python}
@@ -335,7 +346,10 @@ The following parameters are available:
 	\texttt{DLH\_rates=\newline (0.0, 0.0, 0.0)} & a \texttt{tuple} of three \texttt{float}s, rates for duplication, loss and horizontal gene transfer (HGT) events\\
 	\texttt{dupl\_polytomy=0.0}  & allows non-binary duplication events by specifying
 	the parameter~$\lambda$ of a Poisson distribution (copy number = 2 + drawn number)\\
-	\texttt{prohibit\_extinction=\newline "per\_species"}  & avoid loss events for genes that are the last survivor in their species branch (\texttt{"per\_species"}), the last survivor of the whole family (\texttt{"per\_family"}); or no constraints  (\texttt{False})
+	\texttt{prohibit\_extinction=\newline \sq per\_species\sq}  & avoid loss
+	events for genes that are the last survivor in their species branch
+	(\texttt{\sq per\_species\sq}), the last survivor of the whole family
+	(\texttt{\sq per\_family\sq}); or no constraints  (\texttt{False})
 \end{longtable}
 }
 \vspace{3mm}
@@ -357,7 +371,7 @@ tree = te.simulate_dated_gene_tree(S, dupl_rate=1.0, loss_rate=0.5, hgt_rate=0.1
 \end{minted}
 \end{adjustwidth}
 
-The function \texttt{observable\_tree(tree)} returns the observable part of a gene tree, i.e., it copies the tree, removes all branches that lead to loss events only and suppresses all inner nodes with only one child. 
+The function \texttt{observable\_tree(tree)} returns the observable part of a gene tree, i.e., it copies the tree, removes all branches that lead to loss events only and suppresses all inner nodes with only one child.
 It also removes the planted root.
 Example usage:
 \begin{adjustwidth}{1cm}{1cm}\vspace{2mm}
@@ -382,8 +396,11 @@ The following keyword parameters (with their default values) are available:
 	\texttt{base\_rate=1.0} & starting value for the substitution rate (per time unit) and expected value for conserved genes\\
 	\texttt{autocorr\_factors=None}  & a dictionary containing rate factors for the edges of the species tree\\
 	\texttt{autocorr\_variance=0.0}  & variance factor for a lognormal distribution that controls autocorrelation between genes of the same (and closely related) species, the higher the lower the auto\-corre\-la\-tion; only relevant if \texttt{autocorr\_factors} is not directly supplied\\
-	\texttt{rate\_increase=\newline ('gamma', 0.5, 2.2)}  & distribution of the (relative) rate increase (w.r.t. the
-        base rate) for divergent genes, i.e. to a factor 1 + x, the parameters the for default Gamma distribution are chosen to fit observed asymmetries between paralogs in yeast data \citep{byrne2007}\\
+	\texttt{rate\_increase=\newline (\sq gamma\sq, 0.5, 2.2)}  & distribution of
+	the (relative) rate increase (w.r.t. the
+  base rate) for divergent genes, i.e. to a factor 1 + x, the parameters the
+  for default Gamma distribution are chosen to fit observed asymmetries between
+  paralogs in yeast data \citep{byrne2007}\\
 	\texttt{CSN\_weights=(1, 1, 1)}  & weights for choice between conservation,
 	subfunctionalization and neofunctionalization after a duplication event\\
 	\texttt{inplace=True}  & manipulate edge lengths (\texttt{dist}) of the gene tree in-place, otherwise copy the tree\\
@@ -406,11 +423,11 @@ tree = te.simulate_dated_gene_tree(S, dupl_rate=1.0, loss_rate=0.5, hgt_rate=0.1
 te.assign_rates(tree, S, base_rate=1,
                 autocorr_variance=0.2,
                 rate_increase=('gamma', 0.5, 2.2))
-                
+
 # or in a single step
 tree = simulate_gene_trees(S, N=1,
-                           dupl_rate=('gamma', 1.0, 0.8),
-                           loss_rate=0.5,
+                           dupl_rate=('gamma', 1.0, 0.8),   # distribution
+                           loss_rate=0.5,                   # or constant value
                            hgt_rate=0.1,
                            base_rate=('constant', 1.0),
                            autocorr_variance=0.2,
@@ -425,8 +442,11 @@ ogt = ts.observable_tree(tree)
 The function \texttt{simulate\_gene\_trees(S)} combines the simulation of dated gene trees and the rate assignment into one step.
 If \texttt{N=1}, a single gene tree is returned.
 Otherwise, a list of gene trees is returned that shared the same rate factors for the branches in the species tree (autocorrelation factors) in the rate assignment procedure.
-Moreover, a distribution for the base rate (assigned the planted edge of the gene tree) can be specified with the parameter \texttt{base\_rate\_distr}.
-Available are e.g.\ \texttt{("constant", rate)} and \texttt{("gamma", shape, scale)}.
+Moreover, distribution for the base rate (assigned the planted edge of the
+gene tree) and for the event rates can be specified with the parameters
+\texttt{base\_rate}, \texttt{dupl\_rate}, \texttt{loss\_rate} and
+\texttt{hgt\_rate}.
+For available distributions and their syntax see Appx.~\ref{apx:sampling}.
 
 
 \subsubsection{Distance Matrix and Noise}
@@ -455,7 +475,11 @@ The following parameters are available (keyword arguments are indicated by their
 \begin{longtable}{ p{4.5cm} p{9cm} }
 	\texttt{orig\_matrix} & original matrix to be disturbed\\
 	\texttt{sd}  & standard deviation of a normal distribution with mean 1 from which noise factors are drawn\\
-	\texttt{metric\_repair="reject"}  & method to ensure that the resulting distance matrix is still a metric, available are the rejection of noise steps that violate the metric property (\texttt{"reject"}), the decrease-only metric repair (\texttt{"DOMR"}) and the general metric repair (\texttt{"general"}) algorithm\\
+	\texttt{metric\_repair=\sq reject\sq}  & method to ensure that the resulting
+	distance matrix is still a metric, available are the rejection of noise steps
+	that violate the metric property (\texttt{\sq reject\sq}), the decrease-only
+	metric repair (\texttt{\sq DOMR\sq}) and the general metric repair
+	(\texttt{\sq general\sq}) algorithm\\
 \end{longtable}
 }
 \vspace{3mm}
@@ -476,7 +500,7 @@ The class \texttt{Evolver} takes several model as parameters for its initializat
 \begin{itemize}
 	\item a \textbf{subtitution} model (\texttt{SubstModel}, required) for the substitution of single bases or amino acids,
 	\item an \textbf{indel} model (\texttt{IndelModel}, optional) for the simulation of insertions and/or deletion, and
-	\item a model for rate \textbf{heterogeneity} (\texttt{HetModel}, optional) among the sites of the sequence under evolution 
+	\item a model for rate \textbf{heterogeneity} (\texttt{HetModel}, optional) among the sites of the sequence under evolution
 \end{itemize}
 
 \subsubsection{Substitution Model}
@@ -516,7 +540,8 @@ The following models for nucleotide (\texttt{n}) and amino acid (\texttt{a}) sub
 }
 \vspace{3mm}
 
-Note that a custom substitution model can be specified via \texttt{model\_name="CUSTOM"}.
+Note that a custom substitution model can be specified via
+\texttt{model\_name=\sq CUSTOM\sq}.
 In this case, the path to the model in PAML \citep{yang1997} format must be supplied.
 Moreover, the model type (\texttt{n}/\texttt{a}) must fit this model.
 Example usage:
@@ -546,7 +571,8 @@ Moreover, the following parameters are available (with default values):
 \vspace{3mm}
 {\small\centering
 \begin{longtable}{ p{4.5cm} p{9cm} }
-	\texttt{length\_distr=\newline ("zipf", 1.821)} & distribution of indel length, default value for zipf distribution cf.\ \citep{chang2004}\\
+	\texttt{length\_distr=\newline (\sq zipf\sq, 1.821)} & distribution of indel
+	length, default value for zipf distribution cf.\ \citep{chang2004}\\
 	\texttt{min\_length=1} & integer min.\ value at which the specified distribution is truncated, must be less than the expected value of the distribution, \texttt{None} means no limit\\
 	\texttt{max\_length=None} & integer max.\ value at which the specified distribution is truncated, must be greater than the expected value of the distribution, \texttt{None} means no limit\\
 \end{longtable}
@@ -554,23 +580,10 @@ Moreover, the following parameters are available (with default values):
 \vspace{3mm}
 
 \noindent
-The following models for indel length are available:
-
-\vspace{3mm}
-{\small\centering
-\begin{longtable}{ p{3.5cm} p{3.5cm} p{5cm}}
-	% ---------------------------------------------------
-	model & distribution & required parameters (\texttt{kwargs}, with default values)\\
-	% ---------------------------------------------------
-	\texttt{zipf} & Zipf & \texttt{a=1.821}  (parameter $a$ of the Zipf distribution)\\
-	% ---------------------------------------------------
-	\texttt{negative\_binomial} & negative binomial & \texttt{r=1.0} and \texttt{q=0.5} (parameters $r$ and $q$ of the negative binomial distribution)\\
-	% ---------------------------------------------------
-\end{longtable}
-}
-\vspace{3mm}
-
-\noindent
+For available length distributions and their syntax see
+Appx.~\ref{apx:sampling}.
+A zipf or negative binomial distribution are typically used for this purpose
+\cite{cartwright2005,dalquen2012}.
 Example usage:
 
 \begin{adjustwidth}{1cm}{1cm}\vspace{2mm}
@@ -598,7 +611,8 @@ In both cases, the rate or class membership is inherited from the parent sites d
 Note that the sitewise mode is expected to have a longer running time.
 
 An other aspect of among site heterogeneity is the modeling of invariant sites (`$+I$'), i.e., sites that never mutate at all as a result of very strong selective pressure.
-The (expected) proportion $p$ of invariant sites can be specified by the user, and sites are assigned as \texttt{"invariant"} with probability $p$.
+The (expected) proportion $p$ of invariant sites can be specified by the user,
+and sites are assigned as \texttt{\sq invariant\sq} with probability $p$.
 Note that $p>0$ affects the overall substitution rate.
 In other words, the rates of the non-invariant sites are \textbf{not} adjusted to compensate the decreased number of expected substitution over all sites.
 
@@ -662,7 +676,9 @@ The following parameters are available for this function (keyword arguments are 
 	\begin{longtable}{ p{4.5cm} p{9cm} }
 		\texttt{tree} & phylogenetic tree; instance of \texttt{PhyloTree}\\
 		\texttt{start\_length=200} & length of the root sequence which is randomly drawn from the equilibrium frequencies in the specified substitution model\\
-		\texttt{start\_seq=None} & root sequence (\texttt{str}); must be compatible with the specified substitution model (\texttt{model\_type="n"/"a"}); if supplied, the \texttt{start\_length} attribute is ignored\\
+		\texttt{start\_seq=None} & root sequence (\texttt{str}); must be compatible
+		with the specified substitution model (\texttt{model\_type=\sq n\sq/\sq
+		a\sq}); if supplied, the \texttt{start\_length} attribute is ignored\\
 	\end{longtable}
 }
 \vspace{3mm}
@@ -679,7 +695,9 @@ The following keyword parameters are available:
 	\begin{longtable}{ p{4.5cm} p{9cm} }
 		\texttt{include\_inner=True} & if \texttt{True}, include also inner nodes in the alignment; otherwise only sequences of leaf nodes are aligned\\
 		\texttt{write\_to=None} & path and filename for the output\\
-		\texttt{alignment\_format=\newline "phylip"} & format of the alignment file; available are \texttt{"phylip"}, \texttt{"clustal"} and \texttt{"pretty"}\\
+		\texttt{alignment\_format=\newline \sq phylip\sq} & format of the alignment
+		file; available are \texttt{\sq phylip\sq}, \texttt{\sq clustal\sq} and
+		\texttt{\sq pretty\sq}\\
 	\end{longtable}
 }
 \vspace{3mm}
@@ -722,7 +740,7 @@ The gene trees and the sequences are simulated in subsequent steps using the cla
 
 \noindent
 The first step (i) takes the same keyword parameters as input as the function \texttt{simulate\_ gene\_trees()} in Section~\ref{sec:evolution_rates}, where \texttt{N} is the number of gene families to be simulated.
-Thus, rates for the three event types (\texttt{dupl\_rate, loss\_rate, hgt\_rate}), autocorrelation (\texttt{autocorr\_variance}), the distribution of base rates (\texttt{base\_rate\_distr}) etc.\ can be specified. 
+Thus, rates for the three event types (\texttt{dupl\_rate, loss\_rate, hgt\_rate}), autocorrelation (\texttt{autocorr\_variance}), the distribution of base rates (\texttt{base\_rate\_distr}) etc.\ can be specified.
 
 The second step (ii) simulates the sequences along the observable part (without loss branches) of the simulated gene trees.
 The function takes the following parameters as input (keyword arguments are indicated by their default value):
@@ -734,8 +752,11 @@ The function takes the following parameters as input (keyword arguments are indi
 	\texttt{indel\_model=None} & model for insertions and deletions; instance of \texttt{IndelModel}\\
 	\texttt{het\_model=None} & model for among site heterogeneity and invariant sites; instance of \texttt{HetModel}\\
 	\texttt{root\_genome=None} & list of sequences for the roots of the gene trees; must contain the same number of \texttt{str} sequences as trees were simulated in step (i) i.e.\ \texttt{N};
-	sequences must be compatible with the specified substitution model (\texttt{model\_type="n"/"a"})\\
-	\texttt{length\_distr=\newline ("constant", 200)} & distribution of the length of the root sequences if \texttt{root\_genome} is not supplied; available are \texttt{("constant", n)}, \texttt{("gamma", shape, scale)} and \texttt{("gamma\_mean", mean)}, for the latter the shape parameter $k=1$\\
+	sequences must be compatible with the specified substitution model
+	(\texttt{model\_type=\sq n\sq/\sq a\sq})\\
+	\texttt{length\_distr=\newline (\sq constant\sq, 200)} & distribution of the
+	length of the root sequences if \texttt{root\_genome} is not supplied; see
+	Appx.~\ref{apx:sampling}\\
 	\texttt{min\_length=10} & minimal length at which the distribution of lengths is truncated; must be less than the mean of this distribution\\
 	\texttt{max\_length=None} & maximal length at which the distribution of lengths is truncated; must be greater than the mean of this distribution\\
 	\texttt{write\_fastas=True} & if \texttt{True} and an output directory was specified, write the \textbf{sequences} (one file \textbf{per species}) into the directory \texttt{fasta\_files} in the output directory\\
@@ -757,7 +778,7 @@ from asymmetree.treeevolve import simulate_species_tree
 from asymmetree.seqevolve import SubstModel, IndelModel
 
 # simulate a species tree
-species_tree = simulate_species_tree(10, model="yule")
+species_tree = simulate_species_tree(10, model='yule')
 
 # specify models (heterogeneity omitted)
 subst_model = SubstModel('n', 'JC69')
@@ -771,7 +792,7 @@ gs.simulate_gene_trees(50, dupl_rate=1.0, loss_rate=0.5,
 gs.simulate_sequences(subst_model,
                       indel_model=indel_model,
                       length_distr=('constant', 200))
-                      
+
 # results have been written to directories 'true_gene_trees',
 # 'fasta_files' and 'alignments' in 'path/to/genome_directory'
 \end{minted}
@@ -866,7 +887,9 @@ For the Maximum Consistent Triple Set problem, tree different heuristics are ava
 \vspace{3mm}
 
 The class \texttt{TreeReconstructor} in the module \texttt{SpeciesTreeFromParalogs} computes a species tree after it is provides with one or more NetworkX graphs that represent (estimated) orthology relations.
-To this end, the nodes in these graph must have a \texttt{"color"} attribute, since these will be the leaf labels in the reconstructed species tree.
+To this end, the nodes in these graph must have a \texttt{\sq color\sq}
+attribute, since these will be the leaf labels in the reconstructed species
+tree.
 Example usage:
 
 \begin{adjustwidth}{1cm}{1cm}\vspace{2mm}
@@ -878,14 +901,20 @@ tree_reconstr = TreeReconstructor()
 # ortho_relations is a list of orthology relations
 for graph in ortho_relations:
     tree_reconstr.add_ortho_graph(graph)
-    
+
 # finally an estimate the species tree can be computed
 tree = tr.build_species_tree(mode='BPMF')
 print(tree.to_newick())
 \end{minted}
 \end{adjustwidth}
 
-The module \texttt{SpeciesTreeFromProteinOrtho} contains functions to estimate a species tree from a \texttt{ProteinOrtho} \citep{lechner2011} output file. For example, the function \texttt{reconstruct\_from\_ proteinortho(filename, triple\_mode="BPMF")} takes the filename to the output file and optionally the triple heuristic as input, and returns a tuple consisting of the estimated species tree (\texttt{PhyloTree}) and a Newick representation (\texttt{str}) containing support values for the inner nodes.
+The module \texttt{SpeciesTreeFromProteinOrtho} contains functions to estimate
+a species tree from a \texttt{ProteinOrtho} \citep{lechner2011} output file.
+For example, the function \texttt{reconstruct\_from\_ proteinortho(filename,
+triple\_mode=\sq BPMF\sq)} takes the filename to the output file and optionally
+the triple heuristic as input, and returns a tuple consisting of the estimated
+species tree (\texttt{PhyloTree}) and a Newick representation (\texttt{str})
+containing support values for the inner nodes.
 
 \bibliographystyle{plainnatnourl}
 \bibliography{AsymmeTree}
@@ -921,19 +950,19 @@ The module \texttt{SpeciesTreeFromProteinOrtho} contains functions to estimate a
 	%--------------------------------------------------------------------------
 	\hline
 	%--------------------------------------------------------------------------
-	\texttt{SpeciesTree} & 
+	\texttt{SpeciesTree} &
 	Simulator for dated species trees with different models. \\
 	%--------------------------------------------------------------------------
-	\texttt{GeneTree} & 
+	\texttt{GeneTree} &
 	Simulator for dated gene trees, construction of the observable gene tree. \\
 	%--------------------------------------------------------------------------
-	\texttt{EvolutionRates} & 
+	\texttt{EvolutionRates} &
 	Simulation of evolution rate asymmetries, autocorrelation between ancestors and descendants as well as correlation between genes in the same species. \\
 	%--------------------------------------------------------------------------
-	\texttt{Scenario} & 
+	\texttt{Scenario} &
 	Wrapper class for species and gene tree scenarios, computation of the (R)BMG as well as event counts and some statistics. \\
 	%--------------------------------------------------------------------------
-	\texttt{NoisyMatrix} & 
+	\texttt{NoisyMatrix} &
 	Generation of a noisy matrix (random perturbation or wrong topology noise). \\
 	%--------------------------------------------------------------------------
 	\hline
@@ -942,25 +971,25 @@ The module \texttt{SpeciesTreeFromProteinOrtho} contains functions to estimate a
 	%--------------------------------------------------------------------------
 	\hline
 	%--------------------------------------------------------------------------
-	\texttt{Evolver} & 
+	\texttt{Evolver} &
 	Includes the class \texttt{Evolver} for the simulation of sequences along a phylogenetic tree. \\
 	%--------------------------------------------------------------------------
-	\texttt{EvolvingSequence} & 
+	\texttt{EvolvingSequence} &
 	Data structure for sequences that are under evolution based on a doubly-linked list. \\
 	%--------------------------------------------------------------------------
-	\texttt{SubstModel} & 
+	\texttt{SubstModel} &
 	Substitution model for the sequence simulation. \\
 	%--------------------------------------------------------------------------
-	\texttt{IndelModel} & 
+	\texttt{IndelModel} &
 	Insertion/deletion (indel) model. \\
 	%--------------------------------------------------------------------------
-	\texttt{HetModel} & 
+	\texttt{HetModel} &
 	Model for rate heterogeneity among the sites of an evolving sequence and for invariant sites. \\
 	%--------------------------------------------------------------------------
-	\texttt{Alignment} & 
+	\texttt{Alignment} &
 	Construction of the true multiple sequence alignment after the simulation of sequences along a tree. \\
 	%--------------------------------------------------------------------------
-	\texttt{EmpiricalModels} & 
+	\texttt{EmpiricalModels} &
 	Contains rate matrices and equilibrium frequencies for the empirical substitution models, taken from \citep{criscuolo}. \\
 	%--------------------------------------------------------------------------
 	\hline
@@ -969,25 +998,25 @@ The module \texttt{SpeciesTreeFromProteinOrtho} contains functions to estimate a
 	%--------------------------------------------------------------------------
 	\hline
 	%--------------------------------------------------------------------------
-	\texttt{Tree} & 
+	\texttt{Tree} &
 	Includes the basic class \texttt{Tree}, provides functions for tree traversals, Newick parser, etc. \\
 	%--------------------------------------------------------------------------
-	\texttt{PhyloTree} & 
+	\texttt{PhyloTree} &
 	Includes the class \texttt{PhyloTree} for phylogenetic trees (inherits from \texttt{Tree}), provides a Newick parser, etc. \\
 	%--------------------------------------------------------------------------
-	\texttt{BuildST} & 
+	\texttt{BuildST} &
 	Includes the class \texttt{BuildST} that computes a supertree from a given list of tress (with overlapping labels) \citep{deng2016}. \\
 	%--------------------------------------------------------------------------
-	\texttt{hdtgraph.DynamicGraph} & 
+	\texttt{hdtgraph.DynamicGraph} &
 	Dynamic graph data structure described by \citet{holm2001}. \\
 	%--------------------------------------------------------------------------
-	\texttt{DoublyLinkedList} & 
+	\texttt{DoublyLinkedList} &
 	Implementation of a doubly-linked list. \\
 	%--------------------------------------------------------------------------
-	\texttt{GraphTools} & 
+	\texttt{GraphTools} &
 	Miscellaneous functions for graphs, e.g.\ check for graph equality. \\
 	%--------------------------------------------------------------------------
-	\texttt{DistanceCalculation} & 
+	\texttt{DistanceCalculation} &
 	Calculation of maximum likelihood distances of pairs of aligned sequences. \\
 	%--------------------------------------------------------------------------
 	\hline
@@ -996,22 +1025,22 @@ The module \texttt{SpeciesTreeFromProteinOrtho} contains functions to estimate a
 	%--------------------------------------------------------------------------
 	\hline
 	%--------------------------------------------------------------------------
-	\texttt{TrueBMG} & 
+	\texttt{TrueBMG} &
 	Computation of the true (R)BMG from a gene tree as well as the true orthology relation. \\
 	%--------------------------------------------------------------------------
-	\texttt{ExtBestHits} & 
+	\texttt{ExtBestHits} &
 	Implementation of the \emph{Extended Best Hits} method, optionally uses \texttt{qinfer}. \\
 	%--------------------------------------------------------------------------
-	\texttt{TreeReconstruction} & 
+	\texttt{TreeReconstruction} &
 	Reconstruction of the gene tree with \texttt{RapidNJ} \citep{simonsen2008} and midpoint rooting. \\
 	%--------------------------------------------------------------------------
-	\texttt{Quartets} & 
+	\texttt{Quartets} &
 	Implementation of \emph{Quartet} approach with two different methods for outgroup selection, optionally uses \texttt{qinfer}. \\
 	%--------------------------------------------------------------------------
-	\texttt{LRTConstructor} & 
+	\texttt{LRTConstructor} &
 	Construction of a least resolved tree (LRT) from a BMG via \emph{informative triples} (optionally uses minimal edge cuts) or from a leaf-colored tree. \\
 	%--------------------------------------------------------------------------
-	\texttt{Augmentation} & 
+	\texttt{Augmentation} &
 	Augmentation of the least resolved tree (w.r.t.\ some BMG) in order to identify all unambiguously false orthology assignments \citep{schaller2020}. \\
 	%--------------------------------------------------------------------------
 	\hline
@@ -1020,13 +1049,13 @@ The module \texttt{SpeciesTreeFromProteinOrtho} contains functions to estimate a
 	%--------------------------------------------------------------------------
 	\hline
 	%--------------------------------------------------------------------------
-	\texttt{Cograph} & 
+	\texttt{Cograph} &
 	Includes the classes \texttt{Cotree} and \texttt{CotreeNode} as well as a generator for random cotrees/cographs. \\
 	%--------------------------------------------------------------------------
-	\texttt{CographEditor} & 
+	\texttt{CographEditor} &
 	Implements a heuristic for cograph editing \citep{crespelle2019}. \\
 	%--------------------------------------------------------------------------
-	\texttt{LinearCographDetector} & 
+	\texttt{LinearCographDetector} &
 	Implements an $\mathcal{O}(n+m)$ algorithm for cograph detection \citep{corneil1985}. \\
 	%--------------------------------------------------------------------------
 	\hline
@@ -1035,10 +1064,10 @@ The module \texttt{SpeciesTreeFromProteinOrtho} contains functions to estimate a
 	%--------------------------------------------------------------------------
 	\hline
 	%--------------------------------------------------------------------------
-	\texttt{SpeciesTreeFromParalogs} & 
+	\texttt{SpeciesTreeFromParalogs} &
 	Species tree reconstruction from orthology/paralogy relations. Heuristic version of \texttt{ParaPhylo} \cite{hellmuth2015}. \\
 	%--------------------------------------------------------------------------
-	\texttt{SpeciesTreeFrom\newline ProteinOrtho} & 
+	\texttt{SpeciesTreeFrom\newline ProteinOrtho} &
 	Species tree reconstruction from \texttt{ProteinOrtho} \cite{lechner2011,lechner2014} output. \\
 	%--------------------------------------------------------------------------
 	\hline
@@ -1047,10 +1076,47 @@ The module \texttt{SpeciesTreeFromProteinOrtho} contains functions to estimate a
 	%--------------------------------------------------------------------------
 	\hline
 	%--------------------------------------------------------------------------
-	\texttt{GeneTreeVis} & 
+	\texttt{GeneTreeVis} &
 	Visualization of simulated gene trees (of type \texttt{PhyloTree}), experimental. \\
 	%--------------------------------------------------------------------------
 \end{longtable}
+}
+
+
+\section{Distributions for sampling}\label{apx:sampling}
+
+The following distributions are available for sampling:
+
+{\small\centering
+  \begin{longtable}{ p{3cm} p{5cm} p{5.5cm}}
+    % ---------------------------------------------------
+    distribution & syntax & parameters\\
+    % ---------------------------------------------------
+    constant & \texttt{x}\newline \texttt{(\sq constant\sq, x)}
+    & $x$ must
+    be a number\\
+    % ---------------------------------------------------
+    uniform\newline (continuous) & \texttt{(\sq uniform\sq, a, b)} & $a<=b$
+    must be numbers\\
+    % ---------------------------------------------------
+    uniform\newline (discrete) & \texttt{(\sq discrete\_uniform\sq, a, b)} &
+    $a<=b$ must be integers\\
+    % ---------------------------------------------------
+    gamma & \texttt{(\sq gamma\sq, shape, scale)} & shape and scale must be
+    floats $>0$\\
+    % ---------------------------------------------------
+    gamma (mean) & \texttt{(\sq gamma\_mean\sq, mean)} & mean must be a number
+    $>0$, shape$=1$ and scale$=$mean/shape\\
+    % ---------------------------------------------------
+    exponential & \texttt{(\sq exponential\sq, rate)} & rate must be a float
+    $\ge0$ $>0$\\
+    % ---------------------------------------------------
+    Zipf & \texttt{(\sq zipf\sq, a)} & $a>1$ must be a float value\\
+    % ---------------------------------------------------
+    negative binomial & \texttt{(\sq negative\_binomial\sq, r, q)} & $r\ge 1$
+    must be an integer, \newline $0<q<1$ a float value\\
+    % ---------------------------------------------------
+  \end{longtable}
 }
 
 \end{document}

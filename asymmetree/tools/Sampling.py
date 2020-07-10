@@ -121,13 +121,26 @@ class Sampler:
                 
                 if not isinstance(mean , (int, float)) or mean <= 0.0:
                     raise ValueError('mean of gamma distribution must be '\
-                                     'a number >=0.0')
+                                     'a number >0.0')
                 
                 self._distr = 'gamma'
                 self.draw = self._draw_gamma
                 self._exp_val = mean
                 self._shape = 1.0
                 self._scale = mean / self._shape
+                
+                
+            elif self._params[0] == 'exponential':
+                
+                rate = self._params[1]
+                
+                if not isinstance(mean , float) or rate < 0.0:
+                    raise ValueError('rate must be a float >=0.0')
+                
+                self._distr = 'exponential'
+                self.draw = self._draw_exponential
+                self._exp_val = float('inf') if rate == 0.0 else 1/rate
+                self._rate = rate
                 
                 
             elif self._params[0] == 'zipf':
@@ -219,6 +232,22 @@ class Sampler:
         
         while True:
             x = np.random.gamma(self._shape, scale=self._scale) + self._shift
+            
+            if self._discrete:
+                x = round(x)
+                
+            if ((not self._min or x >= self.min) and
+                (not self._max or x <= self._max)):
+                return x
+            
+            
+    def _draw_exponential(self):
+        
+        while True:
+            if self._rate == 0.0:
+                x = float('inf')
+            else:
+                x = np.random.exponential(scale=1/self._rate) + self._shift
             
             if self._discrete:
                 x = round(x)
