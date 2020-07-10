@@ -44,6 +44,7 @@ class Sampler:
         if isinstance(self._params, (int, float)):
             
             self._distr = 'constant'
+            self.draw = self._draw_constant
             self._exp_val = (round(self._params) if self._discrete else
                              self._params)
             
@@ -56,6 +57,7 @@ class Sampler:
                     raise ValueError('constant value must be a number')
                     
                 self._distr = 'constant'
+                self.draw = self._draw_constant
                 self._exp_val = round(val) if self._discrete else val
                 
             elif self._params[0] == 'uniform':
@@ -71,6 +73,7 @@ class Sampler:
                                      'must be numbers and a <= b')
                     
                 self._distr = 'uniform'
+                self.draw = self._draw_uniform
                 self._exp_val = (a + b) / 2
                 self._a = a
                 self._b = b
@@ -89,6 +92,7 @@ class Sampler:
                                      'distr. must be ints and a <= b')
                     
                 self._distr = 'discrete_uniform'
+                self.draw = self._draw_discrete_uniform
                 self._exp_val = (a + b) / 2
                 self._a = a
                 self._b = b
@@ -106,6 +110,7 @@ class Sampler:
                                      'distribution must be floats >0.0')
                     
                 self._distr = 'gamma'
+                self.draw = self._draw_gamma
                 self._exp_val = shape * scale
                 self._shape = shape
                 self._scale = scale
@@ -119,6 +124,7 @@ class Sampler:
                                      'a number >=0.0')
                 
                 self._distr = 'gamma'
+                self.draw = self._draw_gamma
                 self._exp_val = mean
                 self._shape = 1.0
                 self._scale = mean / self._shape
@@ -143,6 +149,7 @@ class Sampler:
                     self._exp_val = 0.0
                     
                 self._distr = 'zipf'
+                self.draw = self._draw_zipf
                 self._a = a
                     
             elif self._params[0] == 'negative_binomial':
@@ -159,6 +166,7 @@ class Sampler:
                     raise ValueError('parameter q must be a float >0 and <1')
                     
                 self._distr = 'negative_binomial'
+                self.draw = self._draw_neg_bin
                 self._exp_val = r * q / (1 - q)
                 self._r = r
                 self._q = q
@@ -178,59 +186,63 @@ class Sampler:
             raise ValueError('expected value must be >= minimum and'\
                              '<= maximum')
             
+                
+    def _draw_constant(self):
+        
+        return self._exp_val
     
-    def draw(self):
+    
+    def _draw_uniform(self):
         
-        if self._distr == 'constant':
-            return self._exp_val
-        
-        elif self._distr == 'uniform':
+        while True:
+            x = np.random.uniform(low=self._a, high=self._b) + self._shift
             
-            while True:
-                x = np.random.uniform(low=self._a, high=self._b) + self._shift
+            if self._discrete:
+                x = round(x)
                 
-                if self._discrete:
-                    x = round(x)
-                    
-                if ((not self._min or x >= self.min) and
-                    (not self._max or x <= self._max)):
-                    return x
-        
-        elif self._distr == 'discrete_uniform':
+            if ((not self._min or x >= self.min) and
+                (not self._max or x <= self._max)):
+                return x
             
-            while True:
-                x = np.random.randint(self._a, high=self._b) + self._shift
-                    
-                if ((not self._min or x >= self.min) and
-                    (not self._max or x <= self._max)):
-                    return x
+    
+    def _draw_discrete_uniform(self):
         
-        elif self._distr == 'gamma':
-            
-            while True:
-                x = np.random.gamma(self._shape, scale=self._scale) + self._shift
+        while True:
+            x = np.random.randint(self._a, high=self._b) + self._shift
                 
-                if self._discrete:
-                    x = round(x)
-                    
-                if ((not self._min or x >= self.min) and
-                    (not self._max or x <= self._max)):
-                    return x
+            if ((not self._min or x >= self.min) and
+                (not self._max or x <= self._max)):
+                return x
+                
+    
+    def _draw_gamma(self):
         
-        elif self._distr == 'zipf':
+        while True:
+            x = np.random.gamma(self._shape, scale=self._scale) + self._shift
             
-            while True:
-                x = np.random.zipf(self._a) + self._shift
-                    
-                if ((not self._min or x >= self.min) and
-                    (not self._max or x <= self._max)):
-                    return x
+            if self._discrete:
+                x = round(x)
+                
+            if ((not self._min or x >= self.min) and
+                (not self._max or x <= self._max)):
+                return x
+            
+    
+    def _draw_zipf(self):
         
-        elif self._distr == 'negative_binomial':
+        while True:
+            x = np.random.zipf(self._a) + self._shift
+                
+            if ((not self._min or x >= self.min) and
+                (not self._max or x <= self._max)):
+                return x
             
-            while True:
-                x = np.random.negative_binomial(self._r, 1 - self._q) + self._shift
-                    
-                if ((not self._min or x >= self.min) and
-                    (not self._max or x <= self._max)):
-                    return x
+    
+    def _draw_neg_bin(self):
+        
+        while True:
+            x = np.random.negative_binomial(self._r, 1 - self._q) + self._shift
+                
+            if ((not self._min or x >= self.min) and
+                (not self._max or x <= self._max)):
+                return x

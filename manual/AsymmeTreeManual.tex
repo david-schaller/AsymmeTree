@@ -382,7 +382,8 @@ The following keyword parameters (with their default values) are available:
 	\texttt{base\_rate=1.0} & starting value for the substitution rate (per time unit) and expected value for conserved genes\\
 	\texttt{autocorr\_factors=None}  & a dictionary containing rate factors for the edges of the species tree\\
 	\texttt{autocorr\_variance=0.0}  & variance factor for a lognormal distribution that controls autocorrelation between genes of the same (and closely related) species, the higher the lower the auto\-corre\-la\-tion; only relevant if \texttt{autocorr\_factors} is not directly supplied\\
-	\texttt{gamma\_param=\newline (0.5, 1.0, 2.2)}  & parameter the for Gamma distribution (\texttt{a, loc, scale}) from which rate factors for divergent are drawn, the default values are chosen to fit observed asymmetries between paralogs in yeast data \citep{byrne2007}\\
+	\texttt{rate\_increase=\newline ('gamma', 0.5, 2.2)}  & distribution of the (relative) rate increase (w.r.t. the
+        base rate) for divergent genes, i.e. to a factor 1 + x, the parameters the for default Gamma distribution are chosen to fit observed asymmetries between paralogs in yeast data \citep{byrne2007}\\
 	\texttt{CSN\_weights=(1, 1, 1)}  & weights for choice between conservation,
 	subfunctionalization and neofunctionalization after a duplication event\\
 	\texttt{inplace=True}  & manipulate edge lengths (\texttt{dist}) of the gene tree in-place, otherwise copy the tree\\
@@ -404,7 +405,7 @@ S = te.simulate_species_tree(10)
 tree = te.simulate_dated_gene_tree(S, dupl_rate=1.0, loss_rate=0.5, hgt_rate=0.1)
 te.assign_rates(tree, S, base_rate=1,
                 autocorr_variance=0.2,
-                gamma_param=(0.5, 1.0, 2.2))
+                rate_increase=('gamma', 0.5, 2.2))
                 
 # or in a single step
 tree = simulate_gene_trees(S, N=1,
@@ -413,7 +414,7 @@ tree = simulate_gene_trees(S, N=1,
                            hgt_rate=0.1,
                            base_rate=('constant', 1.0),
                            autocorr_variance=0.2,
-                           gamma_param=(0.5, 1.0, 2.2))
+                           rate_increase=('gamma', 0.5, 2.2))
 
 # observable gene tree
 ogt = ts.observable_tree(tree)
