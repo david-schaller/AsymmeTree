@@ -610,7 +610,7 @@ class PhyloTree(Tree):
     
     
     @staticmethod
-    def random_colored_tree(N, colors, binary=False):
+    def random_colored_tree(N, colors, binary=False, force_all_colors=False):
         """Creates a random colored tree.
         
         The number of leaves and the color labels are specified in the
@@ -620,6 +620,8 @@ class PhyloTree(Tree):
         
         Keyword arguments:
             binary - forces the tree to be binary; default is False
+            force_all_colors - the resulting graph has at least one leaf for
+                each color; default is False
         """
         
         if not isinstance(N, int):
@@ -629,6 +631,9 @@ class PhyloTree(Tree):
             colors = [i+1 for i in range(colors)]
         elif not isinstance(colors, collections.abc.Iterable):
             raise TypeError("'colors' must be of type 'int' or iterable")
+            
+        if len(colors) > N and force_all_colors:
+            raise ValueError('cannot force all colors since #colors > N')
         
         root = PhyloTreeNode(0, label='0')
         tree = PhyloTree(root)
@@ -654,10 +659,22 @@ class PhyloTree(Tree):
                 node_list.append(new_child)
                 nr += 1
                 leaf_count += 1
-                
-        for node in node_list:                          # assign colors
-            if not node.children:                       # to leaves randomly
-                node.color = random.choice(colors)
+        
+        leaves = [node for node in node_list if not node.children]
+        
+        if force_all_colors:
+            # use every color at least once
+            permutation = np.random.permutation(len(leaves))
+            for i in range(len(leaves)):
+                if i < len(colors):
+                    leaves[permutation[i]].color = colors[i]
+                else:
+                    # color the remaining leaves randomly
+                    leaves[permutation[i]].color = random.choice(colors)
+        else:
+            # assign colors completely randomly
+            for leaf in leaves:
+                leaf.color = random.choice(colors)
                 
         return tree
    
