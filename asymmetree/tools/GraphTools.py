@@ -61,7 +61,12 @@ def symmetric_diff(G1, G2):
     
     sym_diff_number = 0
     
-    for x, y in itertools.combinations(set1, 2):
+    if isinstance(G1, nx.DiGraph):
+        generator = itertools.permutations(set1, 2)
+    else:
+        generator = itertools.combinations(set1, 2)
+    
+    for x, y in generator:
         if G1.has_edge(x, y) and not G2.has_edge(x, y):
             sym_diff_number += 1
         elif not G1.has_edge(x, y) and G2.has_edge(x, y):
@@ -85,6 +90,38 @@ def random_graph(N, p=0.5):
             G.add_edge(x, y)
     
     return G
+
+
+def disturb_graph(graph, insertion_prob, deletion_prob, inplace=False,
+                  preserve_properly_colored=True):
+    """Randomly insert/delete edges in a graph."""
+    
+    if not inplace:
+        graph = graph.copy()
+    
+    for x, y in itertools.combinations(graph.nodes, 2):
+        
+        if (preserve_properly_colored and
+            'color' in graph.nodes[x] and 'color' in graph.nodes[y] and
+            graph.nodes[x]['color'] == graph.nodes[y]['color']):
+            continue
+        
+        if not graph.has_edge(x, y) and random.random() <= insertion_prob:
+            graph.add_edge(x, y)
+        elif graph.has_edge(x, y) and random.random() <= deletion_prob:
+            graph.remove_edge(x, y)
+        
+        # done for undirected graphs
+        if not isinstance(graph, nx.DiGraph):
+            continue
+        
+        # other direction for digraphs
+        if not graph.has_edge(y, x) and random.random() <= insertion_prob:
+            graph.add_edge(y, x)
+        elif graph.has_edge(y, x) and random.random() <= deletion_prob:
+            graph.remove_edge(y, x)
+    
+    return graph
 
 
 def performance(true_graph, graph):
