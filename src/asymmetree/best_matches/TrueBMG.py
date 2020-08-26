@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
 """
-Orthology graph, cBMG, cRBMG.
+Orthology graph, BMG, RBMG.
 
 This module provides classes concerning colored graphs and colored
-(phylogentic) trees, including a cBMG(PhyloTree)-function.
+(phylogentic) trees, including a BMG(PhyloTree)-function.
 """
 
 import itertools
@@ -18,7 +18,7 @@ __author__ = 'David Schaller'
 
 
 # --------------------------------------------------------------------------
-#                 True Orthology Graph (TOG), cBMG & cRBMG
+#                 True Orthology Graph (TOG), BMG & RBMG
 #
 #                         (given a known tree)
 # --------------------------------------------------------------------------
@@ -43,7 +43,7 @@ def orthology_from_tree(tree):
 
 
 def bmg_from_tree(tree, supply_rbmg=False):
-    """Create an n-colored BMG (and optionally RBMG) from a given tree."""
+    """Construct a BMG (and optionally RBMG) from a given tree."""
     
     tree.supply_leaves()                                # assign list of leaves to each node
     bmg = nx.DiGraph()
@@ -69,3 +69,46 @@ def bmg_from_tree(tree, supply_rbmg=False):
         return bmg
     else:
         return bmg, symmetric_part(bmg)
+    
+    
+def bmg_from_tree_quadratic(tree, supply_rbmg=False):
+    """Construct a BMG (and optionally RBMG) from a given tree in O(|L|^2).
+    
+    Implementation of the quadratic algorithm in Geiss et al. 2020. Proven to
+    run in O(|L|^2).
+    """
+    
+    tree.supply_leaves()
+    bmg = nx.DiGraph()
+    colors = set()
+    
+    # maps (v, color) --> 0 / 1
+    l = {}
+    
+    for v in tree.root.leaves:
+        colors.add(v.color)
+        bmg.add_node(v.ID, label=v.label, color=v.color)
+        l[v, v.color] = 1
+        
+    for v in tree.postorder():
+        
+        if not v.children:
+            continue
+        
+        for u1, u2 in itertools.combinations(v.children, 2):
+            for x, y in itertools.product(u1.leaves, u2.leaves):
+                
+                if not l.get((u1, y.color)):
+                    bmg.add_edge(x.ID, y.ID)
+                if not l.get((u2, x.color)):
+                    bmg.add_edge(y.ID, x.ID)
+                    
+        for u, r in itertools.product(v.children, colors):
+            if l.get((u, r)):
+                l[v, r] = 1
+    
+    if not supply_rbmg:
+        return bmg
+    else:
+        return bmg, symmetric_part(bmg)
+    
