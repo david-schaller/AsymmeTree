@@ -13,9 +13,95 @@ import networkx as nx
 
 from asymmetree.best_matches import TrueBMG
 from asymmetree import PhyloTree, PhyloTreeNode
+from asymmetree.tools.GraphTools import sort_by_colors
 
 
 __author__ = 'David Schaller'
+
+
+def informative_triples(graph, color_dict=None):
+    """Compute the informative triples of a colored digraph."""
+    
+    if not isinstance(graph, nx.DiGraph):
+        raise TypeError("must be a NetworkX 'Digraph'")
+    
+    if not color_dict:
+        color_dict = sort_by_colors(graph)
+    
+    R = []
+    
+    for c1, c2 in itertools.permutations(color_dict.keys(), 2):
+        for a in color_dict[c1]:
+            for b1, b2 in itertools.permutations(color_dict[c2], 2):
+                if graph.has_edge(a, b1) and (not graph.has_edge(a, b2)):
+                    R.append( (a, b1, b2) )
+    
+    return R
+
+
+def forbidden_triples(graph, color_dict=None):
+    """Compute the forbidden triples of a colored digraph."""
+    
+    if not isinstance(graph, nx.DiGraph):
+        raise TypeError("must be a NetworkX 'Digraph'")
+    
+    if not color_dict:
+        color_dict = sort_by_colors(graph)
+    
+    F = []
+    
+    for c1, c2 in itertools.permutations(color_dict.keys(), 2):
+        for a in color_dict[c1]:
+            for b1, b2 in itertools.combinations(color_dict[c2], 2):
+                if graph.has_edge(a, b1) and graph.has_edge(a, b2):
+                    F.append( (a, b1, b2) )
+    
+    return F
+
+
+def informative_forbidden_triples(graph, color_dict=None):
+    """Compute the informative and forbidden triples of a colored digraph."""
+    
+    if not isinstance(graph, nx.DiGraph):
+        raise TypeError("must be a NetworkX 'Digraph'")
+    
+    if not color_dict:
+        color_dict = sort_by_colors(graph)
+    
+    R, F = [], []
+    
+    for c1, c2 in itertools.permutations(color_dict.keys(), 2):
+        for a in color_dict[c1]:
+            for b1, b2 in itertools.combinations(color_dict[c2], 2):
+                
+                if graph.has_edge(a, b1) and graph.has_edge(a, b2):
+                    F.append( (a, b1, b2) )
+                elif graph.has_edge(a, b1):
+                    R.append( (a, b1, b2) )
+                elif graph.has_edge(a, b2):
+                    R.append( (a, b2, b1) )
+    
+    return R, F
+
+
+def aho_graph(R, L, weighted=False):
+    """Construct the auxiliary graph (Aho graph) for BUILD.
+        
+    Edges (a,b) are optionally weighted by the number of occurrences in
+    triples of the form ab|x or ba|x.
+    """
+    
+    G = nx.Graph()
+    G.add_nodes_from(L)
+
+    for t1, t2, t3 in R:
+        if not G.has_edge(t1, t2):
+            G.add_edge(t1, t2, weight=1)
+        elif weighted:
+            G[t1][t2]['weight'] += 1
+    
+    return G
+    
 
 
 # --------------------------------------------------------------------------
@@ -101,48 +187,26 @@ def _redundant_edges(T, subtree_colors, arc_colors):
 
 class LRTConstructor:
     
-    def __init__(self, G, mincut=True):
+    def __init__(self, G, mincut=True, weighted_mincut=False):
         
         self.G = G
-        self.R = []
-        self.L = set()
-        self.color_dict = {}
         self.mincut = mincut
-        self.cut_value = 0
-        self.cut_list = []
-        
-    
-    def initialize(self):
-        """Initialize color dictionary and leaf set."""
-        
-        for v in self.G.nodes:
-            color = self.G.nodes[v]['color']
-            if color not in self.color_dict:
-                self.color_dict[color] = [v]
-            else:
-                self.color_dict[color].append(v)
-            self.L.add(v)
-    
-    
-    def informative_triples(self):
-        """Compute the informative triples."""
-        
-        for c_a, c_b in itertools.permutations(self.color_dict.keys(), 2):
-            for a in self.color_dict[c_a]:
-                for b, b2 in itertools.permutations(self.color_dict[c_b], 2):
-                    if self.G.has_edge(a, b) and (not self.G.has_edge(a, b2)):
-                        self.R.append( (a, b, b2) )
+        self.weighted_mincut = weighted_mincut
     
     
     def build_tree(self):
         """Build the least resolved tree from informative triples."""
         
-        self.initialize()
-        self.informative_triples()
+        self.L = {v for v in self.G.nodes()}
+        self.color_dict = sort_by_colors(self.G)
+        self.R = informative_triples(self.G, color_dict=self.color_dict)
+        
+        self.cut_value = 0
+        self.cut_list = []
         
         root = self.aho(self.L, self.R)
         if not root:
-            print("No such tree exists!")
+            print('no such tree exists')
             return None
         else:
             return PhyloTree(root)
@@ -151,44 +215,70 @@ class LRTConstructor:
     def aho(self, L, R):
         """Recursive Aho-algorithm."""
         
-        if len(L) == 1:                                 # trivial case: only one leaf left in L
+        # trivial case: only one leaf left in L
+        if len(L) == 1:
             leaf = L.pop()
             return PhyloTreeNode(leaf, label=self.G.nodes[leaf]['label'],
                                  color=self.G.nodes[leaf]['color'])
             
-        help_graph_A = HelpGraph(L, R, self)            # construct the help graph A(R)
-                                                        # determine connected components A1, ..., Ak
-        conn_comps = help_graph_A.connected_comp(mincut=self.mincut)
+        help_graph = aho_graph(R, L, weighted=self.weighted_mincut)
+        conn_comps = self.connected_components(help_graph)
         
-        if len(conn_comps) <= 1:                        # return False if less than 2 connected components
+        # return False if less than 2 connected components
+        if len(conn_comps) <= 1:
             print('Connected component:\n', conn_comps)
             return False
+        
         child_nodes = []
         for cc in conn_comps:
-            Li = set(cc)                                # list/dictionary --> set
+            Li = set(cc)                            # list/dictionary --> set
             Ri = []
-            for t in R:                                 # determine which triples are in the subtree
+            for t in R:                             # determine which triples are in the subtree
                 if Li.issuperset(t):
                     Ri.append(t)
-            Ti = self.aho(Li, Ri)                       # recursive call
+            Ti = self.aho(Li, Ri)                   # recursive call
             if not Ti:
-                return False                            # raise False to previous call of aho()
+                return False                        # raise False to previous call of aho()
             else:
                 child_nodes.append(Ti)
                 
-        subtree_root = PhyloTreeNode(0, label='')       # place new inner node
+        subtree_root = PhyloTreeNode(0, label='')   # place new inner node
         for Ti in child_nodes:
-            subtree_root.add_child(Ti)                  # add roots of the subtrees to the new node
+            subtree_root.add_child(Ti)              # add roots of the subtrees to the new node
    
-        return subtree_root                             # return the new node
+        return subtree_root                         # return the new node
+    
+    
+    def connected_components(self, aho_graph):
+        """Determines the connected components of the graph."""
+        
+        conn_comps = list(nx.connected_components(aho_graph))
+        if (not self.mincut) or len(conn_comps) > 1:
+            return conn_comps
+        else:
+            # Stoer–Wagner algorithm
+            cut_value, partition = nx.stoer_wagner(aho_graph)
+            self.cut_value += cut_value
+            if len(partition[0]) < len(partition[1]):
+                smaller_comp = partition[0]
+            else:
+                smaller_comp = partition[1]
+            for edge in self.G.edges:
+                if ((edge[0] in smaller_comp and edge[1] not in smaller_comp)
+                    or
+                    (edge[1] in smaller_comp and edge[0] not in smaller_comp)):
+                    self.cut_list.append(edge)
+            return partition
     
     
     @staticmethod
     def correct_bmg(bmg_original):
-        """Build the LRT (using Mincut in Aho algorithm and return its BMG and RBMG."""
+        """Build the LRT (using Mincut in Aho algorithm) and
+        return its BMG and RBMG."""
         
         subtrees = []
-        for sg in (bmg_original.subgraph(c) for c in nx.weakly_connected_components(bmg_original)):
+        for sg in (bmg_original.subgraph(c)
+                   for c in nx.weakly_connected_components(bmg_original)):
             lrt_constructor = LRTConstructor(sg, mincut=True)
             tree = lrt_constructor.build_tree()
             if tree:
@@ -204,59 +294,6 @@ class LRTConstructor:
                 tree.root.add_child(subtree.root)
         
         return TrueBMG.bmg_from_tree(tree)
-
-
-class HelpGraph:
-    """Help graph for Aho-algorithm.
-    
-    Takes a list of leaves L and a list of tuples R of the form (x,y|z) and
-    builds a graph with V = L and E = { (x,y) | (x,y|z) in R }.
-    Provides optional Minimal Edge Cut for function connected_comp().
-    """
-    
-    def __init__(self, L, R, aho):
-        """Constructs the help graph as NetworkX graph.
-        
-        Edges (a,b) are weighted by the number of occurrences in triples
-        of the form ab|x or ba|x.
-        """
-        
-        self.G = nx.Graph()
-        self.G.add_nodes_from(L)
-        self.aho = aho
-
-        for t1, t2, t3 in R:
-            if not self.G.has_edge(t1, t2):
-                self.G.add_edge(t1, t2, weight=1)
-#            if self.G.has_edge(t1, t2):
-#                self.G[t1][t2]["weight"] += 1
-#            else:
-#                self.G.add_edge(t1, t2, weight=1)
-    
-    
-    def connected_comp(self, mincut=False):
-        """Determines the connected components of the graph.
-        
-        Keyword arguments:
-            mincut -- if True and graph has only one component, a 
-                      minimal edge cut is applied first, function then
-                      always return > 1 components (default=False).
-        """
-        
-        if (not mincut) or nx.number_connected_components(self.G) > 1:
-            return list(nx.connected_components(self.G))
-        else:
-            cut = nx.stoer_wagner(self.G)           # Stoer–Wagner algorithm
-            self.aho.cut_value += cut[0]
-            if len(cut[1][0]) < len(cut[1][1]):
-                smaller_comp = cut[1][0]
-            else:
-                smaller_comp = cut[1][1]
-            for edge in self.G.edges:
-                if ((edge[0] in smaller_comp and edge[1] not in smaller_comp) or
-                    (edge[1] in smaller_comp and edge[0] not in smaller_comp)):
-                    self.aho.cut_list.append(edge)
-            return cut[1]
         
         
 # --------------------------------------------------------------------------

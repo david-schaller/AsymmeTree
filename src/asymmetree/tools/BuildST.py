@@ -79,9 +79,7 @@ class BuildST:
         
         Y = self.ConnectedComp(len(self.treelist), self, count=len(self.Xp))
         
-        for i in range(len(self.treelist)):
-            
-            tree = self.treelist[i]
+        for i, tree in enumerate(self.treelist):
             
             # Y_init.singleton is the set [k]
             self.singleton_pointer[tree.root] = Y.singleton.append(i)
