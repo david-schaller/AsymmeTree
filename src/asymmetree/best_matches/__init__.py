@@ -2,7 +2,7 @@
 
 # best match computation
 from asymmetree.best_matches.TrueBMG import orthology_from_tree, bmg_from_tree
-from asymmetree.best_matches.LRTConstructor import lrt_from_observable_tree, lrt_from_colored_graph
+from asymmetree.best_matches.LeastResolvedTree import lrt_from_observable_tree, lrt_from_colored_graph
 from asymmetree.best_matches.Augmentation import augment_and_label
 
 # best match estimation

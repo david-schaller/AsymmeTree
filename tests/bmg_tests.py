@@ -23,8 +23,7 @@ class TestBMG(unittest.TestCase):
             bmg = bm.bmg_from_tree(tree)
             
             lrt1 = bm.lrt_from_observable_tree(tree)
-            lrt_constr = bm.LRTConstructor(bmg, mincut=False)
-            lrt2 = lrt_constr.build_tree()
+            lrt2 = bm.lrt_from_colored_graph(bmg, mincut=False)
             
             self.assertTrue( lrt1.compare_topology(lrt2) )
             

@@ -13,7 +13,9 @@ import networkx as nx
 
 from asymmetree.best_matches.TrueBMG import bmg_from_tree
 from asymmetree.tools.PhyloTree import PhyloTree, PhyloTreeNode
-from asymmetree.tools.GraphTools import sort_by_colors, is_properly_colored
+from asymmetree.tools.GraphTools import (sort_by_colors,
+                                         is_properly_colored,
+                                         graphs_equal)
 from asymmetree.tools.Build import Build
 
 
@@ -127,15 +129,23 @@ def _arc_colors(T, subtree_colors):
     
     all_colors = subtree_colors[T.root]
     
-    arc_colors = {v: set() for v in T.preorder()}     # color sets for all v
+    # color sets for all v
+    arc_colors = {v: set() for v in T.preorder()}
     
     for u in T.root.leaves:
-        remaining = all_colors - {u.color}            # colors to which no best match has yet been found
-        current = u.parent                            # start with direct parent of each node
+        
+        # colors to which no best match has yet been found
+        remaining = all_colors - {u.color}
+        
+        # start with direct parent of each node
+        current = u.parent
+        
         while remaining and current:
             colors_here = set()
             for v in current.leaves:
-                if v.color in remaining:              # best match found
+                
+                # best match found
+                if v.color in remaining:
                     colors_here.add(v.color)
             
             arc_colors[current].update(colors_here)
@@ -167,6 +177,53 @@ def redundant_edges(T, subtree_colors, arc_colors):
 # --------------------------------------------------------------------------
 #                               LRT FROM BMG
 # --------------------------------------------------------------------------
+
+def bmg_test(G):
+    
+    if not isinstance(G, nx.DiGraph):
+            raise TypeError('not a digraph')
+    if not is_properly_colored(G):
+        raise RuntimeError('not a properly colored digraph')
+    
+    subtrees = []
+    colors = None
+    
+    for wcc in nx.weakly_connected_components(G):
+        
+        sg = G.subgraph(wcc).copy()
+        color_dict = sort_by_colors(sg)
+        
+        # the color sets of all components must be equal
+        if colors is None:
+            colors = set(color_dict)
+        elif colors != set(color_dict):
+            return False
+        
+        L = {v for v in sg.nodes()}
+        R = informative_triples(sg, color_dict=color_dict)
+        build = Build(R, L, mincut=False)
+        subtree = build.build_tree()
+        
+        if not subtree: 
+            return False
+        else:
+            # a digraph is a BMG iff its equal to the BMG of BUILD(R)
+            subtree.reconstruct_information_from_graph(sg)
+            if not graphs_equal(sg, bmg_from_tree(subtree)):
+                return False
+            subtrees.append(subtree)
+    
+    if len(subtrees) == 1:
+        root = subtrees[0].root
+    else:
+        root = PhyloTreeNode(-1)
+        for subtree in subtrees:
+            root.add_child(subtree.root)
+    
+    tree = PhyloTree(root)
+    tree.reconstruct_IDs()
+    return tree
+    
 
 def lrt_from_colored_graph(G, mincut=False, weighted_mincut=False):
     
@@ -240,7 +297,7 @@ class TwoColoredLRT:
                                       color=self.digraph.nodes[v]['color']))
         # 2 colors
         else:
-            roots = []
+            subtrees = []
             for wcc in nx.weakly_connected_components(self.digraph):
                 if len(wcc) == 1:
                     return False
@@ -250,13 +307,13 @@ class TwoColoredLRT:
                 if not subroot:
                     return False
                 else:
-                    roots.append(subroot)
+                    subtrees.append(subroot)
             
-            if len(roots) == 1:
-                root = roots[0]
+            if len(subtrees) == 1:
+                root = subtrees[0]
             else:
                 root = PhyloTreeNode(-1)
-                for subroot in roots:
+                for subroot in subtrees:
                     root.add_child(subroot)
         
         tree = PhyloTree(root)
@@ -314,9 +371,8 @@ if __name__ == '__main__':
     bmg = bmg_from_tree(T)
     
     start_time1 = time.time()
-    # lrt_constr = LRTConstructor(bmg, mincut=False)
-    # lrt1 = lrt_constr.build_tree()
     lrt1 = lrt_from_colored_graph(bmg, mincut=False)
+    # lrt1 = bmg_test(bmg)
     end_time1 = time.time()
     
     lrt2 = lrt_from_observable_tree(T)
