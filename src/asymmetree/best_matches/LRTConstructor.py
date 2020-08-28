@@ -11,9 +11,10 @@ import itertools
 
 import networkx as nx
 
-from asymmetree.best_matches import TrueBMG
-from asymmetree import PhyloTree, PhyloTreeNode
-from asymmetree.tools.GraphTools import sort_by_colors
+from asymmetree.best_matches.TrueBMG import bmg_from_tree
+from asymmetree.tools.PhyloTree import PhyloTree, PhyloTreeNode
+from asymmetree.tools.GraphTools import sort_by_colors, is_properly_colored
+from asymmetree.tools.Build import Build
 
 
 __author__ = 'David Schaller'
@@ -81,27 +82,7 @@ def informative_forbidden_triples(graph, color_dict=None):
                 elif graph.has_edge(a, b2):
                     R.append( (a, b2, b1) )
     
-    return R, F
-
-
-def aho_graph(R, L, weighted=False):
-    """Construct the auxiliary graph (Aho graph) for BUILD.
-        
-    Edges (a,b) are optionally weighted by the number of occurrences in
-    triples of the form ab|x or ba|x.
-    """
-    
-    G = nx.Graph()
-    G.add_nodes_from(L)
-
-    for t1, t2, t3 in R:
-        if not G.has_edge(t1, t2):
-            G.add_edge(t1, t2, weight=1)
-        elif weighted:
-            G[t1][t2]['weight'] += 1
-    
-    return G
-    
+    return R, F    
 
 
 # --------------------------------------------------------------------------
@@ -130,8 +111,8 @@ def lrt_from_observable_tree(T):
         subtree_colors[v] = {leaf.color for leaf in v.leaves}
         
     arc_colors = _arc_colors(lrt, subtree_colors)
-    redundant_edges = _redundant_edges(lrt, subtree_colors, arc_colors)
-    lrt.contract(redundant_edges)
+    red_edges = redundant_edges(lrt, subtree_colors, arc_colors)
+    lrt.contract(red_edges)
     lrt = lrt.topology_only()
     
     return lrt
@@ -164,138 +145,69 @@ def _arc_colors(T, subtree_colors):
     return arc_colors
 
 
-def _redundant_edges(T, subtree_colors, arc_colors):
+def redundant_edges(T, subtree_colors, arc_colors):
     
-    redundant_edges = []
+    red_edges = []
     
     for u, v in T.inner_edges():
         
-        aux_set = set()                                 # colors s in sigma( L(T(u) \ T(v)) )
+        # colors s in sigma( L(T(u) \ T(v)) )
+        aux_set = set()
+        
         for v2 in u.children:
             if v2 is not v:
                 aux_set.update(subtree_colors[v2])
         
         if not arc_colors[v].intersection(aux_set):
-            redundant_edges.append((u, v))
+            red_edges.append((u, v))
     
-    return redundant_edges
+    return red_edges
 
 
 # --------------------------------------------------------------------------
 #                               LRT FROM BMG
 # --------------------------------------------------------------------------
 
-class LRTConstructor:
+def lrt_from_colored_graph(G, mincut=False, weighted_mincut=False):
     
-    def __init__(self, G, mincut=True, weighted_mincut=False):
-        
-        self.G = G
-        self.mincut = mincut
-        self.weighted_mincut = weighted_mincut
+    L = {v for v in G.nodes()}
+    R = informative_triples(G)
     
+    build = Build(R, L, mincut=mincut, weighted_mincut=weighted_mincut)
     
-    def build_tree(self):
-        """Build the least resolved tree from informative triples."""
-        
-        self.L = {v for v in self.G.nodes()}
-        self.color_dict = sort_by_colors(self.G)
-        self.R = informative_triples(self.G, color_dict=self.color_dict)
-        
-        self.cut_value = 0
-        self.cut_list = []
-        
-        root = self.aho(self.L, self.R)
-        if not root:
-            print('no such tree exists')
-            return None
-        else:
-            return PhyloTree(root)
+    tree = build.build_tree()
     
-    
-    def aho(self, L, R):
-        """Recursive Aho-algorithm."""
+    if not tree:
+        return None
+    else:
+        # assign label and colors to the leaves
+        tree.reconstruct_information_from_graph(G)
         
-        # trivial case: only one leaf left in L
-        if len(L) == 1:
-            leaf = L.pop()
-            return PhyloTreeNode(leaf, label=self.G.nodes[leaf]['label'],
-                                 color=self.G.nodes[leaf]['color'])
+        return tree
+
+
+def correct_bmg(bmg_original):
+    """Build the LRT (using min cut in BUILD algorithm) and return its BMG."""
+    
+    subtrees = []
+    for sg in (bmg_original.subgraph(c)
+               for c in nx.weakly_connected_components(bmg_original)):
+        tree = lrt_from_colored_graph(sg, mincut=True)
+        if tree:
+            subtrees.append(tree)
             
-        help_graph = aho_graph(R, L, weighted=self.weighted_mincut)
-        conn_comps = self.connected_components(help_graph)
-        
-        # return False if less than 2 connected components
-        if len(conn_comps) <= 1:
-            print('Connected component:\n', conn_comps)
-            return False
-        
-        child_nodes = []
-        for cc in conn_comps:
-            Li = set(cc)                            # list/dictionary --> set
-            Ri = []
-            for t in R:                             # determine which triples are in the subtree
-                if Li.issuperset(t):
-                    Ri.append(t)
-            Ti = self.aho(Li, Ri)                   # recursive call
-            if not Ti:
-                return False                        # raise False to previous call of aho()
-            else:
-                child_nodes.append(Ti)
-                
-        subtree_root = PhyloTreeNode(0, label='')   # place new inner node
-        for Ti in child_nodes:
-            subtree_root.add_child(Ti)              # add roots of the subtrees to the new node
-   
-        return subtree_root                         # return the new node
+    if len(subtrees) == 0:
+        return None
+    elif len(subtrees) == 1:
+        tree = subtrees[0]
+    else:
+        tree = PhyloTree(PhyloTreeNode(0))
+        for subtree in subtrees:
+            tree.root.add_child(subtree.root)
     
-    
-    def connected_components(self, aho_graph):
-        """Determines the connected components of the graph."""
-        
-        conn_comps = list(nx.connected_components(aho_graph))
-        if (not self.mincut) or len(conn_comps) > 1:
-            return conn_comps
-        else:
-            # Stoer–Wagner algorithm
-            cut_value, partition = nx.stoer_wagner(aho_graph)
-            self.cut_value += cut_value
-            if len(partition[0]) < len(partition[1]):
-                smaller_comp = partition[0]
-            else:
-                smaller_comp = partition[1]
-            for edge in self.G.edges:
-                if ((edge[0] in smaller_comp and edge[1] not in smaller_comp)
-                    or
-                    (edge[1] in smaller_comp and edge[0] not in smaller_comp)):
-                    self.cut_list.append(edge)
-            return partition
-    
-    
-    @staticmethod
-    def correct_bmg(bmg_original):
-        """Build the LRT (using Mincut in Aho algorithm) and
-        return its BMG and RBMG."""
-        
-        subtrees = []
-        for sg in (bmg_original.subgraph(c)
-                   for c in nx.weakly_connected_components(bmg_original)):
-            lrt_constructor = LRTConstructor(sg, mincut=True)
-            tree = lrt_constructor.build_tree()
-            if tree:
-                subtrees.append(tree)
-                
-        if len(subtrees) == 0:
-            return None
-        elif len(subtrees) == 1:
-            tree = subtrees[0]
-        else:
-            tree = PhyloTree(PhyloTreeNode(0))
-            for subtree in subtrees:
-                tree.root.add_child(subtree.root)
-        
-        return TrueBMG.bmg_from_tree(tree)
-        
-        
+    return bmg_from_tree(tree)
+
+
 # --------------------------------------------------------------------------
 #                          LRT FROM 2-col. BMG
 #                         (new characterization)
@@ -303,80 +215,90 @@ class LRTConstructor:
             
 class TwoColoredLRT:
     
-    
     def __init__(self, digraph):
         
         if not isinstance(digraph, nx.DiGraph):
             raise TypeError('not a digraph')
             
         self.digraph = digraph
-        self._color_list()
-        
-        
-    def _color_list(self):
-        
-        self.colors = []
-        
-        for v in self.digraph.nodes():
-            col = self.digraph.nodes[v]['color']
-            if col not in self.colors and len(self.colors) < 2:
-                self.colors.append(col)
-            elif col not in self.colors:
-                raise RuntimeError('more than 2 colors in digraph')
-        
-    
-    def _color_count(self, G):
-        
-        color_count = [0 for _ in range(2)]
-        
-        for v in G.nodes():
-            color_count[self.colors.index(G.nodes[v]['color'])] += 1
-        
-        return color_count
+        self.color_dict = sort_by_colors(digraph)
                 
     
-    def build(self):
+    def build_tree(self):
         
-        def _build_tree(G):
-            
-            root_leaves = []
-            color_count = self._color_count(G)
-            
-            for v in G.nodes():
-                col_idx = self.colors.index(G.nodes[v]['color'])
+        if not is_properly_colored(self.digraph):
+            raise RuntimeError('not a properly colored digraph')
+        if len(self.color_dict) > 2:
+            raise RuntimeError('more than 2 colors')
+        
+        # star tree if there is only one color
+        if len(self.color_dict) == 1:
+            root = PhyloTreeNode(-1)
+            for v in self.digraph.nodes():
+                root.add_child(
+                    PhyloTreeNode(-1, label=self.digraph.nodes[v]['label'],
+                                      color=self.digraph.nodes[v]['color']))
+        # 2 colors
+        else:
+            roots = []
+            for wcc in nx.weakly_connected_components(self.digraph):
+                if len(wcc) == 1:
+                    return False
                 
-                if color_count[(col_idx + 1) % 2] == G.out_degree(v):
-                    valid = True
-                    for v2 in G.predecessors(v):
-                        if color_count[col_idx % 2] != G.out_degree(v2):
-                            valid = False
-                    if valid:
-                        root_leaves.append(v)
-                    
-            if not root_leaves and nx.is_weakly_connected(G):
-                return False
+                subroot = self._build_tree(self.digraph.subgraph(wcc).copy())
                 
-            node = PhyloTreeNode(0, label='')
-            for v in root_leaves:
-                node.add_child(PhyloTreeNode(v, label=str(v),
-                                             color=G.nodes[v]['color']))
-                G.remove_node(v)
-            
-            for wcc in nx.weakly_connected_components(G):
-                child = _build_tree(G.subgraph(wcc).copy())
-                
-                if not child:
+                if not subroot:
                     return False
                 else:
-                    node.add_child(child)
-                    
-            return node
+                    roots.append(subroot)
+            
+            if len(roots) == 1:
+                root = roots[0]
+            else:
+                root = PhyloTreeNode(-1)
+                for subroot in roots:
+                    root.add_child(subroot)
         
-        root = _build_tree(self.digraph.copy())
-        if not root:
+        tree = PhyloTree(root)
+        tree.reconstruct_IDs()
+        return tree
+    
+        
+    def _build_tree(self, G):
+            
+        color_count = {color: 0 for color in self.color_dict.keys()}
+        for v in G.nodes():
+            color_count[G.nodes[v]['color']] += 1
+        other_color = {color: G.order() - count
+                       for color, count in color_count.items()}
+        
+        umbrella = {v for v in G.nodes() if 
+                    other_color[G.nodes[v]['color']] == G.out_degree(v)}
+        S_1 = {v for v in umbrella if umbrella.issuperset(G.predecessors(v))}
+        S_2 = {v for v in S_1 if S_1.issuperset(G.predecessors(v))}
+        
+        if not S_2 or len(S_1) != len(S_2):
             return False
-        else:
-            return PhyloTree(root) 
+            
+        node = PhyloTreeNode(-1)
+        for v in S_2:
+            node.add_child(PhyloTreeNode(v, label=G.nodes[v]['label'],
+                                            color=G.nodes[v]['color']))
+            G.remove_node(v)
+        
+        for wcc in nx.weakly_connected_components(G):
+            
+            if len(wcc) == 1:
+                return False
+            
+            child = self._build_tree(G.subgraph(wcc).copy())
+            
+            if not child:
+                return False
+            else:
+                node.add_child(child)
+                
+        return node
 
         
         
@@ -389,11 +311,12 @@ if __name__ == '__main__':
     T = PhyloTree.random_colored_tree(N, 2)
     print('--- T ---\n', T.to_newick())
     
-    bmg = TrueBMG.bmg_from_tree(T)
+    bmg = bmg_from_tree(T)
     
     start_time1 = time.time()
-    lrt_constr = LRTConstructor(bmg, mincut=False)
-    lrt1 = lrt_constr.build_tree()
+    # lrt_constr = LRTConstructor(bmg, mincut=False)
+    # lrt1 = lrt_constr.build_tree()
+    lrt1 = lrt_from_colored_graph(bmg, mincut=False)
     end_time1 = time.time()
     
     lrt2 = lrt_from_observable_tree(T)
@@ -402,11 +325,11 @@ if __name__ == '__main__':
     print('--- LRT2 ---\n', lrt2.to_newick())
     print('LRTs equal: {}'.format( lrt1.compare_topology(lrt2) ))
     
-    bmg = TrueBMG.bmg_from_tree(T)
+    bmg = bmg_from_tree(T)
     
     start_time2 = time.time()
     tc = TwoColoredLRT(bmg)
-    lrt3 = tc.build()
+    lrt3 = tc.build_tree()
     end_time2 = time.time()
     
     lrt4 = lrt_from_observable_tree(T)

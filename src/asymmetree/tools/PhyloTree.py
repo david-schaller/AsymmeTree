@@ -397,38 +397,6 @@ class PhyloTree(Tree):
         else:
             raise ValueError('invalid Newick string')
     
-    
-    def reconstruct_IDs(self):
-        """Reconstruct the (leaf) IDs."""
-        
-        self.number_of_species = 0
-        IDs = set()
-        
-        for v in self.preorder():
-            if not v.children:
-                self.number_of_species += 1
-            if v.label.isdigit():
-                v.ID = int(v.label)
-                IDs.add(v.ID)
-        
-        # assign new IDs to internal nodes
-        current_ID = 0
-        for v in self.preorder():
-            if str(v.ID) != v.label:
-                while current_ID in IDs:
-                    current_ID += 1
-                v.ID = current_ID
-                IDs.add(current_ID)
-                
-                
-    def reconstruct_timestamps(self):
-        """Reconstruct the timestamps."""
-        
-        self.root.tstamp = 1.0
-        for v in self.preorder():
-            if v.parent:
-                v.tstamp = v.parent.tstamp - v.dist
-    
 # --------------------------------------------------------------------------
 #                         TREE  <--->  NETWORKX
 # --------------------------------------------------------------------------
@@ -586,6 +554,55 @@ class PhyloTree(Tree):
         tree = PhyloTree.parse_nx(tree_nx, root_id)
         
         return tree
+    
+# --------------------------------------------------------------------------
+#                    RECONSTRUCTION OF INFORMATION
+# --------------------------------------------------------------------------
+
+    def reconstruct_IDs(self):
+        """Reconstruct the (leaf) IDs."""
+        
+        self.number_of_species = 0
+        IDs = set()
+        
+        for v in self.preorder():
+            if not v.children:
+                self.number_of_species += 1
+            if v.label.isdigit():
+                v.ID = int(v.label)
+                IDs.add(v.ID)
+        
+        # assign new IDs to internal nodes
+        current_ID = 0
+        for v in self.preorder():
+            if str(v.ID) != v.label:
+                while current_ID in IDs:
+                    current_ID += 1
+                v.ID = current_ID
+                IDs.add(current_ID)
+    
+    
+    def reconstruct_information_from_graph(self, G):
+        """Reconstructs the labels and colors from a NetworkX Graph."""
+        
+        for v in self.preorder():
+            if v.ID in G:
+                if 'label' in G.nodes[v.ID]:
+                    v.label = G.nodes[v.ID]['label']
+                if 'color' in G.nodes[v.ID]:
+                    if isinstance(G.nodes[v.ID]['color'], list):
+                        v.color = tuple(G.nodes[v.ID]['color'])
+                    else:
+                        v.color = G.nodes[v.ID]['color']
+                
+                
+    def reconstruct_timestamps(self):
+        """Reconstruct the timestamps."""
+        
+        self.root.tstamp = 1.0
+        for v in self.preorder():
+            if v.parent:
+                v.tstamp = v.parent.tstamp - v.dist
     
 # --------------------------------------------------------------------------
         

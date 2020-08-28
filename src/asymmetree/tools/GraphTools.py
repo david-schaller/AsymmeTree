@@ -32,6 +32,18 @@ def graphs_equal(G1, G2):
     return True
 
 
+def is_properly_colored(G):
+    """Returns whether a (di)graph is properly colored.
+    
+    Raises a KeyError if, in any edge, a vertex has no 'color' attribute."""
+    
+    for u, v in G.edges():
+        if G.nodes[u]['color'] == G.nodes[v]['color']:
+            return False
+    
+    return True        
+
+
 def symmetric_part(G):
     """Returns the (undirected) symmetric part of a directed graph."""
     

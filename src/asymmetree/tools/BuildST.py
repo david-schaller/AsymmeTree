@@ -56,7 +56,7 @@ class BuildST:
             return False
         root = self._buildst(U_init)
         if not root:
-            print("Could not build the supertree!")
+            print('Could not build the supertree!')
             return False
         else:
             return Tree(root)
@@ -131,7 +131,7 @@ class BuildST:
         if U.count == 2:
             labels = U.get_labelnodes()
             if len(labels) != 2:
-                print("Could not find 2 label nodes!")
+                print('Could not find 2 labeled nodes!')
                 return
             node1 = TreeNode(self.id_counter, label=labels[0].label)
             node2 = TreeNode(self.id_counter+1, label=labels[1].label)
@@ -218,8 +218,8 @@ class BuildST:
         #    return incompatible
         # --------------------------------------------------
         if len(W) == 1:
-            print("Leaves:", W[0].get_labelnodes() )
-            print("The tree are incompatible!")
+            print('Leaves:', W[0].get_labelnodes() )
+            print('The trees are incompatible!')
             return False
         
         # --------------------------------------------------
@@ -292,7 +292,7 @@ class XpNode:
     
     def __repr__(self):
         
-        return "<XpNodeID:" + str(id(self)) + ", " + str(self.label)
+        return '<XpNodeID:{}, {}>'.format(id(self), self.label)
     
     def __str__(self):
         
