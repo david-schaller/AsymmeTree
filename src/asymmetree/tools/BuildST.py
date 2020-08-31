@@ -51,6 +51,7 @@ class BuildST:
         """Build the supertree from the given tree list if existent."""
         
         self._prepare_trees()        # tree indices, Xp nodes
+
         U_init = self._initialize()
         if not U_init:
             return False
@@ -151,8 +152,8 @@ class BuildST:
         
         for i in J:
             v_i = U.List[i][0]
-            U.List[i].remove_element(self.list_pointer[v_i])
-            U.singleton.remove_element(self.singleton_pointer[v_i])
+            U.List[i].remove_node(self.list_pointer[v_i])
+            U.singleton.remove_node(self.singleton_pointer[v_i])
             
             self.marked.discard(v_i)        # unmark v_i and
             for child in v_i.children:      # mark its children
@@ -263,7 +264,7 @@ class BuildST:
                 Y2.count -= 1
             elif v in self.marked:
                 i = self.node_to_tree_index[v]
-                Y2.List[i].remove_element(self.list_pointer[v])
+                Y2.List[i].remove_node(self.list_pointer[v])
                 self.list_pointer[v] = Y1.List[i].append(v)
                 
                 # v becomes singleton
@@ -272,14 +273,14 @@ class BuildST:
                     self.singleton_pointer[singleton_node] = Y2.singleton.append(i)
                 # index i is no longer singleton, i.e. it must have been a singleton
                 elif len(Y2.List[i]) == 0:
-                    Y2.singleton.remove_element(self.singleton_pointer[v])
+                    Y2.singleton.remove_node(self.singleton_pointer[v])
                 
                 # v becomes singleton
                 if len(Y1.List[i]) == 1:                                        
                     self.singleton_pointer[v] = Y1.singleton.append(i)
                 # index i is no longer singleton
                 elif len(Y1.List[i]) == 2:
-                    Y1.singleton.remove_element(self.singleton_pointer[Y1.List[i][0]])
+                    Y1.singleton.remove_node(self.singleton_pointer[Y1.List[i][0]])
 
 
 class XpNode:

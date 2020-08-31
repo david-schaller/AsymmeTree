@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 """
-Doubly-linked list.
+Linked list.
 
-Implementation of a doubly-linked list in Python 3. The list enables access
+Implementation of a linked list in Python 3. The list enables access
 to single list elements in order to modify/delete values in constant time.
 """
 
@@ -13,20 +13,19 @@ import collections
 __author__ = 'David Schaller'
 
 
-class DLListNode:
-    """Doubly-linked list node."""
+class LinkedListNode:
+    """Linked list node."""
     
-    __slots__ = ('_value', '_prev', '_next')
+    __slots__ = ('_value', '_next')
     
-    def __init__(self, value, prev_el=None, next_el=None):
+    def __init__(self, value, next_el=None):
         
         self._value = value
-        self._prev = prev_el
         self._next = next_el
 
 
-class DLList:
-    """Doubly-linked list."""
+class LinkedList:
+    """Linked list."""
     
     __slots__ = ('_first', '_last', '_count')
     
@@ -35,6 +34,7 @@ class DLList:
         self._first = None
         self._last = None
         self._count = 0
+        
         for arg in args:
             if isinstance(arg, collections.abc.Iterable):
                 for item in arg:
@@ -55,7 +55,7 @@ class DLList:
     
     def __iter__(self):
         
-        return DLListIterator(self)
+        return LinkedListIterator(self)
 
 
     def __next__(self):
@@ -94,24 +94,17 @@ class DLList:
         if index < 0:
             index += self._count
         
-        if index <= self._count // 2:
-            # start from beginning
-            node = self._first
-            for _ in range(index):
-                node = node._next
-        
-        else:
-            # start from end
-            node = self._last
-            for _ in range(self._count - index - 1):
-                node = node._prev
+        # search from beginning
+        node = self._first
+        for _ in range(index):
+            node = node._next
             
         return node
     
     
     def append(self, value):
         
-        new_end = DLListNode(value, prev_el=self._last)
+        new_end = LinkedListNode(value)
         if self._last:
             self._last._next = new_end
         self._last = new_end
@@ -129,9 +122,7 @@ class DLList:
     
     def append_left(self, value):
         
-        new_start = DLListNode(value, next_el=self._first)
-        if self._first:
-            self._first._prev = new_start
+        new_start = LinkedListNode(value, next_el=self._first)
         self._first = new_start
         if not self._last:
             self._last = new_start
@@ -139,64 +130,30 @@ class DLList:
         return new_start
     
     
-    def remove_node(self, node):
-        """Remove an item by reference to the 'DLListNode' instance in O(1)."""
-        
-        if node._prev:
-            node._prev._next = node._next
-        if node._next:
-            node._next._prev = node._prev
-        if self._first is node:
-            self._first = node._next
-        if self._last is node:
-            self._last = node._prev
-        node._prev, node._next = None, None
-        self._count -= 1
-    
-    
     def remove(self, value):
         """Remove an item by value in O(n)."""
         
         node = self._first
+        prev_node = None
+        
         while node:
             if node._value == value:
-                self.remove_node(node)
+                
+                if prev_node:
+                    prev_node._next = node._next
+                else:
+                    self._first = node._next
+                    
+                if not node._next:
+                    self._last = prev_node
+                
+                self._count -= 1
                 return
+            
+            prev_node = node
             node = node._next
             
-        raise KeyError('value {} is not in the doubly-linked list'.format(value))
-        
-        
-    def remove_range(self, index, length=None):
-        """Removes a range from the index of the specified length.
-        
-        Removes the range [index, index+length) from the sequence. If no length
-        is specified or index+length is out of bounds, the list gets truncated.
-        """
-        
-        if not isinstance(index, int):
-            raise TypeError("index must be of type 'int'")
-        elif index < 0:
-            index = self._count + index
-            
-        if length is not None and (not isinstance(length, int) or length < 1):
-            raise TypeError("length must be of type 'int' and >0")
-        
-        if length is None or index + length >= self._count:
-            self.truncate(index)
-            
-        elif index == 0:
-            self.truncate_left(length)
-            
-        else:
-            cut_start = self.node_at(index)
-            cut_end = self.node_at(index + length - 1)
-            
-            cut_start._prev._next = cut_end._next
-            cut_end._next._prev = cut_start._prev
-            cut_start._prev, cut_end._next = None, None
-            
-            self._count -= length
+        raise KeyError('value {} is not in the linked list'.format(value))
     
     
     def insert_right_of(self, node, value):
@@ -206,10 +163,7 @@ class DLList:
             new_node = self.append(value)
             
         else:
-            new_node = DLListNode(value,
-                                     prev_el=node,
-                                     next_el=node._next)
-            new_node._next._prev = new_node
+            new_node = LinkedListNode(value, next_el=node._next)
             node._next = new_node
             self._count += 1
         
@@ -225,7 +179,6 @@ class DLList:
             new_end = self.node_at(index-1)
             self._last = new_end
             if new_end._next:
-                new_end._next._prev = None
                 new_end._next = None
             self._count = index
             
@@ -238,32 +191,26 @@ class DLList:
         else:
             new_start = self.node_at(n)
             self._first = new_start
-            if new_start._prev:
-                new_start._prev._next = None
-                new_start._prev = None
             self._count -= n
         
     
-    def popright(self):
-        """Removes the last element of the list and returns its value."""
+    # def popright(self):
+    #     """Removes the last node of the list and returns its value."""
         
-        if self._last:
-            value = self._last._value
-            self.remove_node(self._last)
-            return value
-        else:
-            return None
+    #     pass
     
     
     def popleft(self):
-        """Removes the first element of the list and returns its value."""
+        """Removes the first node of the list and returns its value."""
         
         if self._first:
             value = self._first._value
-            self.remove_node(self._first)
+            self._first = self._first._next
+            self._first._next = None
+            self._count -= 1
             return value
         else:
-            return None
+            raise IndexError('pop from empty linked list')
     
     
     def clear(self):
@@ -274,7 +221,7 @@ class DLList:
         
     
     def _count_actual(self):
-        """Counts the actual number of elements."""
+        """Counts the actual number of nodes."""
         
         current = self._first
         counter = 0
@@ -286,13 +233,13 @@ class DLList:
         return counter
         
 
-class DLListIterator:
-    """Iterator class for doubly-linked list."""
+class LinkedListIterator:
+    """Iterator class for linked list."""
     
-    def __init__(self, dllist):
+    def __init__(self, llist):
         
-        self.dllist = dllist
-        self._current = dllist._first
+        self.llist = llist
+        self._current = llist._first
         
     
     def __next__(self):

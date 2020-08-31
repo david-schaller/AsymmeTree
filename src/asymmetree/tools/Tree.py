@@ -55,7 +55,7 @@ class TreeNode:
     def remove_child(self, child_node):
         
         if child_node.parent is self:
-            self.children.remove_element(child_node.parent_dll_element)
+            self.children.remove_node(child_node.parent_dll_element)
             child_node.parent = None
             child_node.parent_dll_element = None
         else:

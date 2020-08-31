@@ -292,7 +292,7 @@ class Evolver:
             
         # go to the element at position pos
         else:
-            current_site = sequence.element_at(pos)
+            current_site = sequence.node_at(pos)
             
         for _ in range(d):
             current_site = sequence.insert_right_of(current_site,

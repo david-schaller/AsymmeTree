@@ -10,7 +10,7 @@ Classes in this module:
 
 from enum import Enum, auto
 
-from asymmetree.tools.DoublyLinkedList import DLList, DLListElement, DLListIterator
+from asymmetree.tools.DoublyLinkedList import DLList, DLListNode, DLListIterator
 
 
 __author__ = 'David Schaller'
@@ -23,7 +23,7 @@ class State(Enum):
     INHERITED  = auto()
 
 
-class EvoSeqElement(DLListElement):
+class EvoSeqElement(DLListNode):
     """Site element in an evolving sequence."""
     
     __slots__ = ('status', 'site_id', 'parent_el', 'rate_class', 'rate_factor')

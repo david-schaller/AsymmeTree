@@ -254,14 +254,14 @@ class HDTGraph:
         # e is not a tree edge --> simply delete e
         if e.tree_edge == False:
             if u in l.nodedict:
-                l.nodedict[u].nontree_edges.remove_element(e.dllist_entries[0])
+                l.nodedict[u].nontree_edges.remove_node(e.dllist_entries[0])
             if v in l.nodedict:
-                l.nodedict[v].nontree_edges.remove_element(e.dllist_entries[1])
+                l.nodedict[v].nontree_edges.remove_node(e.dllist_entries[1])
         
         # e is a tree edge --> search for replacement
         else:
-            l.nodedict[u].tree_edges.remove_element(e.dllist_entries[0])
-            l.nodedict[v].tree_edges.remove_element(e.dllist_entries[1])
+            l.nodedict[u].tree_edges.remove_node(e.dllist_entries[0])
+            l.nodedict[v].tree_edges.remove_node(e.dllist_entries[1])
             # remove e on all levels <= l(e)
             for i in range(l.index, -1, -1):
                 if not self.levels[i].cut(u, v):
@@ -290,10 +290,10 @@ class HDTGraph:
                     f = dgnode.nontree_edges.popleft()
                     if f.e[0] == dgnode.value:
                         other_end = f.e[1]
-                        l.nodedict[other_end].nontree_edges.remove_element(f.dllist_entries[1])
+                        l.nodedict[other_end].nontree_edges.remove_node(f.dllist_entries[1])
                     else:
                         other_end = f.e[0]
-                        l.nodedict[other_end].nontree_edges.remove_element(f.dllist_entries[0])
+                        l.nodedict[other_end].nontree_edges.remove_node(f.dllist_entries[0])
                     
                     # f is a replacement edge
                     if (other_end in l.nodedict) and (l.nodedict[other_end].active_occ.get_root() is root2):

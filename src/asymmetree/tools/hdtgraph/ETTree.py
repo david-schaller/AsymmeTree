@@ -249,7 +249,7 @@ class ETTree:
                 self.end = node.prev_occ
             
             active = self.nodedict[node.value]
-            active.occurrences.remove_element(node.occ)
+            active.occurrences.remove_node(node.occ)
             if node.active:                             # was it the active occurrence?
                 node.active = 0
                 replace = active.occurrences[0]         # (arbitrary) new active node
