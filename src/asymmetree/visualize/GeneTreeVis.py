@@ -44,9 +44,9 @@ class GeneTreeVis:
         
         self.ax.axvline(x=0, linewidth=1, color='grey', linestyle='--')
         self.ax.set_yticks([])
-        self.ax.spines["top"].set_visible(False)
-        self.ax.spines["left"].set_visible(False)
-        self.ax.spines["right"].set_visible(False)
+        self.ax.spines['top'].set_visible(False)
+        self.ax.spines['left'].set_visible(False)
+        self.ax.spines['right'].set_visible(False)
         
         xmin, xmax = self.ax.get_xlim()
         ymin, ymax = self.ax.get_ylim()
@@ -55,7 +55,7 @@ class GeneTreeVis:
         plt.show()
         
     
-    def initial_traversal(self, distance="evolutionary"):
+    def initial_traversal(self, distance='evolutionary'):
         
         xmax = 0.0
         
