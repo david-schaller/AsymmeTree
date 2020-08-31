@@ -12,7 +12,7 @@ import itertools
 import networkx as nx
 
 from asymmetree.best_matches.TrueBMG import bmg_from_tree
-from asymmetree.tools.PhyloTree import PhyloTree, PhyloTreeNode
+from asymmetree.datastructures.PhyloTree import PhyloTree, PhyloTreeNode
 from asymmetree.tools.GraphTools import (sort_by_colors,
                                          is_properly_colored,
                                          graphs_equal)

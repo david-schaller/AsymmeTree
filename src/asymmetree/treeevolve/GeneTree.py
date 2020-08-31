@@ -11,9 +11,9 @@ from collections import deque
 
 import numpy as np
 
-from asymmetree.tools.PhyloTree import (PhyloTree, PhyloTreeNode,
-                                        delete_losses_and_contract,
-                                        remove_planted_root)
+from asymmetree.datastructures.PhyloTree import (PhyloTree, PhyloTreeNode,
+                                                 delete_losses_and_contract,
+                                                 remove_planted_root)
 
 
 __author__ = 'David Schaller'

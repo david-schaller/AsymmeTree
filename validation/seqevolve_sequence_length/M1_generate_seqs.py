@@ -2,7 +2,7 @@
 
 import os, glob
 
-from asymmetree.tools.PhyloTree import PhyloTree, PhyloTreeNode
+from asymmetree.datastructures.PhyloTree import PhyloTree, PhyloTreeNode
 from asymmetree.seqevolve import Evolver, SubstModel
 import asymmetree.tools.DistanceCalculation as dc
 from asymmetree.seqevolve.Alignment import write_to_file

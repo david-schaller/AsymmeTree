@@ -1,9 +1,19 @@
 # -*- coding: utf-8 -*-
 
+"""
+Implementation of Karger's algorithm for minimal edge cut.
+
+Randomized algorithm that returns a minimal edge cut with high probability.
+This implementation is based on:
+    
+http://web.stanford.edu/class/archive/cs/cs161/cs161.1166/lectures/
+lecture15.pdf
+"""
+
 import random
 import networkx as nx
 
-from asymmetree.tools.LinkedList import LinkedList
+from asymmetree.datastructures.LinkedList import LinkedList
 
 
 __author__ = 'David Schaller'

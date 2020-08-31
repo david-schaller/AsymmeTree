@@ -10,7 +10,9 @@ Classes in this module:
 
 from enum import Enum, auto
 
-from asymmetree.tools.DoublyLinkedList import DLList, DLListNode, DLListIterator
+from asymmetree.datastructures.DoublyLinkedList import (DLList,
+                                                        DLListNode,
+                                                        DLListIterator)
 
 
 __author__ = 'David Schaller'

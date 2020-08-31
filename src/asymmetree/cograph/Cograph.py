@@ -3,7 +3,7 @@
 import itertools, random
 import networkx as nx
 
-from asymmetree.tools import Tree
+from asymmetree.datastructures import Tree
 
 
 __author__ = 'David Schaller'

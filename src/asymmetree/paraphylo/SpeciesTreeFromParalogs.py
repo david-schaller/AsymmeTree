@@ -5,7 +5,7 @@ import itertools
 import networkx as nx
 
 from asymmetree.cograph.CographEditor import CographEditor
-from asymmetree.tools.PhyloTree import PhyloTree, PhyloTreeNode
+from asymmetree.datastructures.PhyloTree import PhyloTree, PhyloTreeNode
 
 
 __author__ = 'David Schaller'

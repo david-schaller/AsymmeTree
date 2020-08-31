@@ -12,7 +12,7 @@ References:
       July 1999. 502–536.
 """
 
-from asymmetree.tools.DoublyLinkedList import DLList
+from asymmetree.datastructures.DoublyLinkedList import DLList
 
 
 __author__ = 'David Schaller'
@@ -39,10 +39,11 @@ class DGNode:
 
 class ETTreeNode:
     
-    __slots__ = ['value', 'parent', 'left', 'right', 'prev_occ', 'next_occ',
-                 'height', 'size', 'active', 'occ', 'ett']
+    __slots__ = ('value', 'parent', 'left', 'right', 'prev_occ', 'next_occ',
+                 'height', 'size', 'active', 'occ', 'ett')
     
-    def __init__(self, value, prev_occ=None, next_occ=None, active=False, ett=None):
+    def __init__(self, value, prev_occ=None, next_occ=None,
+                 active=False, ett=None):
         
         self.value = value
         self.parent = None
@@ -90,7 +91,7 @@ class ETTree:
     which is here implemented as an AVL-tree.
     """
     
-    __slots__ = ['root', 'nodedict', 'start', 'end', 'current_occ']
+    __slots__ = ('root', 'nodedict', 'start', 'end', 'current_occ')
     
     def __init__(self, root=None, nodedict=None, start=None, end=None):
         
@@ -258,7 +259,8 @@ class ETTree:
                     self.nodedict[node.value].active_occ = replace
                     self.update_height_size(replace, propagate=True)
                 else:                                   # no replacement found
-                    print("Couldn't find a replacement node for", node)
+                    print("could not find a replacement node "\
+                          "for '{}'".format(node))
                     del self.nodedict[node.value]
             
     
@@ -393,7 +395,7 @@ class ETTree:
     def get_root(self, value):
         
         if value not in self.nodedict:
-            print("Could not find node:", value)
+            print("could not find node '{}'".format(value))
             return
         return self.nodedict[value].active_occ.get_root()
         

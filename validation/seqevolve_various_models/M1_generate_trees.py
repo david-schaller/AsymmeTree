@@ -2,7 +2,7 @@
 
 import os, pickle, glob
 
-from asymmetree.tools.PhyloTree import PhyloTree
+from asymmetree.datastructures.PhyloTree import PhyloTree
 import asymmetree.treeevolve as te
 
 

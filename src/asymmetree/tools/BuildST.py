@@ -16,9 +16,9 @@ References:
 
 from collections import deque
 
-from asymmetree.tools.Tree import Tree, TreeNode
-from asymmetree.tools.DoublyLinkedList import DLList
-from asymmetree.tools.hdtgraph.DynamicGraph import HDTGraph
+from asymmetree.datastructures.Tree import Tree, TreeNode
+from asymmetree.datastructures.DoublyLinkedList import DLList
+from asymmetree.datastructures.hdtgraph.DynamicGraph import HDTGraph
 
 
 __author__ = 'David Schaller'
@@ -481,7 +481,7 @@ if __name__ == '__main__':
     # ----- TESTING THIS MODULE -----
     
     import numpy as np
-    from asymmetree.tools.PhyloTree import PhyloTree
+    from asymmetree.datastructures.PhyloTree import PhyloTree
     from asymmetree.treeevolve import observable_tree
     
     N = 20

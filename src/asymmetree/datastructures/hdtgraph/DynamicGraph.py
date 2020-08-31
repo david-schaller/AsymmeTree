@@ -23,8 +23,10 @@ References:
       July 1999. 502–536.
 """
 
-from asymmetree.tools.hdtgraph.ETTree import ETTree, ETTreeNode, DGNode
-from asymmetree.tools.Tree import Tree
+from asymmetree.datastructures.hdtgraph.ETTree import (ETTree,
+                                                       ETTreeNode,
+                                                       DGNode)
+from asymmetree.datastructures.Tree import Tree
 
 
 __author__ = 'David Schaller'

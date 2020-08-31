@@ -8,7 +8,7 @@ import collections, itertools, random, re, pickle, json, os
 import numpy as np
 import networkx as nx
 
-from asymmetree.tools.Tree import Tree, TreeNode
+from asymmetree.datastructures.Tree import Tree, TreeNode
 
 
 __author__ = 'David Schaller'
