@@ -118,6 +118,28 @@ class LinkedList:
         
         for value in iterable:
             self.append(value)
+            
+    
+    def concatenate(self, other):
+        """Merges two linked lists.
+        
+        The instance for which this function is called is extended, the other
+        list should no longer be used."""
+        
+        if not isinstance(other, LinkedList):
+            raise TypeError("must be of type 'LinkedList'")
+            
+        if self._last:
+            self._last._next = other._first
+        else:
+            self._first = other._first
+        
+        if other._last:
+            self._last = other._last
+            
+        self._count += other._count
+        
+        return self
     
     
     def append_left(self, value):
