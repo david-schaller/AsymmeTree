@@ -10,7 +10,7 @@ http://web.stanford.edu/class/archive/cs/cs161/cs161.1166/lectures/
 lecture15.pdf
 """
 
-import random
+import random, math
 import networkx as nx
 
 from asymmetree.datastructures.LinkedList import LinkedList
@@ -20,7 +20,7 @@ from asymmetree.datastructures.AVLTree import TreeSet
 __author__ = 'David Schaller'
 
 
-class Supernode:
+class _Supernode:
     
     def __init__(self, initial_node):
         
@@ -60,24 +60,83 @@ class Karger():
             
         if not nx.is_connected(graph):
             raise ValueError('graph not connected')
+            
+        self.graph = graph
+            
+    
+    def run(self):
+        """Execute a single run of the contraction procedure."""
+        
+        return self._karger_main()
+    
+    
+    def best_out_of(self, runs=None):
+        """Execute multiple runs and return the one with the smallest cutvalue.
+        
+        Keyword arguments:
+            runs -- number of runs; default is None, in which case
+                O(n^2 * log n) runs are executed
+        """
+        
+        if not runs:
+            n = self.graph.order()
+            runs = round(n**2 * math.log(n))
+        
+        best_V1, best_V2, best_cutvalue = None, None, None
+        
+        for _ in range(runs):
+            V1, V2, cutvalue = self._karger_main()
+            
+            if not best_cutvalue or cutvalue < best_cutvalue:
+                best_V1, best_V2, best_cutvalue = V1, V2, cutvalue
+                
+        return best_V1, best_V2, best_cutvalue
+    
+    
+    def generate(self, runs=None):
+        """Generator for runs of the contraction procedure.
+        
+        Keyword arguments:
+            runs -- number of runs; default is None, in which case
+                O(n^2 * log n) runs are generated
+        """
+        
+        if not runs:
+            n = self.graph.order()
+            runs = round(n**2 * math.log(n))
+        
+        for _ in range(runs):
+            yield self._karger_main()
+    
+        
+    def _full_edge_set(self):
+        
+        # construct the balanced search tree for the full edge set once
+        if not hasattr(self, 'full_egde_set'):
+            self.full_egde_set = TreeSet()
+            for u, v in self.graph.edges():
+                self.full_egde_set.add( (u, v) )
+                
+        return self.full_egde_set.copy()
+        
+        
+    def _initialize(self):
         
         self.supernodes = set()
-        self.supernode_dict = {}    # maps node --> supernode
-        self.edges = TreeSet()      # set of all (non-loop) edges
-        self.superedges = {}        # maps superedge --> edges
+        self.supernode_dict = {}            # maps node --> supernode
+        self.superedges = {}                # maps superedge --> edges
+        self.edges = self._full_edge_set()  # set of all (non-loop) edges
         
-        for v in graph.nodes():
-            sn = Supernode(v)
+        for v in self.graph.nodes():
+            sn = _Supernode(v)
             self.supernode_dict[v] = sn
             self.supernodes.add(sn)
         
-        for u, v in graph.edges():
+        for u, v in self.graph.edges():
             u_sn = self.supernode_dict[u]
             v_sn = self.supernode_dict[v]
             e = _sort2(u_sn, v_sn)
-            self.superedges[e] = LinkedList()
-            self.superedges[e].append( (u, v) )
-            self.edges.add( (u, v) )
+            self.superedges[e] = LinkedList( [(u, v)] )
             
             
     def _merge(self, a, b):
@@ -111,7 +170,9 @@ class Karger():
                 self.superedges[_sort2(x, d)] = edges_xd
                 
                 
-    def karger(self):
+    def _karger_main(self):
+        
+        self._initialize()
         
         while len(self.supernodes) > 2:
             
@@ -129,7 +190,7 @@ class Karger():
         y = self.supernodes.pop()
 
         cut_value = len(self.superedges[_sort2(x, y)])
-        print('cut_edges', list(self.superedges[_sort2(x, y)]))
+        # print('cut_edges', list(self.superedges[_sort2(x, y)]))
             
         return list(x.nodes), list(y.nodes), cut_value
     
@@ -139,9 +200,9 @@ if __name__ == '__main__':
     G = nx.Graph()
     G.add_edges_from([('a', 'b'), ('a', 'c'), ('a', 'd'),
                       ('b', 'd'), ('c', 'd'), ('c', 'e'), ('d', 'e')])
-    k = Karger(G)
+    karger = Karger(G)
     
-    V1, V2, cut_value = k.karger()
-    print(V1)
-    print(V2)
-    print(cut_value)
+    for V1, V2, cut_value in karger.generate(3):
+        print(V1)
+        print(V2)
+        print(cut_value)
