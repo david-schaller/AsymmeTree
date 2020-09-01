@@ -3,7 +3,7 @@
 """
 AVL-tree implementation.
     
-Balanced binary tree.
+Balanced binary search tree.
 """
 
 
@@ -53,8 +53,27 @@ class AVLTreeNode:
         return self.balance
     
     
+    def left_size(self):
+        
+        return self.left.size if self.left else 0
+    
+    
+    def right_size(self):
+        
+        return self.right.size if self.right else 0
+    
+    
     def __str__(self):
         return '<AVLTreeNode: {}>'.format(self.key)
+    
+    
+    def copy(self):
+        
+        copy = AVLTreeNode(self.key, self.value)
+        copy.height = self.height
+        copy.size = self.size
+        copy.balance = self.balance
+        return copy
  
 
 class AVLTree:
@@ -92,6 +111,165 @@ class AVLTree:
         return self._find(item) is not None
     
     
+    def __getitem__(self, item):
+        
+        node = self._find(key)
+        
+        if not node:
+            raise KeyError(str(key))
+            
+        return node.value
+    
+    
+    def get(self, item, default=None):
+        
+        node = self._find(key)
+        
+        if node:
+            return node.value
+        else:
+            return default
+        
+    
+    def keys(self):
+        """Return an iterator for the keys."""
+        
+        return AVLTreeIterator(self, mode=1)
+    
+    
+    def values(self):
+        """Return an iterator for the values."""
+        
+        return AVLTreeIterator(self, mode=2)
+    
+    
+    def items(self):
+        """Return an iterator for (key, value) pairs."""
+        
+        return AVLTreeIterator(self, mode=3)
+    
+    
+    def insert(self, key, value=None):
+        """Insert a key (and value) into the AVL tree."""
+        
+        if not self.root:
+            self.root = AVLTreeNode(key, value)
+        else:
+            node = self._find_insert(key)
+            
+            if key < node.key:
+                node.left = AVLTreeNode(key, value)
+                node.left.parent = node
+                self.root = self._rebalance(node)
+            elif key > node.key:
+                node.right = AVLTreeNode(key, value)
+                node.right.parent = node
+                self.root = self._rebalance(node)
+                
+                
+    def remove(self, key):
+        """Remove a key from the tree.
+        
+         Raises a KeyError if key is not in the tree."""
+        
+        node = self._find(key)
+        
+        if not node:
+            raise KeyError(str(key))
+            
+        self._delete_node(node)
+    
+    
+    def discard(self, key):
+        """Remove a key from the tree if present."""
+        
+        node = self._find(key)
+        
+        if node:
+            self._delete_node(node)
+        
+    
+    def pop(self, key):
+        """Remove a key from the tree and return its value.
+        
+         Raises a KeyError if key is not in the tree."""
+        
+        node = self._find(key)
+        
+        if not node:
+            raise KeyError(str(key))
+            
+        self._delete_node(node)
+        return node.value
+        
+    
+    def clear(self):
+        """Removes all items from the tree."""
+        
+        self.root = None
+    
+    
+    def key_at(self, index):
+        """Return the key at the index."""
+        
+        return self._node_at(index).key
+    
+    
+    def value_at(self, index):
+        """Return the value at the index."""
+        
+        return self._node_at(index).value
+    
+    
+    def key_and_value_at(self, index):
+        """Return the (key, value) pair at the index."""
+        
+        node = self._node_at(index)
+        return (node.key, node.value)
+    
+    
+    def remove_at(self, index):
+        """Remove node at the index."""
+        
+        self._delete_node(self._node_at(index))
+    
+    
+    def pop_at(self, index):
+        """Remove node at the index and return its (key, value) pair."""
+        
+        node = self._node_at(index)
+        self._delete_node(node)
+        return (node.key, node.value)
+    
+    
+    def _node_at(self, index):
+        """Return the node at the index."""
+        
+        if index < 0:
+            if index < -self.root.size:
+                raise IndexError('index {} is out of range'.format(index))
+            else:
+                index += self.root.size
+        
+        if index >= self.root.size:
+            raise IndexError('index {} is out of range'.format(index))
+        
+        current = self.root
+        current_sum = 0
+        
+        while current:
+            current_index = current_sum + current.left_size()
+            if index == current_index:
+                return current
+            elif index < current_index:
+                current = current.left
+            else:
+                current = current.right
+                current_sum = current_index + 1
+                
+        raise RuntimeError('could not find node with index {}'.format(index))
+    
+    
     def _find(self, key):
         
         if not self.root:
@@ -105,42 +283,26 @@ class AVLTree:
                 current = current.left
             else:
                 current = current.right
-    
-    
-    def insert(self, key, value=None):
-        """Insert a key (and value) into the AVL tree."""
+                
+                
+    def _find_insert(self, key):
         
-        def _insert(node):
-            if key == node.key:
-                return
-            elif key < node.key:
-                if node.left:
-                    _insert(key, node.left)
-                else:
-                    node.left = AVLTreeNode(key, value)
-                    node.left.parent = node
-                    self.root = self.rebalance(node)
+        current = self.root
+        while True:
+            if key < current.key and current.left:
+                current = current.left
+            elif key > current.key and current.right:
+                current = current.right
             else:
-                if node.right:
-                    _insert(key, node.right)
-                else:
-                    node.right = AVLTreeNode(key, value)
-                    node.right.parent = node
-                    self.root = self.rebalance(node)
-        
-        if not self.root:
-            self.root = AVLTreeNode(key, value)
-            return
-        
-        self._insert(key, self.root)
+                return current
     
     
-    def delete_node(self, node):
+    def _delete_node(self, node):
         
         if node.left and node.right:
             
             # replace by smallest in right subtree
-            subst = self.smallest_in_subtree(node.right)
+            subst = self._smallest_in_subtree(node.right)
             to_rebalance = subst.parent
             if to_rebalance is node:
                 to_rebalance = subst
@@ -161,7 +323,7 @@ class AVLTree:
                     par.right = subst
             else:
                 self.root = subst
-            self.root = self.rebalance(to_rebalance)
+            self.root = self._rebalance(to_rebalance)
             
         elif node.left:
             par = node.parent
@@ -171,7 +333,7 @@ class AVLTree:
                     par.left = node.left
                 elif node is par.right:
                     par.right = node.left
-                self.root = self.rebalance(par)
+                self.root = self._rebalance(par)
             else:
                 self.root = node.left
                 
@@ -183,7 +345,7 @@ class AVLTree:
                     par.left = node.right
                 elif node is par.right:
                     par.right = node.right
-                self.root = self.rebalance(par)
+                self.root = self._rebalance(par)
             else:
                 self.root = node.right
                 
@@ -194,14 +356,14 @@ class AVLTree:
                     par.left = None
                 elif node is par.right:
                     par.right = None
-                self.root = self.rebalance(par)
+                self.root = self._rebalance(par)
             else:
                 self.root = None
         
         node.parent, node.left, node.right = None, None, None
     
     
-    def rebalance(self, node):
+    def _rebalance(self, node):
         
         while node:
             balance = node.update()
@@ -209,26 +371,26 @@ class AVLTree:
                 if balance > 1:
                     if node.left.balance >= 0:
                         # single rotation needed
-                        self.rightrotate(node)
+                        self._rightrotate(node)
                     else:      
                         # double rotation needed
-                        self.leftrotate(node.left)
-                        self.rightrotate(node)
+                        self._leftrotate(node.left)
+                        self._rightrotate(node)
                 else:
                     if node.right.balance <= 0:
                         # single rotation needed
-                        self.leftrotate(node)
+                        self._leftrotate(node)
                     else:
                         # double rotation needed
-                        self.rightrotate(node.right)
-                        self.leftrotate(node)
+                        self._rightrotate(node.right)
+                        self._leftrotate(node)
                 balance = node.balance
             if not node.parent:
                 return node
             node = node.parent
             
             
-    def rightrotate(self, y):
+    def _rightrotate(self, y):
         
         x = y.left
         B = x.right
@@ -246,7 +408,7 @@ class AVLTree:
         x.update()
         
         
-    def leftrotate(self, x):
+    def _leftrotate(self, x):
         
         y = x.right
         B = y.left
@@ -264,7 +426,7 @@ class AVLTree:
         y.update()
     
     
-    def smallest_in_subtree(self, node):
+    def _smallest_in_subtree(self, node):
         
         current = node
         while current.left:
@@ -272,12 +434,32 @@ class AVLTree:
         return current
     
     
-    def biggest_in_subtree(self, node):
+    def _biggest_in_subtree(self, node):
         
         current = node
         while current.right:
             current = current.right
         return current
+    
+    
+    def copy(self):
+        """Return a copy of the tree."""
+        
+        def _copy(node, parent=None):
+            
+            node_copy = node.copy()
+            node_copy.parent = parent
+            if node.left:
+                node_copy.left = _copy(node.left, parent=node_copy)
+            if node.right:
+                node_copy.right = _copy(node.right, parent=node_copy)
+            return node_copy
+            
+        
+        tree_copy = AVLTree()
+        if self.root:
+            tree_copy.root = _copy(self.root)
+        return tree_copy
                 
     
     def to_newick(self):
@@ -350,18 +532,94 @@ class AVLTree:
 class AVLTreeIterator:
     """Iterator class for AVL tree."""
     
-    def __init__(self, avl_tree):
+    def __init__(self, avl_tree, mode=1):
         
-        ######  not yet implemented ######
         self.avl_tree = avl_tree
-        self._current = None
+        self._current = self.avl_tree.root
+        
+        # Where do I come from?
+        # 1 -- up
+        # 2 -- left
+        # 3 -- right
+        self._from = 1
+        
+        # What is returned?
+        # 1 -- key
+        # 2 -- value
+        # 3 -- (key, value)
+        self._mode = mode
+        
+        
+    def __iter__(self):
+        
+        return self
         
     
     def __next__(self):
         
-        if self._current:
-            x = self._current
-            self._current = self._current._next
-            return x._value
-        else:
-            raise StopIteration
+        while self._current:
+            
+            # coming from above
+            if self._from == 1:
+                if self._current.left:
+                    self._current = self._current.left
+                else:
+                    self._from = 2
+            # coming from left child --> return this node
+            elif self._from == 2:
+                x = self._current
+                
+                if self._current.right:
+                    self._current = self._current.right
+                    self._from = 1
+                else:
+                    self._current = self._current.parent
+                    if self._current and self._current.left is x:
+                        self._from = 2
+                    elif self._current:
+                        self._from = 3
+                
+                if self._mode == 1:
+                    return x.key
+                elif self._mode == 2:
+                    return x.value
+                else:
+                    return (x.key, x.value)
+                
+            # coming from right child
+            else:
+                x = self._current
+                self._current = self._current.parent
+                if self._current and self._current.left is x:
+                    self._from = 2
+                elif self._current:
+                    self._from = 3
+        
+        # stop when current node becomes None
+        raise StopIteration
+        
+
+if __name__ == '__main__':
+    
+    import random
+    
+    keys = [i for i in range(10000)]
+    random.shuffle(keys)
+    
+    t = AVLTree()
+    for key in keys:
+        t.insert(key)
+    # print(t.to_newick())  
+     
+    # t = set()
+    # for key in keys:
+    #     t.add(key)
+    
+    t = t.copy()
+    print(len(t))
+    print(t.pop_at(-10000))
+    print(len(t))
+    print(t.key_and_value_at(980))
+    
+    l = [key for key in t.items()]
+    print(l[-5:])
