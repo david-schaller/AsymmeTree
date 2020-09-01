@@ -14,6 +14,7 @@ import random
 import networkx as nx
 
 from asymmetree.datastructures.LinkedList import LinkedList
+from asymmetree.datastructures.AVLTree import TreeSet
 
 
 __author__ = 'David Schaller'
@@ -32,9 +33,19 @@ class Supernode:
         return len(self.nodes)
     
     
+    def __lt__(self, other):
+        
+        return id(self) < id(other)
+    
+    
     def merge_from(self, other):
         
         self.nodes.concatenate(other.nodes)
+        
+
+def _sort2(a, b):
+    
+    return (a, b) if a < b else (b, a)
         
         
 class Karger():
@@ -45,11 +56,14 @@ class Karger():
             raise TypeError('must be a NetworkX graph')
             
         if not graph.order() >= 2:
-            raise RuntimeError('graph must have >= 2 nodes')
+            raise ValueError('graph must have >= 2 nodes')
+            
+        if not nx.is_connected(graph):
+            raise ValueError('graph not connected')
         
         self.supernodes = set()
         self.supernode_dict = {}    # maps node --> supernode
-        self.edges = set()          # set of all (non-loop) edges
+        self.edges = TreeSet()      # set of all (non-loop) edges
         self.superedges = {}        # maps superedge --> edges
         
         for v in graph.nodes():
@@ -60,9 +74,9 @@ class Karger():
         for u, v in graph.edges():
             u_sn = self.supernode_dict[u]
             v_sn = self.supernode_dict[v]
-            
-            self.superedges[u_sn, v_sn] = LinkedList()
-            self.superedges[u_sn, v_sn].append( (u, v) )
+            e = _sort2(u_sn, v_sn)
+            self.superedges[e] = LinkedList()
+            self.superedges[e].append( (u, v) )
             self.edges.add( (u, v) )
             
             
@@ -87,43 +101,37 @@ class Karger():
             if d is x:
                 continue
             
-            # merge the edge lists E_ad and E_bd
+            # merge the edge lists of superedges ad and bd
             edges_xd = LinkedList()
-            for se in ((a, d), (d, a), (b, d), (d, b)):
+            for se in (_sort2(a, d), _sort2(b, d)):
                 if se in self.superedges:
                     edges_xd.concatenate(self.superedges[se])
                     del self.superedges[se]
             if edges_xd:
-                self.superedges[x, d] = edges_xd
+                self.superedges[_sort2(x, d)] = edges_xd
                 
                 
     def karger(self):
         
         while len(self.supernodes) > 2:
             
-            # find a better solution for choice !!!
-            u, v = random.choice(tuple(self.edges))
+            u, v = random.choice(self.edges)
             u_sn = self.supernode_dict[u]
             v_sn = self.supernode_dict[v]
             
             self._merge(u_sn, v_sn)
             
-            for se in ((u_sn, v_sn), (v_sn, u_sn)):
-                if se in self.superedges:
-                    self.edges.difference_update(self.superedges[se])
-                    del self.superedges[se]
+            se = _sort2(u_sn, v_sn)
+            self.edges.difference_update(self.superedges[se])
+            del self.superedges[se]
         
-        x, y = list(self.supernodes)
-        V1 = list(x.nodes)
-        V2 = list(y.nodes)
-        if (x, y) in self.superedges:
-            cut_value = len(self.superedges[x, y])
-            print('cut_edges', list(self.superedges[x, y]))
-        else:
-            cut_value = len(self.superedges[y, x])
-            print('cut_edges', list(self.superedges[y, x]))
+        x = self.supernodes.pop()
+        y = self.supernodes.pop()
+
+        cut_value = len(self.superedges[_sort2(x, y)])
+        print('cut_edges', list(self.superedges[_sort2(x, y)]))
             
-        return V1, V2, cut_value
+        return list(x.nodes), list(y.nodes), cut_value
     
 
 if __name__ == '__main__':
@@ -132,7 +140,7 @@ if __name__ == '__main__':
     G.add_edges_from([('a', 'b'), ('a', 'c'), ('a', 'd'),
                       ('b', 'd'), ('c', 'd'), ('c', 'e'), ('d', 'e')])
     k = Karger(G)
-    print(k.superedges)
+    
     V1, V2, cut_value = k.karger()
     print(V1)
     print(V2)

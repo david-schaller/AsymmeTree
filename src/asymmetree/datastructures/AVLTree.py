@@ -3,7 +3,8 @@
 """
 AVL-tree implementation.
     
-Balanced binary search tree.
+Balanced binary search tree implementation of a set (TreeSet) and
+dictionary (TreeDict).
 """
 
 
@@ -107,31 +108,41 @@ class TreeSet:
     
     def __contains__(self, item):
         
-        return self._find(item) is not None    
+        return self._find(item) is not None
+    
+    
+    def __getitem__(self, index):
+        """Return the element at the index.
+        
+        Same as 'key_at(index)'."""
+        
+        return self._node_at(index).key
     
     
     def add(self, item):
         """Insert an item."""
         
-        self.insert(item)
+        if not self.root:
+            self.root = TreeSetNode(item)
+        else:
+            node = self._find_insert(item)
+            
+            if item < node.key:
+                node.left = TreeSetNode(item)
+                node.left.parent = node
+                self.root = self._rebalance(node)
+            elif item > node.key:
+                node.right = TreeSetNode(item)
+                node.right.parent = node
+                self.root = self._rebalance(node)
     
     
     def insert(self, key):
-        """Insert an item."""
+        """Insert an item.
         
-        if not self.root:
-            self.root = TreeSetNode(key)
-        else:
-            node = self._find_insert(key)
-            
-            if key < node.key:
-                node.left = TreeSetNode(key)
-                node.left.parent = node
-                self.root = self._rebalance(node)
-            elif key > node.key:
-                node.right = TreeSetNode(key)
-                node.right.parent = node
-                self.root = self._rebalance(node)
+        The function 'add(item)' should be used instead for sets."""
+        
+        self.add(key)
                 
                 
     def remove(self, key):
@@ -174,20 +185,19 @@ class TreeSet:
         """Removes all items from the tree."""
         
         self.root = None
-    
-    
-    def item_at(self, index):
-        """Return the item at the index.
         
-        Same as 'key_at()'"""
+    
+    def difference_update(self, t):
+        """Discard all elements found in t."""
         
-        return self._node_at(index).key
+        for item in t:
+            self.discard(item)
     
     
     def key_at(self, index):
         """Return the key at the index.
         
-        Same as 'item_at()'."""
+        Same as '__getitem__(index)' for 'TreeSet' but not for 'TreeDict'."""
         
         return self._node_at(index).key
     
