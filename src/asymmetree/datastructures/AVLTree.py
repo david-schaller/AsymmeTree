@@ -10,16 +10,14 @@ Balanced binary search tree.
 __author__ = 'David Schaller'
 
 
-class AVLTreeNode:
+class TreeSetNode:
     
-    __slots__ = ('key', 'value',
-                 'parent', 'left', 'right',
+    __slots__ = ('key', 'parent', 'left', 'right',
                  'height', 'size', 'balance')
     
-    def __init__(self, key, value):
+    def __init__(self, key):
         
         self.key = key
-        self.value = value
         
         self.parent = None
         self.left = None
@@ -64,31 +62,32 @@ class AVLTreeNode:
     
     
     def __str__(self):
-        return '<AVLTreeNode: {}>'.format(self.key)
+        
+        return '<AVLNode: {}>'.format(self.key)
     
     
     def copy(self):
         
-        copy = AVLTreeNode(self.key, self.value)
+        copy = TreeSetNode(self.key)
         copy.height = self.height
         copy.size = self.size
         copy.balance = self.balance
         return copy
  
 
-class AVLTree:
+class TreeSet:
     """AVL tree."""
     
     __slots__ = ('root')
     
-    def __init__(self, root=None):
+    def __init__(self):
         
-        self.root = root
+        self.root = None
     
     
     def __iter__(self):
         
-        return AVLTreeIterator(self)
+        return TreeSetIterator(self)
 
 
     def __next__(self):
@@ -108,61 +107,29 @@ class AVLTree:
     
     def __contains__(self, item):
         
-        return self._find(item) is not None
+        return self._find(item) is not None    
     
     
-    def __getitem__(self, item):
+    def add(self, item):
+        """Insert an item."""
         
-        node = self._find(key)
-        
-        if not node:
-            raise KeyError(str(key))
-            
-        return node.value
+        self.insert(item)
     
     
-    def get(self, item, default=None):
-        
-        node = self._find(key)
-        
-        if node:
-            return node.value
-        else:
-            return default
-        
-    
-    def keys(self):
-        """Return an iterator for the keys."""
-        
-        return AVLTreeIterator(self, mode=1)
-    
-    
-    def values(self):
-        """Return an iterator for the values."""
-        
-        return AVLTreeIterator(self, mode=2)
-    
-    
-    def items(self):
-        """Return an iterator for (key, value) pairs."""
-        
-        return AVLTreeIterator(self, mode=3)
-    
-    
-    def insert(self, key, value=None):
-        """Insert a key (and value) into the AVL tree."""
+    def insert(self, key):
+        """Insert an item."""
         
         if not self.root:
-            self.root = AVLTreeNode(key, value)
+            self.root = TreeSetNode(key)
         else:
             node = self._find_insert(key)
             
             if key < node.key:
-                node.left = AVLTreeNode(key, value)
+                node.left = TreeSetNode(key)
                 node.left.parent = node
                 self.root = self._rebalance(node)
             elif key > node.key:
-                node.right = AVLTreeNode(key, value)
+                node.right = TreeSetNode(key)
                 node.right.parent = node
                 self.root = self._rebalance(node)
                 
@@ -189,18 +156,18 @@ class AVLTree:
             self._delete_node(node)
         
     
-    def pop(self, key):
-        """Remove a key from the tree and return its value.
+    def pop(self):
+        """Remove and return the greatest item.
         
-         Raises a KeyError if key is not in the tree."""
+        Raises an IndexError if the tree is empty."""
+         
+        if not self.root:
+            raise IndexError('pop from empty tree')
         
-        node = self._find(key)
-        
-        if not node:
-            raise KeyError(str(key))
+        node = self._biggest_in_subtree(self.root)
             
         self._delete_node(node)
-        return node.value
+        return node.key
         
     
     def clear(self):
@@ -209,23 +176,20 @@ class AVLTree:
         self.root = None
     
     
-    def key_at(self, index):
-        """Return the key at the index."""
+    def item_at(self, index):
+        """Return the item at the index.
+        
+        Same as 'key_at()'"""
         
         return self._node_at(index).key
     
     
-    def value_at(self, index):
-        """Return the value at the index."""
+    def key_at(self, index):
+        """Return the key at the index.
         
-        return self._node_at(index).value
-    
-    
-    def key_and_value_at(self, index):
-        """Return the (key, value) pair at the index."""
+        Same as 'item_at()'."""
         
-        node = self._node_at(index)
-        return (node.key, node.value)
+        return self._node_at(index).key
     
     
     def remove_at(self, index):
@@ -235,11 +199,11 @@ class AVLTree:
     
     
     def pop_at(self, index):
-        """Remove node at the index and return its (key, value) pair."""
+        """Remove item at the index and return it."""
         
         node = self._node_at(index)
         self._delete_node(node)
-        return (node.key, node.value)
+        return node.key
     
     
     def _node_at(self, index):
@@ -445,21 +409,21 @@ class AVLTree:
     def copy(self):
         """Return a copy of the tree."""
         
-        def _copy(node, parent=None):
-            
-            node_copy = node.copy()
-            node_copy.parent = parent
-            if node.left:
-                node_copy.left = _copy(node.left, parent=node_copy)
-            if node.right:
-                node_copy.right = _copy(node.right, parent=node_copy)
-            return node_copy
-            
-        
-        tree_copy = AVLTree()
+        tree_copy = TreeSet()
         if self.root:
-            tree_copy.root = _copy(self.root)
+            tree_copy.root = self._copy(self.root)
         return tree_copy
+    
+    
+    def _copy(self, node, parent=None):
+        
+        node_copy = node.copy()
+        node_copy.parent = parent
+        if node.left:
+            node_copy.left = self._copy(node.left, parent=node_copy)
+        if node.right:
+            node_copy.right = self._copy(node.right, parent=node_copy)
+        return node_copy
                 
     
     def to_newick(self):
@@ -529,10 +493,12 @@ class AVLTree:
             return True
         
         
-class AVLTreeIterator:
-    """Iterator class for AVL tree."""
+class TreeSetIterator:
+    """Iterator for AVL-tree-based set."""
     
-    def __init__(self, avl_tree, mode=1):
+    __slots__ = ('avl_tree', '_current', '_from')
+    
+    def __init__(self, avl_tree):
         
         self.avl_tree = avl_tree
         self._current = self.avl_tree.root
@@ -543,12 +509,6 @@ class AVLTreeIterator:
         # 3 -- right
         self._from = 1
         
-        # What is returned?
-        # 1 -- key
-        # 2 -- value
-        # 3 -- (key, value)
-        self._mode = mode
-        
         
     def __iter__(self):
         
@@ -556,6 +516,15 @@ class AVLTreeIterator:
         
     
     def __next__(self):
+        
+        node = self._find_next()
+        if node:
+            return node.key
+        else:
+            raise StopIteration
+    
+    
+    def _find_next(self):
         
         while self._current:
             
@@ -568,7 +537,6 @@ class AVLTreeIterator:
             # coming from left child --> return this node
             elif self._from == 2:
                 x = self._current
-                
                 if self._current.right:
                     self._current = self._current.right
                     self._from = 1
@@ -578,14 +546,7 @@ class AVLTreeIterator:
                         self._from = 2
                     elif self._current:
                         self._from = 3
-                
-                if self._mode == 1:
-                    return x.key
-                elif self._mode == 2:
-                    return x.value
-                else:
-                    return (x.key, x.value)
-                
+                return x
             # coming from right child
             else:
                 x = self._current
@@ -595,25 +556,180 @@ class AVLTreeIterator:
                 elif self._current:
                     self._from = 3
         
-        # stop when current node becomes None
-        raise StopIteration
+
+class TreeDictNode(TreeSetNode):
+    
+    __slots__ = ('value',)
+    
+    def __init__(self, key, value):
+        
+        super().__init__(key)
+        self.value = value
+        
+    
+    def copy(self):
+        
+        copy = TreeDictNode(self.key, self.value)
+        copy.height = self.height
+        copy.size = self.size
+        copy.balance = self.balance
+        return copy
+    
+
+class TreeDict(TreeSet):
+        
+    
+    def __iter__(self):
+        
+        return TreeDictIterator(self)
+        
+    
+    def __getitem__(self, item):
+        
+        node = self._find(key)
+        
+        if not node:
+            raise KeyError(str(key))
+            
+        return node.value
+    
+    
+    def get(self, item, default=None):
+        
+        node = self._find(key)
+        
+        if node:
+            return node.value
+        else:
+            return default
+        
+    
+    def keys(self):
+        """Return an iterator for the keys."""
+        
+        return TreeDictIterator(self, mode=1)
+        
+    
+    def values(self):
+        """Return an iterator for the values."""
+        
+        return TreeDictIterator(self, mode=2)
+    
+    
+    def items(self):
+        """Return an iterator for (key, value) pairs."""
+        
+        return TreeDictIterator(self, mode=3)
+    
+    
+    def pop(self, key):
+        """Remove a key from the tree and return its value.
+        
+         Raises a KeyError if key is not in the tree."""
+        
+        node = self._find(key)
+        
+        if not node:
+            raise KeyError(str(key))
+            
+        self._delete_node(node)
+        return node.value
+    
+    
+    def value_at(self, index):
+        """Return the value at the index."""
+        
+        return self._node_at(index).value
+    
+    
+    def key_and_value_at(self, index):
+        """Return the (key, value) pair at the index."""
+        
+        node = self._node_at(index)
+        return (node.key, node.value)
+    
+    
+    def pop_at(self, index):
+        """Remove node at the index and return its (key, value) pair."""
+        
+        node = self._node_at(index)
+        self._delete_node(node)
+        return (node.key, node.value)
+    
+    
+    def add(self, key, value):
+        """Insert a key and value."""
+        
+        self.insert(key, value)
+    
+    
+    def insert(self, key, value):
+        """Insert a key and value."""
+        
+        if not self.root:
+            self.root = TreeDictNode(key, value)
+        else:
+            node = self._find_insert(key)
+            
+            if key < node.key:
+                node.left = TreeDictNode(key, value)
+                node.left.parent = node
+                self.root = self._rebalance(node)
+            elif key > node.key:
+                node.right = TreeDictNode(key, value)
+                node.right.parent = node
+                self.root = self._rebalance(node)
+                
+    def copy(self):
+        """Return a copy of the tree."""
+        
+        tree_copy = TreeDict()
+        if self.root:
+            tree_copy.root = self._copy(self.root)
+        return tree_copy
+                
+                
+class TreeDictIterator(TreeSetIterator):
+    """Iterator for AVL-tree-based dictionary."""
+    
+    __slots__ = ('_mode',)
+    
+    def __init__(self, avl_tree, mode=1):
+        
+        super().__init__(avl_tree)
+        
+        # What is returned?
+        # 1 -- key
+        # 2 -- value
+        # 3 -- (key, value)
+        self._mode = mode
+        
+    
+    def __next__(self):
+        
+        node = self._find_next()
+        if node:
+            if self._mode == 1:
+                return node.key
+            elif self._mode == 2:
+                return node.value
+            else:
+                return (node.key, node.value)
+        else:
+            raise StopIteration
         
 
 if __name__ == '__main__':
     
-    import random
+    import random, time
     
     keys = [i for i in range(10000)]
     random.shuffle(keys)
     
-    t = AVLTree()
+    t = TreeDict()
     for key in keys:
-        t.insert(key)
-    # print(t.to_newick())  
-     
-    # t = set()
-    # for key in keys:
-    #     t.add(key)
+        t.insert(key, None)
+    # print(t.to_newick())
     
     t = t.copy()
     print(len(t))
@@ -623,3 +739,22 @@ if __name__ == '__main__':
     
     l = [key for key in t.items()]
     print(l[-5:])
+     
+    s = set()
+    for key in keys:
+        s.add(key)
+        
+    start_time1 = time.time()
+    for i in range(500):
+        x = random.randint(0, len(t)-1)
+        t.pop_at(x)
+    end_time1 = time.time()
+    print(len(t))
+    
+    start_time2 = time.time()
+    for i in range(500):
+        x = random.choice(tuple(s))
+        s.remove(x)
+    end_time2 = time.time()
+    
+    print(end_time1 - start_time1, end_time2 - start_time2)
