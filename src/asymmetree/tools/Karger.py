@@ -79,8 +79,7 @@ class Karger():
         """
         
         if not runs:
-            n = self.graph.order()
-            runs = round(n**2 * math.log(n))
+            runs = self._default_run_number()
         
         best_V1, best_V2, best_cutvalue = None, None, None
         
@@ -102,11 +101,16 @@ class Karger():
         """
         
         if not runs:
-            n = self.graph.order()
-            runs = round(n**2 * math.log(n))
+            runs = self._default_run_number()
         
         for _ in range(runs):
             yield self._karger_main()
+            
+            
+    def _default_run_number(self):
+        
+        n = self.graph.order()
+        return round(n**2 * math.log(n))
     
         
     def _full_edge_set(self):
@@ -116,7 +120,8 @@ class Karger():
             self.full_egde_set = TreeSet()
             for u, v in self.graph.edges():
                 self.full_egde_set.add( (u, v) )
-                
+        
+        # otherwise copy which is O(|E|)
         return self.full_egde_set.copy()
         
         

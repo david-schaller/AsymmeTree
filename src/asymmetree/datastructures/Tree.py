@@ -191,6 +191,22 @@ class Tree:
         else:
             yield from []
             
+        
+    def euler_and_level(self):
+        """Generator for an Euler tour with node levels."""
+        
+        def _euler_level(node, level):
+            yield (node, level)
+            
+            for child in node.children:
+                yield from _euler_level(child, level+1)
+                yield (node, level)
+        
+        if self.root:
+            yield from _euler_level(self.root, 0)
+        else:
+            yield from []
+            
     
     def supply_leaves(self):
         """Add the leaves to all nodes that are in the subtree of a specific node."""
