@@ -19,14 +19,18 @@ class TreeNode:
                  'children', 'leaves')
     
     
-    def __init__(self, ID, label=""):
+    def __init__(self, ID, label=''):
         
         self.ID = ID
         self.label = label
+        
+        
         self.parent = None
+        # reference to doubly-linked list element in the parents' children
+        self.parent_dll_element = None
+        
         self.children = dll.DLList()
-        self.parent_dll_element = None      # reference to doubly-linked list element
-                                            # in the parents' children
+        
     
     def __str__(self):
         
@@ -35,10 +39,11 @@ class TreeNode:
     
     def __repr__(self):
         
-        return "<TN: {}>".format(self.ID)
+        return '<TN: {}>'.format(self.ID)
     
                                             
     def add_child(self, child_node):
+        """Add a node as a child of this node."""
         
         # do nothing if child_node is already a child of self
         
@@ -59,7 +64,8 @@ class TreeNode:
             child_node.parent = None
             child_node.parent_dll_element = None
         else:
-            raise ValueError("{} is not a child of node {}".format(child_node, self))
+            raise ValueError('{} is not a child of node {}'.format(child_node,
+                                                                   self))
             
             
     def detach(self):
@@ -69,6 +75,12 @@ class TreeNode:
         else:
             self.parent = None
             self.parent_dll_element = None
+            
+    
+    def is_leaf(self):
+        """Return whether the node is a leaf."""
+        
+        return not self.children
         
 
 class Tree:
@@ -318,7 +330,7 @@ class Tree:
     def compare_topology(self, other):
         """Compare the tree topology based on the hierarchies.
         
-        Only works for binary trees."""
+        Only works for phylogenetic trees."""
         
         hierarchy1 = sorted(self.get_hierarchy())
         hierarchy2 = sorted(other.get_hierarchy())

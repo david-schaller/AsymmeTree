@@ -515,7 +515,7 @@ class PhyloTree(Tree):
                 f.write( json.dumps(data) )
                 
         elif mode == 'pickle':
-            pickle.dump( (tree_nx, root_id), open(filename, "wb") )
+            pickle.dump( (tree_nx, root_id), open(filename, 'wb') )
             
         else:
             raise ValueError("serialization mode '{}' not supported".format(mode))
@@ -546,7 +546,7 @@ class PhyloTree(Tree):
                 raise RuntimeError('could not identify root')
                 
         elif mode == 'pickle':
-            tree_nx, root_id = pickle.load( open(filename, "rb") )
+            tree_nx, root_id = pickle.load( open(filename, 'rb') )
             
         else:
             raise ValueError("serialization mode '{}' not supported".format(mode))
@@ -568,14 +568,17 @@ class PhyloTree(Tree):
         for v in self.preorder():
             if not v.children:
                 self.number_of_species += 1
-            if v.label.isdigit():
-                v.ID = int(v.label)
-                IDs.add(v.ID)
+            
+            # convention for undefined ID is -1
+            if not isinstance(v.ID, int) or v.ID < 0:
+                if v.label.isdigit():
+                    v.ID = int(v.label)
+                    IDs.add(v.ID)
         
-        # assign new IDs to internal nodes
+        # assign new IDs to remaining nodes
         current_ID = 0
         for v in self.preorder():
-            if str(v.ID) != v.label:
+            if not isinstance(v.ID, int) or v.ID < 0:
                 while current_ID in IDs:
                     current_ID += 1
                 v.ID = current_ID

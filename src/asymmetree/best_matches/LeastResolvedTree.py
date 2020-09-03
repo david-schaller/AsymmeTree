@@ -221,7 +221,12 @@ def bmg_test(G):
             root.add_child(subtree.root)
     
     tree = PhyloTree(root)
+    
+    # assign IDs to inner nodes
     tree.reconstruct_IDs()
+    # assign label and colors to the leaves
+    tree.reconstruct_information_from_graph(G)
+    
     return tree
     
 
@@ -237,6 +242,8 @@ def lrt_from_colored_graph(G, mincut=False, weighted_mincut=False):
     if not tree:
         return None
     else:
+        # assign IDs to inner nodes
+        tree.reconstruct_IDs()
         # assign label and colors to the leaves
         tree.reconstruct_information_from_graph(G)
         
@@ -258,7 +265,7 @@ def correct_bmg(bmg_original):
     elif len(subtrees) == 1:
         tree = subtrees[0]
     else:
-        tree = PhyloTree(PhyloTreeNode(0))
+        tree = PhyloTree(PhyloTreeNode(-1))
         for subtree in subtrees:
             tree.root.add_child(subtree.root)
     
@@ -292,9 +299,7 @@ class TwoColoredLRT:
         if len(self.color_dict) == 1:
             root = PhyloTreeNode(-1)
             for v in self.digraph.nodes():
-                root.add_child(
-                    PhyloTreeNode(-1, label=self.digraph.nodes[v]['label'],
-                                      color=self.digraph.nodes[v]['color']))
+                root.add_child(PhyloTreeNode(v))
         # 2 colors
         else:
             subtrees = []
@@ -317,7 +322,12 @@ class TwoColoredLRT:
                     root.add_child(subroot)
         
         tree = PhyloTree(root)
+        
+        # assign IDs to inner nodes
         tree.reconstruct_IDs()
+        # assign label and colors to the leaves
+        tree.reconstruct_information_from_graph(self.digraph)
+        
         return tree
     
         
@@ -339,8 +349,7 @@ class TwoColoredLRT:
             
         node = PhyloTreeNode(-1)
         for v in S_2:
-            node.add_child(PhyloTreeNode(v, label=G.nodes[v]['label'],
-                                            color=G.nodes[v]['color']))
+            node.add_child(PhyloTreeNode(v))
             G.remove_node(v)
         
         for wcc in nx.weakly_connected_components(G):

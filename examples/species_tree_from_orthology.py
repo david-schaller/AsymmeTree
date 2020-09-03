@@ -51,3 +51,7 @@ print(tr.newick_with_support())
 S_estimate2 = tr.build_species_tree(mode='BPMF')
 print('------------- BPMF species tree -------------')
 print(tr.newick_with_support())
+
+S_estimate3 = tr.build_species_tree(mode='greedy')
+print('------------- GREEDY species tree -------------')
+print(tr.newick_with_support())

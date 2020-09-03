@@ -6,6 +6,7 @@ import networkx as nx
 
 from asymmetree.cograph.CographEditor import CographEditor
 from asymmetree.datastructures.PhyloTree import PhyloTree, PhyloTreeNode
+from asymmetree.tools.Build import Build
 
 
 __author__ = 'David Schaller'
@@ -101,7 +102,9 @@ class TreeReconstructor:
         if mode.lower() == 'bpmf':
             root = self._BPMF(weighted=weighted)
         elif mode.lower() in ('mincut', 'min-cut'):
-            root = self._BUILD(self.L, self.R, mincut=True)
+            build = Build(self.R, self.L, mincut=True,
+                          weighted_mincut=weighted, triple_weights=self.R)
+            root = build.build_tree(return_root=True)
         elif mode.lower() == 'greedy':
             root = self._GREEDY(weighted=weighted)
         else:
@@ -113,70 +116,6 @@ class TreeReconstructor:
         self.S = PhyloTree(root)
         
         return self.S
-    
-    
-    def _BUILD(self, L, R, mincut=True):
-        """Aho's BUILD-algorithm with minimal edge cut."""
-        
-        if len(L) == 1:                                 # trivial case: only one leaf left in L
-            leaf = L.pop()
-            return PhyloTreeNode(leaf, label=leaf)
-        
-        aho_graph = self._aho_graph(L, R)               # construct the Aho-graph
-                                                        # determine connected components A1, ..., Ak
-        conn_comps = self._connected_comp(aho_graph,
-                                          mincut=mincut)
-        
-        if len(conn_comps) <= 1:                        # return False if less than 2 connected components
-            return False
-        
-        child_nodes = []
-        for cc in conn_comps:
-            Li = set(cc)                                # list/dictionary --> set
-            Ri = {}
-            for t, weight in R.items():                 # determine which triples are in the subtree
-                if Li.issuperset(t):
-                    Ri[t] = weight
-            Ti = self._BUILD(Li, Ri)                    # recursive call
-            if not Ti:
-                return False                            # raise False to previous call of aho()
-            else:
-                child_nodes.append(Ti)
-                
-        subtree_root = PhyloTreeNode(0, label='')       # place new inner node
-        for Ti in child_nodes:
-            subtree_root.add_child(Ti)                  # add roots of the subtrees to the new node
-        
-        return subtree_root                             # return the new node
-    
-    
-    def _aho_graph(self, L, R):
-        """Auxiliary graph for Aho-algorithm.
-    
-        Takes a list of leaves L and a list of tuples R of the form (xy|z) and
-        builds a graph with V = L and E = { {x,y} | (xy|z) in R }.
-        Applies Minimal Edge Cut if necessary.
-        """
-        G = nx.Graph()
-        G.add_nodes_from(L)
-
-        for a, b, c in R:
-            if G.has_edge(a, b):
-                G[a][b]['weight'] += R[(a,b,c)]
-            else:
-                G.add_edge(a, b, weight=R[(a,b,c)])
-                
-        return G
-                
-                
-    def _connected_comp(self, G, mincut=True):
-        
-        if nx.number_connected_components(G) > 1 or not mincut:
-            return list(nx.connected_components(G))
-        else:
-            cut = nx.stoer_wagner(G)                    # Stoer–Wagner algorithm
-                                                        # for minimal weighted edge cut
-            return cut[1]
         
     
     def _BPMF(self, weighted=True):
@@ -185,11 +124,12 @@ class TreeReconstructor:
         Modified version by Byrka et al. 2010 and added weights."""
         
         # initialization
-        nodes = {PhyloTreeNode(leaf, label=leaf): {leaf} for leaf in self.L}
+        nodes = {PhyloTreeNode(leaf, label=str(leaf)): {leaf}
+                 for leaf in self.L}
         leaf_to_node = {}
         
         for node in nodes:
-            leaf_to_node[node.label] = node
+            leaf_to_node[node.ID] = node
         
         # merging
         for i in range(len(self.L)-1):
@@ -232,7 +172,7 @@ class TreeReconstructor:
                     S_i, S_j = pair
             
             # create new node S_k connecting S_i and S_j
-            S_k = PhyloTreeNode(0, label='')
+            S_k = PhyloTreeNode(-1)
             S_k.add_child(S_i)
             S_k.add_child(S_j)
             
@@ -257,17 +197,17 @@ class TreeReconstructor:
         else:
             triples = self.R.keys()
                 
-        consistent_triples = {}
-        root = self._BUILD(self.L, consistent_triples, mincut=False)
+        consistent_triples = []
+        root = None
         
         for t in triples:
-            consistent_triples[t] = self.R[t]
-            
-            build_tree = self._BUILD(self.L, consistent_triples, mincut=False)
-            if build_tree:
-                root = build_tree
+            consistent_triples.append(t)
+            build = Build(consistent_triples, self.L, mincut=False)
+            new_root = build.build_tree(return_root=True)
+            if new_root:
+                root = new_root
             else:
-                del consistent_triples[t]
+                consistent_triples.pop()
         
         return root
     
@@ -281,9 +221,9 @@ class TreeReconstructor:
         R_max_cons = {}                     # max. consistent subset of R (i.e. heuristic)
         
         for l1, l2, l3 in R_total:
-            a = l1.label
-            b = l2.label
-            c = l3.label
+            a = l1.ID
+            b = l2.ID
+            c = l3.ID
             
             if a <= b:
                 triple = (a, b, c)
@@ -338,9 +278,9 @@ class TreeReconstructor:
             
             for l1, l2 in itertools.combinations(v.leaves, 2):
                 for l3 in outspecies:
-                    a = l1.label
-                    b = l2.label
-                    c = l3.label
+                    a = l1.ID
+                    b = l2.ID
+                    c = l3.ID
                     triple1 = (a, b, c) if a <= b else (b, a, c)
                     triple2 = (a, c, b) if a <= c else (c, a, b)
                     triple3 = (b, c, a) if b <= c else (c, b, a)

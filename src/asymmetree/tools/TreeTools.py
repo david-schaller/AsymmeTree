@@ -6,7 +6,7 @@ Tree tools.
 
 import itertools
 
-from asymmetree.datastructures.Tree import Tree
+from asymmetree.datastructures.Tree import Tree, TreeNode
 
 
 __author__ = 'David Schaller'
@@ -38,6 +38,9 @@ class LCA:
         self.V = [v for v in self.tree.preorder()]
         self.index = {v: i for i, v in enumerate(self.V)}
         
+        # store leaf IDs for rooted triple queries
+        self.leaf_ids = {v.ID: v for v in self.V if v.is_leaf()}
+        
         self.euler_tour = []
         # levels of the vertices in the Euler tour
         self.L = []
@@ -52,7 +55,7 @@ class LCA:
             if self.R[i] is None:
                 self.R[i] = j
                 
-        # build sparse table for Range minimum query (RMQ)
+        # build sparse table for range minimum query (RMQ)
         self._precompute_logs()
         self._RMQ_sparse_table()
         
@@ -68,6 +71,23 @@ class LCA:
         if r1 > r2:
             r1, r2 = r2, r1
         return self.V[ self.euler_tour[self._RMQ_query(r1, r2)] ]
+    
+    
+    def displays_triple(self, a, b, c):
+        """Return whether the tree displays the rooted triple ab|c (= ba|c)."""
+        
+        abc = [a, b, c]
+        
+        for i in range(3):
+            if not isinstance(abc[i], TreeNode):
+                if abc[i] not in self.leaf_ids:
+                    return False
+                else:
+                    abc[i] = self.leaf_ids[abc[i]]
+            elif abc[i] not in self.index:
+                return False
+        
+        return self._has_triple(*abc)
     
     
     def _precompute_logs(self):
@@ -111,6 +131,12 @@ class LCA:
         else:
             return self.M[j - (1 << k) + 1][k]
         
+    
+    def _has_triple(self, a, b, c):
+        
+        lca_ab = self.get(a, b)
+        return lca_ab is not self.get(lca_ab, c)
+        
 
 def lcas_naive(tree):
     """Naive computation of the last common ancestor for all leaf pairs."""
@@ -128,23 +154,35 @@ def lcas_naive(tree):
 
 if __name__ == '__main__':
     
-    import random, time
+    import random
     
-    tree = Tree.random_tree(4000)
+    # import time
+    # tree = Tree.random_tree(4000)
+    # leaves = tree.supply_leaves()
+    
+    # start_time1 = time.time()
+    # lca_fast = LCA(tree)
+    # end_time1 = time.time()
+    
+    # start_time2 = time.time()
+    # lca_naive = lcas_naive(tree)
+    # end_time2 = time.time()
+    
+    # print(end_time1 - start_time1, end_time2 - start_time2)
+    
+    # for i in range(10):
+    #     v1, v2 = random.sample(leaves, 2)
+        
+    #     print(v1, v2, lca_fast.get(v1, v2), lca_naive[v1, v2])
+    
+    tree = Tree.random_tree(10)
+    print(tree.to_newick())
     leaves = tree.supply_leaves()
-    
-    start_time1 = time.time()
-    lca_fast = LCA(tree)
-    end_time1 = time.time()
-    
-    start_time2 = time.time()
-    lca_naive = lcas_naive(tree)
-    end_time2 = time.time()
-    
-    print(end_time1 - start_time1, end_time2 - start_time2)    
+    lca = LCA(tree)
     
     for i in range(10):
-        v1, v2 = random.sample(leaves, 2)
+        a, b, c = random.sample(leaves, 3)
         
-        print(v1, v2, lca_fast.get(v1, v2), lca_naive[v1, v2])
+        print(a, b, c, lca.displays_triple(a, b, c),
+                       lca.displays_triple(a.ID, b.ID, c.ID))
     
