@@ -7,6 +7,7 @@ import networkx as nx
 from asymmetree.cograph.CographEditor import CographEditor
 from asymmetree.datastructures.PhyloTree import PhyloTree
 from asymmetree.tools.Build import Build, greedy_BUILD, best_pair_merge_first
+from asymmetree.tools.TreeTools import LCA
 
 
 __author__ = 'David Schaller'
@@ -20,8 +21,9 @@ class TreeReconstructor:
         self.R = {}             # (weighted) species triples
         self.L = set()          # set of species leaves
         
-        self._edit_runs_per_cc = edit_runs_per_cc   # runs of cograph editing heuristic
-                                                    # per connected component
+        # runs of cograph editing heuristic per connected component
+        self._edit_runs_per_cc = edit_runs_per_cc
+        
         self.S = None           # the reconstructed species tree
         
         if cotree_mode == 'best':                   # only use the best cotree
@@ -29,7 +31,8 @@ class TreeReconstructor:
         elif cotree_mode == 'all':                  # use all cotrees
             self._cotree_mode = 'all'
         else:
-            raise ValueError("invalid argument '{}' for cotree usage".format(cotree_mode))
+            raise ValueError("invalid argument '{}' for cotree "\
+                             "usage".format(cotree_mode))
         
         
     def add_ortho_graph(self, ortho_graph):
@@ -128,42 +131,20 @@ class TreeReconstructor:
         return self.S
     
     
-    def _max_consistent_triple_set(self):
-        
-        if self.S is None:
-            raise RuntimeError('species tree has not been built yet')
-            
-        R_total = self.S.get_triples()      # all triples of the tree
-        R_max_cons = {}                     # max. consistent subset of R (i.e. heuristic)
-        
-        for l1, l2, l3 in R_total:
-            a = l1.ID
-            b = l2.ID
-            c = l3.ID
-            
-            if a <= b:
-                triple = (a, b, c)
-            else:
-                triple = (b, a, c)
-                
-            if triple in self.R:
-                R_max_cons[triple] = self.R[triple]
-        
-        return R_max_cons
-    
-    
-    def _total_support(self, R_max_cons):
+    def _total_support(self):
         """Compute the total support s of the tree as in ParaPhylo."""
+        
+        lca = LCA(self.S)
         
         numerator = 0
         denominator = 0
         
-        for triple, weight in R_max_cons.items():
+        for t in lca.consistent_triple_generator(self.R):
             
-            numerator += weight
-            denominator += weight
+            numerator += self.R[t]
+            denominator += self.R[t]
             
-            a, b, c = triple
+            a, b, c = t
             triple2 = (a, c, b) if a <= c else (c, a, b)
             triple3 = (b, c, a) if b <= c else (c, b, a)
             
@@ -177,9 +158,10 @@ class TreeReconstructor:
     
     
     def _subtree_support(self):
-        """Compute the subtree support s_v for the inner nodes as in ParaPhylo."""
+        """Compute the subtree support for the inner nodes as in ParaPhylo."""
         
-        support = {}                        # internal node v --> support for T(v)
+        # internal node v --> support for T(v)
+        support = {}
         
         self.S.supply_leaves()
         all_leaves = set(self.S.root.leaves)
@@ -219,7 +201,7 @@ class TreeReconstructor:
         
         if v is None:
             supports = self._subtree_support()
-            supports[self.S.root] = self._total_support(self._max_consistent_triple_set())
+            supports[self.S.root] = self._total_support()
             return self.newick_with_support(v=self.S.root, supports=supports) + ';'
         
         elif not v.children:

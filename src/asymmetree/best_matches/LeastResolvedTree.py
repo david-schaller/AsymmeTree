@@ -178,7 +178,11 @@ def redundant_edges(T, subtree_colors, arc_colors):
 #                               LRT FROM BMG
 # --------------------------------------------------------------------------
 
-def bmg_test(G):
+def is_bmg(G):
+    """Determine whether a colored digraph is a BMG.
+    
+    If the graph is a BMG, then its LRT is returned.
+    """
     
     if not isinstance(G, nx.DiGraph):
             raise TypeError('not a digraph')
@@ -208,7 +212,7 @@ def bmg_test(G):
             return False
         else:
             # a digraph is a BMG iff its equal to the BMG of BUILD(R)
-            subtree.reconstruct_information_from_graph(sg)
+            subtree.reconstruct_info_from_graph(sg)
             if not graphs_equal(sg, bmg_from_tree(subtree)):
                 return False
             subtrees.append(subtree)
@@ -225,7 +229,7 @@ def bmg_test(G):
     # assign IDs to inner nodes
     tree.reconstruct_IDs()
     # assign label and colors to the leaves
-    tree.reconstruct_information_from_graph(G)
+    tree.reconstruct_info_from_graph(G)
     
     return tree
     
@@ -245,7 +249,7 @@ def lrt_from_colored_graph(G, mincut=False, weighted_mincut=False):
         # assign IDs to inner nodes
         tree.reconstruct_IDs()
         # assign label and colors to the leaves
-        tree.reconstruct_information_from_graph(G)
+        tree.reconstruct_info_from_graph(G)
         
         return tree
 
@@ -326,7 +330,7 @@ class TwoColoredLRT:
         # assign IDs to inner nodes
         tree.reconstruct_IDs()
         # assign label and colors to the leaves
-        tree.reconstruct_information_from_graph(self.digraph)
+        tree.reconstruct_info_from_graph(self.digraph)
         
         return tree
     
@@ -381,7 +385,7 @@ if __name__ == '__main__':
     
     start_time1 = time.time()
     lrt1 = lrt_from_colored_graph(bmg, mincut=False)
-    # lrt1 = bmg_test(bmg)
+    # lrt1 = is_bmg(bmg)
     end_time1 = time.time()
     
     lrt2 = lrt_from_observable_tree(T)

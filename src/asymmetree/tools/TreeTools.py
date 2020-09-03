@@ -90,6 +90,20 @@ class LCA:
         return self._has_triple(*abc)
     
     
+    def consistent_triples(self, triples):
+        """Return a list with the subset of 'triples' that are displayed."""
+        
+        return [t for t in triples if self.displays_triple(*t)]
+    
+    
+    def consistent_triple_generator(self, triples):
+        """Generator for the items in 'triples' that are displayed."""
+        
+        for t in triples:
+            if self.displays_triple(*t):
+                yield t
+    
+    
     def _precompute_logs(self):
         
         n = len(self.L)

@@ -2,6 +2,7 @@
 
 """Algorithms for building trees from rooted triple sets."""
 
+
 import itertools
 import networkx as nx
 
@@ -85,24 +86,25 @@ class Build:
             if self.print_info: print('Connected component:\n', conn_comps)
             return False
         
+        # otherwise proceed recursively
         child_nodes = []
         for cc in conn_comps:
             Li = set(cc)                    # list/dictionary --> set
             Ri = []
-            for t in R:                     # determine which triples are in the subtree
+            for t in R:                     # construct triple subset
                 if Li.issuperset(t):
                     Ri.append(t)
-            Ti = self._aho(Li, Ri)           # recursive call
+            Ti = self._aho(Li, Ri)          # recursive call
             if not Ti:
-                return False                # raise False to previous call of _aho()
+                return False                # raise False to previous call
             else:
                 child_nodes.append(Ti)
                 
-        subtree_root = PhyloTreeNode(-1)    # place new inner node
+        node = PhyloTreeNode(-1)            # place new inner node
         for Ti in child_nodes:
-            subtree_root.add_child(Ti)      # add roots of the subtrees to the new node
+            node.add_child(Ti)              # add roots of the subtrees
    
-        return subtree_root                 # return the new node
+        return node
     
     
     def _connected_components(self, aho_graph):

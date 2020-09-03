@@ -585,7 +585,7 @@ class PhyloTree(Tree):
                 IDs.add(current_ID)
     
     
-    def reconstruct_information_from_graph(self, G):
+    def reconstruct_info_from_graph(self, G):
         """Reconstructs the labels and colors from a NetworkX Graph."""
         
         for v in self.preorder():
