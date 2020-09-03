@@ -5,8 +5,8 @@ import itertools
 import networkx as nx
 
 from asymmetree.cograph.CographEditor import CographEditor
-from asymmetree.datastructures.PhyloTree import PhyloTree, PhyloTreeNode
-from asymmetree.tools.Build import Build
+from asymmetree.datastructures.PhyloTree import PhyloTree
+from asymmetree.tools.Build import Build, greedy_BUILD, best_pair_merge_first
 
 
 __author__ = 'David Schaller'
@@ -99,14 +99,24 @@ class TreeReconstructor:
     def build_species_tree(self, mode='bpmf', weighted=True):
         """Build a species tree from the informative triples."""
         
+        # Wu's Best-Pair-Merge-First heuristic
         if mode.lower() == 'bpmf':
-            root = self._BPMF(weighted=weighted)
+            root = best_pair_merge_first(self.R, self.L,
+                                triple_weights=(self.R if weighted else None),
+                                return_root=True)
+            
+        # BUILD with min cut 
         elif mode.lower() in ('mincut', 'min-cut'):
             build = Build(self.R, self.L, mincut=True,
                           weighted_mincut=weighted, triple_weights=self.R)
             root = build.build_tree(return_root=True)
+            
+        # greedy BUILD heuristic
         elif mode.lower() == 'greedy':
-            root = self._GREEDY(weighted=weighted)
+            root = greedy_BUILD(self.R, self.L,
+                                triple_weights=(self.R if weighted else None),
+                                return_root=True)
+            
         else:
             raise ValueError("mode '{}' is not valid".format(mode))
             
@@ -116,100 +126,6 @@ class TreeReconstructor:
         self.S = PhyloTree(root)
         
         return self.S
-        
-    
-    def _BPMF(self, weighted=True):
-        """Wu’s Best-Pair-Merge-First heuristic.
-        
-        Modified version by Byrka et al. 2010 and added weights."""
-        
-        # initialization
-        nodes = {PhyloTreeNode(leaf, label=str(leaf)): {leaf}
-                 for leaf in self.L}
-        leaf_to_node = {}
-        
-        for node in nodes:
-            leaf_to_node[node.ID] = node
-        
-        # merging
-        for i in range(len(self.L)-1):
-            
-            score = {(S_i, S_j): 0
-                     for S_i, S_j in itertools.combinations(nodes.keys(), 2)}
-            
-            for x, y, z in self.R.keys():
-                
-                w = self.R[(x,y,z)]
-                
-                S_i, S_j, S_k = (leaf_to_node[x],
-                                 leaf_to_node[y],
-                                 leaf_to_node[z])
-                
-                if (S_i is not S_j) and (S_i is not S_k) and (S_j is not S_k):
-                    
-                    if (S_i, S_j) in score:
-                        score[(S_i, S_j)] += 2 * w if weighted else 2
-                    else:
-                        score[(S_j, S_i)] += 2 * w if weighted else 2
-                        
-                    if (S_i, S_k) in score:
-                        score[(S_i, S_k)] -= 1 * w if weighted else 1
-                    else:
-                        score[(S_k, S_i)] -= 1 * w if weighted else 1
-                        
-                    if (S_j, S_k) in score:
-                        score[(S_j, S_k)] -= 1 * w if weighted else 1
-                    else:
-                        score[(S_k, S_j)] -= 1 * w if weighted else 1
-            
-            current_max = float('-inf')
-            S_i, S_j = None, None
-            
-            for pair, pair_score in score.items():
-                
-                if pair_score > current_max:
-                    current_max = pair_score
-                    S_i, S_j = pair
-            
-            # create new node S_k connecting S_i and S_j
-            S_k = PhyloTreeNode(-1)
-            S_k.add_child(S_i)
-            S_k.add_child(S_j)
-            
-            nodes[S_k] = nodes[S_i] | nodes[S_j]    # set union
-            for leaf in nodes[S_k]:
-                leaf_to_node[leaf] = S_k
-            
-            del nodes[S_i]
-            del nodes[S_j]
-            
-        assert len(nodes) == 1, 'more than 1 node left'
-        
-        return next(iter(nodes))
-    
-    
-    def _GREEDY(self, weighted=True):
-        
-        if weighted:
-            triples = sorted(self.R.keys(),
-                             key=lambda triple: self.R[triple],
-                             reverse=True)
-        else:
-            triples = self.R.keys()
-                
-        consistent_triples = []
-        root = None
-        
-        for t in triples:
-            consistent_triples.append(t)
-            build = Build(consistent_triples, self.L, mincut=False)
-            new_root = build.build_tree(return_root=True)
-            if new_root:
-                root = new_root
-            else:
-                consistent_triples.pop()
-        
-        return root
     
     
     def _max_consistent_triple_set(self):
