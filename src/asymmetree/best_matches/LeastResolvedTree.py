@@ -58,6 +58,7 @@ def forbidden_triples(graph, color_dict=None):
             for b1, b2 in itertools.combinations(color_dict[c2], 2):
                 if graph.has_edge(a, b1) and graph.has_edge(a, b2):
                     F.append( (a, b1, b2) )
+                    F.append( (a, b2, b1) )
     
     return F
 
@@ -79,12 +80,58 @@ def informative_forbidden_triples(graph, color_dict=None):
                 
                 if graph.has_edge(a, b1) and graph.has_edge(a, b2):
                     F.append( (a, b1, b2) )
+                    F.append( (a, b2, b1) )
                 elif graph.has_edge(a, b1):
                     R.append( (a, b1, b2) )
                 elif graph.has_edge(a, b2):
                     R.append( (a, b2, b1) )
     
-    return R, F    
+    return R, F
+
+
+def binary_explainable_triples(graph, color_dict=None):
+    """Extended informative triple set for binary-explainable graphs."""
+    
+    if not isinstance(graph, nx.DiGraph):
+        raise TypeError("must be a NetworkX 'Digraph'")
+    
+    if not color_dict:
+        color_dict = sort_by_colors(graph)
+    
+    R_binary = []
+    
+    for c1, c2 in itertools.permutations(color_dict.keys(), 2):
+        for a in color_dict[c1]:
+            for b1, b2 in itertools.combinations(color_dict[c2], 2):
+                
+                if graph.has_edge(a, b1) and graph.has_edge(a, b2):
+                    try:
+                        if b2 < b1:
+                            b1, b2 = b2, b1
+                    except NotImplemented: pass
+                    R_binary.append( (b1, b2, a) )
+                elif graph.has_edge(a, b1):
+                    R_binary.append( (a, b1, b2) )
+                elif graph.has_edge(a, b2):
+                    R_binary.append( (a, b2, b1) )
+    
+    return R_binary
+
+
+def _finalize(tree, G):
+    
+    if not tree:
+        return None
+    
+    if isinstance(tree, PhyloTreeNode):
+        tree = PhyloTree(tree)
+    
+    # assign IDs to inner nodes
+    tree.reconstruct_IDs()
+    # assign label and colors to the leaves
+    tree.reconstruct_info_from_graph(G)
+    
+    return tree
 
 
 # --------------------------------------------------------------------------
@@ -224,14 +271,7 @@ def is_bmg(G):
         for subtree in subtrees:
             root.add_child(subtree.root)
     
-    tree = PhyloTree(root)
-    
-    # assign IDs to inner nodes
-    tree.reconstruct_IDs()
-    # assign label and colors to the leaves
-    tree.reconstruct_info_from_graph(G)
-    
-    return tree
+    return _finalize(root, G)
     
 
 def lrt_from_colored_graph(G, mincut=False, weighted_mincut=False):
@@ -240,18 +280,9 @@ def lrt_from_colored_graph(G, mincut=False, weighted_mincut=False):
     R = informative_triples(G)
     
     build = Build(R, L, mincut=mincut, weighted_mincut=weighted_mincut)
-    
     tree = build.build_tree()
     
-    if not tree:
-        return None
-    else:
-        # assign IDs to inner nodes
-        tree.reconstruct_IDs()
-        # assign label and colors to the leaves
-        tree.reconstruct_info_from_graph(G)
-        
-        return tree
+    return _finalize(tree, G)
 
 
 def correct_bmg(bmg_original):
@@ -325,14 +356,7 @@ class TwoColoredLRT:
                 for subroot in subtrees:
                     root.add_child(subroot)
         
-        tree = PhyloTree(root)
-        
-        # assign IDs to inner nodes
-        tree.reconstruct_IDs()
-        # assign label and colors to the leaves
-        tree.reconstruct_info_from_graph(self.digraph)
-        
-        return tree
+        return _finalize(root, self.digraph)
     
         
     def _build_tree(self, G):
@@ -370,7 +394,26 @@ class TwoColoredLRT:
                 
         return node
 
-        
+
+# --------------------------------------------------------------------------
+#                      Binary-refinable tree (BRT)
+# --------------------------------------------------------------------------
+
+def binary_refinable_tree(G, mincut=False, weighted_mincut=False):
+    """Compute the binary-refinable tree (BRT) for a graph.
+    
+    The BRT of a BMG can, if it exists, be refined arbitrarily and such that
+    it still explains the BMG. In particular, all binary explainations are 
+    refinements of the BRT."""
+    
+    L = {v for v in G.nodes()}
+    R = binary_explainable_triples(G)
+    
+    build = Build(R, L, mincut=mincut, weighted_mincut=weighted_mincut)
+    brt = build.build_tree()
+    
+    return _finalize(brt, G)
+
         
 if __name__ == '__main__':
     
