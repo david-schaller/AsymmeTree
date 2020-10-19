@@ -61,7 +61,7 @@ def simulate_species_tree(N, model='innovation',
         raise ValueError('rescaling is not applicable to unplanted trees '\
                          'with only one leaf')
     
-    # main simulation algorithm
+    # choice of the main simulation algorithm
     if model.lower() in ('innovation', 'innovations'):
         tree = _innovation_model(N, planted)
     elif model.lower() == 'yule':
@@ -171,6 +171,13 @@ def _select_edges_for_contraction(tree, p, exclude_planted_edge=True):
             edges.append((u,v))
     
     return edges
+
+
+def assign_losses(tree, proportion):
+    """Randomly assigns a specified proportion of leaves as losses."""
+    
+    for leaf in tree.random_leaves(proportion):
+        leaf.label = '*'
 
 
 # --------------------------------------------------------------------------

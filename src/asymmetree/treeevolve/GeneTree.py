@@ -38,24 +38,24 @@ class _Branch:
     def __init__(self, ID, array_id, rate,
                  parent, S_u, S_v, transferred):
         
-        self.ID = ID                                    # unique branch id
-        self.array_id = array_id                        # index in rate array
-        self.rate = rate                                # total event rate
+        self.ID = ID                                # unique branch id
+        self.array_id = array_id                    # index in rate array
+        self.rate = rate                            # total event rate
         
-        self.parent = parent                            # parent node
-        self.S_u = S_u                                  # edge (S_u, S_v) into which
-        self.S_v = S_v                                  # the branch is embedded
-        self.transferred = transferred                  # 1 if HGT edge, 0 otherwise
+        self.parent = parent                        # parent node
+        self.S_u = S_u                              # edge (S_u, S_v) into which
+        self.S_v = S_v                              # the branch is embedded
+        self.transferred = transferred              # 1 if HGT edge, 0 otherwise
         
 
 class GeneTreeSimulator:
     
     def __init__(self, S):
         
-        self.S = S                                      # species tree
-        self.sorted_speciations = S.sorted_nodes()      # list of speciations sorted by time stamp
-        self.sorted_edges = S.sorted_edges()            # edges of the species tree
-                                                        # sort (u,v) by tstamp of u
+        self.S = S                                  # species tree
+        self.sorted_speciations = S.sorted_nodes()  # list of speciations sorted by time stamp
+        self.sorted_edges = S.sorted_edges()        # edges of the species tree
+                                                    # sort (u,v) by tstamp of u
     
     
     def simulate(self,
@@ -91,7 +91,7 @@ class GeneTreeSimulator:
         
         self._reset()
         
-        return self._gillespie_simulation()
+        return self._run()
     
     
     def _reset(self):
@@ -186,7 +186,7 @@ class GeneTreeSimulator:
         return valid_edges
 
 
-    def _gillespie_simulation(self):
+    def _run(self):
         
         T = self._initiatialize_tree()
         t = T.root.tstamp                   # start time = 1.0
@@ -225,7 +225,8 @@ class GeneTreeSimulator:
         
         if len(self.S.root.children) > 1:
             # root is a speciation event
-            root = PhyloTreeNode(self.id_counter, label='S', color=self.S.root.ID, 
+            root = PhyloTreeNode(self.id_counter, label='S',
+                                 color=self.S.root.ID, 
                                  dist=0.0, tstamp=self.S.root.tstamp)
         else:                    
             # planted species tree
@@ -258,6 +259,8 @@ class GeneTreeSimulator:
     
     def _speciation(self):
         
+        # also handles loss and leaf nodes of the species tree
+        
         S_v = self.spec_queue.popleft()
         S_u = S_v.parent
         
@@ -269,8 +272,9 @@ class GeneTreeSimulator:
                                       transferred=branch.transferred)
             branch.parent.add_child(spec_node)
             
+            # losses and (extant) leaves
             if not S_v.children:
-                spec_node.label = str(spec_node.ID)
+                spec_node.label = '*' if S_v.is_loss() else str(spec_node.ID)
                 
             for S_w in S_v.children:
                 

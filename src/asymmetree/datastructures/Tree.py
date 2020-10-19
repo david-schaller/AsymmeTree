@@ -92,6 +92,22 @@ class Tree:
     def __init__(self, root):
         
         self.root = root
+        
+    
+    def leaves(self):
+        """Generator for leaves of the tree."""
+        
+        def _leaves(node):
+            if not node.children:
+                yield node
+            else:
+                for child in node.children:
+                    yield from _leaves(child)
+        
+        if self.root:
+            yield from _leaves(self.root)
+        else:
+            yield from []
     
     
     def preorder(self):
@@ -154,8 +170,8 @@ class Tree:
     def edges_sibling_order(self):
         """Generator for all edges of the tree with sibling order.
         
-        Returns edges uv as tuples (u, v, nr) where nr is the index of v in the
-        list of children of node u."""
+        Returns edges uv as tuples (u, v, nr) where nr is the index of v in
+        the list of children of node u."""
         
         def _edges_sibling_order(node):
             i = 0
@@ -221,7 +237,8 @@ class Tree:
             
     
     def supply_leaves(self):
-        """Add the leaves to all nodes that are in the subtree of a specific node."""
+        """Add the leaves to all nodes that are in the subtree of a specific
+        node."""
         
         def _supply_leaves(node):
             node.leaves = []
@@ -265,7 +282,7 @@ class Tree:
         
         parent = node.parent
         if not parent:
-            print("Cannot delete and reconnect root '{}'!".format(node))
+            print("cannot delete and reconnect root '{}'".format(node))
             return False
         else:
             parent.remove_child(node)
@@ -308,6 +325,19 @@ class Tree:
             return _to_newick(self.root) + ';'
         else:
             return ';'
+        
+    
+    def random_leaves(self, proportion):
+        """Return a random subset of the leaves."""
+        
+        if (not isinstance(proportion, (float, int)) or 
+            proportion < 0 or proportion > 1):
+            raise ValueError('needs a number 0 <= p <= 1')
+        
+        leaves = [v for v in self.leaves()]
+        k = round(proportion * len(leaves))
+        
+        return random.sample(leaves, k)
       
     
     def get_hierarchy(self):
@@ -336,13 +366,15 @@ class Tree:
         hierarchy2 = sorted(other.get_hierarchy())
         
         if len(hierarchy1) != len(hierarchy2):
-            print("Unequal sizes of the hierarchy sets: {} and {}".format(len(hierarchy1), len(hierarchy2)))
+            print('Unequal sizes of the hierarchy sets: '\
+                  '{} and {}'.format(len(hierarchy1), len(hierarchy2)))
             return False
         
         for i in range(len(hierarchy1)):
             
             if hierarchy1[i] != hierarchy2[i]:
-                print("Hierarchies not equal:\n{}\n{}".format(hierarchy1[i], hierarchy2[i]))
+                print('Hierarchies not equal:'\
+                      '\n{}\n{}'.format(hierarchy1[i], hierarchy2[i]))
                 return False
         
         return True
