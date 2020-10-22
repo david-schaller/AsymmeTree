@@ -15,7 +15,7 @@ from asymmetree.tools.TreeTools import LCA
 from asymmetree.tools.Build import (aho_graph,
                                     Build,
                                     best_pair_merge_first)
-from asymmetree.tools.Karger import Karger
+from asymmetree.tools.Partitioning import Karger
 
 
 __author__ = 'David Schaller'
@@ -81,27 +81,46 @@ class BMGEditor:
             return bmg_from_tree(tree)
         
         
-def editing_cost(G, V1, V2):
-    """Return the editing cost of a bipartition.
+def unsatisfiability_cost(partition, G):
+    """Return the unsatisfiability cost of a partition.
     
     This cost is the number of unsatisfiable (non-)arcs induced by the
     bipartition.
     """
     
-    colors_V1 = {G.nodes[v]['color'] for v in V1}
-    colors_V2 = {G.nodes[v]['color'] for v in V2}
+    color_sets = [{} for V in partition]
+    
+    for V, colors in zip(partition, color_sets):
+        for v in V:
+            c = G.nodes[v]['color']
+            if c not in colors:
+                colors[c] = 1
+            else:
+                colors[c] += 1
     
     cost = 0
     
-    for V_x, V_y, colors in ((V1, V2, colors_V1), (V2, V1, colors_V2)):
-        for x, y in itertools.product(V_x, V_y):
+    for V, colors in zip(partition, color_sets):
+        
+        if not isinstance(V, set):
+            V = set(V)
+        
+        for x, y in itertools.product(V, G.nodes()):
             
-            if G.has_edge(x, y):
-                if G.nodes[y]['color'] in colors:
-                    cost += 1     
-            else:
-                if G.nodes[y]['color'] not in colors:
+            y_color = G.nodes[y]['color']
+            
+            # skip pairs with the same color
+            if G.nodes[x]['color'] == y_color:
+                continue
+            
+            if y not in V:
+                if G.has_edge(x, y):
+                    if colors.get(y_color):
+                        cost += 1
+                elif not colors.get(y_color):
                     cost += 1
+            elif not G.has_edge(x, y) and colors.get(y_color) == 1:
+                cost += 1
                     
     return cost
 
@@ -179,7 +198,7 @@ class BuildKarger:
             best_cost, best_V1, best_V2 = None, None, None
             
             for V1, V2, cutvalue in karger.generate():
-                cost = editing_cost(self.G, V1, V2)
+                cost = unsatisfiability_cost([V1, V2], self.G)
                 
                 if best_cost is None or cost < best_cost:
                     best_cost, best_V1, best_V2 = cost, V1, V2
@@ -191,7 +210,7 @@ if __name__ == '__main__':
     
     from asymmetree.tools.GraphTools import disturb_graph, symmetric_diff
     
-    random_tree = PhyloTree.random_colored_tree(30, 4,
+    random_tree = PhyloTree.random_colored_tree(20, 4,
                                                 force_all_colors=True)
     bmg = bmg_from_tree(random_tree)
     disturbed = disturb_graph(bmg, 0.1, 0.1, preserve_properly_colored=True)

@@ -1,16 +1,10 @@
 # -*- coding: utf-8 -*-
 
 """
-Implementation of Karger's algorithm for minimal edge cut.
-
-Randomized algorithm that returns a minimal edge cut with high probability.
-This implementation is based on:
-    
-http://web.stanford.edu/class/archive/cs/cs161/cs161.1166/lectures/
-lecture15.pdf
+Algorithms for graph (bi)partitioning.
 """
 
-import random, math
+import random, math, itertools
 import networkx as nx
 
 from asymmetree.datastructures.LinkedList import LinkedList
@@ -18,6 +12,16 @@ from asymmetree.datastructures.AVLTree import TreeSet
 
 
 __author__ = 'David Schaller'
+
+# ----------------------------------------------------------------------------
+#                           Karger's algorithm
+#
+# Implementation of Karger's algorithm for minimal edge cut. Randomized
+# algorithm that returns a minimal edge cut with high probability.
+# This implementation is based on: 
+# http://web.stanford.edu/class/archive/cs/cs161/cs161.1166/lectures/
+# lecture15.pdf
+# ----------------------------------------------------------------------------
 
 
 class _Supernode:
@@ -200,14 +204,77 @@ class Karger():
         return list(x.nodes), list(y.nodes), cut_value
     
 
+# ----------------------------------------------------------------------------
+#                           Greedy bipartition
+# ----------------------------------------------------------------------------
+
+def partition_cut_value(partition, G):
+    
+    cut_value = 0
+    
+    for Vi, Vj in itertools.combinations(partition, 2):
+        for x, y in itertools.product(Vi, Vj):
+            if G.has_edge(x, y):
+                cut_value += 1
+    
+    return cut_value
+    
+
+def _move(from_set, to_set, x):
+    
+    from_set.remove(x)
+    to_set.add(x)
+
+
+def greedy_bipartition(V, f_cost, args=()):
+    """Randomized greedy bipartitioning with custom cost function."""
+    
+    if len(V) < 2:
+        raise ValueError('iterable must have >=2 elements')
+    
+    V1 = set()
+    V2 = set(V)
+    remaining = set(V)
+    
+    best_cost, best_bp = float('inf'), None
+    
+    for _ in range(len(V)-1):
+        
+        best_cost_local, best_x = float('inf'), None
+        for x in remaining:
+            _move(V2, V1, x)
+            cost = f_cost([V1, V2], *args)
+            if cost < best_cost_local:
+                best_cost_local = cost
+                best_x = [x]
+            elif cost == best_cost_local:
+                best_x.append(x) 
+            _move(V1, V2, x)
+            
+        x = random.choice(best_x)
+        _move(V2, V1, x)
+        remaining.remove(x)
+        
+        if best_cost_local < best_cost:
+            best_cost = best_cost_local
+            best_bp = [(list(V1), list(V2))]
+        elif best_cost_local == best_cost:
+            best_bp.append( (list(V1), list(V2)) )
+            
+    return best_cost, random.choice(best_bp)
+    
+
 if __name__ == '__main__':
     
     G = nx.Graph()
     G.add_edges_from([('a', 'b'), ('a', 'c'), ('a', 'd'),
                       ('b', 'd'), ('c', 'd'), ('c', 'e'), ('d', 'e')])
-    karger = Karger(G)
     
+    karger = Karger(G)
     for V1, V2, cut_value in karger.generate(3):
-        print(V1)
-        print(V2)
-        print(cut_value)
+        print(cut_value, [V1, V2])
+        
+    V = list(G.nodes())
+    for i in range(3):
+        print( *greedy_bipartition(V, partition_cut_value, args=(G,)) )
+        
