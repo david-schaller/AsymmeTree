@@ -5,6 +5,7 @@ Algorithms for graph (bi)partitioning.
 """
 
 import random, math, itertools
+import numpy as np
 import networkx as nx
 
 from asymmetree.datastructures.LinkedList import LinkedList
@@ -201,7 +202,7 @@ class Karger():
         cut_value = len(self.superedges[_sort2(x, y)])
         # print('cut_edges', list(self.superedges[_sort2(x, y)]))
             
-        return list(x.nodes), list(y.nodes), cut_value
+        return cut_value, [list(x.nodes), list(y.nodes)]
     
 
 # ----------------------------------------------------------------------------
@@ -232,8 +233,7 @@ def greedy_bipartition(V, f_cost, args=()):
     if len(V) < 2:
         raise ValueError('iterable must have >=2 elements')
     
-    V1 = set()
-    V2 = set(V)
+    V1, V2 = set(), set(V)
     remaining = set(V)
     
     best_cost, best_bp = float('inf'), None
@@ -262,6 +262,75 @@ def greedy_bipartition(V, f_cost, args=()):
             best_bp.append( (list(V1), list(V2)) )
             
     return best_cost, random.choice(best_bp)
+
+
+# ----------------------------------------------------------------------------
+#                        Adaptive walk bipartition
+# ----------------------------------------------------------------------------
+
+def gradient_walk_bipartition(V, f_cost, args=(), initial_bipartition=None):
+    
+    if len(V) < 2:
+        raise ValueError('iterable must have >=2 elements')
+    
+    # partition P
+    P = [set(), set()]
+    lookup = {}
+    
+    if not isinstance(V, (list, tuple)):
+        V = list(V)
+    
+    if not initial_bipartition:
+        for k, m in enumerate(np.random.permutation(len(V))):
+            x = V[m]
+            i = 0 if k <= len(V) / 2 else 1
+            P[i].add(x)
+            lookup[x] = i
+    elif len(initial_bipartition) == 2:
+        for i in range(2):
+            for x in initial_bipartition[i]:
+                P[i].add(x)
+                lookup[x] = i
+    else:
+        raise ValueError('not a bipartition')
+        
+    best_cost = f_cost([*P], *args)
+    best_bp = tuple(list(s) for s in P)
+    
+    while True:
+        
+        best_cost_local, best_x = float('inf'), None
+        for x in V:
+            V1 = P[lookup[x]]
+            V2 = P[(lookup[x] + 1) % 2]
+            
+            # avoid that one set becomes empty
+            if len(V1) == 1:
+                continue
+            
+            _move(V1, V2, x)
+            cost = f_cost([V1, V2], *args)
+            if cost < best_cost_local:
+                best_cost_local = cost
+                best_x = [x]
+            elif cost == best_cost_local:
+                best_x.append(x) 
+            _move(V2, V1, x)
+        
+        if best_cost_local < best_cost:
+            x = random.choice(best_x)
+            V1 = P[lookup[x]]
+            V2 = P[(lookup[x] + 1) % 2]
+            _move(V1, V2, x)
+            lookup[x] = (lookup[x] + 1) % 2
+            
+            best_cost = best_cost_local
+            best_bp = tuple(list(s) for s in P)
+        else:
+            break
+    
+    return best_cost, best_bp
+        
     
 
 if __name__ == '__main__':
@@ -271,10 +340,16 @@ if __name__ == '__main__':
                       ('b', 'd'), ('c', 'd'), ('c', 'e'), ('d', 'e')])
     
     karger = Karger(G)
-    for V1, V2, cut_value in karger.generate(3):
-        print(cut_value, [V1, V2])
+    for result in karger.generate(3):
+        print(*result)
         
     V = list(G.nodes())
+    
+    print('---------')
     for i in range(3):
         print( *greedy_bipartition(V, partition_cut_value, args=(G,)) )
+    
+    print('---------')
+    for i in range(3):
+        print( *gradient_walk_bipartition(V, partition_cut_value, args=(G,)) )
         

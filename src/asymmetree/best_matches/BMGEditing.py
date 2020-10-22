@@ -15,7 +15,9 @@ from asymmetree.tools.TreeTools import LCA
 from asymmetree.tools.Build import (aho_graph,
                                     Build,
                                     best_pair_merge_first)
-from asymmetree.tools.Partitioning import Karger
+from asymmetree.tools.Partitioning import (Karger,
+                                           greedy_bipartition,
+                                           gradient_walk_bipartition)
 
 
 __author__ = 'David Schaller'
@@ -63,7 +65,20 @@ class BMGEditor:
         
     def build_karger(self):
         
-        build = BuildKarger(self.R, self.L, self.G)
+        build = BuildMinCost(self.R, self.L, self.G, bipart_method='karger')
+        self._tree = build.build_tree()
+    
+    
+    def build_greedy(self):
+        
+        build = BuildMinCost(self.R, self.L, self.G, bipart_method='greedy')
+        self._tree = build.build_tree()
+    
+    
+    def build_gradient_walk(self):
+        
+        build = BuildMinCost(self.R, self.L, self.G,
+                             bipart_method='gradient_walk')
         self._tree = build.build_tree()
     
     
@@ -125,16 +140,22 @@ def unsatisfiability_cost(partition, G):
     return cost
 
 
-class BuildKarger:
+class BuildMinCost:
     """BUILD algorithm with minimal cost bipartition."""
     
-    def __init__(self, R, L, digraph):
+    def __init__(self, R, L, digraph, bipart_method='karger'):
         
         self.R = R
         self.L = L
         
         # colored digraph
         self.G = digraph
+        
+        if bipart_method in ('karger', 'greedy', 'gradient_walk'):
+            self.bipart_method = bipart_method
+        else:
+            raise ValueError("unknown bipartition method "\
+                             "'{}'".format(bipart_method))
     
     
     def build_tree(self, return_root=False):
@@ -192,18 +213,37 @@ class BuildKarger:
         conn_comps = list(nx.connected_components(aho_graph))
         if len(conn_comps) > 1:
             return conn_comps
-        else:
+        
+        best_cost, best_bp = float('inf'), None
+        
+        if self.bipart_method == 'karger':
             karger = Karger(aho_graph)
             
-            best_cost, best_V1, best_V2 = None, None, None
-            
-            for V1, V2, cutvalue in karger.generate():
-                cost = unsatisfiability_cost([V1, V2], self.G)
+            for _, bp in karger.generate():
+                cost = unsatisfiability_cost(bp, self.G)
                 
-                if best_cost is None or cost < best_cost:
-                    best_cost, best_V1, best_V2 = cost, V1, V2
+                if cost < best_cost:
+                    best_cost, best_bp = cost, bp
+        
+        elif self.bipart_method == 'greedy':
             
-            return best_V1, best_V2
+            for _ in range(5):
+                cost, bp = greedy_bipartition(conn_comps[0],
+                                              unsatisfiability_cost,
+                                              args=(self.G,))
+                if cost < best_cost:
+                    best_cost, best_bp = cost, bp
+        
+        elif self.bipart_method == 'gradient_walk':
+            
+            for _ in range(5):
+                cost, bp = gradient_walk_bipartition(conn_comps[0],
+                                                     unsatisfiability_cost,
+                                                     args=(self.G,))
+                if cost < best_cost:
+                    best_cost, best_bp = cost, bp
+        
+        return best_bp
 
 
 if __name__ == '__main__':
@@ -229,16 +269,28 @@ if __name__ == '__main__':
     bmg5 = editor.get_bmg(extract_triples_first=False)
     bmg6 = editor.get_bmg(extract_triples_first=True)
     
+    editor.build_greedy()
+    bmg7 = editor.get_bmg(extract_triples_first=False)
+    bmg8 = editor.get_bmg(extract_triples_first=True)
+    
+    editor.build_gradient_walk()
+    bmg9 = editor.get_bmg(extract_triples_first=False)
+    bmg10 = editor.get_bmg(extract_triples_first=True)
+    
     print('-------------')
     print([(v, bmg.nodes[v]['color']) for v in bmg.nodes()])
     print('orginal', bmg.edges(), bmg.size())
     print('disturbed', disturbed.edges(), disturbed.size())
-    print('BMG1', bmg1.edges(), bmg1.size())
-    print('BMG2', bmg2.edges(), bmg2.size())
-    print('BMG3', bmg3.edges(), bmg3.size())
-    print('BMG4', bmg4.edges(), bmg4.size())
-    print('BMG5', bmg5.edges(), bmg5.size())
-    print('BMG6', bmg6.edges(), bmg6.size())
+    # print('BMG1', bmg1.edges(), bmg1.size())
+    # print('BMG2', bmg2.edges(), bmg2.size())
+    # print('BMG3', bmg3.edges(), bmg3.size())
+    # print('BMG4', bmg4.edges(), bmg4.size())
+    # print('BMG5', bmg5.edges(), bmg5.size())
+    # print('BMG6', bmg6.edges(), bmg6.size())
+    # print('BMG7', bmg7.edges(), bmg7.size())
+    # print('BMG8', bmg8.edges(), bmg8.size())
+    # print('BMG9', bmg9.edges(), bmg9.size())
+    # print('BMG8', bmg10.edges(), bmg10.size())
     print('-------------')
     print('original BMG is BMG:   ', bool(LRT.is_bmg(bmg)  ) )
     print('disturbed graph is BMG:', bool(LRT.is_bmg(disturbed)) )
@@ -257,4 +309,12 @@ if __name__ == '__main__':
           symmetric_diff(bmg, bmg5), symmetric_diff(disturbed, bmg5))
     print('orig./dist. vs BMG6 (Karger min cost, extr):',
           symmetric_diff(bmg, bmg6), symmetric_diff(disturbed, bmg6))
+    print('orig./dist.vs BMG7 (Greedy min cost, no extr):',
+          symmetric_diff(bmg, bmg7), symmetric_diff(disturbed, bmg7))
+    print('orig./dist. vs BMG8 (Greedy min cost, extr):',
+          symmetric_diff(bmg, bmg8), symmetric_diff(disturbed, bmg8))
+    print('orig./dist.vs BMG9 (Grad. W. min cost, no extr):',
+          symmetric_diff(bmg, bmg9), symmetric_diff(disturbed, bmg9))
+    print('orig./dist. vs BMG10 (Grad. W. min cost, extr):',
+          symmetric_diff(bmg, bmg10), symmetric_diff(disturbed, bmg10))
     
