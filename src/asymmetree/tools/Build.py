@@ -72,10 +72,16 @@ class Build:
     def _aho(self, L, R):
         """Recursive Aho-algorithm."""
         
-        # trivial case: only one leaf left in L
+        # trivial cases: only one or two leaves left in L
         if len(L) == 1:
             leaf = L.pop()
             return PhyloTreeNode(leaf, label=str(leaf))
+        elif len(L) == 2:
+            node = PhyloTreeNode(-1)
+            for _ in range(2):
+                leaf = L.pop()
+                node.add_child(PhyloTreeNode(leaf, label=str(leaf)))
+            return node
             
         help_graph = aho_graph(R, L, weighted=self.weighted_mincut,
                                      triple_weights=self.triple_weights)
@@ -87,7 +93,7 @@ class Build:
             return False
         
         # otherwise proceed recursively
-        child_nodes = []
+        node = PhyloTreeNode(-1)            # place new inner node
         for cc in conn_comps:
             Li = set(cc)                    # list/dictionary --> set
             Ri = []
@@ -98,11 +104,7 @@ class Build:
             if not Ti:
                 return False                # raise False to previous call
             else:
-                child_nodes.append(Ti)
-                
-        node = PhyloTreeNode(-1)            # place new inner node
-        for Ti in child_nodes:
-            node.add_child(Ti)              # add roots of the subtrees
+                node.add_child(Ti)           # add root of the subtree
    
         return node
     

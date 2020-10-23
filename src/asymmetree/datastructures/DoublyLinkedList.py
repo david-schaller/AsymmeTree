@@ -18,11 +18,16 @@ class DLListNode:
     
     __slots__ = ('_value', '_prev', '_next')
     
-    def __init__(self, value, prev_el=None, next_el=None):
+    def __init__(self, value, prev_node=None, next_node=None):
         
         self._value = value
-        self._prev = prev_el
-        self._next = next_el
+        self._prev = prev_node
+        self._next = next_node
+        
+    
+    def get(self):
+        
+        return self._value
 
 
 class DLList:
@@ -111,7 +116,7 @@ class DLList:
     
     def append(self, value):
         
-        new_end = DLListNode(value, prev_el=self._last)
+        new_end = DLListNode(value, prev_node=self._last)
         if self._last:
             self._last._next = new_end
         self._last = new_end
@@ -129,7 +134,7 @@ class DLList:
     
     def append_left(self, value):
         
-        new_start = DLListNode(value, next_el=self._first)
+        new_start = DLListNode(value, next_node=self._first)
         if self._first:
             self._first._prev = new_start
         self._first = new_start
@@ -207,8 +212,8 @@ class DLList:
             
         else:
             new_node = DLListNode(value,
-                                     prev_el=node,
-                                     next_el=node._next)
+                                     prev_node=node,
+                                     next_node=node._next)
             new_node._next._prev = new_node
             node._next = new_node
             self._count += 1

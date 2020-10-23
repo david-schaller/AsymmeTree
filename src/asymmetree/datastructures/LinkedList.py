@@ -18,10 +18,15 @@ class LinkedListNode:
     
     __slots__ = ('_value', '_next')
     
-    def __init__(self, value, next_el=None):
+    def __init__(self, value, next_node=None):
         
         self._value = value
-        self._next = next_el
+        self._next = next_node
+    
+    
+    def get(self):
+        
+        return self._value
 
 
 class LinkedList:
@@ -144,7 +149,7 @@ class LinkedList:
     
     def append_left(self, value):
         
-        new_start = LinkedListNode(value, next_el=self._first)
+        new_start = LinkedListNode(value, next_node=self._first)
         self._first = new_start
         if not self._last:
             self._last = new_start
@@ -185,7 +190,7 @@ class LinkedList:
             new_node = self.append(value)
             
         else:
-            new_node = LinkedListNode(value, next_el=node._next)
+            new_node = LinkedListNode(value, next_node=node._next)
             node._next = new_node
             self._count += 1
         

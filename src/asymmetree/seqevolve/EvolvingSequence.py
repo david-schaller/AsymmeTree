@@ -32,11 +32,11 @@ class EvoSeqElement(DLListNode):
     
     def __init__(self, value,
                  status, site_id,
-                 prev_el=None, next_el=None,
+                 prev_node=None, next_node=None,
                  parent_el=None,
                  rate_class=0, rate_factor=1.0):
         
-        super().__init__(value, prev_el=prev_el, next_el=next_el)
+        super().__init__(value, prev_node=prev_node, next_node=next_node)
         
         self.status = status
         self.site_id = site_id
@@ -67,7 +67,7 @@ class EvoSeq(DLList):
                rate_class=0, rate_factor=1.0):
         
         new_end = EvoSeqElement(value, status, site_id,
-                                prev_el=self._last,
+                                prev_node=self._last,
                                 parent_el=parent_el,
                                 rate_class=rate_class,
                                 rate_factor=rate_factor)
@@ -84,7 +84,7 @@ class EvoSeq(DLList):
                     rate_class=0, rate_factor=1.0):
         
         new_start = EvoSeqElement(value, status, site_id,
-                                  next_el=self._first,
+                                  next_node=self._first,
                                   parent_el=parent_el,
                                   rate_class=rate_class,
                                   rate_factor=rate_factor)
@@ -108,8 +108,8 @@ class EvoSeq(DLList):
             
         else:
             new_element = EvoSeqElement(value, status, site_id,
-                                        prev_el=element,
-                                        next_el=element._next,
+                                        prev_node=element,
+                                        next_node=element._next,
                                         parent_el=parent_el,
                                         rate_class=rate_class,
                                         rate_factor=rate_factor)

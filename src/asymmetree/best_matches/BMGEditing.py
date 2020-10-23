@@ -7,6 +7,7 @@ import itertools
 import networkx as nx
 
 from asymmetree.datastructures.PhyloTree import PhyloTree, PhyloTreeNode
+from asymmetree.datastructures.Partition import Partition
 
 import asymmetree.best_matches.LeastResolvedTree as LRT
 from asymmetree.best_matches.TrueBMG import bmg_from_tree
@@ -140,13 +141,63 @@ def unsatisfiability_cost(partition, G):
     return cost
 
 
-class BuildMinCost:
-    """BUILD algorithm with minimal cost bipartition."""
+
+def _triple_connect(G, t):
     
-    def __init__(self, R, L, digraph, bipart_method='karger'):
+    G.add_edge(t[0], t[1])
+    G.add_edge(t[0], t[2])
+    
+
+def mtt_partition(L, R, F):
+    
+    # auxiliary graph initialized as Aho graph
+    G = aho_graph(R, L, weighted=False)
+    
+    # auxiliary partition
+    P = Partition(nx.connected_components(G))
+    
+    if len(P) == 1:
+        return P, G
+    
+    # aux. set of forbidden triples
+    S = {t for t in F if P.separated_xy_z(*t)}
+    
+    # lookup of forb. triples to which u belongs
+    L = {u: [] for u in L}
+    for t in F:
+        for u in t:
+            L[u].append(t)
+    
+    while S:
+        t = S.pop()
+        _triple_connect(G, t)
+        
+        # merge returns the smaller of the two merged sets
+        smaller_set = P.merge(t[0], t[2])
+        
+        # update S by traversing the L(u)
+        for u in smaller_set:
+            for t in L[u]:
+                if t in S and not P.separated_xy_z(*t):
+                    S.remove(t)
+                    _triple_connect(G, t)
+                elif t not in S and P.separated_xy_z(*t):
+                    S.add(t)
+    
+    return P, G
+    
+
+
+class BuildMinCost:
+    """BUILD / MTT algorithm with minimal cost bipartition."""
+    
+    def __init__(self, R, L, digraph, F=None, bipart_method='karger'):
         
         self.R = R
         self.L = L
+        
+        # forbidden triples --> activates MTT if non-empty
+        self.F = F
         
         # colored digraph
         self.G = digraph
@@ -166,29 +217,44 @@ class BuildMinCost:
                 'PhyloTree' instance
         """
         
-        root = self._aho(self.L, self.R)
+        if self.F:
+            root = self._mtt(self.L, self.R, self.F)
+        else:
+            root = self._aho(self.L, self.R)
+            
         return root if return_root else PhyloTree(root)
+    
+    
+    def _trivial_case(self, L):
+        
+        if len(L) == 1:
+            leaf = L.pop()
+            return PhyloTreeNode(leaf, label=str(leaf))
+        
+        elif len(L) == 2:
+            node = PhyloTreeNode(-1)
+            for _ in range(2):
+                leaf = L.pop()
+                node.add_child(PhyloTreeNode(leaf, label=str(leaf)))
+            return node
     
     
     def _aho(self, L, R):
         """Recursive Aho-algorithm."""
         
-        # trivial case: only one leaf left in L
-        if len(L) == 1:
-            leaf = L.pop()
-            return PhyloTreeNode(leaf, label=str(leaf))
+        # trivial case: one or two leaves left in L
+        if len(L) <= 2:
+            return self._trivial_case(L)
             
-        help_graph = aho_graph(R, L, weighted=False)
-        conn_comps = self._connected_components(help_graph)
+        aux_graph = aho_graph(R, L, weighted=False)
+        partition = list(nx.connected_components(aux_graph))
         
-        # there should always be >= 2 components
-        if len(conn_comps) < 2:
-            raise RuntimeError('only one component')
+        if len(partition) < 2:
+            partition = self._bipartition(L, aux_graph)
         
-        child_nodes = []
-        for cc in conn_comps:
-            Li = set(cc)                    # list/dictionary --> set
-            Ri = []
+        node = PhyloTreeNode(-1)            # place new inner node
+        for s in partition:
+            Li, Ri = set(s), []
             for t in R:                     # construct triple subset
                 if Li.issuperset(t):
                     Ri.append(t)
@@ -196,28 +262,45 @@ class BuildMinCost:
             if not Ti:
                 return False                # raise False to previous call
             else:
-                child_nodes.append(Ti)
-                
-        node = PhyloTreeNode(-1)            # place new inner node
-        for Ti in child_nodes:
-            node.add_child(Ti)              # add roots of the subtrees
+                node.add_child(Ti)          # add roots of the subtrees
    
         return node
     
     
-    def _connected_components(self, aho_graph):
-        """Determines the connected components of the graph.
+    def _mtt(self, L, R, F):
+        """Recursive MTT algorithm."""
         
-        And optionally executes a min cut if there is only one component."""
+        # trivial case: one or two leaves left in L
+        if len(L) <= 2:
+            return self._trivial_case(L)
         
-        conn_comps = list(nx.connected_components(aho_graph))
-        if len(conn_comps) > 1:
-            return conn_comps
+        partition, aux_graph = mtt_partition(L, R, F)
+        
+        if len(partition) < 2:
+            partition = self._bipartition(L, aux_graph)
+        
+        node = PhyloTreeNode(-1)            # place new inner node
+        for s in partition:
+            Li, Ri, Fi = set(s), [], []
+            for Xi, X in ((Ri, R), (Fi, F)):
+                for t in X:
+                    if Li.issuperset(t):
+                        Xi.append(t)
+            Ti = self._mtt(Li, Ri, Fi)      # recursive call
+            if not Ti:
+                return False                # raise False to previous call
+            else:
+                node.add_child(Ti)          # add roots of the subtrees
+   
+        return node
+    
+    
+    def _bipartition(self, L, aux_graph):
         
         best_cost, best_bp = float('inf'), None
         
         if self.bipart_method == 'karger':
-            karger = Karger(aho_graph)
+            karger = Karger(aux_graph)
             
             for _, bp in karger.generate():
                 cost = unsatisfiability_cost(bp, self.G)
@@ -228,7 +311,7 @@ class BuildMinCost:
         elif self.bipart_method == 'greedy':
             
             for _ in range(5):
-                cost, bp = greedy_bipartition(conn_comps[0],
+                cost, bp = greedy_bipartition(L,
                                               unsatisfiability_cost,
                                               args=(self.G,))
                 if cost < best_cost:
@@ -237,7 +320,7 @@ class BuildMinCost:
         elif self.bipart_method == 'gradient_walk':
             
             for _ in range(5):
-                cost, bp = gradient_walk_bipartition(conn_comps[0],
+                cost, bp = gradient_walk_bipartition(L,
                                                      unsatisfiability_cost,
                                                      args=(self.G,))
                 if cost < best_cost:
@@ -248,6 +331,8 @@ class BuildMinCost:
 
 if __name__ == '__main__':
     
+    from time import time
+    
     from asymmetree.tools.GraphTools import disturb_graph, symmetric_diff
     
     random_tree = PhyloTree.random_colored_tree(20, 4,
@@ -257,23 +342,33 @@ if __name__ == '__main__':
     
     editor = BMGEditor(disturbed)
     
+    start_time = time()
     editor.build_mincut()
+    time_mincut = time() - start_time
     bmg1 = editor.get_bmg(extract_triples_first=False)
     bmg2 = editor.get_bmg(extract_triples_first=True)
     
+    start_time = time()
     editor.build_bpmf()
+    time_bpmf = time() - start_time
     bmg3 = editor.get_bmg(extract_triples_first=False)
     bmg4 = editor.get_bmg(extract_triples_first=True)
     
+    start_time = time()
     editor.build_karger()
+    time_karger = time() - start_time
     bmg5 = editor.get_bmg(extract_triples_first=False)
     bmg6 = editor.get_bmg(extract_triples_first=True)
     
+    start_time = time()
     editor.build_greedy()
+    time_greedy = time() - start_time
     bmg7 = editor.get_bmg(extract_triples_first=False)
     bmg8 = editor.get_bmg(extract_triples_first=True)
     
+    start_time = time()
     editor.build_gradient_walk()
+    time_gradw = time() - start_time
     bmg9 = editor.get_bmg(extract_triples_first=False)
     bmg10 = editor.get_bmg(extract_triples_first=True)
     
@@ -297,22 +392,31 @@ if __name__ == '__main__':
     print('original vs disturbed:', symmetric_diff(bmg, disturbed))
     print('-------------')
     
+    print('Mincut time:', time_mincut)
     print('orig./dist. vs BMG1 (Mincut, no extr):',
           symmetric_diff(bmg, bmg1), symmetric_diff(disturbed, bmg1))
     print('orig./dist. vs BMG2 (Mincut, extr):',
           symmetric_diff(bmg, bmg2), symmetric_diff(disturbed, bmg2))
+    
+    print('BPMF time:', time_bpmf)
     print('orig./dist.vs BMG3 (BPMF, no extr):',
           symmetric_diff(bmg, bmg3), symmetric_diff(disturbed, bmg3))
     print('orig./dist. vs BMG4 (BPMF, extr):',
           symmetric_diff(bmg, bmg4), symmetric_diff(disturbed, bmg4))
+    
+    print('Karger time:', time_karger)
     print('orig./dist.vs BMG5 (Karger min cost, no extr):',
           symmetric_diff(bmg, bmg5), symmetric_diff(disturbed, bmg5))
     print('orig./dist. vs BMG6 (Karger min cost, extr):',
           symmetric_diff(bmg, bmg6), symmetric_diff(disturbed, bmg6))
+    
+    print('Greedy time:', time_greedy)
     print('orig./dist.vs BMG7 (Greedy min cost, no extr):',
           symmetric_diff(bmg, bmg7), symmetric_diff(disturbed, bmg7))
     print('orig./dist. vs BMG8 (Greedy min cost, extr):',
           symmetric_diff(bmg, bmg8), symmetric_diff(disturbed, bmg8))
+    
+    print('Grad. W. time:', time_gradw)
     print('orig./dist.vs BMG9 (Grad. W. min cost, no extr):',
           symmetric_diff(bmg, bmg9), symmetric_diff(disturbed, bmg9))
     print('orig./dist. vs BMG10 (Grad. W. min cost, extr):',
