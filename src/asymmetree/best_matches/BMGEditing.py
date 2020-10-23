@@ -4,21 +4,15 @@
 
 import itertools
 
-import networkx as nx
+# import networkx as nx
 
-from asymmetree.datastructures.PhyloTree import PhyloTree, PhyloTreeNode
-from asymmetree.datastructures.Partition import Partition
+from asymmetree.datastructures.PhyloTree import PhyloTree#, PhyloTreeNode
 
 import asymmetree.best_matches.LeastResolvedTree as LRT
 from asymmetree.best_matches.TrueBMG import bmg_from_tree
 from asymmetree.tools.GraphTools import sort_by_colors
 from asymmetree.tools.TreeTools import LCA
-from asymmetree.tools.Build import (aho_graph,
-                                    Build,
-                                    best_pair_merge_first)
-from asymmetree.tools.Partitioning import (Karger,
-                                           greedy_bipartition,
-                                           gradient_walk_bipartition)
+from asymmetree.tools.Build import Build2, best_pair_merge_first
 
 
 __author__ = 'David Schaller'
@@ -54,8 +48,10 @@ class BMGEditor:
     
     def build_mincut(self, weighted=True):
         
-        build = Build(self.R, self.L,
-                      mincut=True, weighted_mincut=weighted)
+        build = Build2(self.R, self.L,
+                       allow_inconsistency=True,
+                       bipart_method='mincut',
+                       weighted_mincut=weighted)
         self._tree = build.build_tree()
         
     
@@ -66,20 +62,31 @@ class BMGEditor:
         
     def build_karger(self):
         
-        build = BuildMinCost(self.R, self.L, self.G, bipart_method='karger')
+        build = Build2(self.R, self.L,
+                       allow_inconsistency=True,
+                       bipart_method='karger',
+                       cost_function=unsatisfiability_cost,
+                       cost_function_args=(self.G,),)
         self._tree = build.build_tree()
     
     
     def build_greedy(self):
         
-        build = BuildMinCost(self.R, self.L, self.G, bipart_method='greedy')
+        build = Build2(self.R, self.L,
+                       allow_inconsistency=True,
+                       bipart_method='greedy',
+                       cost_function=unsatisfiability_cost,
+                       cost_function_args=(self.G,),)
         self._tree = build.build_tree()
     
     
     def build_gradient_walk(self):
         
-        build = BuildMinCost(self.R, self.L, self.G,
-                             bipart_method='gradient_walk')
+        build = Build2(self.R, self.L,
+                       allow_inconsistency=True,
+                       bipart_method='gradient_walk',
+                       cost_function=unsatisfiability_cost,
+                       cost_function_args=(self.G,),)
         self._tree = build.build_tree()
     
     
@@ -91,7 +98,7 @@ class BMGEditor:
         
         else:
             R_consistent = self.extract_consistent_triples()
-            build = Build(R_consistent, self.L, mincut=False)
+            build = Build2(R_consistent, self.L, allow_inconsistency=False)
             tree = build.build_tree()
             tree.reconstruct_info_from_graph(self.G)
             return bmg_from_tree(tree)
@@ -139,194 +146,6 @@ def unsatisfiability_cost(partition, G):
                 cost += 1
                     
     return cost
-
-
-
-def _triple_connect(G, t):
-    
-    G.add_edge(t[0], t[1])
-    G.add_edge(t[0], t[2])
-    
-
-def mtt_partition(L, R, F):
-    
-    # auxiliary graph initialized as Aho graph
-    G = aho_graph(R, L, weighted=False)
-    
-    # auxiliary partition
-    P = Partition(nx.connected_components(G))
-    
-    if len(P) == 1:
-        return P, G
-    
-    # aux. set of forbidden triples
-    S = {t for t in F if P.separated_xy_z(*t)}
-    
-    # lookup of forb. triples to which u belongs
-    L = {u: [] for u in L}
-    for t in F:
-        for u in t:
-            L[u].append(t)
-    
-    while S:
-        t = S.pop()
-        _triple_connect(G, t)
-        
-        # merge returns the smaller of the two merged sets
-        smaller_set = P.merge(t[0], t[2])
-        
-        # update S by traversing the L(u)
-        for u in smaller_set:
-            for t in L[u]:
-                if t in S and not P.separated_xy_z(*t):
-                    S.remove(t)
-                    _triple_connect(G, t)
-                elif t not in S and P.separated_xy_z(*t):
-                    S.add(t)
-    
-    return P, G
-    
-
-
-class BuildMinCost:
-    """BUILD / MTT algorithm with minimal cost bipartition."""
-    
-    def __init__(self, R, L, digraph, F=None, bipart_method='karger'):
-        
-        self.R = R
-        self.L = L
-        
-        # forbidden triples --> activates MTT if non-empty
-        self.F = F
-        
-        # colored digraph
-        self.G = digraph
-        
-        if bipart_method in ('karger', 'greedy', 'gradient_walk'):
-            self.bipart_method = bipart_method
-        else:
-            raise ValueError("unknown bipartition method "\
-                             "'{}'".format(bipart_method))
-    
-    
-    def build_tree(self, return_root=False):
-        """Build a tree displaying all triples in R if possible.
-        
-        Keyword arguments:
-            return_root - if True, return 'PhyloTreeNode' instead of
-                'PhyloTree' instance
-        """
-        
-        if self.F:
-            root = self._mtt(self.L, self.R, self.F)
-        else:
-            root = self._aho(self.L, self.R)
-            
-        return root if return_root else PhyloTree(root)
-    
-    
-    def _trivial_case(self, L):
-        
-        if len(L) == 1:
-            leaf = L.pop()
-            return PhyloTreeNode(leaf, label=str(leaf))
-        
-        elif len(L) == 2:
-            node = PhyloTreeNode(-1)
-            for _ in range(2):
-                leaf = L.pop()
-                node.add_child(PhyloTreeNode(leaf, label=str(leaf)))
-            return node
-    
-    
-    def _aho(self, L, R):
-        """Recursive Aho-algorithm."""
-        
-        # trivial case: one or two leaves left in L
-        if len(L) <= 2:
-            return self._trivial_case(L)
-            
-        aux_graph = aho_graph(R, L, weighted=False)
-        partition = list(nx.connected_components(aux_graph))
-        
-        if len(partition) < 2:
-            partition = self._bipartition(L, aux_graph)
-        
-        node = PhyloTreeNode(-1)            # place new inner node
-        for s in partition:
-            Li, Ri = set(s), []
-            for t in R:                     # construct triple subset
-                if Li.issuperset(t):
-                    Ri.append(t)
-            Ti = self._aho(Li, Ri)          # recursive call
-            if not Ti:
-                return False                # raise False to previous call
-            else:
-                node.add_child(Ti)          # add roots of the subtrees
-   
-        return node
-    
-    
-    def _mtt(self, L, R, F):
-        """Recursive MTT algorithm."""
-        
-        # trivial case: one or two leaves left in L
-        if len(L) <= 2:
-            return self._trivial_case(L)
-        
-        partition, aux_graph = mtt_partition(L, R, F)
-        
-        if len(partition) < 2:
-            partition = self._bipartition(L, aux_graph)
-        
-        node = PhyloTreeNode(-1)            # place new inner node
-        for s in partition:
-            Li, Ri, Fi = set(s), [], []
-            for Xi, X in ((Ri, R), (Fi, F)):
-                for t in X:
-                    if Li.issuperset(t):
-                        Xi.append(t)
-            Ti = self._mtt(Li, Ri, Fi)      # recursive call
-            if not Ti:
-                return False                # raise False to previous call
-            else:
-                node.add_child(Ti)          # add roots of the subtrees
-   
-        return node
-    
-    
-    def _bipartition(self, L, aux_graph):
-        
-        best_cost, best_bp = float('inf'), None
-        
-        if self.bipart_method == 'karger':
-            karger = Karger(aux_graph)
-            
-            for _, bp in karger.generate():
-                cost = unsatisfiability_cost(bp, self.G)
-                
-                if cost < best_cost:
-                    best_cost, best_bp = cost, bp
-        
-        elif self.bipart_method == 'greedy':
-            
-            for _ in range(5):
-                cost, bp = greedy_bipartition(L,
-                                              unsatisfiability_cost,
-                                              args=(self.G,))
-                if cost < best_cost:
-                    best_cost, best_bp = cost, bp
-        
-        elif self.bipart_method == 'gradient_walk':
-            
-            for _ in range(5):
-                cost, bp = gradient_walk_bipartition(L,
-                                                     unsatisfiability_cost,
-                                                     args=(self.G,))
-                if cost < best_cost:
-                    best_cost, best_bp = cost, bp
-        
-        return best_bp
 
 
 if __name__ == '__main__':
