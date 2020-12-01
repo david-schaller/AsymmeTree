@@ -9,7 +9,7 @@ from asymmetree.tools.TreeTools import LCA
 __author__ = 'David Schaller'
 
 
-def below_equal_above(T, S):
+def below_equal_above(T, S, lca_T=None, lca_S=None):
     
     L_T = [l for l in T.leaves()]
     L_T_ids = [l.ID for l in L_T]
@@ -24,8 +24,10 @@ def below_equal_above(T, S):
     above = nx.Graph()
     above.add_nodes_from(L_T_ids)
     
-    lca_T = LCA(T)
-    lca_S = LCA(S)
+    if not isinstance(lca_T, LCA):
+        lca_T = LCA(T)
+    if not isinstance(lca_S, LCA):
+        lca_S = LCA(S)
     
     for a, b in itertools.combinations(L_T, 2):
         
@@ -41,6 +43,17 @@ def below_equal_above(T, S):
     
     
     return below, above, equal
+
+
+def ldt_graph(T, S, lca_T=None, lca_S=None):
+    """Later-divergence-time graph.
+    
+    Returns a graph with the leaves of the gene tree T as vertex set, and 
+    edges ab if and only if a and b diverged later than the corresponding
+    species A and B in the species tree S."""
+    
+    ldt, _, _ = below_equal_above(T, S, lca_T=lca_T, lca_S=lca_S)
+    return ldt
 
 
 if __name__ == '__main__':

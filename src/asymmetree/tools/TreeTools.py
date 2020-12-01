@@ -59,12 +59,20 @@ class LCA:
         self._precompute_logs()
         self._RMQ_sparse_table()
         
-    
-    def get(self, u, v):
+        
+    def __call__(self, a, b):
         """Return the last common ancestor of two nodes."""
         
-        return self._get_lca(self._id_to_treenode(u),
-                             self._id_to_treenode(v))
+        return self._get_lca(self._id_to_treenode(a),
+                             self._id_to_treenode(b))
+        
+        
+    
+    def get(self, a, b):
+        """Return the last common ancestor of two nodes."""
+        
+        return self._get_lca(self._id_to_treenode(a),
+                             self._id_to_treenode(b))
     
     
     def displays_triple(self, a, b, c):
