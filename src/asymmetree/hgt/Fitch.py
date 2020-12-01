@@ -37,10 +37,14 @@ def rs_transfer_edges(T, S, lca_S=None):
     return transfer_edges
 
 
-def fitch(tree, transfer_edges, supply_directed=True, lca_T=None):
-    """Return the directed Fitch graph.
+def fitch(tree, transfer_edges, supply_undirected=False, lca_T=None):
+    """Returns the (directed) Fitch graph.
     
-    Optionally returns the undirected Fitch graph as a second return value.
+    Keyword arguments:
+        supply_undirected - additionally return the undirected Fitch graph,
+            default is False
+        lca_T - instance of LCA corresponding to the tree, default is False,
+            in which case a new instance is created and used
     """
     
     if not isinstance(lca_T, LCA):
@@ -68,7 +72,19 @@ def fitch(tree, transfer_edges, supply_directed=True, lca_T=None):
             lca_T.ancestor_not_equal(lca_T(x, y), first_transfer[y])):
             fitch.add_edge(x, y)
     
-    if not supply_directed:
+    if not supply_undirected:
         return fitch
     else:
         return fitch, symmetric_part(fitch)
+    
+
+def undirected_fitch(tree, transfer_edges, lca_T=None):
+    """Returns the undirected Fitch graph.
+    
+    Keyword arguments:
+        lca_T - instance of LCA corresponding to the tree, default is False,
+            in which case a new instance is created and used
+    """
+    
+    return fitch(tree, transfer_edges, supply_undirected=True, lca_T=lca_T)[1]
+    
