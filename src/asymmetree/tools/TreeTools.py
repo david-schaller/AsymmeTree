@@ -228,7 +228,7 @@ class LCA:
         
         # both are edges
         elif isinstance(u, tuple) and isinstance(v, tuple):
-            return u[1] is self._get_lca(u[1], v[0])
+            return u[1] is v[1] or u[1] is self._get_lca(u[1], v[0])
         
 
 def lcas_naive(tree):

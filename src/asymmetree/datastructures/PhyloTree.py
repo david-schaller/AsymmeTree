@@ -88,17 +88,13 @@ class PhyloTree(Tree):
                              keep_transferred=True):
         """Delete a node from the tree and reconnect its parent and children."""
         
-        distance, transferred = node.dist, node.transferred
-        parent = super().delete_and_reconnect(node)
+        for child in node.children:
+            if add_distances:
+                child.dist += node.dist
+            if keep_transferred and node.transferred:
+                child.transferred = 1
         
-        if parent:
-            for child in parent.children:
-                if add_distances:
-                    child.dist += distance
-                if keep_transferred and transferred:
-                    child.transferred = 1
-        
-        return parent
+        return super().delete_and_reconnect(node)
         
     
     def contract(self, edges):

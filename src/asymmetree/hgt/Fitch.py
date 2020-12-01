@@ -6,7 +6,6 @@ import itertools
 import networkx as nx
 
 from asymmetree.tools.TreeTools import LCA
-from asymmetree.tools.GraphTools import symmetric_part
 
 
 __author__ = 'David Schaller'
@@ -43,7 +42,7 @@ def fitch(tree, transfer_edges, supply_undirected=False, lca_T=None):
     Keyword arguments:
         supply_undirected - additionally return the undirected Fitch graph,
             default is False
-        lca_T - instance of LCA corresponding to the tree, default is False,
+        lca_T - instance of LCA corresponding to the tree, default is False
             in which case a new instance is created and used
     """
     
@@ -70,21 +69,54 @@ def fitch(tree, transfer_edges, supply_undirected=False, lca_T=None):
         
         if (y in first_transfer and
             lca_T.ancestor_not_equal(lca_T(x, y), first_transfer[y])):
-            fitch.add_edge(x, y)
+            fitch.add_edge(x.ID, y.ID)
     
     if not supply_undirected:
         return fitch
     else:
-        return fitch, symmetric_part(fitch)
+        return fitch, fitch.to_undirected()
     
 
 def undirected_fitch(tree, transfer_edges, lca_T=None):
     """Returns the undirected Fitch graph.
     
     Keyword arguments:
-        lca_T - instance of LCA corresponding to the tree, default is False,
+        lca_T - instance of LCA corresponding to the tree, default is False
             in which case a new instance is created and used
     """
     
     return fitch(tree, transfer_edges, supply_undirected=True, lca_T=lca_T)[1]
+
+
+if __name__ == '__main__':
+    
+    import asymmetree.treeevolve as te
+    
+    S = te.simulate_species_tree(10)
+    TGT = te.simulate_dated_gene_tree(S, dupl_rate=1.0, loss_rate=0.5,
+                                      hgt_rate=0.5)
+    OGT = te.observable_tree(TGT)
+    
+    print('--- S ---\n', S.to_newick())
+    print('--- OGT ---\n', OGT.to_newick())
+    
+    transf1 = true_transfer_edges(OGT)
+    transf2 = rs_transfer_edges(OGT, S)
+    
+    print(transf1)
+    print(transf2)
+    print(transf1.issuperset(transf2))
+    print(transf1-transf2)
+    
+    fitch_d, fitch_u = fitch(OGT, transf2, supply_undirected=True)
+    n = fitch_d.order()
+    
+    print(fitch_d.edges())
+    print(fitch_d.size())
+    print(fitch_u.edges())
+    print(fitch_u.size())
+    
+    from asymmetree.visualize.GeneTreeVis import GeneTreeVis
+    GeneTreeVis(TGT)
+    GeneTreeVis(OGT)
     
