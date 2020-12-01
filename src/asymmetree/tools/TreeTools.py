@@ -38,8 +38,8 @@ class LCA:
         self.V = [v for v in self.tree.preorder()]
         self.index = {v: i for i, v in enumerate(self.V)}
         
-        # store leaf IDs for rooted triple queries
-        self.leaf_ids = {v.ID: v for v in self.V if v.is_leaf()}
+        # store IDs for queries via ID
+        self.id_dict = {v.ID: v for v in self.V}
         
         self.euler_tour = []
         # levels of the vertices in the Euler tour
@@ -60,34 +60,58 @@ class LCA:
         self._RMQ_sparse_table()
         
     
-    def get(self, v1, v2):
+    def get(self, u, v):
         """Return the last common ancestor of two nodes."""
         
-        if v1 is v2:
-            return v1
-        
-        r1 = self.R[self.index[v1]]
-        r2 = self.R[self.index[v2]]
-        if r1 > r2:
-            r1, r2 = r2, r1
-        return self.V[ self.euler_tour[self._RMQ_query(r1, r2)] ]
+        return self._get_lca(self._id_to_treenode(u),
+                             self._id_to_treenode(v))
     
     
     def displays_triple(self, a, b, c):
         """Return whether the tree displays the rooted triple ab|c (= ba|c)."""
         
-        abc = [a, b, c]
+        try:
+            return self._has_triple(self._id_to_treenode(a),
+                                    self._id_to_treenode(b),
+                                    self._id_to_treenode(c))
+        except KeyError:
+            return False
         
-        for i in range(3):
-            if not isinstance(abc[i], TreeNode):
-                if abc[i] not in self.leaf_ids:
-                    return False
-                else:
-                    abc[i] = self.leaf_ids[abc[i]]
-            elif abc[i] not in self.index:
-                return False
+    
+    def are_comparable(self, u, v):
+        """Return whether two nodes/edges are comparable w.r.t. ancestor
+        relation."""
         
-        return self._has_triple(*abc)
+        return self._are_comparable(self._id_to_treenode(u),
+                                    self._id_to_treenode(v))
+    
+    
+    def ancestor_or_equal(self, u, v):
+        """Return whether u is equal to or an ancestor of v."""
+        
+        return self._ancestor_or_equal(self._id_to_treenode(u),
+                                       self._id_to_treenode(v))
+    
+    
+    def ancestor_not_equal(self, u, v):
+        """Return whether u is a strict ancestor of v."""
+        
+        u = self._id_to_treenode(u)
+        v = self._id_to_treenode(v)
+        
+        return u != v and self._ancestor_or_equal(u, v)
+    
+    
+    def descendant_or_equal(self, u, v):
+        """Return whether u is equal to or a descendant of v."""
+        
+        return self.ancestor_or_equal(v, u)
+    
+    
+    def descendant_not_equal(self, u, v):
+        """Return whether u is a strict descendant of v."""
+        
+        return self.ancestor_not_equal(v, u)
     
     
     def consistent_triples(self, triples):
@@ -146,10 +170,57 @@ class LCA:
             return self.M[j - (1 << k) + 1][k]
         
     
+    def _id_to_treenode(self, v):
+        
+        if isinstance(v, TreeNode):
+            return v
+        elif isinstance(v, (tuple, list)) and len(v) == 2:
+            return (self._id_to_treenode(v[0]),
+                    self._id_to_treenode(v[1]))
+        else:
+            return self.id_dict[v]
+        
+        
+    def _get_lca(self, v1, v2):
+        
+        if v1 is v2:
+            return v1
+        
+        r1 = self.R[self.index[v1]]
+        r2 = self.R[self.index[v2]]
+        if r1 > r2:
+            r1, r2 = r2, r1
+        return self.V[ self.euler_tour[self._RMQ_query(r1, r2)] ]
+        
+    
     def _has_triple(self, a, b, c):
         
-        lca_ab = self.get(a, b)
-        return lca_ab is not self.get(lca_ab, c)
+        lca_ab = self._get_lca(a, b)
+        return lca_ab is not self._get_lca(lca_ab, c)
+    
+    
+    def _are_comparable(self, u, v):
+        
+        return self._ancestor_or_equal(u, v) or self._ancestor_or_equal(v, u)
+    
+    
+    def _ancestor_or_equal(self, u, v):
+        
+        # both are nodes
+        if isinstance(u, TreeNode) and isinstance(v, TreeNode):
+            return u is self._get_lca(u, v)
+        
+        # u node, v edge
+        elif isinstance(u, TreeNode) and isinstance(v, tuple):
+            return u is self._get_lca(u, v[0])
+        
+        # u edge, v node
+        elif isinstance(u, tuple) and isinstance(v, TreeNode):
+            return u[1] is self._get_lca(u[1], v)
+        
+        # both are edges
+        elif isinstance(u, tuple) and isinstance(v, tuple):
+            return u[1] is self._get_lca(u[1], v[0])
         
 
 def lcas_naive(tree):

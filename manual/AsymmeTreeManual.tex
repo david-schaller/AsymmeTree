@@ -192,7 +192,8 @@ The library interface functions are described in the following sections and can 
 
 The term `color' regularly appears in the library and refers to the reconciliation of gene trees with species trees.
 In particular, the terms `color' and `species'/`genome' in which a gene resides are used interchangeably.
-The emphasizes the close connection to vertex-colored graphs such as (colored) Best Match Graphs \citep{geiss2019a}.
+This emphasizes the close connection to vertex-colored graphs such as (colored) 
+Best Match Graphs \citep{geiss2019a}.
 
 
 
@@ -215,7 +216,9 @@ The vertices of a \texttt{PhyloTree} instance are of type \texttt{PhyloTreeNode}
 	\texttt{color} & only gene trees; species in which the gene resides, i.e., ID of some vertex in a species tree, \texttt{int} for extant genes, can be of type \texttt{tuple} (of two \texttt{int}s) for inner and loss vertices\\
 	\texttt{tstamp} & time stamp of the event (\texttt{double})\\
 	\texttt{dist} & evolutionary distance or divergence time from the parent vertex (\texttt{double})\\
-	\texttt{tranferred} & only gene trees; indicates whether the edge from the parent is the transfer edge from an HGT event; \texttt{1} if yes and \texttt{0} otherwise \\
+	\texttt{transferred} & only gene trees; indicates whether the edge from the 
+	parent is the transfer edge from an HGT event; \texttt{1} if yes and 
+	\texttt{0} otherwise \\
 \end{longtable}
 }
 \vspace{3mm}
@@ -462,7 +465,7 @@ It returns a tuple containing a list of leaves in the tree (corresponding to the
 \begin{minted}[fontsize=\footnotesize]{python}
 # tree is an observable gene tree
 leaves, D = tree.distance_matrix()
-leaf_index_dict = {leaf: i for i, leaf in leaves}
+leaf_index_dict = {leaf: i for i, leaf in enumerate(leaves)}
 \end{minted}
 \end{adjustwidth}
 
