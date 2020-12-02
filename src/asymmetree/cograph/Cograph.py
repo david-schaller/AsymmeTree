@@ -152,6 +152,17 @@ class Cotree(Tree.Tree):
         else:
             return False
         
+    
+    def complement(self, inplace=False):
+        """Returns the cotree of the complement cograph."""
+        
+        tree = self if inplace else self.copy()
+        
+        for v in tree.inner_vertices():
+            v.label = 'series' if v.label == 'parallel' else 'parallel'
+        
+        return tree
+    
 
     def copy(self):
         

@@ -9,8 +9,9 @@ Implementation of the Extended Best Hits method for best match inference.
 import os, subprocess, time
 import networkx as nx
 
-from asymmetree.file_io.ScenarioFileIO import parse_bmg_edges, matrix_to_phylip, species_to_genes
-from asymmetree.tools.GraphTools import symmetric_part
+from asymmetree.file_io.ScenarioFileIO import (parse_bmg_edges,
+                                               matrix_to_phylip,
+                                               species_to_genes)
 
 
 __author__ = 'David Schaller'
@@ -50,7 +51,7 @@ def ebh(leaves, D, epsilon=1e-8):
                 D[u,v] <= relative_threshold * minima[leaves[v].color]):
                 bmg.add_edge(leaves[u].ID, leaves[v].ID, distance = D[u,v])
     
-    return bmg, symmetric_part(bmg)
+    return bmg, bmg.to_undirected(reciprocal=True)
 
 
 # --------------------------------------------------------------------------
@@ -104,7 +105,7 @@ def ebh_qinfer(scenario,
     
     bmg = parse_bmg_edges(output.stdout.decode(), scenario)
     
-    return bmg, symmetric_part(bmg), exec_time
+    return bmg, bmg.to_undirected(reciprocal=True), exec_time
 
 
 def ebh_from_scenario(scenario, epsilon=0.5):

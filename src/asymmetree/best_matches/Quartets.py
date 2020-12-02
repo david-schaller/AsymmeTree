@@ -9,8 +9,10 @@ import itertools, random,  subprocess, time, os
 import numpy as np
 import networkx as nx
 
-from asymmetree.tools.GraphTools import symmetric_part
-from asymmetree.file_io.ScenarioFileIO import parse_bmg_edges, matrix_to_phylip, species_to_genes, write_newick
+from asymmetree.file_io.ScenarioFileIO import (parse_bmg_edges,
+                                               matrix_to_phylip,
+                                               species_to_genes,
+                                               write_newick)
 
 
 __author__ = 'David Schaller'
@@ -326,8 +328,7 @@ class Quartets:
                                 self.bmg.add_edge(x.ID, y.ID)
                     i = j
         
-        self.rbmg = symmetric_part(self.bmg)
-        return self.bmg, self.rbmg
+        return self.bmg, self.bmg.to_undirected(reciprocal=True)
     
     
     def build_graphs_closest_outgroups(self):
@@ -378,8 +379,7 @@ class Quartets:
                                 self.bmg.add_edge(x.ID, y.ID)
                     i = j
                     
-        self.rbmg = symmetric_part(self.bmg)
-        return self.bmg, self.rbmg
+        return self.bmg, self.bmg.to_undirected(reciprocal=True)
     
     
     def build_graphs(self):
@@ -451,9 +451,8 @@ def quartet_qinfer(scenario,
         raise Exception("no output from qinfer")
     
     bmg = parse_bmg_edges(output.stdout.decode(), scenario)
-    rbmg = symmetric_part(bmg)
     
-    return bmg, rbmg, exec_time
+    return bmg, bmg.to_undirected(reciprocal=True), exec_time
 
 
 def quartet_from_scenario(scenario, epsilon=-1,
