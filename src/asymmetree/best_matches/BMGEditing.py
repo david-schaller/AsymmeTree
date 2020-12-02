@@ -11,7 +11,7 @@ from asymmetree.datastructures.PhyloTree import PhyloTree#, PhyloTreeNode
 import asymmetree.best_matches.LeastResolvedTree as LRT
 from asymmetree.best_matches.TrueBMG import bmg_from_tree
 from asymmetree.tools.GraphTools import sort_by_colors
-from asymmetree.tools.TreeTools import LCA
+from asymmetree.datastructures.Tree import LCA
 from asymmetree.tools.Build import Build2, best_pair_merge_first
 
 

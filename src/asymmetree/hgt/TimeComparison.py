@@ -3,7 +3,7 @@
 import itertools
 import networkx as nx
 
-from asymmetree.tools.TreeTools import LCA
+from asymmetree.datastructures.Tree import LCA
 
 
 __author__ = 'David Schaller'

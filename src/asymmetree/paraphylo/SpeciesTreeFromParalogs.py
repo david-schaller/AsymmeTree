@@ -6,8 +6,8 @@ import networkx as nx
 
 from asymmetree.cograph.CographEditor import CographEditor
 from asymmetree.datastructures.PhyloTree import PhyloTree
+from asymmetree.datastructures.Tree import LCA
 from asymmetree.tools.Build import Build, greedy_BUILD, best_pair_merge_first
-from asymmetree.tools.TreeTools import LCA
 
 
 __author__ = 'David Schaller'
