@@ -91,6 +91,7 @@ def undirected_fitch(tree, transfer_edges, lca_T=None):
 if __name__ == '__main__':
     
     import asymmetree.treeevolve as te
+    import asymmetree.tools.GraphTools as gt
     
     S = te.simulate_species_tree(10)
     TGT = te.simulate_dated_gene_tree(S, dupl_rate=1.0, loss_rate=0.5,
@@ -111,10 +112,12 @@ if __name__ == '__main__':
     fitch_d, fitch_u = fitch(OGT, transf2, supply_undirected=True)
     n = fitch_d.order()
     
-    print(fitch_d.edges())
-    print(fitch_d.size())
-    print(fitch_u.edges())
-    print(fitch_u.size())
+    print(gt.independent_sets(fitch_u))
+    
+    # print(fitch_d.edges())
+    # print(fitch_d.size())
+    # print(fitch_u.edges())
+    # print(fitch_u.size())
     
     from asymmetree.visualize.GeneTreeVis import GeneTreeVis
     GeneTreeVis(TGT)

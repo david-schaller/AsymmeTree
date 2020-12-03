@@ -19,7 +19,7 @@ class GeneTreeVis:
         self.leafs_per_vertical_unit = 15
         self.symbol_zorder = 3        
         
-        print(tree.to_newick())
+        # print(tree.to_newick())
         
         self.distance_dict = {}
         self.colors = {}
@@ -87,7 +87,7 @@ class GeneTreeVis:
             cmap = plt.get_cmap('jet')(np.linspace(0, 1.0, len(self.colors)))
         for color_label, color in zip(self.colors.keys(), cmap):
             self.colors[color_label] = color
-        print(self.colors)
+        # print(self.colors)
     
     
     def assign_positions(self):

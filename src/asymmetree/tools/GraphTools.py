@@ -27,7 +27,7 @@ def build_adjacency_matrix(G):
         for y in neighbors:
             M[index[x], index[y]] = 1
             
-    return M
+    return M, index
 
 
 # ----------------------------------------------------------------------------
@@ -43,8 +43,29 @@ def graphs_equal(G1, G2):
     if set(G1.nodes()) != set(G2.nodes()):
         return False
     
-    for u, v in G1.edges():
-        if not G2.has_edge(u,v):
+    for x, y in G1.edges():
+        if not G2.has_edge(x, y):
+            return False
+    
+    return True
+
+
+def is_subgraph(G1, G2):
+    """Returns whether G1 is a subgraph of G2."""
+    
+    if ((isinstance(G1, nx.Graph) and isinstance(G2, nx.DiGraph)) or
+        (isinstance(G1, nx.DiGraph) and isinstance(G2, nx.Graph))):
+        return False
+    
+    if G1.order() > G2.order() or G1.size() > G2.size():
+        return False
+    
+    # vertex set is not a subset
+    if not set(G1.nodes()) <= set(G2.nodes()):
+        return False
+    
+    for x, y in G1.edges():
+        if not G2.has_edge(x, y):
             return False
     
     return True
