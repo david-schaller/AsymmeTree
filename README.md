@@ -2,12 +2,12 @@
 ![Logo](manual/images/logo.png)
 
 [![license: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![pypi version](https://img.shields.io/badge/pypi-v0.1.0-blue.svg)](https://pypi.org/project/asymmetree/)
+[![pypi version](https://img.shields.io/badge/pypi-v0.1.1-blue.svg)](https://pypi.org/project/asymmetree/)
 
 AsymmeTree is an open-source Python library for the simulation and analysis of phylogenetic scenarios.
 It includes a simulator for species and gene trees with heterogeneous evolution rates, nucleotide and amino acid sequences with or without indels, as well as whole genomes/proteomes.
 
-Moreover, it includes tools for the inference and analysis of orthology and phylogenetic best matches (resp. best hits) from known gene trees or evolutionary distances, an algorithm to compute supertrees, and a method to estimate rooted species trees from an ensemble of orthology/paralogy relations.
+Moreover, it includes tools for the inference and analysis of orthology and phylogenetic best matches (resp. best hits) from known gene trees or evolutionary distances, tools for the analysis of horizontal gene transfer (HGT) events, an algorithm to compute supertrees, and a method to estimate rooted species trees from an ensemble of orthology/paralogy relations.
 
 The library was originally designed to validate mathematical concepts and test inference methods for various steps on the way to more realistically-available data, i.e., dated gene trees, additive distances of gene sets, noisy distances and finally sequences.
 
@@ -32,7 +32,7 @@ AsymmeTree has several dependencies (which are installed automatically when usin
 * [Matplotlib](https://matplotlib.org/)
 
 The simulation of phylogenetic scenarios and sequences does not have any other dependencies.
-To use the tree reconstruction method for best match inference and the C++ implementation of the quartet method, resp., [RapidNJ](https://birc.au.dk/software/rapidnj/) and [qinfer](https://github.com/david-schaller/qinfer) must be installed.
+However, to use the tree reconstruction method for best match inference and the C++ implementation of the quartet method, resp., [RapidNJ](https://birc.au.dk/software/rapidnj/) and [qinfer](https://github.com/david-schaller/qinfer) must be installed.
 I recommend that you compile these tools on your machine, place the binaries into a persistent location and add this location to your PATH environment variable.
 
 ## Usage and Description
@@ -43,6 +43,7 @@ For a more detailed description of the usage and the implementation of the simul
 
 The two classes `Tree` and `PhyloTree` implement tree data structures which are essential for most of the modules in the package.
 The latter contains converters and parsers for the Newick format and a NetworkX graph format.
+Moreover, `PhyloTree` can be serialized in either JSON format or the Python-specific serialization format (using the library `pickle`).
 
 ### Simulation of Phylogenetic Trees
 
@@ -50,7 +51,7 @@ The subpackage `treeevolve` contains modules for the simulation and manipulation
 
 A typical simulation consists of the following steps:
 * dated species tree (models e.g. 'innovation', 'Yule' and '(episodic) birth-death process')
-* dated gene tree(s) (Gillespie-like algorithm)
+* dated gene tree(s) (birth-death process with speciations as additional branching events)
 * assignment of asymmetric evolution rates to paralogous genes
 * observable gene tree(s) (removal of all branches that lead to losses only)
 
@@ -86,9 +87,13 @@ Phylogenetic best matches of a gene x of species X are defined as those genes y 
 The subpackage `best_matches` contains functions to compute both relations.
 If the true (observable) gene tree is known (as e.g. the case in simulations), best matches and orthologs can be computed using the module `TrueBMG`. If only distance data is available, best matches have to be estimated (from distance data on a set of genes). AsymmeTree currently implements three different methods that are described by Stadler et al. (2020).
 
+### HGT Analysis
+
+The subpackage `hgt` contains several functions for the analysis of horizontal gene transfer events in the simulated scenarios. In particular, the directed and undirected Fitch relation can be extracted, as well as the pairs of genes that diverged later than the respective species in which they reside, i.e. the so-called later-divergence-time (LDT) graph. The latter situation is indicative for the presence of HGT events in the scenario. 
+
 ### Supertree Computation
 
-Implementation of the BuildST algorithm described by Deng & Fernández-Baca (2016) to compute a supertree from a given list of tree based on the leaf labels. The algorithm uses the dynamic graph data structure described by Holm, de Lichtenberg & Thorup in 2001 (HDT algorithm). The classes `HDTGraph` and `BuildST` can be imported from the subpackage `tools`.
+Implementation of the BuildST algorithm described by Deng & Fernández-Baca (2016) to compute a supertree from a given list of tree based on the leaf labels. The algorithm uses the dynamic graph data structure described by Holm, de Lichtenberg & Thorup in 2001 (HDT algorithm). The classes `HDTGraph` and `BuildST` can be imported from the subpackages `datastructures` and `tools`, respectively.
 
 ### Cograph Editing and ParaPhylo
 
