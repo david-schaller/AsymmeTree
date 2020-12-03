@@ -67,12 +67,12 @@ class PhyloTree(Tree):
         super().__init__(root)
     
     
-    def sorted_nodes(self):
+    def sorted_nodes(self, oldest_to_youngest=True):
         """Return list of sorted nodes by timestamp."""
         
         return sorted(self.preorder(),
                       key=lambda node: node.tstamp,
-                      reverse=True)
+                      reverse=oldest_to_youngest)
     
     
     def sorted_edges(self):
@@ -95,19 +95,6 @@ class PhyloTree(Tree):
                 child.transferred = 1
         
         return super().delete_and_reconnect(node)
-        
-    
-    def contract(self, edges):
-        
-        contracted = set()
-        
-        for u, v in edges:
-            
-            # avoid trying to contract the same edge multiple times
-            if v not in contracted:
-                self.delete_and_reconnect(v)
-            
-            contracted.add(v)
             
             
     def remove_planted_root(self):

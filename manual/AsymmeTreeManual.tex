@@ -129,9 +129,18 @@
 \section{Introduction}
 
 AsymmeTree is an open-source Python library for the simulation and analysis of phylogenetic scenarios.
-It includes a simulator for species and gene trees with asymmetric evolution rates, tools for the inference and analysis of phylogenetic best matches \citep{geiss2019a,geiss2020c} (resp. best hits) from known gene trees or evolutionary distances. Moreover, it includes an algorithm to compute supertrees \citep{deng2016} and a method to estimate rooted species trees from an ensemble of orthology/paralogy relations \citep{hellmuth2015}.
+It includes a simulator for species and gene trees with asymmetric evolution 
+rates, tools for the inference and analysis of phylogenetic best matches 
+\citep{geiss2019a,geiss2020c} (resp. best hits) from known gene trees or 
+evolutionary distances. Moreover, it includes tools for the analysis of 
+horizontal gene transfer (HGT) events, an algorithm to compute supertrees 
+\citep{deng2016} and a method to estimate rooted species trees from an ensemble 
+of orthology/paralogy relations \citep{hellmuth2015}.
 
-The library, and especially the simulator, was primarily designed to be able to validate mathematical concepts and test inference methods for various steps on the way to more realistically available data, i.e., dated gene trees, additive distances of gene sets, noisy distances and finally sequences.
+The library, and especially the simulator, is primarily designed to explore and
+validate mathematical concepts, and to test inference methods for various steps 
+on the way to more realistically available data, i.e., dated gene trees, 
+additive distances of gene sets, noisy distances and finally sequences.
 Both nucleotide and amino acid sequence simulation with or without indels are supported. In both cases, several substitution models are available.
 
 The software is hosted on \href{https://github.com/david-schaller/AsymmeTree}{GitHub} and also available via The Python Package Index (\href{https://pypi.org/project/asymmetree/}{PyPI}).
@@ -179,9 +188,18 @@ AssymmeTree has several dependencies (which are installed automatically when usi
 	\item \href{https://matplotlib.org/}{Matplotlib}
 \end{itemize}
 
-To use the tree reconstruction method for best match inference and the C++ implementation of the quartet method \citep{stadler2020}, the software \href{https://birc.au.dk/software/rapidnj/}{RapidNJ} \citep{simonsen2008}, resp., \href{https://github.com/david-schaller/qinfer}{qinfer} must be installed.
-I recommend that you compile these tools on your machine, place the binaries into a persistent location and add this location to your PATH environment variable.
-Both tools do \emph{not} need to be installed for most functionalities including the simulator.
+The simulation of phylogenetic scenarios and sequences, as well as most 
+functions for their analysis, do not have any other dependencies.
+
+However,
+to use the tree reconstruction method for best match inference and the C++ 
+implementation of the quartet method \citep{stadler2020}, the software 
+\href{https://birc.au.dk/software/rapidnj/}{RapidNJ} \citep{simonsen2008}, 
+resp., \href{https://github.com/david-schaller/qinfer}{qinfer} must be 
+installed.
+I recommend that you compile these tools on your machine, place the binaries 
+into a persistent location and add this location to your PATH environment 
+variable.
 
 
 
@@ -192,8 +210,9 @@ The library interface functions are described in the following sections and can 
 
 The term `color' regularly appears in the library and refers to the reconciliation of gene trees with species trees.
 In particular, the terms `color' and `species'/`genome' in which a gene resides are used interchangeably.
-This emphasizes the close connection to vertex-colored graphs such as (colored) 
-Best Match Graphs \citep{geiss2019a}.
+The reason for this is that the information in which species/genomes the genes 
+reside is usually modeled as a (vertex) coloring, such as e.g.\ in (colored) 
+best match graphs \citep{geiss2019a}.
 
 
 
@@ -215,7 +234,10 @@ The vertices of a \texttt{PhyloTree} instance are of type \texttt{PhyloTreeNode}
 	horizontal gene transfer, \texttt{\sq *\sq} for loss\\
 	\texttt{color} & only gene trees; species in which the gene resides, i.e., ID of some vertex in a species tree, \texttt{int} for extant genes, can be of type \texttt{tuple} (of two \texttt{int}s) for inner and loss vertices\\
 	\texttt{tstamp} & time stamp of the event (\texttt{double})\\
-	\texttt{dist} & evolutionary distance or divergence time from the parent vertex (\texttt{double})\\
+	\texttt{dist} & evolutionary distance from the parent vertex 
+	(\texttt{double}); if no evolution rates (see below) were simulated yet, then 
+	this value corresponds to the divergence time between the vertex and its 
+	parent\\
 	\texttt{transferred} & only gene trees; indicates whether the edge from the 
 	parent is the transfer edge from an HGT event; \texttt{1} if yes and 
 	\texttt{0} otherwise \\
@@ -260,6 +282,9 @@ from asymmetree import PhyloTree
 tree = PhyloTree.load('tree.json')
 \end{minted}
 \end{adjustwidth}
+
+An overview over selected functions of the tree classes is given in 
+Appendix~\ref{apx:tree-functions}.
 
 \subsection{Simulation of Species and Gene Trees}
 
@@ -837,6 +862,10 @@ AsymmeTree currently implements three different methods that are described by \c
 Please see the file \texttt{examples/best\_match\_infer.py} in the GitHub repo for an example usage of these modules following the simulation of gene tree scenarios.
 
 
+\subsection{Analysis of Horizontal Gene Transfer}
+
+\TODO{In the making...}
+
 
 \subsection{Supertree Computation}
 
@@ -1083,6 +1112,122 @@ containing support values for the inner nodes.
 	Visualization of simulated gene trees (of type \texttt{PhyloTree}), experimental. \\
 	%--------------------------------------------------------------------------
 \end{longtable}
+}
+
+
+\section{Tree functions}\label{apx:tree-functions}
+
+The following table contains an overview over selected functions of the classes 
+that inherit for \texttt{Tree}.
+
+{\footnotesize
+  \setlength{\tabcolsep}{6pt}
+  \renewcommand{\arraystretch}{1.4}
+  %\renewcommand\tabularxcolumn[1]{m{#1}}
+  \begin{longtable}{| p{4.0cm} | p{10cm} |}
+    \endfirsthead
+    \multicolumn{2}{c}{\textit{Table continued from previous page}}\\
+    \hline
+    \endhead
+    \hline \multicolumn{2}{r}{\textit{Table continued on next page}} \\
+    \endfoot
+    \hline
+    \endlastfoot
+    %
+    \hline
+    %--------------------------------------------------------------------------
+    \multicolumn{2}{|l|}{\textbf{\texttt{Tree}} (corresonding node class: 
+    \texttt{TreeNode})}\\
+    %--------------------------------------------------------------------------
+    \hline
+    %--------------------------------------------------------------------------
+    \texttt{leaves()} & Generator for the leaf nodes. \\
+    %--------------------------------------------------------------------------
+    \texttt{preorder()} & Generator for preorder traversal. \\
+    %--------------------------------------------------------------------------
+    \texttt{postorder()} & Generator for postorder traversal. \\
+    %--------------------------------------------------------------------------
+    \texttt{inner\_vertices()} & Generator for inner nodes/vertices. \\
+    %--------------------------------------------------------------------------
+    \texttt{edges()} & Generator for the edges of the tree. \\
+    %--------------------------------------------------------------------------
+    \texttt{euler\_generator()} & Generator for an Euler tour. \\
+    %--------------------------------------------------------------------------
+    \texttt{supply\_leaves()} & Add a \texttt{list} of leaf nodes in the 
+    subtree of each node as attribute \texttt{leaves} to each respective node, 
+    and return the full list (the root's list). \\
+    %--------------------------------------------------------------------------
+    \texttt{contract(edges)} & Contract all edges in the collection
+    \texttt{edges}. \\
+    %--------------------------------------------------------------------------
+    \texttt{get\_triples()} & Return a list of all triples that are displayed 
+    by the tree. \\
+    %--------------------------------------------------------------------------
+    \texttt{to\_newick()} & Return a \texttt{str} representation of the tree in 
+    Newick format. Inheriting classes implement their own version of this 
+    function.\\
+    %--------------------------------------------------------------------------
+    \texttt{random\_tree(N, binary=False)} & Return a random tree with 
+    \texttt{N} that is optionally forced to be binary. Stepwise, a new child is 
+    attached to a randomly selected node until \texttt{N} are reached.\\
+    %--------------------------------------------------------------------------
+    \hline
+    %--------------------------------------------------------------------------
+    %--------------------------------------------------------------------------
+    \multicolumn{2}{|l|}{\textbf{\texttt{PhyloTree}} (corresonding node class: 
+      \texttt{PhyloTreeNode})}\\
+    %--------------------------------------------------------------------------
+    \hline
+    %--------------------------------------------------------------------------
+    \texttt{sorted\_nodes( oldest\_to\_youngest=True)} & Return a list of nodes 
+    sorted by timestamp (default is from oldest, which should be the root, to 
+    youngest).\\
+    %--------------------------------------------------------------------------
+    \texttt{distance\_matrix( leaf\_order=None)} & Return a list of nodes 
+    and a distance matrix on the leaves, optionally takes a list of the leaves 
+    that defines their indices in the matrix.\\
+    %--------------------------------------------------------------------------
+    \texttt{parse\_newick(newick)} & Parse a Newick \texttt{str}.\\
+    %--------------------------------------------------------------------------
+    \texttt{to\_nx()} & Returns a NetworkX \text{DiGraph} version of the tree 
+    and its \texttt{root}.\\
+    %--------------------------------------------------------------------------
+    \texttt{parse\_nx(G, root)} & Convert a tree encoded as a NetworkX 
+    \text{DiGraph} (together with the root) back into a \texttt{PhyloTree}.\\
+    %--------------------------------------------------------------------------
+    \texttt{serialize(filename, mode=None)} & Serialize a tree in JSON or 
+    pickle format specified by \texttt{mode}. Default is \texttt{None}, in 
+    which case the mode is inferred from the filename ending.\\
+    %--------------------------------------------------------------------------
+    \texttt{load(filename, mode=None)} & Load a tree from a file in JSON or 
+    pickle format specified by \texttt{mode}. Default is \texttt{None}, in 
+    which case the mode is inferred from the filename ending.\\
+    %--------------------------------------------------------------------------
+    \texttt{copy()} & Return a copy of the tree.\\
+    %--------------------------------------------------------------------------
+    \hline
+    %--------------------------------------------------------------------------
+    %--------------------------------------------------------------------------
+    \multicolumn{2}{|l|}{\textbf{\texttt{Cotree}} (corresonding node class: 
+      \texttt{CotreeNode})}\\
+    %--------------------------------------------------------------------------
+    \hline
+    %--------------------------------------------------------------------------
+    \texttt{to\_cograph()} & Return the corresponding cograph as a NetworkX 
+    \texttt{Graph}.\\
+    %--------------------------------------------------------------------------
+    \texttt{cotree()} & Convert a cograph into a cotree.\\
+    %--------------------------------------------------------------------------
+    \texttt{complement( 
+      inplace=False)} & Return the cotree of the complement 
+    cograph.\\
+    %--------------------------------------------------------------------------
+    \texttt{copy()} & Return a copy of the cotree.\\
+    %--------------------------------------------------------------------------
+    \texttt{random\_cotree( N, force\_series\_root=False)} & Returns a random 
+    cotree with \texttt{N} leaves. Optionally forced to be connected.\\
+    %--------------------------------------------------------------------------
+  \end{longtable}
 }
 
 

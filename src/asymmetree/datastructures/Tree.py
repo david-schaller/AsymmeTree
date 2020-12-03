@@ -256,6 +256,19 @@ class Tree:
         else:
             return []
         
+    
+    def contract(self, edges):
+        
+        contracted = set()
+        
+        for u, v in edges:
+            
+            # avoid trying to contract the same edge multiple times
+            if v not in contracted:
+                self.delete_and_reconnect(v)
+            
+            contracted.add(v)
+        
         
     def get_triples(self):
         """Retrieve a list of all triples of the tree.

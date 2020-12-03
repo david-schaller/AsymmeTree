@@ -9,7 +9,7 @@ It includes a simulator for species and gene trees with heterogeneous evolution 
 
 Moreover, it includes tools for the inference and analysis of orthology and phylogenetic best matches (resp. best hits) from known gene trees or evolutionary distances, tools for the analysis of horizontal gene transfer (HGT) events, an algorithm to compute supertrees, and a method to estimate rooted species trees from an ensemble of orthology/paralogy relations.
 
-The library was originally designed to validate mathematical concepts and test inference methods for various steps on the way to more realistically-available data, i.e., dated gene trees, additive distances of gene sets, noisy distances and finally sequences.
+The library is primarily designed to explore and validate mathematical concepts, and to test inference methods for various steps on the way to more realistically-available data, i.e., dated gene trees, additive distances of gene sets, noisy distances and finally sequences.
 
 
 ## Installation
@@ -31,7 +31,7 @@ AsymmeTree has several dependencies (which are installed automatically when usin
 * [Scipy and Numpy](http://www.scipy.org/install.html)
 * [Matplotlib](https://matplotlib.org/)
 
-The simulation of phylogenetic scenarios and sequences does not have any other dependencies.
+The simulation of phylogenetic scenarios and sequences, as well as most functions for their analysis, do not have any other dependencies.
 However, to use the tree reconstruction method for best match inference and the C++ implementation of the quartet method, resp., [RapidNJ](https://birc.au.dk/software/rapidnj/) and [qinfer](https://github.com/david-schaller/qinfer) must be installed.
 I recommend that you compile these tools on your machine, place the binaries into a persistent location and add this location to your PATH environment variable.
 
@@ -89,7 +89,7 @@ If the true (observable) gene tree is known (as e.g. the case in simulations), b
 
 ### HGT Analysis
 
-The subpackage `hgt` contains several functions for the analysis of horizontal gene transfer events in the simulated scenarios. In particular, the directed and undirected Fitch relation can be extracted, as well as the pairs of genes that diverged later than the respective species in which they reside, i.e. the so-called later-divergence-time (LDT) graph. The latter situation is indicative for the presence of HGT events in the scenario. 
+The subpackage `hgt` contains several functions for the analysis of horizontal gene transfer events in the simulated scenarios. In particular, the directed and undirected Fitch relation can be extracted, as well as the pairs of genes that diverged later than the respective species in which they reside, i.e. the so-called later-divergence-time (LDT) graph. The latter situation is indicative for the presence of HGT events in the scenario.
 
 ### Supertree Computation
 

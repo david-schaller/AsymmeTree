@@ -182,7 +182,7 @@ class Cotree(Tree.Tree):
        
     
     @staticmethod
-    def random_cotree(N_leaves, force_series_root=False):
+    def random_cotree(N, force_series_root=False):
         """Creates a random cotree."""
         
         root = CotreeNode(ID=0)
@@ -190,7 +190,7 @@ class Cotree(Tree.Tree):
         node_list = [root]
         nr, leaf_count = 1, 1
         
-        while leaf_count < N_leaves:
+        while leaf_count < N:
             node = random.choice(node_list)
             
             # avoid nodes with outdegree 1
