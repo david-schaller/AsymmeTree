@@ -286,11 +286,36 @@ tree = PhyloTree.load('tree.json')
 An overview over selected functions of the tree classes is given in 
 Appendix~\ref{apx:tree-functions}.
 
+The class \texttt{LCA} can be initiated with an instance of type \texttt{Tree} 
+or its inheriting classes and then provides functions for efficient last common 
+ancestor queries in that tree. 
+
+\begin{adjustwidth}{1cm}{1cm}\vspace{2mm}
+  \begin{minted}[fontsize=\footnotesize]{python}
+  from asymmetree.datastructures.Tree import LCA
+  
+  # tree is of type 'Tree' (or an inheriting class)
+  lca_T = LCA(tree)
+  
+  # l.c.a. queries via 'TreeNode' instances or IDs (int)
+  print( lca_T(4, 7) )
+  
+  # triple queries (e.g. is 3 5 | 2 displayed?)
+  print( lca_T.displays_triple(3, 5, 2) )
+  \end{minted}
+\end{adjustwidth}
+All such queries take instance of type \texttt{TreeNode} (or inheriting 
+classes) as 
+input or \texttt{int}s, and raise a \texttt{KeyError} if this node or ID, 
+resp., is not in the tree.
+
 \subsection{Simulation of Species and Gene Trees}
 
 The subpackage \texttt{asymmetree.treeevolve} contains modules for the simulation of dated species and gene trees.
 In terms of divergence time, these trees define an ultrametric on the set of their (extant) leaves.
-Gene trees, furthermore, can be manipulated with a realistic rate heterogeneity among their branches resulting in general additive distances.
+Gene trees, furthermore, can be manipulated with a realistic rate heterogeneity 
+among their branches resulting in general additive distances (but no longer 
+ultrametric).
 
 
 \subsubsection{Species Trees}
@@ -364,14 +389,24 @@ print(S2.to_newick())
 
 \subsubsection{Gene Trees}
 
-Dated gene trees are simulated along a given species tree \texttt{S} with a variant of the birth-death, resp., Gillespie algorithm \citep{kendall1948,gillespie1976}.
-To this end, use the class \texttt{GeneTreeSimulator} or the function \texttt{simulate\_dated\_gene\_tree(S, **kwargs)} with a species tree of type \texttt{PhyloTree}.
+Dated gene trees are simulated along a given species tree \texttt{S} using a 
+birth-death process \citep{kendall1948,gillespie1976} with speciation events as 
+additional branching events (fixed time points given by the species tree). At 
+each time point, the total event rate is given by the sum of the event rates 
+over all branches that are currently active (not extinct).
+Thus, the total event rate in general increases during the simulation if the 
+loss rate does not dominate the rates of the branching events.
+To simulate gene tree, use the class \texttt{GeneTreeSimulator} or the function 
+\texttt{simulate\_dated\_gene\_tree(S, **kwargs)} with a species tree of type 
+\texttt{PhyloTree}.
 The following parameters are available:
 
 \vspace{3mm}
 {\small\centering
 \begin{longtable}{ p{4.0cm} p{9cm} }
-	\texttt{DLH\_rates=\newline (0.0, 0.0, 0.0)} & a \texttt{tuple} of three \texttt{float}s, rates for duplication, loss and horizontal gene transfer (HGT) events\\
+	\texttt{dupl\_rate=0.0} & duplication rate (\texttt{float})\\
+  \texttt{loss\_rate=0.0} & loss rate (\texttt{float})\\
+  \texttt{hgt\_rate=0.0} & horizontal gene transfer rate (\texttt{float})\\
 	\texttt{dupl\_polytomy=0.0}  & allows non-binary duplication events by specifying
 	the parameter~$\lambda$ of a Poisson distribution (copy number = 2 + drawn number)\\
 	\texttt{prohibit\_extinction=\newline \sq per\_species\sq}  & avoid loss
@@ -474,7 +509,7 @@ Moreover, distribution for the base rate (assigned the planted edge of the
 gene tree) and for the event rates can be specified with the parameters
 \texttt{base\_rate}, \texttt{dupl\_rate}, \texttt{loss\_rate} and
 \texttt{hgt\_rate}.
-For available distributions and their syntax see Appx.~\ref{apx:sampling}.
+For available distributions and their syntax see Appendix~\ref{apx:sampling}.
 
 
 \subsubsection{Distance Matrix and Noise}
@@ -864,8 +899,70 @@ Please see the file \texttt{examples/best\_match\_infer.py} in the GitHub repo f
 
 \subsection{Analysis of Horizontal Gene Transfer}
 
-\TODO{In the making...}
+The subpackage \texttt{hgt} contains several functions for the analysis of 
+horizontal gene transfer events in the simulated scenarios. In particular, 
+transfer edges, the 
+directed and undirected Fitch graph can be extracted, as well as the pairs 
+of genes that diverged later than the respective species in which they reside, 
+i.e. the so-called later-divergence-time (LDT) graph. The latter situation is 
+indicative for the presence of HGT events in the scenario.
 
+An edge $(u, v)$ in a gene tree is a \emph{``true''} transfer edge if an HGT 
+event happened on the path from $u$ to $v$. In the simulated trees, this is 
+indicated by the attribute \texttt{transferred} of \texttt{PhyloTreeNode} $v$ 
+which is set to \texttt{1}.
+An edge $(u, v)$ in the gene tree is an \emph{rs-}transfer edge (named after 
+the \emph{relaxed scenario} concept) if the \texttt{color}s of $u$ and $v$ are 
+incomparable in the corresponding species tree \texttt{S}.
+True and rs-transfer edges may not be equivalent, e.g.\ when a transfer from 
+branch $A$ to $B$ is followed by a transfer from $B$ to $A$ and this gene 
+lineage does not survive in branch $B$.
+
+\begin{adjustwidth}{1cm}{1cm}\vspace{2mm}
+\begin{minted}[fontsize=\footnotesize]{python}
+from asymmetree.hgt import true_transfer_edges, rs_transfer_edges
+
+# gene tree T and species tree S
+transfer_edges1 = true_transfer_edges(T)
+transfer_edges2 = rs_transfer_edges(T, S)
+\end{minted}
+\end{adjustwidth}
+
+The directed Fitch graph of a tree $T$ has as vertex set the leaves of $T$ and 
+a directed edge $(x,y)$ when the path from the last common ancestor of 
+$x$ and $y$ to the leaf $y$ contains a transfer edge \cite{geiss2018}.
+The undirected Fitch graph of a tree $T$ also has as vertex set the leaves of 
+$T$ and an undirected edge $xy$ when the path from $x$ to $y$ contains a 
+transfer edge \cite{hellmuth2018}.
+
+\begin{adjustwidth}{1cm}{1cm}\vspace{2mm}
+\begin{minted}[fontsize=\footnotesize]{python}
+from asymmetree.hgt import fitch, undirected_fitch
+
+# gene tree 'T', and precomputed 'transfer_edges' 
+dfg = fitch(T, transfer_edges)
+ufg = undirected_fitch(T, transfer_edges)
+\end{minted}
+\end{adjustwidth}
+
+As mentioned above, the situation in which two genes diverged later that their 
+corresponding species witnesses HGT events.
+The graph that contains edges for any such gene pair has been termed the 
+later-divergence-time (LDT) graph.
+
+\begin{adjustwidth}{1cm}{1cm}\vspace{2mm}
+\begin{minted}[fontsize=\footnotesize]{python}
+from asymmetree.hgt import ldt_graph
+
+# gene tree 'T', CORRESPONDING species tree 'S' 
+ldt = ldt_graph(T, S, lca_T=None, lca_S=None)
+\end{minted}
+\end{adjustwidth}
+In order to reduce runtime, precomputed instances of the class 
+\texttt{LCA} for \texttt{T} and \texttt{S} 
+can be supplied using the keyword parameters \texttt{lca\_T}
+and \texttt{lca\_S}, respectively. Otherwise, such instances are initiated 
+within the function.
 
 \subsection{Supertree Computation}
 
@@ -975,7 +1072,38 @@ containing support values for the inner nodes.
 	\hline
 	%--------------------------------------------------------------------------
 	\textbf{Packages and Modules} & \textbf{Description} \\
-	%--------------------------------------------------------------------------
+  %--------------------------------------------------------------------------
+  \hline
+  %--------------------------------------------------------------------------
+  \multicolumn{2}{|l|}{\textbf{\texttt{datastructures}}}\\
+  %--------------------------------------------------------------------------
+  \hline
+  	%--------------------------------------------------------------------------
+  \texttt{Tree} &
+  Includes the basic class \texttt{Tree}, provides functions for tree 
+  traversals, Newick parser, etc. The class \texttt{LCA} provides efficient 
+  last common ancestor queries.\\
+  %--------------------------------------------------------------------------
+  \texttt{PhyloTree} &
+  Includes the class \texttt{PhyloTree} for phylogenetic trees (inherits from 
+  \texttt{Tree}), provides a Newick parser, etc. \\
+  %--------------------------------------------------------------------------
+  \texttt{LinkedList} &
+  Implementation of a linked list. \\
+  %--------------------------------------------------------------------------
+  \texttt{DoublyLinkedList} &
+  Implementation of a doubly-linked list. \\
+  %--------------------------------------------------------------------------
+  \texttt{AVLTree} &
+  Implementation of an ordered set (\texttt{TreeSet}) and an ordered dictionary 
+  (\texttt{TreeDict}) as a balanced binary search tree (AVL tree). \\
+  %--------------------------------------------------------------------------
+  \texttt{Partition} &
+  Dynamic partition that supports efficient merge operations. \\
+  %--------------------------------------------------------------------------
+  \texttt{hdtgraph.DynamicGraph} &
+  Dynamic graph data structure described by \citet{holm2001}. \\
+  %--------------------------------------------------------------------------
 	\hline
 	%--------------------------------------------------------------------------
 	\multicolumn{2}{|l|}{\textbf{\texttt{treeevolve}}}\\
@@ -1022,34 +1150,46 @@ containing support values for the inner nodes.
 	Construction of the true multiple sequence alignment after the simulation of sequences along a tree. \\
 	%--------------------------------------------------------------------------
 	\texttt{EmpiricalModels} &
-	Contains rate matrices and equilibrium frequencies for the empirical substitution models, taken from \citep{criscuolo}. \\
+	Contains rate matrices and equilibrium frequencies for the empirical 
+	substitution models, taken from \citep{criscuolo}. \\
+  %--------------------------------------------------------------------------
+  \hline
+  %--------------------------------------------------------------------------
+  \multicolumn{2}{|l|}{\textbf{\texttt{genome}}}\\
+  %--------------------------------------------------------------------------
+  \hline
+  %--------------------------------------------------------------------------
+  \texttt{GenomeSimulator} &
+  Includes the class \texttt{GenomeSimulator} for the simulation of multiple 
+  gene families along a common species tree. \\
+  %--------------------------------------------------------------------------
 	%--------------------------------------------------------------------------
 	\hline
 	%--------------------------------------------------------------------------
 	\multicolumn{2}{|l|}{\textbf{\texttt{tools}}}\\
 	%--------------------------------------------------------------------------
 	\hline
-	%--------------------------------------------------------------------------
-	\texttt{Tree} &
-	Includes the basic class \texttt{Tree}, provides functions for tree traversals, Newick parser, etc. \\
-	%--------------------------------------------------------------------------
-	\texttt{PhyloTree} &
-	Includes the class \texttt{PhyloTree} for phylogenetic trees (inherits from \texttt{Tree}), provides a Newick parser, etc. \\
+  %--------------------------------------------------------------------------
+  \texttt{Build} &
+  Includes the classes \texttt{Build} and \texttt{Build2} for triple 
+  consistency tests and tree construction \citep{aho1981, he2006}. \\
 	%--------------------------------------------------------------------------
 	\texttt{BuildST} &
-	Includes the class \texttt{BuildST} that computes a supertree from a given list of tress (with overlapping labels) \citep{deng2016}. \\
-	%--------------------------------------------------------------------------
-	\texttt{hdtgraph.DynamicGraph} &
-	Dynamic graph data structure described by \citet{holm2001}. \\
-	%--------------------------------------------------------------------------
-	\texttt{DoublyLinkedList} &
-	Implementation of a doubly-linked list. \\
+	Includes the class \texttt{BuildST} that computes a supertree from a given 
+	list of tress (with overlapping labels) \citep{deng2016}. \\
 	%--------------------------------------------------------------------------
 	\texttt{GraphTools} &
 	Miscellaneous functions for graphs, e.g.\ check for graph equality. \\
 	%--------------------------------------------------------------------------
 	\texttt{DistanceCalculation} &
 	Calculation of maximum likelihood distances of pairs of aligned sequences. \\
+  %--------------------------------------------------------------------------
+  \texttt{Partitioning} &
+  Implementation of (bi)partitioning heuristics such as Karger's algorithm. \\
+  %--------------------------------------------------------------------------
+  \texttt{Sampling} &
+  Includes the class \texttt{Sampler} which support drawing numbers from 
+  various distributions. \\
 	%--------------------------------------------------------------------------
 	\hline
 	%--------------------------------------------------------------------------
@@ -1082,13 +1222,27 @@ containing support values for the inner nodes.
 	\hline
 	%--------------------------------------------------------------------------
 	\texttt{Cograph} &
-	Includes the classes \texttt{Cotree} and \texttt{CotreeNode} as well as a generator for random cotrees/cographs. \\
+	Includes the classes \texttt{Cotree} and \texttt{CotreeNode} as well as a 
+	generator for random cotrees/cographs. The class 
+	\texttt{LinearCographDetector} implements an $\mathcal{O}(|V|+|E|)$ algorithm 
+	for cograph detection and cotree construction \citep{corneil1985}.\\
 	%--------------------------------------------------------------------------
 	\texttt{CographEditor} &
 	Implements a heuristic for cograph editing \citep{crespelle2019}. \\
-	%--------------------------------------------------------------------------
-	\texttt{LinearCographDetector} &
-	Implements an $\mathcal{O}(n+m)$ algorithm for cograph detection \citep{corneil1985}. \\
+  %--------------------------------------------------------------------------
+  \hline
+  %--------------------------------------------------------------------------
+  \multicolumn{2}{|l|}{\textbf{\texttt{hgt}}}\\
+  %--------------------------------------------------------------------------
+  \hline
+  %--------------------------------------------------------------------------
+  \texttt{Fitch} &
+  Extraction of transfer edges from a gene tree (together with a species tree). 
+  Construction of the directed and undirected Fitch graph.\\
+  %--------------------------------------------------------------------------
+  \texttt{TimeComparison} &
+  Comparison of the divergence time of genes with the divergence time of their 
+  respective species. \\
 	%--------------------------------------------------------------------------
 	\hline
 	%--------------------------------------------------------------------------
@@ -1136,7 +1290,7 @@ that inherit for \texttt{Tree}.
     %
     \hline
     %--------------------------------------------------------------------------
-    \multicolumn{2}{|l|}{\textbf{\texttt{Tree}} (corresonding node class: 
+    \multicolumn{2}{|l|}{\textbf{\texttt{Tree}} (corresponding node class: 
     \texttt{TreeNode})}\\
     %--------------------------------------------------------------------------
     \hline
@@ -1174,7 +1328,7 @@ that inherit for \texttt{Tree}.
     \hline
     %--------------------------------------------------------------------------
     %--------------------------------------------------------------------------
-    \multicolumn{2}{|l|}{\textbf{\texttt{PhyloTree}} (corresonding node class: 
+    \multicolumn{2}{|l|}{\textbf{\texttt{PhyloTree}} (corresponding node class: 
       \texttt{PhyloTreeNode})}\\
     %--------------------------------------------------------------------------
     \hline
@@ -1189,7 +1343,7 @@ that inherit for \texttt{Tree}.
     %--------------------------------------------------------------------------
     \texttt{parse\_newick(newick)} & Parse a Newick \texttt{str}.\\
     %--------------------------------------------------------------------------
-    \texttt{to\_nx()} & Returns a NetworkX \text{DiGraph} version of the tree 
+    \texttt{to\_nx()} & Return a NetworkX \text{DiGraph} version of the tree 
     and its \texttt{root}.\\
     %--------------------------------------------------------------------------
     \texttt{parse\_nx(G, root)} & Convert a tree encoded as a NetworkX 
@@ -1208,7 +1362,7 @@ that inherit for \texttt{Tree}.
     \hline
     %--------------------------------------------------------------------------
     %--------------------------------------------------------------------------
-    \multicolumn{2}{|l|}{\textbf{\texttt{Cotree}} (corresonding node class: 
+    \multicolumn{2}{|l|}{\textbf{\texttt{Cotree}} (corresponding node class: 
       \texttt{CotreeNode})}\\
     %--------------------------------------------------------------------------
     \hline
@@ -1225,7 +1379,8 @@ that inherit for \texttt{Tree}.
     \texttt{copy()} & Return a copy of the cotree.\\
     %--------------------------------------------------------------------------
     \texttt{random\_cotree( N, force\_series\_root=False)} & Returns a random 
-    cotree with \texttt{N} leaves. Optionally forced to be connected.\\
+    cotree with \texttt{N} leaves. Optionally forced to be connected (= root is 
+    a series node).\\
     %--------------------------------------------------------------------------
   \end{longtable}
 }
