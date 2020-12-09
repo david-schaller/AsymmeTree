@@ -145,8 +145,6 @@ def is_rs_fitch(G, color_set=None):
     
     # if nothing was True
     return False
-    
-    
 
 
 if __name__ == '__main__':

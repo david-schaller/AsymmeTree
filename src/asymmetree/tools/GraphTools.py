@@ -193,6 +193,15 @@ def sort_by_colors(graph):
     return color_dict
 
 
+def copy_node_attributes(from_graph, to_graph):
+    """Copy node label and color from one graph to another."""
+    
+    for x in from_graph.nodes():
+        if to_graph.has_node(x):
+            to_graph.nodes[x]['label'] = from_graph.nodes[x]['label']
+            to_graph.nodes[x]['color'] = from_graph.nodes[x]['color']
+
+
 # ----------------------------------------------------------------------------
 #                      Graph generation/manipulation
 # ----------------------------------------------------------------------------
