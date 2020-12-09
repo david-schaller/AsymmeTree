@@ -199,7 +199,7 @@ def _innovation_model(N, planted, ultrametric=True):
     
     # planted tree (root is an implicit outgroup with outdegree = 1)
     if planted:
-        root = PhyloTreeNode(1, label="1")
+        root = PhyloTreeNode(1, label='1')
         tree.root.add_child(root)
         node_counter += 1
     else:
@@ -256,35 +256,39 @@ def _innovation_model(N, planted, ultrametric=True):
                 species[new_s] = child2
                 
     if ultrametric:         
-        _make_ultrametric(tree)
+        simulate_timing(tree)
+        distance_from_timing(tree)
     
     return tree
 
 
-def _make_ultrametric(tree):
-    """Makes a given species tree S ultrametric.
+def simulate_timing(tree):
+    """Simulates a timing for the tree.
     
     It is t(root) = 1 and t(x) = 0 for x in L(S)."""
     
-    if not tree.root.children:
-        tree.root.dist = 0.0
-        tree.root.tstamp = 0.0
-    
     for v in tree.preorder():
-        if not v.parent:
-            v.dist = 0.0
-            v.tstamp = 1.0
-        elif not v.children:
-            v.dist = v.parent.tstamp
+        if not v.children:
             v.tstamp = 0.0
+        elif not v.parent:
+            v.tstamp = 1.0
         else:                               # random walk to a leaf
             pos = v                         # current position
             length = 0                      # path length |P|
             while pos.children:
                 length += 1
                 pos = pos.children[np.random.randint(len(pos.children))]
-            v.dist = (v.parent.tstamp) * 2 * np.random.uniform() / (length+1)
-            v.tstamp = v.parent.tstamp - v.dist
+            v.tstamp = v.parent.tstamp * (1 - 2 * np.random.uniform() / (length+1))
+            
+
+def distance_from_timing(tree):
+    """Adjusts all distances according to the time stamp difference."""
+    
+    if tree.root:
+        tree.root.dist = 0.0
+    
+    for u, v in tree.edges():
+        v.dist = abs(u.tstamp - v.tstamp)
 
 
 def _reverse_time_stamps(tree):

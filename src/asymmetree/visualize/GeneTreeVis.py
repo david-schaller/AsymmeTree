@@ -10,14 +10,16 @@ __author__ = 'David Schaller'
 
 class GeneTreeVis:
     
-    def __init__(self, tree):
+    def __init__(self, tree, scale_symbols=1.0, species_info=False):
         
         self.tree = tree
         
-        self.symbolsize = 0.03
+        self.species_info = species_info
+        
+        self.symbolsize = 0.03 * scale_symbols
         self.symbollw = 0.04
         self.leafs_per_vertical_unit = 15
-        self.symbol_zorder = 3        
+        self.symbol_zorder = 3      
         
         # print(tree.to_newick())
         
@@ -112,11 +114,12 @@ class GeneTreeVis:
         
         for v in self.tree.preorder():
             if v.parent:
+                color = 'red' if v.transferred else 'black'
                 self.ax.plot([self.node_positions[v.parent][0],
                               self.node_positions[v][0]],
                              [self.node_positions[v][1],
                               self.node_positions[v][1]],
-                     color='black',
+                     color=color,
                      linestyle='-', linewidth=1)
             if v.children:
                 self.ax.plot([self.node_positions[v][0],
@@ -146,8 +149,11 @@ class GeneTreeVis:
                     x, y = self.node_positions[v]
                     self.draw_leaf(x, y,
                                    color=self.colors[v.color])
-                    self.write_label(x+self.symbolsize+0.02, y,
-                                     str(v.label))
+                    if not self.species_info:
+                        text = str(v.label)
+                    else:
+                        text = '{} <{}>'.format(v.label, v.color)
+                    self.write_label(x+self.symbolsize+0.02, y, text)
                 
     
     def draw_leaf(self, x, y, color='white', leftalign=True):

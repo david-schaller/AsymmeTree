@@ -122,6 +122,14 @@ class Tree:
             yield from _preorder(self.root)
         else:
             yield from []
+            
+    
+    def traverse_subtree(self, u):
+        """Generator for preorder traversal of the subtree rooted at u."""
+        
+        yield u
+        for child in u.children:
+            yield from self.traverse_subtree(child)
     
     
     def postorder(self):

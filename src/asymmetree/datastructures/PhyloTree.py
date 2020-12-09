@@ -95,8 +95,20 @@ class PhyloTree(Tree):
                 child.transferred = 1
         
         return super().delete_and_reconnect(node)
+    
+    
+    def add_planted_root(self):
+        """Add a new root that has the original root as its single child."""
+        
+        old_root = self.root
+        self.root = PhyloTreeNode(-1)
+        
+        if old_root:
+            self.root.add_child(old_root)
+        
+        return self.root
             
-            
+    
     def remove_planted_root(self):
         """Removes the planted root if existent.
         

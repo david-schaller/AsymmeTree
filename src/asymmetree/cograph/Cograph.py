@@ -163,6 +163,24 @@ class Cotree(Tree.Tree):
         
         return tree
     
+    
+    def paths_of_length_2(self):
+        """Generator for all paths of length 2 (edges) in the cograph."""
+        
+        self.supply_leaves()
+        lca = Tree.LCA(self)
+        
+        for u in self.inner_vertices():
+            
+            if u.label == 'parallel':
+                continue
+            
+            for v1, v2 in itertools.permutations(u.children, 2):
+                for t1, t2 in itertools.combinations(v1.leaves, 2):
+                    if lca(t1, t2).label == 'parallel':
+                        for t3 in v2.leaves:
+                            yield t1, t3, t2
+    
 
     def copy(self):
         

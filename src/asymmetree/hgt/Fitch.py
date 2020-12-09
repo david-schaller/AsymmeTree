@@ -48,6 +48,9 @@ def fitch(tree, transfer_edges, supply_undirected=False, lca_T=None):
     
     if not isinstance(lca_T, LCA):
         lca_T = LCA(tree)
+        
+    if not isinstance(transfer_edges, (set, dict)):
+        transfer_edges = set(transfer_edges)
     
     leaves = tree.supply_leaves()
     fitch = nx.DiGraph()
@@ -60,7 +63,7 @@ def fitch(tree, transfer_edges, supply_undirected=False, lca_T=None):
         
         current = x
         while current:
-            if current.transferred:
+            if current in transfer_edges:
                 first_transfer[x] = current
                 break
             current = current.parent
