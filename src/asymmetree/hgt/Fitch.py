@@ -6,6 +6,7 @@ import itertools
 import networkx as nx
 
 from asymmetree.datastructures.Tree import LCA
+from asymmetree.tools.GraphTools import independent_sets
 
 
 __author__ = 'David Schaller'
@@ -91,6 +92,63 @@ def undirected_fitch(tree, transfer_edges, lca_T=None):
     return fitch(tree, transfer_edges, supply_undirected=True, lca_T=lca_T)[1]
 
 
+def _rs_fitch_aux_graph(G, color_set, ind_sets, ignore_set):
+    
+    aux_graph = nx.Graph()
+    aux_graph.add_nodes_from(color_set)
+    
+    for i, ind_set in enumerate(ind_sets):
+        
+        # skip the independent set that shall not be included
+        if ignore_set == i:
+            continue
+        
+        for x, y in itertools.combinations(ind_set, 2):
+            X = G.nodes[x]['color']
+            Y = G.nodes[y]['color']
+            
+            if X != Y:
+                aux_graph.add_edge(X, Y)
+    
+    return aux_graph
+
+
+def is_rs_fitch(G, color_set=None):
+    """Checks whether a given graph is an rs-Fitch graph.
+    
+    I.e. whether the graph is the Fitch graph of some relaxed scenario (rs).
+    """
+    
+    if color_set is None:
+        color_set = set()
+        for v in G.nodes():
+            color_set.add(G.nodes[v]['color'])
+    
+    ind_sets = independent_sets(G)
+    
+    # not a complete multipartite graph
+    if ind_sets is False:
+        return False
+    
+    # trivial number of independent sets
+    k = len(ind_sets)
+    if k <= 1:
+        return True
+    
+    # more than one independent set
+    for ignore_set in range(-1, k):
+        
+        # ignore_set = -1 means that no set is ignored
+        aux_graph = _rs_fitch_aux_graph(G, color_set, ind_sets, ignore_set)
+        if not nx.is_connected(aux_graph):
+            return True
+    
+    # if nothing was True
+    return False
+    
+    
+
+
 if __name__ == '__main__':
     
     import asymmetree.treeevolve as te
@@ -122,7 +180,18 @@ if __name__ == '__main__':
     # print(fitch_u.edges())
     # print(fitch_u.size())
     
-    from asymmetree.visualize.GeneTreeVis import GeneTreeVis
-    GeneTreeVis(TGT)
-    GeneTreeVis(OGT)
+    # from asymmetree.visualize.GeneTreeVis import GeneTreeVis
+    # GeneTreeVis(TGT)
+    # GeneTreeVis(OGT)
+    
+    print('is rs-Fitch graph:',
+          is_rs_fitch(fitch_u, color_set=[x.ID for x in S.leaves()]))
+    
+    G = nx.Graph()
+    G.add_node('a', color=1)
+    G.add_node('a2', color=1)
+    G.add_node('b', color=2)
+    G.add_node('b2', color=2)
+    G.add_edges_from([('a', 'a2'), ('a', 'b2'), ('b', 'a2'), ('b', 'b2')])
+    print('is rs-Fitch graph:', is_rs_fitch(G, color_set=[1,2]))
     

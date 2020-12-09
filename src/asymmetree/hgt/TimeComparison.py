@@ -237,7 +237,7 @@ if __name__ == '__main__':
         ldt2 = ldt_graph(T2, S2)
         print(ldt2.order(), ldt2.size(), gt.graphs_equal(ldt, ldt2))
         
-        print('--- fitch ---\n')
+        print('--- fitch ---')
         fitch2 = undirected_fitch(T2, rs_transfer_edges(T2, S2))
         print('Order: {} vs {}'.format(fitch.order(), fitch2.order()))
         print('Size: {} vs {}'.format(fitch.size(), fitch2.size()))
