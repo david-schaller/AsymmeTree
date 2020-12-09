@@ -210,6 +210,7 @@ if __name__ == '__main__':
     
     import asymmetree.treeevolve as te
     import asymmetree.tools.GraphTools as gt
+    from asymmetree.hgt.Fitch import undirected_fitch, rs_transfer_edges
     
     S = te.simulate_species_tree(10)
     TGT = te.simulate_dated_gene_tree(S, dupl_rate=1.0, loss_rate=0.5,
@@ -221,6 +222,7 @@ if __name__ == '__main__':
     print('--- OGT ---\n', OGT.to_newick())
     
     ldt, above, equal = below_equal_above(OGT, S)
+    fitch = undirected_fitch(OGT, rs_transfer_edges(OGT, S))
     n = ldt.order()
     print('Genes:', n, 'Total relations:', int(n * (n-1) / 2))
     print('< {}\n= {}\n> {}'.format(ldt.size(), equal.size(), above.size()))
@@ -234,5 +236,11 @@ if __name__ == '__main__':
         print('--- T2 ---\n', T2.to_newick(distance=False))
         ldt2 = ldt_graph(T2, S2)
         print(ldt2.order(), ldt2.size(), gt.graphs_equal(ldt, ldt2))
+        
+        print('--- fitch ---\n')
+        fitch2 = undirected_fitch(T2, rs_transfer_edges(T2, S2))
+        print('Order: {} vs {}'.format(fitch.order(), fitch2.order()))
+        print('Size: {} vs {}'.format(fitch.size(), fitch2.size()))
+        print(gt.contingency_table(fitch, fitch2))
     else:
         print(False)

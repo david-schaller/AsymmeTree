@@ -115,7 +115,7 @@ def contingency_table(true_graph, graph, as_dict=True):
     if isinstance(graph, nx.DiGraph):
         tn = (graph.order() * (graph.order()-1)) - (tp + fp + fn)
     else:
-        tn = (graph.order() * (graph.order()-1) / 2) - (tp + fp + fn)
+        tn = (graph.order() * (graph.order()-1) // 2) - (tp + fp + fn)
     
     if as_dict:
         return {'tp': tp, 'tn': tn, 'fp': fp, 'fn': fn}
