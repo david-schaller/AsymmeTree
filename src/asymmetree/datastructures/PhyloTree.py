@@ -569,6 +569,8 @@ class PhyloTree(Tree):
                 if v.label.isdigit():
                     v.ID = int(v.label)
                     IDs.add(v.ID)
+            elif isinstance(v.ID, int) and v.ID >= 0:
+                IDs.add(v.ID)
         
         # assign new IDs to remaining nodes
         current_ID = 0

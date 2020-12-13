@@ -92,25 +92,26 @@ class RsScenarioConstructor:
         self.S.supply_leaves()
         
         # top-level call on full leaf set and rho_S
-        T = PhyloTree(self._build_gene_tree(self.L, self.S.root.children[0]))
+        self.T = PhyloTree(self._build_gene_tree(self.L, self.S.root.children[0]))
         
         # --- post-processing of T ---
         
         # planted root
-        T.add_planted_root()
-        T.root.tstamp = self.S.root.tstamp
-        T.root.color = self.S.root.ID
+        self.T.add_planted_root()
+        self.T.root.tstamp = self.S.root.tstamp
+        self.T.root.color = self.S.root.ID
         
         # suppress all vertices with a single child except the planted root
         to_suppress = []
-        for u in T.preorder():
+        for u in self.T.preorder():
             if u.parent and len(u.children) == 1:
                 to_suppress.append((u.parent, u))
-        T.contract(to_suppress)
+        self.T.contract(to_suppress)
         
-        distance_from_timing(T)
+        self.T.reconstruct_IDs()
+        distance_from_timing(self.T)
         
-        return self.S, T
+        return self.S, self.T
         
     
     def _species_tree(self):
