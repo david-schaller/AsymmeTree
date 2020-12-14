@@ -51,7 +51,9 @@ bin/
 *.lof
 *.toc
 _minted*/
+*.pyg
 
 # others
 examples/results/*
 testfile*
+*.DS_store

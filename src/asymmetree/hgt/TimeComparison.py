@@ -204,7 +204,7 @@ class RsScenarioConstructor:
                     if v_S is not v_S_star:
                         w_K.transferred = 1
         
-        return u_T     
+        return u_T
 
 
 if __name__ == '__main__':

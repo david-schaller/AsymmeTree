@@ -6,4 +6,5 @@ from asymmetree.hgt.Fitch import (true_transfer_edges,
                                   undirected_fitch)
 
 from asymmetree.hgt.TimeComparison import (below_equal_above,
-                                           ldt_graph)
+                                           ldt_graph,
+                                           RsScenarioConstructor)
