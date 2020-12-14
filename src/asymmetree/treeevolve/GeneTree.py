@@ -64,6 +64,7 @@ class GeneTreeSimulator:
                  hgt_rate=0.0,
                  dupl_polytomy=0.0,
                  prohibit_extinction='per_species',
+                 replace_prob=0.0,
                  **kwargs):
         """Simulate a gene tree along the specified species tree.
         
@@ -78,6 +79,9 @@ class GeneTreeSimulator:
                 species ('per_species'), of the complete gene family
                 ('per_family'), or no constraints (False); default is 
                 'per_species'.
+            replace_prob -- replacing HGT events, probability by which one
+                random homolog in the receiving branch of the receiving branch
+                gets lost immediately after the transfer
         """
         
         self.rate_sum = dupl_rate + loss_rate + hgt_rate
@@ -88,6 +92,8 @@ class GeneTreeSimulator:
         self._prohibit_extinction = prohibit_extinction
         
         self._dupl_polytomy = dupl_polytomy
+        
+        self._replace_prob = replace_prob
         
         self._reset()
         
@@ -214,7 +220,18 @@ class GeneTreeSimulator:
                     
                 # HGT    
                 elif event_type == 'H':
-                    self._hgt(event_tstamp, branch)
+                    trans_edge, _ = self._hgt(event_tstamp, branch)
+                    
+                    if (self._replace_prob > 0.0            and
+                        trans_edge                          and
+                        len(self.ES_to_b[trans_edge]) > 1   and
+                        np.random.random() < self._replace_prob):
+                        
+                        # choose among all except the last added branch
+                        i = np.random.randint(0, 
+                                      high=len(self.ES_to_b[trans_edge])-1)
+                        self._loss(event_tstamp,
+                                   self.ES_to_b[trans_edge][i])
                 
                 t = event_tstamp
 
@@ -395,7 +412,12 @@ class GeneTreeSimulator:
             if (self._prohibit_extinction == 'per_species' and
                 len(self.ES_to_b[trans_edge]) == 2):
                 self.total_rate += self.l
-                self.ES_to_b[trans_edge][0].rate += self.l 
+                self.ES_to_b[trans_edge][0].rate += self.l
+            
+            return trans_edge, new_branch
+        
+        else:
+            return False, None
                 
     
     def _assert_no_extinction(self, T):
