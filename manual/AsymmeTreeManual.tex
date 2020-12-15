@@ -412,13 +412,23 @@ The following parameters are available:
 	\texttt{prohibit\_extinction=\newline \sq per\_species\sq}  & avoid loss
 	events for genes that are the last survivor in their species branch
 	(\texttt{\sq per\_species\sq}), the last survivor of the whole family
-	(\texttt{\sq per\_family\sq}); or no constraints  (\texttt{False})
+	(\texttt{\sq per\_family\sq}); or no constraints  (\texttt{False})\\
+  \texttt{replace\_prob=0.0} & probability that a a transferred copy replaces 
+  one (randomly chosen) homolog in the receiving branch; default is 
+  \texttt{0.0} in which case all HGT events are additive
 \end{longtable}
 }
 \vspace{3mm}
 
 \noindent
-For the constraints to avoid extinction, the loss rate in the respective branches are temporarily set to zero.
+For the constraints to avoid extinction, the loss rate in the respective 
+branches are temporarily set to zero.
+Note that if replacing HGT is enabled (\texttt{replace\_prob} $>0.0$), then the 
+resulting 
+tree may contain loss leaves even if the loss rate is zero.
+Hence, constructing the observable tree (see below) also becomes relevant in 
+the latter setting.
+
 Example usage:
 
 \begin{adjustwidth}{1cm}{1cm}\vspace{2mm}
@@ -430,7 +440,11 @@ tree_simulator = te.GeneTreeSimulator(S)
 tree = tree_simulator.simulate(dupl_rate=1.0, loss_rate=0.5, hgt_rate=0.1)
 
 # or
-tree = te.simulate_dated_gene_tree(S, dupl_rate=1.0, loss_rate=0.5, hgt_rate=0.1)
+tree = te.simulate_dated_gene_tree(S,
+                                   dupl_rate=1.0,
+                                   loss_rate=0.5,
+                                   hgt_rate=0.1,
+                                   replace_prob=0.5)
 \end{minted}
 \end{adjustwidth}
 
