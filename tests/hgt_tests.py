@@ -21,8 +21,8 @@ class TestHGT(unittest.TestCase):
     
         # true gene tree (with losses)
         TGT = te.simulate_dated_gene_tree(S, dupl_rate=1.0,
-                                             loss_rate=0.5,
-                                             hgt_rate=0.2)
+                                              loss_rate=0.5,
+                                              hgt_rate=0.2)
         
         # observable gene tree
         OGT = te.observable_tree(TGT)
@@ -35,6 +35,31 @@ class TestHGT(unittest.TestCase):
         cotree = Cotree.cotree(ldt)
         
         self.assertTrue( gt.is_subgraph(ldt, fitch) and cotree )
+    
+    
+    def test_replacing_hgt(self):
+        
+        N = 20
+        
+        S = te.simulate_species_tree(N, model='innovation')
+    
+        # true gene tree (with losses)
+        TGT = te.simulate_dated_gene_tree(S, dupl_rate=0.0,
+                                             loss_rate=0.0,
+                                             hgt_rate=1.0,
+                                             prohibit_extinction='per_species',
+                                             replace_prob=1.0,)
+        
+        # observable gene tree
+        OGT = te.observable_tree(TGT)
+        
+        leaves = [v for v in OGT.leaves()]
+        colors = {v.color for v in leaves}
+        
+        # print(TGT.to_newick())
+        # print(OGT.to_newick())
+        
+        self.assertTrue(len(colors) == N and len(leaves) == N)
             
 
 if __name__ == '__main__':
