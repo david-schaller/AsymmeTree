@@ -278,24 +278,25 @@ class Tree:
             contracted.add(v)
         
         
-    def get_triples(self):
-        """Retrieve a list of all triples of the tree.
+    def get_triples(self, id_only=False):
+        """Retrieve a list of all triples of the tree."""
         
-        Warning: Algorithm works recursively and can produce extremely 
-        large lists.
-        """
-                
+        if id_only:
+            return [(a.ID, b.ID, c.ID) for a, b, c in self._triple_generator()]
+        else:
+            return [t for t in self._triple_generator()]
+    
+    
+    def _triple_generator(self):
+        
         self.supply_leaves()
-        triples = []
         
         for u in self.preorder():
             for v1, v2 in itertools.permutations(u.children, 2):
                 if len(v2.leaves) > 1:
-                    for t3 in v1.leaves:
-                        for t1, t2 in itertools.combinations(v2.leaves, 2):
-                            triples.append( (t1, t2, t3) )
-        
-        return triples
+                    for c in v1.leaves:
+                        for a, b in itertools.combinations(v2.leaves, 2):
+                            yield a, b, c
     
     
     def delete_and_reconnect(self, node):

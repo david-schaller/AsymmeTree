@@ -73,7 +73,7 @@ def simulate_species_tree(N, model='innovation',
     else:
         raise ValueError("model '{}' is not available".format(model))
         
-    # remove extinct branches for model that include losses
+    # remove extinct branches for models that include losses
     if remove_extinct and model.upper() in ('BDP', 'EBDP'):
         delete_losses_and_contract(tree, inplace=True)
         
@@ -86,6 +86,10 @@ def simulate_species_tree(N, model='innovation',
          edges = _select_edges_for_contraction(tree, non_binary_prob,
                                                exclude_planted_edge=True)
          tree.contract(edges)
+    
+    # rescale to specified height
+    if rescale_to_height is not None:
+        _rescale(tree, rescale_to_height, inplace=True)
         
     return tree
 

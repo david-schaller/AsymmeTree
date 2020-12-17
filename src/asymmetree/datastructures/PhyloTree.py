@@ -123,7 +123,7 @@ class PhyloTree(Tree):
             new_root.dist = 0.0
             
     
-    def supply_leaves(self, exclude_losses=True):
+    def supply_leaves(self, exclude_losses=False):
         """Add the leaves to all nodes under their respective subtrees."""
         
         def _supply_leaves(node, exclude_losses):
