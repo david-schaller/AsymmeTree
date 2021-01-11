@@ -4,7 +4,7 @@ import os, subprocess, itertools, time
 
 from asymmetree.best_matches.TrueBMG import bmg_from_tree
 from asymmetree.file_io.ScenarioFileIO import matrix_to_phylip
-from asymmetree import PhyloTree, PhyloTreeNode
+from asymmetree.datastructures.PhyloTree import PhyloTree, PhyloTreeNode
 
 
 __author__ = 'David Schaller'

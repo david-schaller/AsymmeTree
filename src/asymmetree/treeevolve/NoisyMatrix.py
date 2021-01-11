@@ -9,7 +9,7 @@ Introduce noise into a distance matrix.
 import random
 import numpy as np
 
-from asymmetree import PhyloTree, PhyloTreeNode
+from asymmetree.datastructures.PhyloTree import PhyloTree, PhyloTreeNode
 
 
 __author__ = "David Schaller"

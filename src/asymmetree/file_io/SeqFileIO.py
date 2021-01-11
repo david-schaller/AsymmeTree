@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from asymmetree import TreeNode
+from asymmetree.datastructures.Tree import TreeNode
 
 
 __author__ = 'David Schaller'

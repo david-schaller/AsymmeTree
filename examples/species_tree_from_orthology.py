@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from asymmetree import PhyloTree
+from asymmetree.datastructures import PhyloTree
 import asymmetree.treeevolve as te
 from asymmetree.best_matches import TrueBMG
 from asymmetree.paraphylo import TreeReconstructor

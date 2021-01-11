@@ -2,7 +2,7 @@
 
 import unittest, os
 
-from asymmetree import PhyloTree
+from asymmetree.datastructures import PhyloTree
 
 
 __author__ = 'David Schaller'

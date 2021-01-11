@@ -2,7 +2,7 @@
 
 import unittest
 
-from asymmetree import PhyloTreeNode
+from asymmetree.datastructures import PhyloTreeNode
 import asymmetree.seqevolve as se
 import asymmetree.treeevolve as te
 

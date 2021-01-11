@@ -2,7 +2,7 @@
 
 import unittest
 
-from asymmetree import PhyloTree
+from asymmetree.datastructures import PhyloTree
 import asymmetree.best_matches as bm
 
 

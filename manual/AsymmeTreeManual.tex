@@ -206,7 +206,8 @@ variable.
 \section{Usage}
 
 AsymmeTree is divided into several subpackages and modules, an overview of which is given in Appendix~\ref{apx:package_structure}.
-The library interface functions are described in the following sections and can be imported directly from the respective subpackage (see examples).
+The API functions are described in the following sections and can be imported 
+directly from the respective subpackage (see examples).
 
 The term `color' regularly appears in the library and refers to the reconciliation of gene trees with species trees.
 In particular, the terms `color' and `species'/`genome' in which a gene resides are used interchangeably.
@@ -277,7 +278,7 @@ To load a tree that was serialized this way, use:
 
 \begin{adjustwidth}{1cm}{1cm}\vspace{2mm}
 \begin{minted}[fontsize=\footnotesize]{python}
-from asymmetree import PhyloTree
+from asymmetree.datastructures import PhyloTree
 
 tree = PhyloTree.load('tree.json')
 \end{minted}
@@ -291,18 +292,18 @@ or its inheriting classes and then provides functions for efficient last common
 ancestor queries in that tree. 
 
 \begin{adjustwidth}{1cm}{1cm}\vspace{2mm}
-  \begin{minted}[fontsize=\footnotesize]{python}
-  from asymmetree.datastructures.Tree import LCA
-  
-  # tree is of type 'Tree' (or an inheriting class)
-  lca_T = LCA(tree)
-  
-  # l.c.a. queries via 'TreeNode' instances or IDs (int)
-  print( lca_T(4, 7) )
-  
-  # triple queries (e.g. is 3 5 | 2 displayed?)
-  print( lca_T.displays_triple(3, 5, 2) )
-  \end{minted}
+\begin{minted}[fontsize=\footnotesize]{python}
+from asymmetree.datastructures.Tree import LCA
+
+# tree is of type 'Tree' (or an inheriting class)
+lca_T = LCA(tree)
+
+# l.c.a. queries via 'TreeNode' instances or IDs (int)
+print( lca_T(4, 7) )
+
+# triple queries (e.g. is 3 5 | 2 displayed?)
+print( lca_T.displays_triple(3, 5, 2) )
+\end{minted}
 \end{adjustwidth}
 All such queries take instance of type \texttt{TreeNode} (or inheriting 
 classes) as 

@@ -16,13 +16,13 @@ from collections import deque
 
 import networkx as nx
 
-from asymmetree.datastructures import Tree
+from asymmetree.datastructures.Tree import Tree, TreeNode, LCA
 
 
 __author__ = 'David Schaller'
     
 
-class CotreeNode(Tree.TreeNode):
+class CotreeNode(TreeNode):
     
     __slots__ = ('aux_counter',)
     
@@ -50,7 +50,7 @@ class CotreeNode(Tree.TreeNode):
             return '<>'
         
 
-class Cotree(Tree.Tree):
+class Cotree(Tree):
     
     # corresponding node type
     node_type = CotreeNode
@@ -168,7 +168,7 @@ class Cotree(Tree.Tree):
         """Generator for all paths of length 2 (edges) in the cograph."""
         
         self.supply_leaves()
-        lca = Tree.LCA(self)
+        lca = LCA(self)
         
         for u in self.inner_vertices():
             

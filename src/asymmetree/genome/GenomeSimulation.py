@@ -2,7 +2,7 @@
 
 import os
 
-from asymmetree import PhyloTree
+from asymmetree.datastructures.PhyloTree import PhyloTree
 import asymmetree.treeevolve as te
 import asymmetree.seqevolve as se
 from asymmetree.file_io.SeqFileIO import write_alignment, write_fasta
