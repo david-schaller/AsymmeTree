@@ -98,7 +98,15 @@ def symmetric_diff(G1, G2):
 
 
 def contingency_table(true_graph, graph, as_dict=True):
-    """Contingency table for the edge sets of two graphs."""
+    """Contingency table for the edge sets of two graphs.
+    
+    The two graphs must have the same vertex set.
+    """
+    
+    if (true_graph.order() != graph.order() or
+        set(true_graph.nodes()) != set(graph.nodes())):
+        raise ValueError('graphs must have the same vertex sets')
+            
     
     tp, fp, fn = 0, 0, 0
     

@@ -641,8 +641,8 @@ class PhyloTree(Tree):
                 each color; default is False
         """
         
-        if not isinstance(N, int):
-            raise TypeError("N must be of type 'int'")
+        if not isinstance(N, int) or N < 1:
+            raise TypeError("N must be of type 'int' and > 0")
             
         if isinstance(colors, int):
             colors = [i+1 for i in range(colors)]
