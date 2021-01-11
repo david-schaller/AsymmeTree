@@ -393,6 +393,16 @@ class TwoColoredLRT:
                 node.add_child(child)
                 
         return node
+    
+
+def lrt_from_2bmg(G):
+    """Effieciently constructs the LRT for a 2-BMG via the support vertices.
+    
+    Returns false if the graph is not a 2-colored BMG.
+    """
+    
+    builder = TwoColoredLRT(G)
+    return builder.build_tree()
 
 
 # --------------------------------------------------------------------------
