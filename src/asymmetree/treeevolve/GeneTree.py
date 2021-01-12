@@ -164,7 +164,7 @@ class GeneTreeSimulator:
             else:
                 event_type = 'H'
         
-#        assert np.isclose(self.total_rate, sum([b.rate for b in self.branches])), "Sum of rates and total rate are not equal."
+        # assert np.isclose(self.total_rate, sum([b.rate for b in self.branches])), "Sum of rates and total rate are not equal."
         
         return branch, event_type
     
@@ -281,7 +281,10 @@ class GeneTreeSimulator:
         S_v = self.spec_queue.popleft()
         S_u = S_v.parent
         
-        for branch in self.ES_to_b[(S_u, S_v)]:
+        # copy since we modify this list
+        branches = self.ES_to_b[(S_u, S_v)].copy()
+        
+        for branch in branches:
             
             spec_node = PhyloTreeNode(branch.ID, label='S',
                                       color=S_v.ID, tstamp=S_v.tstamp,
@@ -289,10 +292,6 @@ class GeneTreeSimulator:
                                       transferred=branch.transferred)
             branch.parent.add_child(spec_node)
             
-            # losses and (extant) leaves
-            if not S_v.children:
-                spec_node.label = '*' if S_v.is_loss() else str(spec_node.ID)
-                
             for S_w in S_v.children:
                 
                 if S_w is S_v.children[0]:
@@ -308,9 +307,20 @@ class GeneTreeSimulator:
                 
                 self.ES_to_b[(S_v, S_w)].append(new_branch)
                 self.id_counter += 1
+            
+            # losses and (extant) leaves
+            if not S_v.children:
+                spec_node.label = '*' if S_v.is_loss() else str(spec_node.ID)
                 
-            self.total_rate += (len(S_v.children) - 1) * branch.rate
-            self.total_surviving += len(S_v.children) - 1
+                self.ES_to_b[(S_u, S_v)].remove(branch)
+                self.total_rate -= branch.rate
+                branch.rate = 0.0
+                
+                if S_v.is_loss(): self.total_surviving -= 1
+            
+            else:
+                self.total_surviving += len(S_v.children) - 1
+                self.total_rate += (len(S_v.children) - 1) * branch.rate
             
     
     def _duplication(self, event_tstamp, branch):
