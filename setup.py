@@ -5,7 +5,7 @@ with open('README.md', 'r') as fh:
 
 setuptools.setup(
     name='asymmetree',
-    version='1.0.1',
+    version='1.0.2',
     author='David Schaller',
     author_email='sdavid@bioinf.uni-leipzig.de',
     description='Simulation of phylogenetic trees, sequences and genomes.',

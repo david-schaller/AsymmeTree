@@ -381,7 +381,6 @@ class GeneTreeSimulator:
             len(self.ES_to_b[(S_u, S_v)]) == 1):
             self.total_rate -= self.l
             self.ES_to_b[(S_u, S_v)][0].rate -= self.l
-            
     
     
     def _hgt(self, event_tstamp, branch):
