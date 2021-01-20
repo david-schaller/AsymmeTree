@@ -313,6 +313,7 @@ class LinearCographDetector:
         self.leaf_map[v2] = v2_node
         
         if len(self.V) == 2:
+            self._remove_single_child_root()
             return self.T
         
         for x in self.V[2:]:
@@ -431,6 +432,7 @@ class LinearCographDetector:
                 
             self.leaf_map[x] = x_node
         
+        self._remove_single_child_root()
         return self.T
     
     
@@ -530,3 +532,12 @@ class LinearCographDetector:
             w = u                       # rest w for next choice of marked vertex
         
         return u
+    
+    
+    def _remove_single_child_root(self):
+        
+        if len(self.T.root.children) == 1:
+        
+            new_root = self.T.root.children[0]
+            new_root.detach()
+            self.T.root = new_root
