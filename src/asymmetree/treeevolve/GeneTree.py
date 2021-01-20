@@ -6,7 +6,7 @@ Gene Tree Simulator.
 Simulate dated gene trees.
 """
 
-import random
+import random, warnings
 from collections import deque
 
 import numpy as np
@@ -52,10 +52,35 @@ class GeneTreeSimulator:
     
     def __init__(self, S):
         
+        if not isinstance(S, PhyloTree) or not S.root:
+            raise TypeError("'S' must be a non-empty tree of type 'PhyloTree'")
+        
         self.S = S                                  # species tree
         self.sorted_speciations = S.sorted_nodes()  # list of speciations sorted by time stamp
         self.sorted_edges = S.sorted_edges()        # edges of the species tree
                                                     # sort (u,v) by tstamp of u
+        self._analyze_secies_tree()
+    
+    
+    def _analyze_secies_tree(self):
+        
+        self.S_subtree_survivors = {}
+        
+        for u in self.S.postorder():
+            
+            if not u.children:
+                if u.is_loss():
+                    self.S_subtree_survivors[u] = 0
+                else:
+                    self.S_subtree_survivors[u] = 1
+            
+            else:
+                self.S_subtree_survivors[u] = sum(self.S_subtree_survivors[v]
+                                                  for v in u.children)
+        
+        if not self.S_subtree_survivors[self.S.root]:
+            warnings.warn('species tree has no non-loss leaves',
+                          category=warnings.UserWarning)
     
     
     def simulate(self,
