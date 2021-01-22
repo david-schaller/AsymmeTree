@@ -127,23 +127,32 @@ class GeneTreeSimulator:
     
     def _reset(self):
         
-        self.spec_queue = deque(self.sorted_speciations)    # queue for speciation events
+        # queue for speciation events
+        self.spec_queue = deque(self.sorted_speciations)
         self.id_counter = 0
         
-        self.total_surviving = 0                            # counter for surviving genes
-        self.total_rate = 0                                 # total event rate (all branches)
+        # counter for surviving genes
+        self.total_surviving = 0
+        
+        # total event rate (all branches)
+        self.total_rate = 0
+        
+        # keep track of surving branches that are in species branches with
+        # at least 1 surviving species leaf
+        self.surv_non_loss_lineages = set()
+        
         self.branches = []
         
-        self.ES_to_b = {e: [] for e in self.sorted_edges}   # maps E(S) --> existing branches
+        # maps E(S) --> existing branches
+        self.ES_to_b = {e: [] for e in self.sorted_edges}
 
     
     def _get_tstamp(self, t):
         
-        if self._prohibit_extinction == 'per_family' and self.total_surviving == 1:
-            rate = self.d + self.l
-        else:
-            rate = self.total_rate
-        
+        rate = self.total_rate
+        if (self._prohibit_extinction == 'per_family' and
+            len(self.surv_non_loss_lineages) == 1):
+            rate -= self.l
         
         if rate <= 0.0:
             return -1
@@ -153,18 +162,34 @@ class GeneTreeSimulator:
     
     def _get_branch_and_type(self):
         
-        if self._prohibit_extinction == 'per_family' and self.total_surviving == 1:
+        if (self._prohibit_extinction == 'per_family' and
+            len(self.surv_non_loss_lineages) == 1):
             
-            branch = None
-            for b in self.branches:
-                if b.rate > 0.0:
-                    branch = b
+            # get the single branch that is in a non-loss species branch
+            special_branch = next(iter(self.surv_non_loss_lineages))
+            temp_rate = special_branch.rate
+            
+            r = np.random.uniform(high=self.total_rate-self.l)
+            current_sum = 0.0
+            
+            for i in range(len(self.branches)):
+                if r <= current_sum + self.branches[i].rate:
                     break
+                current_sum += self.branches[i].rate
             
-            if np.random.uniform(high=self.d+self.h) <= self.d:
+            branch = self.branches[i]
+            
+            loss_factor = 0 if branch is special_branch else 1
+            
+            if r <= current_sum + self.d:
                 event_type = 'D'
+            elif r <= current_sum + self.d + loss_factor * self.l:
+                event_type = 'L'
             else:
                 event_type = 'H'
+            
+            # finally reset branch rate
+            special_branch.rate = temp_rate
         
         else:
             r = np.random.uniform(high=self.total_rate)
@@ -292,9 +317,11 @@ class GeneTreeSimulator:
             self.ES_to_b[(self.S.root, S_v)].append(new_branch)
             self.branches.append(new_branch)
             self.id_counter += 1
-            
-        self.total_rate += len(self.S.root.children) * rate   
-        self.total_surviving = len(self.S.root.children)
+            if self.S_subtree_survivors[S_v]:
+                self.surv_non_loss_lineages.add(new_branch)
+                
+            self.total_rate += rate   
+            self.total_surviving = 1
             
         return T
             
@@ -332,6 +359,8 @@ class GeneTreeSimulator:
                 
                 self.ES_to_b[(S_v, S_w)].append(new_branch)
                 self.id_counter += 1
+                if self.S_subtree_survivors[S_w]:
+                    self.surv_non_loss_lineages.add(new_branch)
             
             # losses and (extant) leaves
             if not S_v.children:
@@ -341,11 +370,14 @@ class GeneTreeSimulator:
                 self.total_rate -= branch.rate
                 branch.rate = 0.0
                 
-                if S_v.is_loss(): self.total_surviving -= 1
+                if S_v.is_loss():
+                    self.total_surviving -= 1
+                    self.surv_non_loss_lineages.discard(branch)
             
             else:
                 self.total_surviving += len(S_v.children) - 1
                 self.total_rate += (len(S_v.children) - 1) * branch.rate
+                self.surv_non_loss_lineages.discard(branch)
             
     
     def _duplication(self, event_tstamp, branch):
@@ -359,6 +391,7 @@ class GeneTreeSimulator:
                                   transferred=branch.transferred)
         branch.parent.add_child(dupl_node)
         self.ES_to_b[(S_u, S_v)].remove(branch)
+        self.surv_non_loss_lineages.discard(branch)
         
         copy_number = self._get_copy_number()
         
@@ -377,6 +410,8 @@ class GeneTreeSimulator:
             
             self.ES_to_b[(S_u, S_v)].append(new_branch)
             self.id_counter += 1
+            if self.S_subtree_survivors[S_v]:
+                self.surv_non_loss_lineages.add(new_branch)
         
         self.total_surviving += (copy_number - 1)
         self.total_rate += (copy_number - 1) * (self.rate_sum)
@@ -397,6 +432,7 @@ class GeneTreeSimulator:
                                   transferred=branch.transferred)
         branch.parent.add_child(loss_node)
         self.ES_to_b[(S_u, S_v)].remove(branch)
+        self.surv_non_loss_lineages.discard(branch)
         branch.rate = 0.0
         
         self.total_surviving -= 1
@@ -423,6 +459,7 @@ class GeneTreeSimulator:
                                      transferred=branch.transferred)
             branch.parent.add_child(hgt_node)
             self.ES_to_b[(S_u, S_v)].remove(branch)
+            self.surv_non_loss_lineages.discard(branch)
             
             # original branch
             array_id = branch.array_id
@@ -431,6 +468,8 @@ class GeneTreeSimulator:
             self.branches[array_id] = new_branch
             self.ES_to_b[(S_u, S_v)].append(new_branch)
             self.id_counter += 1
+            if self.S_subtree_survivors[S_v]:
+                self.surv_non_loss_lineages.add(new_branch)
             
             # receiving branch
             array_id = len(self.branches)
@@ -439,6 +478,8 @@ class GeneTreeSimulator:
             self.branches.append(trans_branch)
             self.ES_to_b[trans_edge].append(trans_branch)
             self.id_counter += 1
+            if self.S_subtree_survivors[trans_edge[1]]:
+                self.surv_non_loss_lineages.add(trans_branch)
             
             self.total_surviving += 1
             self.total_rate += self.rate_sum
