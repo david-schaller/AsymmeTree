@@ -9,10 +9,6 @@ import networkx as nx
 from asymmetree.datastructures.PhyloTree import PhyloTree, PhyloTreeNode
 from asymmetree.datastructures.Partition import Partition
 
-from asymmetree.tools.Partitioning import (Karger,
-                                           greedy_bipartition,
-                                           gradient_walk_bipartition)
-
 
 __author__ = 'David Schaller'
 
@@ -183,36 +179,16 @@ class Build:
             return partition
         
 
-class Build2:
+class MTT:
     """BUILD / MTT algorithm with minimal cost bipartition."""
     
-    def __init__(self, R, L, F=None,
-                 allow_inconsistency=True,
-                 bipart_method='mincut',
-                 cost_function=None, cost_function_args=None,
-                 weighted_mincut=False, triple_weights=None):
+    def __init__(self, R, L, F=None):
         
         self.R = R
         self.L = L
         
         # forbidden triples --> activates MTT if non-empty
         self.F = F
-        
-        # allow inconsistencies or return False?
-        self.allow_inconsistency = allow_inconsistency
-        
-        if bipart_method in ('mincut', 'karger', 'greedy', 'gradient_walk'):
-            self.bipart_method = bipart_method
-        else:
-            raise ValueError("unknown bipartition method "\
-                             "'{}'".format(bipart_method))
-        
-        self.cost_function = cost_function
-        self.cost_function_args = cost_function_args
-            
-        # parameters if bipartition method is mincut
-        self.weighted_mincut = weighted_mincut
-        self.triple_weights = triple_weights
     
     
     def build_tree(self, return_root=False):
@@ -254,15 +230,11 @@ class Build2:
         if len(L) <= 2:
             return self._trivial_case(L)
             
-        aux_graph = aho_graph(R, L, weighted=self.weighted_mincut,
-                                    triple_weights=self.triple_weights)
+        aux_graph = aho_graph(R, L)
         partition = list(nx.connected_components(aux_graph))
         
         if len(partition) < 2:
-            if not self.allow_inconsistency:
-                return False
-            else:
-                partition = self._bipartition(L, aux_graph)
+            return False
         
         node = PhyloTreeNode(-1)            # place new inner node
         for s in partition:
@@ -289,10 +261,7 @@ class Build2:
         partition, aux_graph = mtt_partition(L, R, F)
         
         if len(partition) < 2:
-            if not self.allow_inconsistency:
-                return False
-            else:
-                partition = self._bipartition(L, aux_graph)
+            return False
         
         node = PhyloTreeNode(-1)            # place new inner node
         for s in partition:
@@ -308,43 +277,6 @@ class Build2:
                 node.add_child(Ti)          # add roots of the subtrees
    
         return node
-    
-    
-    def _bipartition(self, L, aux_graph):
-        
-        best_cost, best_bp = float('inf'), None
-        
-        if self.bipart_method == 'mincut':
-            # Stoer–Wagner algorithm
-            best_cost, best_bp = nx.stoer_wagner(aux_graph)
-        
-        elif self.bipart_method == 'karger':
-            karger = Karger(aux_graph)
-            
-            for _, bp in karger.generate():
-                cost = self.cost_function(bp, *self.cost_function_args)
-                
-                if cost < best_cost:
-                    best_cost, best_bp = cost, bp
-        
-        elif self.bipart_method == 'greedy':
-            
-            for _ in range(5):
-                cost, bp = greedy_bipartition(L, self.cost_function,
-                                              args=self.cost_function_args)
-                if cost < best_cost:
-                    best_cost, best_bp = cost, bp
-        
-        elif self.bipart_method == 'gradient_walk':
-            
-            for _ in range(5):
-                cost, bp = gradient_walk_bipartition(L, self.cost_function,
-                               args=self.cost_function_args)
-                if cost < best_cost:
-                    best_cost, best_bp = cost, bp
-        
-        self.total_cost += best_cost
-        return best_bp
 
 
 def greedy_BUILD(R, L, triple_weights=None, return_root=False):
