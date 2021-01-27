@@ -17,11 +17,11 @@ def augment_and_label(tree, inplace=False):
         tree = tree.copy()
     
     # precompute since tree will be modified
-    inner_vertices = [u for u in tree.inner_vertices()]
+    inner_nodes = [u for u in tree.inner_nodes()]
     tree.supply_leaves()
     current_ID = tree.get_max_ID() + 1
     
-    for u in inner_vertices:
+    for u in inner_nodes:
         
         # should not appear except if tree is planted, otherwise ignore
         if len(u.children) == 1:

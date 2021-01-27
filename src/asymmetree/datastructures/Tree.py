@@ -9,25 +9,46 @@ __author__ = 'David Schaller'
 
 
 class TreeNode:
-    """Class 'TreeNode'.
+    """Tree nodes for class Tree.
     
-    Components for class 'Tree'. Contains a list of children as well as a
-    reference to the parent node.
+    Attributes
+    ----------
+    ID : int
+        Integer identifier of the node, some methods use the convention -1 if
+        an identifier is not needed.
+    label: str
+        Human interpretable label.
+    parent: TreeNode
+        Parent node of this node.
+    children: dll.DLList
+        Child nodes of this node in a doubly-linked list.
+    leaves: list of TreeNode.
+        A list of all leaf nodes in the subtree under this node, only available
+        after execution of supply_leaves() function.
     """
     
-    __slots__ = ('ID', 'label', 'parent', 'parent_dll_element',
+    __slots__ = ('ID', 'label', 'parent', '_par_dll_node',
                  'children', 'leaves')
     
     
     def __init__(self, ID, label=''):
+        """Constructor for TreeNode class.
+        
+        Parameters
+        ----------
+        ID : int
+            Integer identifier of the node, some methods use the convention -1 if
+            an identifier is not needed.
+        label: str, optional
+            Human interpretable label (the default is '').
+        """
         
         self.ID = ID
         self.label = label
         
-        
         self.parent = None
         # reference to doubly-linked list element in the parents' children
-        self.parent_dll_element = None
+        self._par_dll_node = None
         
         self.children = dll.DLList()
         
@@ -43,59 +64,109 @@ class TreeNode:
     
                                             
     def add_child(self, child_node):
-        """Add a node as a child of this node."""
+        """Add a node as a child of this node.
+        
+        Does nothing if the node is already a child node of this node.
+        
+        Parameters
+        ----------
+        child_node : TreeNode
+            The node to add as a new child to this node.
+        """
         
         # do nothing if child_node is already a child of self
         
         if child_node.parent is None:
             child_node.parent = self
-            child_node.parent_dll_element = self.children.append(child_node)
+            child_node._par_dll_node = self.children.append(child_node)
         
         elif child_node.parent is not self:
             child_node.parent.remove_child(child_node)
             child_node.parent = self
-            child_node.parent_dll_element = self.children.append(child_node)  
+            child_node._par_dll_node = self.children.append(child_node)  
     
     
     def remove_child(self, child_node):
+        """Remove a child node of this node.
+        
+        Parameters
+        ----------
+        child_node : TreeNode
+            The node to be removed from the list of children.
+            
+        Raises
+        ------
+        KeyError
+            If the supplied node is not a child of this node.
+        """
         
         if child_node.parent is self:
-            self.children.remove_node(child_node.parent_dll_element)
+            self.children.remove_node(child_node._par_dll_node)
             child_node.parent = None
-            child_node.parent_dll_element = None
+            child_node._par_dll_node = None
         else:
-            raise ValueError('{} is not a child of node {}'.format(child_node,
-                                                                   self))
+            raise KeyError('{} is not a child of node {}'.format(child_node,
+                                                                 self))
             
             
     def detach(self):
+        """Detach this node from its parent.
+        
+        The node has no parent afterwards.
+        """
         
         if self.parent is not None:
             self.parent.remove_child(self)
         else:
             self.parent = None
-            self.parent_dll_element = None
+            self._par_dll_node = None
             
     
     def is_leaf(self):
-        """Return whether the node is a leaf."""
+        """Return True if the node is a leaf, False otherwise.
+        
+        Returns
+        -------
+        bool
+            True if the node is a leaf, i.e. it has no children, else False.
+        """
         
         return not self.children
         
 
 class Tree:
+    """Basic class for trees.
+    
+    Attributes
+    ----------
+    root : TreeNode
+        The root node of the tree.
+    """
     
     # corresponding node type
     node_type = TreeNode
     
     
     def __init__(self, root):
+        """Constructor for the class tree.
+        
+        Parameters
+        ----------
+        root : TreeNode
+            The root node for the newly created tree.
+        """
         
         self.root = root
         
     
     def leaves(self):
-        """Generator for leaves of the tree."""
+        """Generator for leaves of the tree.
+        
+        Yields
+        ------
+        TreeNode
+            The leaf nodes of the tree.
+        """
         
         def _leaves(node):
             if not node.children:
@@ -111,7 +182,13 @@ class Tree:
     
     
     def preorder(self):
-        """Generator for preorder traversal of the tree."""
+        """Generator for preorder traversal of the tree.
+        
+        Yields
+        ------
+        TreeNode
+            All nodes of the tree in pre-order.
+        """
         
         def _preorder(node):
             yield node
@@ -125,7 +202,13 @@ class Tree:
             
     
     def traverse_subtree(self, u):
-        """Generator for preorder traversal of the subtree rooted at u."""
+        """Generator for pre-order traversal of the subtree rooted at u.
+        
+        Yields
+        ------
+        TreeNode
+            All nodes in the subtree rooted at node u in pre-order.
+        """
         
         yield u
         for child in u.children:
@@ -133,7 +216,13 @@ class Tree:
     
     
     def postorder(self):
-        """Generator for postorder traversal of the tree."""
+        """Generator for post-order traversal of the tree.
+        
+        Yields
+        ------
+        TreeNode
+            All nodes in the subtree rooted at node u in post-order.
+        """
         
         def _postorder(node):
             for child in node.children:
@@ -146,23 +235,35 @@ class Tree:
             yield from []
             
     
-    def inner_vertices(self):
-        """Generator for inner vertices in preorder."""
+    def inner_nodes(self):
+        """Generator for inner nodes in pre-order.
         
-        def _inner_vertices(node):
+        Yields
+        ------
+        TreeNode
+            All inner nodes of the tree in pre-order.
+        """
+        
+        def _inner_nodes(node):
             if node.children:
                 yield node
                 for child in node.children:
-                    yield from _inner_vertices(child)
+                    yield from _inner_nodes(child)
         
         if self.root:
-            yield from _inner_vertices(self.root)
+            yield from _inner_nodes(self.root)
         else:
             yield from []
             
     
     def edges(self):
-        """Generator for all edges of the tree."""
+        """Generator for all edges of the tree.
+        
+        Yields
+        ------
+        tuple of two TreeNode objects
+            All edges of the tree.
+        """
         
         def _edges(node):
             for child in node.children:
@@ -178,8 +279,12 @@ class Tree:
     def edges_sibling_order(self):
         """Generator for all edges of the tree with sibling order.
         
-        Returns edges uv as tuples (u, v, nr) where nr is the index of v in
-        the list of children of node u."""
+        Yields
+        ------
+        tuple of two TreeNode objects and one int
+            Edges uv as tuples (u, v, nr) where nr is the index of v in
+            the list of children of node u.
+        """
         
         def _edges_sibling_order(node):
             i = 0
@@ -195,7 +300,14 @@ class Tree:
         
     
     def inner_edges(self):
-        """Generator for all inner edges of the tree."""
+        """Generator for all inner edges of the tree.
+        
+        Yields
+        ------
+        tuple of two TreeNode objects
+            All inner edges uv of the tree, i.e. edges for which the child v
+            of u is not a leaf.
+        """
         
         def _inner_edges(node):
             for child in node.children:
@@ -210,7 +322,19 @@ class Tree:
                 
     
     def euler_generator(self, id_only=False):
-        """Generator for an Euler tour of the tree."""
+        """Generator for an Euler tour of the tree.
+        
+        Parameters
+        ----------
+        id_only : bool
+            If True, the tuples only contain the integer IDs of the nodes
+            (the default is False).
+        
+        Yields
+        ------
+        TreeNode or int
+            Nodes in an Euler tour of the tree.
+        """
         
         def _euler_generator(node, id_only):
             if id_only: yield node.ID
@@ -229,7 +353,14 @@ class Tree:
             
         
     def euler_and_level(self):
-        """Generator for an Euler tour with node levels."""
+        """Generator for an Euler tour with node levels.
+        
+        Yields
+        ------
+        tuple of a TreeNode and an int
+            Nodes and their level (distance from the root) in an Euler tour of
+            the tree.
+        """
         
         def _euler_level(node, level):
             yield (node, level)
@@ -245,8 +376,17 @@ class Tree:
             
     
     def supply_leaves(self):
-        """Add the leaves to all nodes that are in the subtree of a specific
-        node."""
+        """Leaves in the subtree rooted at each node.
+        
+        Computes the list of leaves for every node in the tree containing the
+        leaf nodes lying in the subtree rooted at the node.
+        
+        Returns
+        -------
+        list of TreeNode objects
+            The leaves under the root, i.e. the complete list of leaves.
+            Returns an empty list if the root is None.
+        """
         
         def _supply_leaves(node):
             node.leaves = []
@@ -266,6 +406,13 @@ class Tree:
         
     
     def contract(self, edges):
+        """Contract edges in the tree.
+        
+        Parameters
+        ----------
+        edges : iterable object of tuples of two TreeNode objects
+            The edges to be contracted in the tree.
+        """
         
         contracted = set()
         
@@ -279,7 +426,23 @@ class Tree:
         
         
     def get_triples(self, id_only=False):
-        """Retrieve a list of all triples of the tree."""
+        """Retrieve a list of all triples of the tree.
+        
+        A tree displays a triple ab|c on the leaf nodes a, b and c if the last
+        common ancestor of a and b is a (proper) descendant of the last common
+        ancestor of a and c (b and c).
+        
+        Parameters
+        ----------
+        id_only : bool
+            If True, the triples are represented by the IDs of the nodes.
+            
+        Returns
+        -------
+        list of tuples of three TreeNode or int objects
+            Each tuple (a, b, c) represents the triple ab|c (=ba|c), i.e. the
+            first two items are closer related in the tree.
+        """
         
         if id_only:
             return [(a.ID, b.ID, c.ID) for a, b, c in self._triple_generator()]
@@ -300,11 +463,22 @@ class Tree:
     
     
     def delete_and_reconnect(self, node):
-        """Delete a node from the tree and reconnect its parent and children."""
+        """Delete a node from the tree and reconnect its parent and children.
+        
+        Parameters
+        ----------
+        node : TreeNode
+            The node to be deleted.
+        
+        Returns
+        -------
+        TreeNode or bool
+            The parent of the node, if it could be deleted, or False, if the
+            node could not be deleted, i.e., it has no parent.
+        """
         
         parent = node.parent
         if not parent:
-            print("cannot delete and reconnect root '{}'".format(node))
             return False
         else:
             parent.remove_child(node)
@@ -320,7 +494,14 @@ class Tree:
     
     
     def get_max_ID(self):
-        """Returns the maximum of all node IDs."""
+        """The maximum of all node IDs.
+        
+        Returns
+        -------
+        int
+            The maximum of all node IDs in the tree, or -1 if all IDs are None
+            or if there are no nodes.
+        """
         
         max_ID = -1
         
@@ -332,7 +513,20 @@ class Tree:
         
     
     def to_newick(self, node=None):
-        """Recursive Tree --> Newick (str) function."""
+        """Newick representation of the tree.
+        
+        Parameters
+        ----------
+        node : TreeNode, optional
+            The node whose subtree shall be returned as a Newick string, the
+            default is None, in which case the whole tree is returned in Newick
+            format.
+        
+        Returns
+        -------
+        str
+            A newick representation of the (sub)tree.
+        """
         
         def _to_newick(node):
             if not node.children:
@@ -458,23 +652,24 @@ class Tree:
     
 # ----------------------------------------------------------------------------
 #                       Efficient lca computation
-#                               based on
-#
-# - Bender, M. A., M. Farach-Colton, G. Pemmasani, S. Skiena, and P. Sumazin:
-#   Lowest common ancestors in trees and directed acyclic graphs.
-#   In: Journal of Algorithms. 57, Nr. 2, November 2005, S. 75–94.
-#   ISSN 0196-6774. doi:10.1016/j.jalgor.2005.08.001.
-# - https://cp-algorithms.com/data_structures/sparse-table.html
 # ----------------------------------------------------------------------------
 
 class LCA:
-    """Compute last common ancestors efficiently.
+    """Compute last common ancestors in a tree efficiently.
     
     Uses a reduction to the Range minimum query (RMQ) problem and a sparse
     table implementation.
     Preprocessing complexity: O(n * log n)
     Query complexity: O(1)
     where n is the number of vertices in the tree.
+    
+    References
+    ----------
+    .. [1] M. A. Bender, M. Farach-Colton, G. Pemmasani, S. Skiena, P. Sumazin.
+       Lowest common ancestors in trees and directed acyclic graphs.
+       In: Journal of Algorithms. 57, Nr. 2, November 2005, S. 75–94.
+       ISSN 0196-6774. doi:10.1016/j.jalgor.2005.08.001.
+    .. [2] https://cp-algorithms.com/data_structures/sparse-table.html
     """
     
     def __init__(self, tree):

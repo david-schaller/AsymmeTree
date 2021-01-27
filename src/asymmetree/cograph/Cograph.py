@@ -158,7 +158,7 @@ class Cotree(Tree):
         
         tree = self if inplace else self.copy()
         
-        for v in tree.inner_vertices():
+        for v in tree.inner_nodes():
             v.label = 'series' if v.label == 'parallel' else 'parallel'
         
         return tree
@@ -170,7 +170,7 @@ class Cotree(Tree):
         self.supply_leaves()
         lca = LCA(self)
         
-        for u in self.inner_vertices():
+        for u in self.inner_nodes():
             
             if u.label == 'parallel':
                 continue
