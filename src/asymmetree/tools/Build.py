@@ -180,7 +180,7 @@ class Build:
         
 
 class MTT:
-    """BUILD / MTT algorithm with minimal cost bipartition."""
+    """MTT algorithm."""
     
     def __init__(self, R, L, F=None):
         
