@@ -103,7 +103,7 @@ The latter is a reimplementation of [ParaPhylo](http://pacosy.informatik.uni-lei
 
 ## Citation and References
 
-If you use AsymmeTree in your project or code from it, please cite:
+If you use AsymmeTree in your project or code from it, please consider citing:
 
 * **Stadler, P. F., Geiß, M., Schaller, D., López Sánchez, A., González Laffitte, M., Valdivia, D., Hellmuth, M., and Hernández Rosales, M. (2020) From pairs of most similar sequences to phylogenetic best matches. Algorithms for Molecular Biology. doi: 10.1186/s13015-020-00165-2.**
 

@@ -2,6 +2,7 @@
 
 import asymmetree.treeevolve as te
 from asymmetree.best_matches import lrt_from_observable_tree, Quartets
+from asymmetree.best_matches.Scenario import Scenario
 
 D = 1.0
 L = 1.0
@@ -52,8 +53,8 @@ print(lrt.to_newick())
 #                              SCENARIO
 # --------------------------------------------------------------------------
 
-scenario = te.Scenario(S, TGT, D, L, H, OGT=OGT)      # wrap everything in a scenario
-D = scenario.get_distance_matrix()                      # compute the distance matrix
+scenario = Scenario(S, TGT, D, L, H, OGT=OGT)    # wrap everything in a scenario
+D = scenario.get_distance_matrix()               # compute the distance matrix
 
 
 # --------------------------------------------------------------------------

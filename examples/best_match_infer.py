@@ -8,6 +8,7 @@ from asymmetree.file_io import ScenarioFileIO
 import asymmetree.treeevolve as te
 
 import asymmetree.best_matches as bm
+from asymmetree.best_matches.Scenario import Scenario
 
 
 class ComparisonAnalysis:
@@ -137,7 +138,7 @@ noise_alphas = []#[0.0, 0.02, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
 
 sim_ID = 0
 
-stats_file = 'results/method_comparison.csv'
+stats_file = 'testfile_method_comparison.csv'
 
 # write header of the main statistics file
 ComparisonAnalysis.write_header(stats_file, 'SCEN_ID',
@@ -165,8 +166,8 @@ for rep in range(repeats):
                            rate_increase=('gamma', 0.5, 2.2),
                            CSN_weights=(1/3, 1/3, 1/3))
     
-    scenario1 = te.Scenario(S, TGT1, D, L, H)
-    scenario2 = te.Scenario(S, TGT2, D, L, H)
+    scenario1 = Scenario(S, TGT1, D, L, H)
+    scenario2 = Scenario(S, TGT2, D, L, H)
     
     D1 = scenario1.get_distance_matrix()
     D2 = scenario2.get_distance_matrix()
