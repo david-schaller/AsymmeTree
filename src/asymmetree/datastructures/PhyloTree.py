@@ -698,6 +698,20 @@ class PhyloTree(Tree):
     
     @staticmethod
     def parse_nx(G, root):
+        """Convert a NetworkX Graph version back into a PhyloTree.
+        
+        Parameters
+        ----------
+        G : networkx.Graph
+            A tree represented as a Networkx Graph.
+        root : int
+            The ID of the root.
+        
+        Returns
+        -------
+        PhyloTree
+            The reconstructed tree.
+        """
         
         number_of_leaves = 0
         
@@ -762,9 +776,9 @@ class PhyloTree(Tree):
         
         _, file_ext = os.path.splitext(filename)
         
-        if file_ext in ('.json', '.JSON'):
+        if file_ext.lower() == '.json':
             return 'json'
-        elif file_ext in ('.pickle', '.PICKLE'):
+        elif file_ext.lower() == '.pickle':
             return 'pickle'
         else:
             raise ValueError('serialization format is not supplied and could '\
@@ -772,7 +786,21 @@ class PhyloTree(Tree):
             
             
     def serialize(self, filename, mode=None):
-        """Serialize the tree using pickle."""
+        """Serialize the tree using pickle or json.
+        
+        Parameters
+        ----------
+        filename : str
+            The filename (including the path) of the file to be created.
+        mode : str or None, optional
+            The serialization mode. Supported are pickle and json. The default
+            is None in which case the mode is inferred from the file extension.
+        
+        Raises
+        ------
+        ValueError
+            If the serialization mode is unknown or could not be inferred.
+        """
         
         if not mode:
             mode = PhyloTree._infer_serialization_mode(filename)
@@ -794,9 +822,26 @@ class PhyloTree(Tree):
     
     @staticmethod
     def load(filename, mode=None):
-        """Load a phylogenetic tree from a file.
+        """Reload a PhyloTree from a file (pickle or json).
         
-        Using either the Python module json or pickle."""
+        Parameters
+        ----------
+        filename : str
+            The filename (including the path) of the file to be loaded.
+        mode : str or None, optional
+            The serialization mode. Supported are pickle and json. The default
+            is None in which case the mode is inferred from the file extension.
+        
+        Returns
+        -------
+        PhyloTree
+            The tree reloaded from file.
+        
+        Raises
+        ------
+        ValueError
+            If the serialization mode is unknown or could not be inferred.
+        """
         
         if not mode:
             mode = PhyloTree._infer_serialization_mode(filename)
@@ -831,7 +876,14 @@ class PhyloTree(Tree):
 # --------------------------------------------------------------------------
 
     def reconstruct_IDs(self):
-        """Reconstruct the (leaf) IDs."""
+        """Reconstruct the IDs from the (str) labels.
+        
+        If the labels of the nodes can be converted into integers, then the
+        nodes receive as ID their converted labels.
+        After the first traversal, all remaining nodes that still have an
+        undefined ID (-1) obtain are unique integer ID that has not yet been
+        assigned in the first traversal.
+        """
         
         self.number_of_species = 0
         IDs = set()
@@ -859,7 +911,13 @@ class PhyloTree(Tree):
     
     
     def reconstruct_info_from_graph(self, G):
-        """Reconstructs the labels and colors from a NetworkX Graph."""
+        """Reconstruct the labels and colors from a NetworkX Graph.
+        
+        Parameters
+        ----------
+        G : networkx.Graph
+            The graph from which labels and colors shall be reconstructed.
+        """
         
         for v in self.preorder():
             if v.ID in G:
@@ -873,7 +931,12 @@ class PhyloTree(Tree):
                 
                 
     def reconstruct_timestamps(self):
-        """Reconstruct the timestamps."""
+        """Reconstruct the timestamps.
+        
+        Make the time stamps matching with the distance attribute. The root
+        obtains time stamp 1.0, and all other node smaller time stamps such
+        that the difference to the parent's time stamp is exactly `dist`.
+        """
         
         self.root.tstamp = 1.0
         for v in self.preorder():
@@ -884,6 +947,18 @@ class PhyloTree(Tree):
         
     
     def copy(self):
+        """Return a copy of the tree.
+        
+        Constructs a deep copy of the tree, i.e. to the level of nodes.
+        By default, the node attributes are all immutable data types (except
+        `leaves` which is not copy, and may be recomputed later for the copy).
+        Hence, the original tree is not affected by operations on the copy.
+        
+        Returns
+        -------
+        PhyloTree
+            A copy of the tree.
+        """
         
         if not self.root:
             return PhyloTree(None)
@@ -904,17 +979,38 @@ class PhyloTree(Tree):
     
     @staticmethod
     def random_colored_tree(N, colors, binary=False, force_all_colors=False):
-        """Creates a random colored tree.
+        """Create a random colored tree.
         
         The number of leaves and the color labels are specified in the
-        parameters 'N' and 'colors', respectively. Each non-leaf node in the 
+        parameters `N` and `colors`, respectively. Each non-leaf node in the 
         resulting tree will have at least children (property of phylogenetic
         trees).
         
-        Keyword arguments:
-            binary - forces the tree to be binary; default is False
-            force_all_colors - the resulting graph has at least one leaf for
-                each color; default is False
+        Parameters
+        ----------
+        N : int
+            The desired number of leaves.
+        colors : int or list
+            The list of colors, or the desired number of colors in which case
+            the colors {1, ..., colors} are used.
+        binary : bool, optional
+            If True, forces the tree to be binary (the default is False).
+        force_all_colors : bool
+            If True, the resulting tree is guaranteed to have at least one leaf
+            of each color (the default is False).
+        
+        Returns
+        -------
+        PhyloTree
+            A random tree with `N` leaves and random leaf coloring.
+        
+        Raises
+        ------
+        TypeError
+            If `N` is not an integer > 0.
+        ValueError
+            If the number of colors is greater than `N` and `force_all_colors`
+            is true.
         """
         
         if not isinstance(N, int) or N < 1:
@@ -977,6 +1073,29 @@ class PhyloTree(Tree):
 # -------------------------------------------------------------------------- 
 
 def delete_losses_and_contract(tree, inplace=False):
+    """Delete all branches leading to loss leaves only.
+    
+    Nodes that would have only a single child afterwards are suppressed (except
+    possibly the planted root), i.e. their children are recursively reconnected
+    to the parents. Distances are cumulated in this process and the transferred
+    status is kept in the sense that an edge is a transfer edge if at least
+    one edge on the contracted path to which it corresponds was a transfer edge.
+    
+    Parameters
+    ----------
+    tree : PhyloTree
+        The tree in which loss branches shall be removed.
+    inplace : bool, optional
+        If True, the tree is directly manipulated. The default is False in
+        which case a copy of the tree is created which gets manipulated while
+        the original tree remains untouched.
+    
+    Returns
+    -------
+    PhyloTree
+        The tree with all loss branches removed (original instance or a new one
+        depending on the `inplace` parameter).
+    """
     
     if not inplace:
         tree = tree.copy()
@@ -1001,6 +1120,22 @@ def delete_losses_and_contract(tree, inplace=False):
 
 
 def remove_planted_root(tree, inplace=True):
+    """Remove the planted root of the tree (if existent).
+    
+    Parameters
+    ----------
+    tree : PhyloTree
+        The tree in which the planted root shall be removed.
+    inplace : bool, optional
+        If True, the tree is directly manipulated, otherwise a copy is created
+        and the original tree remains untouched (the default is True).
+    
+    Returns
+    -------
+    PhyloTree
+        The tree with the planted root removed (original instance or a new one
+        depending on the `inplace` parameter).
+    """
     
     if not inplace:
         tree = tree.copy()
