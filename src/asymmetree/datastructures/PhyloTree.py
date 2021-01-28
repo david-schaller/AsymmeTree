@@ -15,9 +15,29 @@ __author__ = 'David Schaller'
 
 
 class PhyloTreeNode(TreeNode):
-    """Class 'PhyloTreeNode'.
+    """Tree nodes for class PhyloTree.
     
-    Components for class 'PhyloTree'.
+    Inherits from the basic class TreeNode.
+    New attributes here are:
+    
+    Attributes
+    ----------
+    color : int, tuple of two int objects, or None
+        If not None, represent the ID of the node or the IDs in an edge in a
+        corresponding species tree to which this node is reconciled.
+    dist : float
+        Evolutionary distance from the parent node.
+    tstamp : float or None
+        Time stamp.
+    transferred : int
+        Equals 1 if the edge from the parent was a transfer edge (parent must
+        be an HGT event).
+    
+    See Also
+    --------
+    PhyloTree
+    TreeNode
+    CotreeNode
     """
     
     __slots__ = ('color', 'dist', 'tstamp', 'transferred')
@@ -25,13 +45,33 @@ class PhyloTreeNode(TreeNode):
     
     def __init__(self, ID, label='', color=None,
                  dist = 1.0, tstamp=None, transferred=0):
+        """Constructor for class PhyloTreeNode.
+        
+        Parameters
+        ----------
+        ID : int
+            Integer identifier of the node, some methods use the convention -1
+            if an identifier is not needed.
+        label: str, optional
+            Human interpretable label (the default is '').
+        color : int, tuple of two int objects, or None, optional
+            If not None, represent the ID of the node or the IDs in an edge in
+            a corresponding species tree to which this node is reconciled (the
+            default is None.
+        dist : float, optional
+            Evolutionary distance from the parent node (the default is 1.0).
+        tstamp : float or None, optional
+            Time stamp (the default is None).
+        transferred : int, optional
+            Equals 1 if the edge from the parent was a transfer edge (the
+            default is 0).
+        """
         
         super().__init__(ID, label=label)
-        self.color = color                      # color / reconciliation
-        self.dist = dist                        # distance from parent
-        self.tstamp = tstamp                    # time stamp
-        self.transferred = transferred          # 1 if edge parent-self was an 
-                                                # HGT edge, and 0 otherwise
+        self.color = color
+        self.dist = dist
+        self.tstamp = tstamp
+        self.transferred = transferred
 
     
     def __repr__(self):
@@ -40,6 +80,14 @@ class PhyloTreeNode(TreeNode):
     
     
     def __str__(self):
+        """String representation of the node.
+        
+        Returns
+        -------
+        str
+            String representation of the node including color (if defined)
+            and dist.
+        """
         
         if isinstance(self.color, (tuple, list)):
             return '{}<{}-{}>:{}'.format(self.label, *self.color, self.dist)
@@ -50,17 +98,56 @@ class PhyloTreeNode(TreeNode):
         
     
     def is_loss(self):
+        """Return True if the node is a loss event.
+        
+        AsymmeTree uses the node label '*' to mark losses.
+        
+        Returns
+        -------
+        bool
+            True if the node is a loss event, else False.
+        """
         
         return self.label == '*'
 
 
 class PhyloTree(Tree):
+    """Class for phylogentic trees.
+    
+    Phylogentic trees are usually defined as trees where every inner node has
+    at least two children. However, the class does not force this property.
+    Simulated trees are often "planted" i.e. the root has only a single child,
+    and this edge represents the ancestral lineage.
+    
+    Attributes
+    ----------
+    root : PhyloTreeNode
+        Inherited from class Tree, but must be a PhyloTreeNode.
+    
+    See Also
+    --------
+    PhyloTreeNode
+    Tree
+    Cotree
+    """
     
     # corresponding node type
     node_type = PhyloTreeNode
     
     
     def __init__(self, root):
+        """Constructor for class PhyloTree.
+        
+        Parameters
+        ----------
+        root : PhyloTreeNode
+            The root of the PhyloTree.
+        
+        Raises
+        ------
+        TypeError
+            If `root` is not an instance of PhyloTreeNode (or None).
+        """
         
         if root is not None and not isinstance(root, PhyloTreeNode):
             raise TypeError("root must be of type 'PhyloTreeNode'")
@@ -68,7 +155,18 @@ class PhyloTree(Tree):
     
     
     def sorted_nodes(self, oldest_to_youngest=True):
-        """Return list of sorted nodes by timestamp."""
+        """List of nodes sorted by timestamp.
+        
+        Return a list of all nodes in the tree sorted by time stamp beginning
+        with the oldest (highest time stamp). Optionally the order can be
+        reversed.
+        
+        Parameters
+        ----------
+        oldest_to_youngest : bool, optional
+            If True, the nodes are sorted from oldest to youngest, otherwise
+            from youngest to oldest (the default is True).
+        """
         
         return sorted(self.preorder(),
                       key=lambda node: node.tstamp,
@@ -76,7 +174,10 @@ class PhyloTree(Tree):
     
     
     def sorted_edges(self):
-        """Return list of sorted edges (u,v) by timestamp of u."""
+        """List of edges (u,v) sorted by timestamp of u.
+        
+        Return a list of all edges (u,v) sorted by timestamp of u beginning
+        with the oldest (highest time stamp)."""
     
         return sorted(self.edges(),
                       key=lambda e: (e[0].tstamp, e[1].tstamp),
@@ -86,7 +187,30 @@ class PhyloTree(Tree):
     def delete_and_reconnect(self, node,
                              add_distances=True,
                              keep_transferred=True):
-        """Delete a node from the tree and reconnect its parent and children."""
+        """Delete a node from the tree and reconnect its parent and children.
+        
+        Parameters
+        ----------
+        node : PhyloTreeNode
+            The node in the tree to be deleted.
+        add_distances : bool, optional
+            When the node v is deleted and its children are reconnected to its
+            parent, add to the `dist` parameter of the children `v.dist`, i.e.
+            the distance of v from its parent (the default is True).
+        keep_transferred : bool, optional
+            When the edge of the deleted node v from its parent u was a
+            transfer edge, make all edges from u to the children of v transfer
+            edges (the default is True).
+            
+        Returns
+        -------
+        PhyloTreeNode or bool
+            The parent of the node, if it could be deleted, or False, if the
+            node could not be deleted, i.e., it has no parent.
+        """
+        
+        if not node.parent:
+            return False
         
         for child in node.children:
             if add_distances:
@@ -98,7 +222,13 @@ class PhyloTree(Tree):
     
     
     def add_planted_root(self):
-        """Add a new root that has the original root as its single child."""
+        """Add a new root that has the original root as its single child.
+        
+        Returns
+        -------
+        PhyloTreeNode
+            The newly added root.
+        """
         
         old_root = self.root
         self.root = PhyloTreeNode(-1)
@@ -112,7 +242,8 @@ class PhyloTree(Tree):
     def remove_planted_root(self):
         """Removes the planted root if existent.
         
-        The the tree has a planted root, its single child becomes the new root.
+        If the the tree has a planted root, its single child becomes the new
+        root. Otherwise, nothing happens.
         """
         
         if len(self.root.children) == 1:
@@ -124,7 +255,24 @@ class PhyloTree(Tree):
             
     
     def supply_leaves(self, exclude_losses=False):
-        """Add the leaves to all nodes under their respective subtrees."""
+        """Leaves in the subtree rooted at each node.
+        
+        Computes the list of leaves for every node in the tree containing the
+        leaf nodes lying in the subtree rooted at the node.
+        
+        Optionally, loss nodes can be excluded.
+        
+        Parameters
+        ----------
+        exclude_losses : bool, optional
+            If True, all loss leaves are excluded (the default is False).
+        
+        Returns
+        -------
+        list of TreeNode objects
+            The leaves under the root, i.e. the complete list of leaves.
+            Returns an empty list if the root is None.
+        """
         
         def _supply_leaves(node, exclude_losses):
         
@@ -148,36 +296,69 @@ class PhyloTree(Tree):
             return []
     
     
-    def color_sorted_leaves(self):
+    def color_sorted_leaves(self, return_list=False):
+        """Sort leaves by their color.
         
-        self.supply_leaves()
+        Parameters
+        ----------
+        return_list : bool, optional
+            If True, also return a list of leaves such that leaves of the same
+            color appear as a coherent sequence (the default is False).
+        
+        Returns
+        -------
+        dict
+            A dictionary with colors as keys and a list of corresponding nodes
+            as values.
+        list, optional
+            List of leaves such that leaves of the same color appear as a
+            coherent sequence.
+        """
+        
         color_dict = {}
         
-        for leaf in self.root.leaves:
+        for leaf in self.leaves():
             if leaf.color not in color_dict:
                 color_dict[leaf.color] = []
             color_dict[leaf.color].append(leaf)
-            
-        leaves = []
-        for color, leaf_list in color_dict.items():
-            for leaf in leaf_list:
-                leaves.append(leaf)
         
-        return leaves
+        if not return_list:
+            return color_dict
+        else:
+            leaves = []
+            for color, leaf_list in color_dict.items():
+                for leaf in leaf_list:
+                    leaves.append(leaf)
+            
+            return color_dict, leaves
     
     
     def distance_matrix(self, leaf_order=None):
-        """Computes the distance matrix from the phylogenetic tree.
+        """Distance matrix on the leaf set of the phylogenetic tree.
         
-        Additionally a list of leaves corresponding to the indices in the matrix
-        is returned.
+        Computes a distance matrix on the set of leaves of the tree where each
+        distances is the sum of the distances (`dist`) on the path connecting
+        the pair of leaves.
         
-        Keyword arguments:
-            leaf_order -- list of leaves defining the indices for the matrix;
-                default is None, in which case leaves are indexed in sibling order.
+        Additionally a list of leaves corresponding to the indices in the
+        matrix is returned.
+        
+        Parameters
+        ----------
+        leaf_order : list, optional
+            A list of all leaves in the tree defining the indices for the
+            matrix (the default is None, in which case leaves are indexed in
+            sibling order).
+        
+        Returns
+        -------
+        list of PhyloTreeNode objects
+            Represents the order for the lines/columns in the distance matrix.
+        numpy.ndarray (dtype=numpy.float)
+            The distance matrix.
         """
         
-        distance_dict, _ = self.distances_from_root()
+        distance_dict = self.distances_from_root()
         self.supply_leaves()
         
         if leaf_order:
@@ -209,8 +390,15 @@ class PhyloTree(Tree):
     
     
     def distances_from_root(self):
+        """The distances of each node to the root of the tree.
         
-        leaf_distances = []
+        Returns
+        -------
+        dict
+            The keys are PhyloTreeNode objects and the values their distances
+            (sum of `dist`) to the root.
+        """
+        
         distance_dict = {}
         
         for v in self.preorder():
@@ -219,14 +407,25 @@ class PhyloTree(Tree):
             else:
                 depth = distance_dict[v.parent] + v.dist
                 distance_dict[v] = depth
-            if not v.children:
-                leaf_distances.append( (str(v), distance_dict[v]) )
                 
-        return distance_dict, leaf_distances
+        return distance_dict
     
     
     def topology_only(self, inplace=True):
-        """Reset distances, time stamps, transfer status and inner labels."""
+        """Reset colors, distances, time stamps, transfer status and inner
+        labels.
+        
+        Parameters
+        ----------
+        inplace : bool
+            If True, reset the attributes of this tree instance, otherwise
+            make a copy first and modify the copy.
+        
+        Returns
+        -------
+        PhyloTree
+            The original or a copy of the tree instance with reset attributes.
+        """
         
         if not inplace:
             T = self.copy()
@@ -245,6 +444,15 @@ class PhyloTree(Tree):
     
     
     def count_node_types(self):
+        """Count speciations, duplication, losses, HGTs and surviving genes.
+        
+        Returns
+        -------
+        dict
+            With the event counts as values. Key are 'S' (speciations), 'D'
+            (duplication), 'L' (losses), 'H' (HGTs) and 'extant' (surviving
+            genes).
+        """
         
         counts = {'S': 0, 'D': 0, 'L': 0, 'H': 0, 'extant': 0}
         
@@ -272,7 +480,33 @@ class PhyloTree(Tree):
         
     def to_newick(self, label=True, color=True, distance=True,
                         label_inner=True, color_inner=False):
-        """Recursive PhyloTree --> Newick (str) function."""
+        """Return a Newick representation of the tree.
+        
+        This function overrides the function of the parent class.
+        
+        Parameters
+        ----------
+        label : bool, optional
+            If True, the Newick str contains the labels of the nodes (the
+            default is True).
+        color : bool, optional
+            If True, the Newick str contains the colors of the nodes in
+            <[...]> brackets (the default is True).
+        distance : bool, optional
+            If True, the Newick str contains the distances of the nodes in
+            standard :[...] notation (the default is True).
+        label_inner : bool, optional
+            If True, the Newick str also contains the labels of the inner 
+            nodes (the default is True).
+        color_inner : bool, optional
+            If True, the Newick str contains the colors of the inner nodes (the
+            default is False).
+        
+        Returns
+        -------
+        str
+            A Newick representation of the tree.
+        """
         
         def _to_newick(node):
             
@@ -281,7 +515,9 @@ class PhyloTree(Tree):
                 if label:
                     token += str(node.label)
                 if color and node.color:
-                    token += '<{}-{}>'.format(*node.color) if isinstance(node.color, (tuple, list)) else '<{}>'.format(node.color)
+                    token += '<{}-{}>'.format(*node.color) \
+                        if isinstance(node.color, (tuple, list)) \
+                        else '<{}>'.format(node.color)
                 if distance:
                     token += ":{}".format(node.dist)
                 return token
@@ -293,7 +529,9 @@ class PhyloTree(Tree):
                 if label and label_inner:
                     token += str(node.label)
                 if color_inner and node.color:
-                    token += '<{}-{}>'.format(*node.color) if isinstance(node.color, (tuple, list)) else '<{}>'.format(node.color)
+                    token += '<{}-{}>'.format(*node.color) \
+                        if isinstance(node.color, (tuple, list)) \
+                        else '<{}>'.format(node.color)
                 if distance:
                     token += ':{}'.format(node.dist)
                 return '({}){}'.format(s[:-1], token)
@@ -307,7 +545,33 @@ class PhyloTree(Tree):
     
     @staticmethod
     def parse_newick(newick):
-        """Parses trees in Newick format into object of type 'PhyloTree'."""
+        """Parses trees in Newick format into object of type 'PhyloTree'.
+        
+        Parameters
+        ----------
+        newick : str
+            A tree in Newick format.
+        
+        Returns
+        -------
+        PhyloTree
+            The parsed tree.
+        
+        Raises
+        ------
+        TypeError
+            If the input is not a string.
+        ValueError
+            If the input is not a valid Newick string.
+        
+        Notes
+        -----
+        Do not use this function for serialization and reloading PhyloTree
+        objects. Use the `serialize()` function instead.
+        IDs are set arbitrarily and do not necessarily match the labels.
+        The colors (if present in <...> in the string) are parsed as strings
+        and need to be converted to integers afterwards if necessary.
+        """
         
         # label<color>:distance
         label_col_dist_regex = re.compile(r"'?([a-zA-Z0-9_]*)'?<(.*)>:(-?[0-9]*\.?[0-9]*[Ee]?-?[0-9]+)")
@@ -377,7 +641,7 @@ class PhyloTree(Tree):
             return children
         
         if not isinstance(newick, str):
-            raise ValueError("Newick parser needs a 'str' as input")
+            raise TypeError("Newick parser needs a 'str' as input")
         end = newick.find(";")
         if end != -1:
             newick = newick[:end]
@@ -397,6 +661,18 @@ class PhyloTree(Tree):
 # --------------------------------------------------------------------------
             
     def to_nx(self):
+        """Convert a PhyloTree into a NetworkX Graph.
+        
+        The attributes correspond to the node attributes in the resulting graph.
+        
+        Returns
+        -------
+        networkx.Graph
+            A graph representation of the tree.
+        int
+            The ID of the root in order to be able to completely reconstruct
+            the tree.
+        """
         
         self._assert_integrity()
         G = nx.DiGraph()

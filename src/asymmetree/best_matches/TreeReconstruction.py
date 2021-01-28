@@ -108,7 +108,7 @@ def reroot(tree, node):
 def midpoint_rooting(tree):
     
     # identify the two most distant leaves and their l.c.a.
-    distance_dict, _ = tree.distances_from_root()
+    distance_dict = tree.distances_from_root()
     tree.supply_leaves()
     max_dist, leaf1, leaf2, lca = float('-inf'), None, None, None
     max_ID = 0

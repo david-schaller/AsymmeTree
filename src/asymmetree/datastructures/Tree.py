@@ -25,6 +25,12 @@ class TreeNode:
     leaves: list of TreeNode.
         A list of all leaf nodes in the subtree under this node, only available
         after execution of supply_leaves() function.
+    
+    See Also
+    --------
+    Tree
+    PhyloTreeNode
+    CotreeNode
     """
     
     __slots__ = ('ID', 'label', 'parent', '_par_dll_node',
@@ -37,8 +43,8 @@ class TreeNode:
         Parameters
         ----------
         ID : int
-            Integer identifier of the node, some methods use the convention -1 if
-            an identifier is not needed.
+            Integer identifier of the node, some methods use the convention -1
+            if an identifier is not needed.
         label: str, optional
             Human interpretable label (the default is '').
         """

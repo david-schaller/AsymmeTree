@@ -25,12 +25,12 @@ class Scenario:
         
         self.OGT = OGT if OGT else observable_tree(TGT)
         
-        self.genes = self.OGT.color_sorted_leaves()
+        self.OGT.supply_leaves()
+        self.color_dict, self.genes = self.OGT.color_sorted_leaves(return_list=True)
         self.gene_index = {gene: i for i, gene in enumerate(self.genes)}
         
         self._count_events()
         self._sort_species_to_subtrees()
-        self._sort_genes_to_species()
         
         self.TOG = TrueBMG.orthology_from_tree(self.OGT)
         self.bmg, self.rbmg = TrueBMG.bmg_from_tree(self.OGT, supply_rbmg=True)
@@ -71,13 +71,6 @@ class Scenario:
             for i in self.outgroup_dict.keys():
                 if self.subtree_index[gene.color] != i:
                     self.outgroup_dict[i].append(gene)
-    
-    
-    def _sort_genes_to_species(self):
-        
-        self.color_dict = {item: [] for item in self.subtree_index.keys()}
-        for gene in self.genes:
-            self.color_dict[gene.color].append(gene)
     
     
     def get_data(self):
