@@ -25,13 +25,14 @@ def aho_graph(R, L, weighted=False, triple_weights=None):
 
     for a, b, c in R:
         if not G.has_edge(a, b):
-            G.add_edge(a, b, weight=0)
+            G.add_edge(a, b)
         
         if weighted:
             if triple_weights:
-                G[a][b]['weight'] += triple_weights[a, b, c]
+                G[a][b]['weight'] = G[a][b].get('weight', 0.0) + \
+                                    triple_weights[a, b, c]
             else:
-                G[a][b]['weight'] += 1
+                G[a][b]['weight'] = G[a][b].get('weight', 0.0) + 1.0
     
     return G
 
