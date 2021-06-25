@@ -20,7 +20,7 @@ class _RefinementConstructor:
         
         for T_i in trees:
             
-            if not isinstance(Tree, T_i):
+            if not isinstance(T_i, Tree):
                 raise TypeError("not a 'Tree' instance")
                 
             if not self.L:
@@ -34,32 +34,37 @@ class _RefinementConstructor:
         
         self.trees = trees
         
-        self.V = set()          # vertices in resulting tree
-        self.vi_to_v = {}       # inner vertex in input tree --> 
-                                # corresponding vertex in resulting tree 
+        self._leaf_set_cardinalities()
                                 
         self.p = [{} for _ in range(len(self.trees))]
                                 # v --> lca_Ti (L(Ti(v)))
         
         self.J = {}             # vertex in resulting tree --> indices of
                                 # the trees with corresponding vertex
+        self.vi_to_v = {}       # inner vertex in input tree --> 
+                                # corresponding vertex in resulting tree
         
         self.Q = deque()        # queue
+        self.V = set()          # vertices in resulting tree
         
         self.label_dict = {}
+        self.id_counter = 0
+        
         for label in self.L:
-            v = TreeNode(len(self.V), label=label)
-            self.V.add(v)
+            v = TreeNode(self.id_counter, label=label)
+            self.id_counter += 1
             self.Q.append(v)
+            self.V.add(v)
             self.label_dict[label] = v
             self.J[v] = {i: None for i in range(len(self.trees))}
+            self.l[v] = 1 
         
         for i, T_i in enumerate(trees):
             for v_i in T_i.leaves():
                 v = self.label_dict[v_i.label]
                 self.p[i][v] = v_i
                 self.J[v][i] = v_i
-            
+                self.vi_to_v[v_i] = v
         
     
     def _leaf_set_cardinalities(self):
@@ -74,5 +79,87 @@ class _RefinementConstructor:
                 else:
                     self.l[v] = sum(self.l[w] for w in v.children)
     
-    
+    def _get_tree(self):
         
+        self.root = None
+        
+        while self.Q:
+            
+            v = self.Q.popleft()
+            u = None
+            l_min = len(self.L)
+            J_u = {}
+            
+            for i in range(len(self.trees)):
+                
+                if i in self.J[v]:
+                    u2 = self.J[v][i].parent
+                else:
+                    u2 = self.p[i][v]
+                
+                if u is None or self.l[u2] < l_min:
+                    u = u2
+                    l_min = self.l[u2]
+                    J_u.clear()
+                    J_u[i] = u2
+                elif self.l[u2] < l_min:
+                    J_u[i] = u2
+            
+            if self.l[v] < l_min:
+                if u in self.vi_to_v:
+                    u = self.vi_to_v[u]
+                else:
+                    u = TreeNode(self.id_counter)
+                    self.id_counter += 1
+                u.add_child(v)
+            else:
+                return False
+            
+            if u not in self.V and l_min < len(self.L):
+                
+                self.Q.append(u)
+                self.V.add(u)
+                if len(self.V) > 2 * len(self.L) - 2:
+                    return False
+                self.J[u] = J_u
+                for i, u_i in J_u.items():
+                    self.vi_to_v[u_i] = u
+                self.l[u] = l_min
+                
+                for i in range(len(self.trees)):
+                    if i in self.J[u]:
+                        self.p[i][u] = self.J[u][i]
+                    elif i in self.J[v]:
+                        self.p[i][u] = self.J[v][i].parent
+                    else:
+                        self.p[i][u] = self.p[i][v]
+                        
+            elif  l_min == len(self.L):
+                self.root = u
+        
+        if not self.root:
+            raise RuntimeError('could not determine root')
+        
+        return Tree(self.root)
+                
+
+if __name__ == '__main__':
+    
+    # ----- TESTING THIS MODULE -----
+    
+    import numpy as np
+    
+    N = 20
+    tree = Tree.random_tree(N, binary=True)
+    print(tree.to_newick())
+    
+    partial_trees = []
+    for i in range(10):
+        
+        T_i = tree.copy()
+        
+        # randomly contract edges in T_i
+
+        partial_trees.append(T_i)
+    
+    CR = _RefinementConstructor(partial_trees)

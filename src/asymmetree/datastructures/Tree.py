@@ -653,6 +653,33 @@ class Tree:
         return True
     
     
+    def copy(self):
+        """Return a copy of the tree.
+        
+        Constructs a deep copy of the tree, i.e. to the level of nodes.
+        By default, the node attributes are all immutable data types.
+        Hence, the original tree is not affected by operations on the copy.
+        
+        Returns
+        -------
+        Tree
+            A copy of the tree.
+        """
+        
+        if not self.root:
+            return Tree(None)
+        
+        orig_to_new = {}
+        
+        for orig in self.preorder():
+            new = TreeNode(orig.ID, label=orig.label)
+            orig_to_new[orig] = new
+            if orig.parent:
+                orig_to_new[orig.parent].add_child(new)
+        
+        return Tree(orig_to_new[self.root])
+    
+    
     @staticmethod
     def random_tree(N, binary=False):
         """A random tree.
