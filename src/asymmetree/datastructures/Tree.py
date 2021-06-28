@@ -576,7 +576,45 @@ class Tree:
         k = round(proportion * len(leaves))
         
         return random.sample(leaves, k)
-      
+    
+    
+    def is_binary(self):
+        """Check whether the tree is a binary tree.
+        
+        Nodes in (rooted) binary trees are either leaves or have exactly two
+        children.
+        
+        Returns
+        -------
+        bool
+            True if the tree is binary, else False.
+        """
+        
+        for v in self.preorder():
+            if len(v.children) == 1 or len(v.children) > 2:
+                return False
+        
+        return True
+    
+    
+    def is_phylogenetic(self):
+        """Check whether the tree is a phylogetic tree.
+        
+        Nodes in (rooted) phylogentic trees are either leaves or have at least
+        two children.
+        
+        Returns
+        -------
+        bool
+            True if the tree is phylogenetic, else False.
+        """
+        
+        for v in self.preorder():
+            if len(v.children) == 1:
+                return False
+        
+        return True
+    
     
     def get_hierarchy(self):
         """Hierarchy set on the leaf labels defined by the tree.
@@ -626,16 +664,54 @@ class Tree:
         hierarchy2 = sorted(other.get_hierarchy())
         
         if len(hierarchy1) != len(hierarchy2):
-            print('Unequal sizes of the hierarchy sets: '\
-                  '{} and {}'.format(len(hierarchy1), len(hierarchy2)))
+            # print('Unequal sizes of the hierarchy sets: '\
+            #       '{} and {}'.format(len(hierarchy1), len(hierarchy2)))
             return False
         
         for i in range(len(hierarchy1)):
             
             if hierarchy1[i] != hierarchy2[i]:
-                print('Hierarchies not equal:'\
-                      '\n{}\n{}'.format(hierarchy1[i], hierarchy2[i]))
+                # print('Hierarchies not equal:'\
+                #       '\n{}\n{}'.format(hierarchy1[i], hierarchy2[i]))
                 return False
+        
+        return True
+    
+    
+    def is_refinement(self, other):
+        """Checks whether the tree is a refinement of 'other' based on the
+        leaf labels.
+        
+        Only works for phylogenetic trees with unique leaf labels.
+        
+        Parameters
+        ----------
+        other : Tree
+            The tree which this tree is compared to.
+        
+        Returns
+        -------
+        bool
+            True if the tree is refinement of 'other', else False.
+        """
+        
+        hierarchy1 = sorted(self.get_hierarchy())
+        hierarchy2 = sorted(other.get_hierarchy())
+        
+        if len(hierarchy1) < len(hierarchy2):
+            return False
+        
+        i1, i2 = 0, 0
+        while i2 < len(hierarchy2):
+            
+            if i2 >= len(hierarchy1):
+                return False
+            
+            if hierarchy1[i1] == hierarchy2[i2]:
+                i1 += 1
+                i2 += 1
+            else:
+                i1 += 1
         
         return True
     

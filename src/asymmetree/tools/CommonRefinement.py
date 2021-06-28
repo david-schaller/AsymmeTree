@@ -34,6 +34,8 @@ class _RefinementConstructor:
         
         self.trees = trees
         
+        self.T = None           # resulting tree
+        
         self._leaf_set_cardinalities()
                                 
         self.p = [{} for _ in range(len(self.trees))]
@@ -79,7 +81,8 @@ class _RefinementConstructor:
                 else:
                     self.l[v] = sum(self.l[w] for w in v.children)
     
-    def _get_tree(self):
+    
+    def _build_tree(self):
         
         self.root = None
         
@@ -102,7 +105,7 @@ class _RefinementConstructor:
                     l_min = self.l[u2]
                     J_u.clear()
                     J_u[i] = u2
-                elif self.l[u2] < l_min:
+                elif self.l[u2] == l_min:
                     J_u[i] = u2
             
             if self.l[v] < l_min:
@@ -111,6 +114,11 @@ class _RefinementConstructor:
                 else:
                     u = TreeNode(self.id_counter)
                     self.id_counter += 1
+                    self.J[u] = J_u
+                    for i, u_i in J_u.items():
+                        self.vi_to_v[u_i] = u
+                        self.J[u][i] = u_i
+                    self.l[u] = l_min
                 u.add_child(v)
             else:
                 return False
@@ -121,10 +129,6 @@ class _RefinementConstructor:
                 self.V.add(u)
                 if len(self.V) > 2 * len(self.L) - 2:
                     return False
-                self.J[u] = J_u
-                for i, u_i in J_u.items():
-                    self.vi_to_v[u_i] = u
-                self.l[u] = l_min
                 
                 for i in range(len(self.trees)):
                     if i in self.J[u]:
@@ -134,32 +138,56 @@ class _RefinementConstructor:
                     else:
                         self.p[i][u] = self.p[i][v]
                         
-            elif  l_min == len(self.L):
+            elif l_min == len(self.L):
                 self.root = u
         
         if not self.root:
             raise RuntimeError('could not determine root')
         
-        return Tree(self.root)
+        self.T = Tree(self.root)
                 
 
 if __name__ == '__main__':
     
     # ----- TESTING THIS MODULE -----
     
+    import random
     import numpy as np
     
     N = 20
+    contraction_prob = 0.9
     tree = Tree.random_tree(N, binary=True)
     print(tree.to_newick())
+    print('----------')
     
     partial_trees = []
     for i in range(10):
         
         T_i = tree.copy()
         
-        # randomly contract edges in T_i
+        edges = []
+        
+        for u, v in T_i.inner_edges():
+            if random.random() < contraction_prob:
+                edges.append((u,v))
+        
+        T_i.contract(edges)
+        print(T_i.to_newick())
 
         partial_trees.append(T_i)
     
     CR = _RefinementConstructor(partial_trees)
+    CR._build_tree()
+    cr_tree = CR.T
+    
+    
+    print('----------')
+    if cr_tree:
+        
+        for T_i in partial_trees:
+            print(cr_tree.is_refinement(T_i))
+        print(tree.is_refinement(cr_tree))
+        print(cr_tree.to_newick())
+        
+    else:
+        print('could not build tree')
