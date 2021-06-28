@@ -4,12 +4,38 @@
 
 from collections import deque
 
-import networkx as nx
-
 from asymmetree.datastructures.Tree import Tree, TreeNode
 
 
 __author__ = 'David Schaller'
+
+
+def common_refinement(trees):
+    """Minimal common refinement for a set of trees with the same leaf set.
+    
+    All input trees must be phylogenetic and have the same set of leaf IDs.
+    In each tree, the leaf IDs must be unique.
+    
+    Parameters
+    ----------
+    trees : sequence of Tree instances
+    
+    Returns
+    -------
+    Tree or bool
+        A common refinement of the input trees if existent, False otherwise.
+        
+    Raises
+    ------
+    TypeError
+        In case of input instances that are not of type Tree.
+    RuntimeError
+        If the sequence contains empty trees or the tree do not share the same
+        set of leaves.
+    """
+    
+    cr = _RefinementConstructor(trees)
+    return cr.run()
 
 
 class _RefinementConstructor:
@@ -24,13 +50,13 @@ class _RefinementConstructor:
                 raise TypeError("not a 'Tree' instance")
                 
             if not self.L:
-                self.L = {v.label for v in T_i.leaves()}
+                self.L = {v.ID for v in T_i.leaves()}
                 if len(self.L) == 0:
                     raise RuntimeError('empty tree in tree list')
             else:
-                L2 = {v.label for v in T_i.leaves()}
+                L2 = {v.ID for v in T_i.leaves()}
                 if self.L != L2:
-                    raise RuntimeError('trees must have the same leaf labels')
+                    raise RuntimeError('trees must have the same leaf IDs')
         
         self.trees = trees
         
@@ -51,8 +77,9 @@ class _RefinementConstructor:
     
     
     def _initialize(self):
+        """Initialize the lookup tables."""
     
-        self.T = None           # resulting tree
+        self.T = None           # resulting tree (candidate)
         
         self._leaf_set_cardinalities()
                                 
@@ -67,21 +94,19 @@ class _RefinementConstructor:
         self.Q = deque()        # queue
         self.V = set()          # vertices in resulting tree
         
-        self.label_dict = {}
-        self.id_counter = 0
+        self.ID_dict = {}
         
-        for label in self.L:
-            v = TreeNode(self.id_counter, label=label)
-            self.id_counter += 1
+        for ID in self.L:
+            v = TreeNode(ID, label=str(ID))
             self.Q.append(v)
             self.V.add(v)
-            self.label_dict[label] = v
+            self.ID_dict[ID] = v
             self.J[v] = {i: None for i in range(len(self.trees))}
             self.l[v] = 1 
         
         for i, T_i in enumerate(self.trees):
             for v_i in T_i.leaves():
-                v = self.label_dict[v_i.label]
+                v = self.ID_dict[v_i.ID]
                 self.p[i][v] = v_i
                 self.J[v][i] = v_i
                 self.vi_to_v[v_i] = v
@@ -101,6 +126,7 @@ class _RefinementConstructor:
     
     
     def _build_tree(self):
+        """Constructs the candidate for the common refinement tree."""
         
         self.root = None
         
@@ -130,8 +156,7 @@ class _RefinementConstructor:
                 if u in self.vi_to_v:
                     u = self.vi_to_v[u]
                 else:
-                    u = TreeNode(self.id_counter)
-                    self.id_counter += 1
+                    u = TreeNode(-1)
                     self.J[u] = J_u
                     for i, u_i in J_u.items():
                         self.vi_to_v[u_i] = u
@@ -166,6 +191,8 @@ class _RefinementConstructor:
     
     
     def _check_displayed(self):
+        """Checks whether all input trees are displayed by the constructed
+        tree."""
         
         for i, T_i in enumerate(self.trees):
             
@@ -173,19 +200,16 @@ class _RefinementConstructor:
             
             to_contract = [(v_copy[v].parent, v_copy[v])
                            for v in self.T.inner_nodes()
-                           if i not in self.J[v] and not v.parent]
+                           if i not in self.J[v] and v.parent]
             
             T_copy.contract(to_contract)
             
             for v_i in T_i.preorder():
                 if v_i.parent is None:
                     if v_copy[self.vi_to_v[v_i]].parent is not None:
-                        print('Here')
                         return False
                 elif v_copy[self.vi_to_v[v_i.parent]] is not \
                      v_copy[self.vi_to_v[v_i]].parent:
-                    print(i, 'Here2', v_i)
-                    print(self.T.to_newick())
                     return False
         
         return True
@@ -219,8 +243,7 @@ if __name__ == '__main__':
 
         partial_trees.append(T_i)
     
-    CR = _RefinementConstructor(partial_trees)
-    cr_tree = CR.run()
+    cr_tree = common_refinement(partial_trees)
     
     print('----------')
     if cr_tree:

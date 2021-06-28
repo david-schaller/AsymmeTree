@@ -27,17 +27,15 @@ __author__ = 'David Schaller'
 class BuildST:
     """Deng and Fernández-Baca's BuildST algorithm."""
     
-    def __init__(self, treelist, hdt=True):
+    def __init__(self, trees, hdt=True):
         """Constructor for BuildST algorithm."""
         
-        self.treelist = treelist
-        self.Xp = dict()                                # maps leaf label --> XpNode
+        self.trees = trees
+        self.Xp = {}                                    # leaf ID --> XpNode
         self.marked = set()                             # set of marked nodes
-        self.node_to_tree_index = dict()
-        self.list_pointer = dict()                      # maps node --> DLL element
-        self.singleton_pointer = dict()                 # maps node --> DLL element
-        
-        self.id_counter = 0                             # counter for tree nodes
+        self.node_to_tree_index = {}
+        self.list_pointer = {}                          # node --> DLL element
+        self.singleton_pointer = {}                     # node --> DLL element
         
         if hdt:
             self.ConnectedComp = ConnectedComp_HDT      # use class 'ConnectedComp_HDT'
@@ -65,22 +63,22 @@ class BuildST:
     
     def _prepare_trees(self):
         
-        for i in range(len(self.treelist)):
-            tree = self.treelist[i]
+        for i in range(len(self.trees)):
+            tree = self.trees[i]
             for node in tree.preorder():
                 # access to tree index i in [k]
                 self.node_to_tree_index[node] = i
                 if not node.children:
-                    if node.label not in self.Xp:
-                        self.Xp[node.label] = XpNode(node.label)
-                    self.Xp[node.label].leafnodes.append(node)
+                    if node.ID not in self.Xp:
+                        self.Xp[node.ID] = XpNode(node.ID)
+                    self.Xp[node.ID].leafnodes.append(node)
     
     
     def _initialize(self):
         
-        Y = self.ConnectedComp(len(self.treelist), self, count=len(self.Xp))
+        Y = self.ConnectedComp(len(self.trees), self, count=len(self.Xp))
         
-        for i, tree in enumerate(self.treelist):
+        for i, tree in enumerate(self.trees):
             
             # Y_init.singleton is the set [k]
             self.singleton_pointer[tree.root] = Y.singleton.append(i)
@@ -101,7 +99,7 @@ class BuildST:
         if self.hdt_graph:
             ett = self.hdt_graph.is_connected()
             if ett:
-                Y.representative = self.treelist[0].root
+                Y.representative = self.trees[0].root
             else:
                 print("Initialization failed. Graph is not fully connected!")
                 return
@@ -111,18 +109,16 @@ class BuildST:
     
     def _buildst(self, U):
         
-        r_U = TreeNode(self.id_counter)    # create a node r_U
-        self.id_counter += 1
-        
         # --------------------------------------------------
         # if |L(U)| = 1 then
         #    return the tree consisting of node r_U,
         #    labeled by the single species in L(U)
         # --------------------------------------------------
         if U.count == 1:
-            label = U.get_labelnodes()[0]
-            r_U.label = label.label
-            return r_U
+            labelnode = U.get_labelnodes()[0]
+            return TreeNode(labelnode.ID, label=str(labelnode.ID))
+        
+        r_U = TreeNode(-1)    # create a node r_U
         
         # --------------------------------------------------
         # if |L(U)| = 2 then
@@ -134,9 +130,8 @@ class BuildST:
             if len(labels) != 2:
                 print('Could not find 2 labeled nodes!')
                 return
-            node1 = TreeNode(self.id_counter, label=labels[0].label)
-            node2 = TreeNode(self.id_counter+1, label=labels[1].label)
-            self.id_counter += 2
+            node1 = TreeNode(labels[0].ID, label=str(labels[0].ID))
+            node2 = TreeNode(labels[1].ID, label=str(labels[1].ID))
             r_U.add_child(node1)
             r_U.add_child(node2)
             return r_U
@@ -284,20 +279,20 @@ class BuildST:
 
 
 class XpNode:
-    """Special type of node for the set Xp (one for each leaf label).""" 
+    """Special type of node for the set Xp (one for each leaf ID).""" 
     
-    def __init__(self, label):
+    def __init__(self, ID):
         
-        self.label = label
+        self.ID = ID
         self.leafnodes = []         # corresponding treenodes of the profile
     
     def __repr__(self):
         
-        return '<XpNodeID:{}, {}>'.format(id(self), self.label)
+        return '<XpNodeID:{}, {}>'.format(id(self), self.ID)
     
     def __str__(self):
         
-        return str(self.label)
+        return str(self.ID)
         
     
 class ConnectedComp_HDT:
@@ -390,7 +385,7 @@ class ConnectedComp_simple:
         self.singleton = singleton if singleton else DLList()
         self.List = List if List else [DLList() for i in range(k)]
         
-        self.component = dict()
+        self.component = {}
     
     
     def keys(self):
@@ -446,7 +441,7 @@ class ConnectedComp_simple:
         for start_node in self.component.keys():
             if start_node in visited:
                 continue
-            conn_comp = dict()                      # dictionary that represents
+            conn_comp = {}                          # dictionary that represents
                                                     # one conn. comp.
             conn_comp[start_node] = self.component[start_node]
             visited.add(start_node)
@@ -473,7 +468,7 @@ class ConnectedComp_simple:
     def get_labelnodes(self):
         """Return the labelnodes in the connected component."""
         
-        return [node for node in self.component.keys() if isinstance(node, XpNode)]
+        return [v for v in self.component.keys() if isinstance(v, XpNode)]
 
 
 if __name__ == '__main__':
@@ -503,10 +498,6 @@ if __name__ == '__main__':
                 j += 1
         obs_tree = observable_tree(t)
         partial_trees.append(obs_tree)
-    
-    # restore labels
-    for v in t.preorder():
-        v.label = str(v.ID)
     
     st_builder = BuildST(partial_trees)
     supertree = st_builder.run()

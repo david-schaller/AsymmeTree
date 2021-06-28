@@ -617,17 +617,17 @@ class Tree:
     
     
     def get_hierarchy(self):
-        """Hierarchy set on the leaf labels defined by the tree.
+        """Hierarchy set on the leaf IDs defined by the tree.
         
         Every (phylogenetic) tree can be represented by a hierarchy on the set
         of its leaves.
-        The labels of the leaf nodes must be unique.
+        The IDs of the leaf nodes must be unique.
         
         Returns
         -------
         set of lists of str objects
             Representing the hierarchy where the leaves are represented by
-            their labels.
+            their IDs.
         """
         
         self.supply_leaves()
@@ -636,7 +636,7 @@ class Tree:
         
         for v in self.preorder():
             
-            A = [leaf.label for leaf in v.leaves]
+            A = [leaf.ID for leaf in v.leaves]
             A.sort()
             A = tuple(A)
             hierarchy.add(A)
@@ -645,9 +645,9 @@ class Tree:
     
     
     def compare_topology(self, other):
-        """Compare the tree topology based on the leaf labels.
+        """Compare the tree topology based on the leaf IDs.
         
-        Only works for phylogenetic trees with unique leaf labels.
+        Only works for phylogenetic trees with unique leaf IDs.
         
         Parameters
         ----------
@@ -680,9 +680,9 @@ class Tree:
     
     def is_refinement(self, other):
         """Checks whether the tree is a refinement of 'other' based on the
-        leaf labels.
+        leaf IDs.
         
-        Only works for phylogenetic trees with unique leaf labels.
+        Only works for phylogenetic trees with unique leaf IDs.
         
         Parameters
         ----------
