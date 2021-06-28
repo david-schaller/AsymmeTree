@@ -644,7 +644,7 @@ class Tree:
         return hierarchy
     
     
-    def compare_topology(self, other):
+    def equal_topology(self, other):
         """Compare the tree topology based on the leaf IDs.
         
         Only works for phylogenetic trees with unique leaf IDs.

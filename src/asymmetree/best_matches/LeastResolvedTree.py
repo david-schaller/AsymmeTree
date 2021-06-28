@@ -445,7 +445,7 @@ if __name__ == '__main__':
     
     print('--- LRT1 ---\n', lrt1.to_newick())
     print('--- LRT2 ---\n', lrt2.to_newick())
-    print('LRTs equal: {}'.format( lrt1.compare_topology(lrt2) ))
+    print('LRTs equal: {}'.format( lrt1.equal_topology(lrt2) ))
     
     bmg = bmg_from_tree(T)
     
@@ -457,5 +457,5 @@ if __name__ == '__main__':
     lrt4 = lrt_from_observable_tree(T)
     print('--- LRT3 ---\n', lrt3.to_newick())
     print('--- LRT4 ---\n', lrt4.to_newick())
-    print('LRTs equal: {}'.format( lrt3.compare_topology(lrt4) ))
+    print('LRTs equal: {}'.format( lrt3.equal_topology(lrt4) ))
     print(end_time1 - start_time1, end_time2 - start_time2)

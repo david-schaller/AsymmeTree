@@ -505,4 +505,4 @@ if __name__ == '__main__':
     print(supertree.to_newick())
     
     # randomly True or False
-    print(t.compare_topology(supertree))
+    print(t.equal_topology(supertree))

@@ -25,7 +25,7 @@ class TestBMG(unittest.TestCase):
             lrt1 = bm.lrt_from_observable_tree(tree)
             lrt2 = bm.lrt_from_colored_graph(bmg, mincut=False)
             
-            self.assertTrue( lrt1.compare_topology(lrt2) )
+            self.assertTrue( lrt1.equal_topology(lrt2) )
             
 
 if __name__ == '__main__':
