@@ -98,10 +98,12 @@ class Build:
     def build_tree(self, return_root=False, print_info=False):
         """Build a tree displaying all triples in R if possible.
         
-        Keyword arguments:
-            return_root - if True, return 'PhyloTreeNode' instead of
-                'PhyloTree' instance
-            print_info - print information about inconsistencies
+        Parameters
+        ----------
+        return_root : bool
+            If True, return 'PhyloTreeNode' instead of 'PhyloTree' instance.
+        print_info : bool
+            Print information about inconsistencies.
         """
         
         self.cut_value = 0
@@ -195,9 +197,10 @@ class MTT:
     def build_tree(self, return_root=False):
         """Build a tree displaying all triples in R if possible.
         
-        Keyword arguments:
-            return_root - if True, return 'PhyloTreeNode' instead of
-                'PhyloTree' instance
+        Parameters
+        ----------
+        return_root : bool
+            If True, return 'PhyloTreeNode' instead of 'PhyloTree' instance.
         """
         
         self.total_cost = 0
@@ -225,7 +228,7 @@ class MTT:
     
     
     def _aho(self, L, R):
-        """Recursive Aho-algorithm."""
+        """Recursive Aho algorithm."""
         
         # trivial case: one or two leaves left in L
         if len(L) <= 2:
@@ -285,11 +288,13 @@ def greedy_BUILD(R, L, triple_weights=None, return_root=False):
     
     Add triples one by one and checks consistency via BUILD.
     
-    Keyword arguments:
-        triple_weights - weights for the triples; default is None in which
-            case all triples are uniformly weighted
-        return_root - if True, return 'PhyloTreeNode' instead of
-            'PhyloTree' instance
+    Parameters
+    ----------
+    triple_weights : dict, optional
+        Weights for the triples; default is None in which case all triples are
+        uniformly weighted.
+    return_root : bool
+        If True, return 'PhyloTreeNode' instead of 'PhyloTree' instance.
     """
         
     if triple_weights:
@@ -319,11 +324,13 @@ def best_pair_merge_first(R, L, triple_weights=None, return_root=False):
     
     Modified version by Byrka et al. (2010) and added weights.
     
-    Keyword arguments:
-        triple_weights - weights for the triples; default is None in which
-            case all triples are uniformly weighted
-        return_root - if True, return 'PhyloTreeNode' instead of
-            'PhyloTree' instance
+    Parameters
+    ----------
+    triple_weights : dict, optional
+        Weights for the triples; default is None in which case all triples are
+        uniformly weighted.
+    return_root : bool
+        If True, return 'PhyloTreeNode' instead of 'PhyloTree' instance.
     """
     
     # initialization
@@ -390,3 +397,32 @@ def best_pair_merge_first(R, L, triple_weights=None, return_root=False):
     
     root = next(iter(nodes))
     return root if return_root else PhyloTree(root)
+
+
+def BUILD_supertree(trees):
+    """Supertree construction based on the BUILD algorithm.
+    
+    Parameters
+    ----------
+    trees : sequence of Tree instances
+    
+    Returns
+    -------
+    PhyloTree or bool
+        A supertree for the input trees if existent, False otherwise.
+    """
+    
+    L = set()
+    R = set()
+        
+    for tree in trees:
+        
+        L.update(l.ID for l in tree.leaves())
+        R.update((*sorted(t[:2]), t[2])
+                 for t in tree.get_triples(id_only=True))
+    
+    build = Build(R, L, mitcut=False)
+    tree = build.build_tree()
+    
+    return tree if tree else False    
+    
