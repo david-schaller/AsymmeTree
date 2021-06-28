@@ -37,11 +37,13 @@ class BuildST:
         self.list_pointer = {}                          # node --> DLL element
         self.singleton_pointer = {}                     # node --> DLL element
         
+        self.fail_message = ''
+        
         if hdt:
-            self.ConnectedComp = ConnectedComp_HDT      # use class 'ConnectedComp_HDT'
+            self.ConnectedComp = ConnectedComp_HDT      # use 'ConnectedComp_HDT'
             self.hdt_graph = HDTGraph()
         else:
-            self.ConnectedComp = ConnectedComp_simple   # use class 'ConnectedComp_simple'
+            self.ConnectedComp = ConnectedComp_simple   # use 'ConnectedComp_simple'
             self.hdt_graph = False
         
     
@@ -55,7 +57,6 @@ class BuildST:
             return False
         root = self._buildst(U_init)
         if not root:
-            print('Could not build the supertree!')
             return False
         else:
             return Tree(root)
@@ -101,8 +102,9 @@ class BuildST:
             if ett:
                 Y.representative = self.trees[0].root
             else:
-                print("Initialization failed. Graph is not fully connected!")
-                return
+                self.failmessage = 'initialization failed because graph is '\
+                                   'not fully connected'
+                return False
             
         return Y
     
@@ -128,7 +130,7 @@ class BuildST:
         if U.count == 2:
             labels = U.get_labelnodes()
             if len(labels) != 2:
-                print('Could not find 2 labeled nodes!')
+                self.failmessage = 'could not find 2 labeled nodes'
                 return
             node1 = TreeNode(labels[0].ID, label=str(labels[0].ID))
             node2 = TreeNode(labels[1].ID, label=str(labels[1].ID))
@@ -165,7 +167,7 @@ class BuildST:
                     break
                 
             if not Y_current:
-                print("Could not find connected component for v_i", v_i)
+                # print("Could not find connected component for v_i", v_i)
                 return
             
             for u in v_i.children:
@@ -176,33 +178,44 @@ class BuildST:
                         # (case 1.1) u is the last child of v_i
                         #            then conn_comp[0] is actually empty
                         if len(conn_comp[0]) == 1:
-                            Y_current.set_component(component=conn_comp[1], representative=u)
+                            Y_current.set_component(component=conn_comp[1],
+                                                    representative=u)
                             break
                         
                         # (case 1.2) two actual components emerge
                         else:
-                            Y_current.set_component(component=conn_comp[0], representative=v_i)
+                            Y_current.set_component(component=conn_comp[0],
+                                                    representative=v_i)
                             Y_new = self.ConnectedComp(Y_current.k, self)
-                            Y_new.set_component(component=conn_comp[1], representative=u)
-                            current_smaller = True if len(conn_comp[0]) < len(conn_comp[1]) else False
+                            Y_new.set_component(component=conn_comp[1], 
+                                                representative=u)
+                            current_smaller = True \
+                                if len(conn_comp[0]) < len(conn_comp[1]) \
+                                else False
                     
                     elif v_i in conn_comp[1]:
                         
                         # (case 2.1) u is the last child of v_i
                         #            then conn_comp[1] is actually empty
                         if len(conn_comp[1]) == 1:
-                            Y_current.set_component(component=conn_comp[0], representative=u)
+                            Y_current.set_component(component=conn_comp[0],
+                                                    representative=u)
                             break
                         
                         # (case 2.2) two actual components emerge
                         else:
-                            Y_current.set_component(component=conn_comp[1], representative=v_i)
+                            Y_current.set_component(component=conn_comp[1],
+                                                    representative=v_i)
                             Y_new = self.ConnectedComp(Y_current.k, self)
-                            Y_new.set_component(component=conn_comp[0], representative=u)
-                            current_smaller = True if len(conn_comp[1]) < len(conn_comp[0]) else False
+                            Y_new.set_component(component=conn_comp[0],
+                                                representative=u)
+                            current_smaller = True \
+                                if len(conn_comp[1]) < len(conn_comp[0]) \
+                                else False
                     
                     if current_smaller:
-                        self._update_conn_comps(Y_current, Y_new, first_swap=True)
+                        self._update_conn_comps(Y_current, Y_new,
+                                                first_swap=True)
                     else:
                         self._update_conn_comps(Y_new, Y_current)
                     
@@ -214,8 +227,7 @@ class BuildST:
         #    return incompatible
         # --------------------------------------------------
         if len(W) == 1:
-            print('Leaves:', W[0].get_labelnodes() )
-            print('The trees are incompatible!')
+            self.failmessage = 'the trees are incompatible'
             return False
         
         # --------------------------------------------------
@@ -325,8 +337,8 @@ class ConnectedComp_HDT:
         """Check if a given key is element of the component."""
         
         if not self.representative: 
-            print("Missing representative for the component! (2)")
-            return False
+            raise RuntimeError('missing representative for the component (2)')
+            
         return self.hdt_graph.connected(self.representative, key)
     
     
@@ -365,8 +377,8 @@ class ConnectedComp_HDT:
         
         result = []
         if not self.representative:
-            print("Missing representative for the component! (1)")
-            return
+            raise RuntimeError('missing representative for the component (1)')
+            
         for node in self.hdt_graph.component_iterator(self.representative):
             if isinstance(node, XpNode):
                 result.append(node)
