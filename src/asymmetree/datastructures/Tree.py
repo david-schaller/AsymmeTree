@@ -729,17 +729,24 @@ class Tree:
         return True
     
     
-    def copy(self):
+    def copy(self, mapping=False):
         """Return a copy of the tree.
         
         Constructs a deep copy of the tree, i.e. to the level of nodes.
         By default, the node attributes are all immutable data types.
         Hence, the original tree is not affected by operations on the copy.
         
+        Parameters
+        ----------
+        mapping : bool
+            If True, additionally return the mapping from original to copied
+            nodes as dictionary.
+        
         Returns
         -------
-        Tree
-            A copy of the tree.
+        Tree or tuple of Tree and dict
+            A copy of the tree and optionally the mapping from original to 
+            copied nodes.
         """
         
         if not self.root:
@@ -753,7 +760,10 @@ class Tree:
             if orig.parent:
                 orig_to_new[orig.parent].add_child(new)
         
-        return Tree(orig_to_new[self.root])
+        if mapping:
+            return Tree(orig_to_new[self.root]), orig_to_new
+        else:
+            return Tree(orig_to_new[self.root])
     
     
     @staticmethod
@@ -810,7 +820,8 @@ class Tree:
                 leaf_count += 1
                 
         return tree
-    
+
+
 # ----------------------------------------------------------------------------
 #                       Efficient lca computation
 # ----------------------------------------------------------------------------

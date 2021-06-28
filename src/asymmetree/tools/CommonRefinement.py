@@ -34,6 +34,24 @@ class _RefinementConstructor:
         
         self.trees = trees
         
+        
+    def run(self):
+        
+        self._initialize()
+        self._build_tree()
+        
+        if self.T:
+            if not self.T.is_phylogenetic():
+                return False
+            if not self._check_displayed():
+                return False
+            return self.T
+        else:
+            return False
+    
+    
+    def _initialize(self):
+    
         self.T = None           # resulting tree
         
         self._leaf_set_cardinalities()
@@ -61,7 +79,7 @@ class _RefinementConstructor:
             self.J[v] = {i: None for i in range(len(self.trees))}
             self.l[v] = 1 
         
-        for i, T_i in enumerate(trees):
+        for i, T_i in enumerate(self.trees):
             for v_i in T_i.leaves():
                 v = self.label_dict[v_i.label]
                 self.p[i][v] = v_i
@@ -145,6 +163,32 @@ class _RefinementConstructor:
             raise RuntimeError('could not determine root')
         
         self.T = Tree(self.root)
+    
+    
+    def _check_displayed(self):
+        
+        for i, T_i in enumerate(self.trees):
+            
+            T_copy, v_copy = self.T.copy(mapping=True)
+            
+            to_contract = [(v_copy[v].parent, v_copy[v])
+                           for v in self.T.inner_nodes()
+                           if i not in self.J[v] and not v.parent]
+            
+            T_copy.contract(to_contract)
+            
+            for v_i in T_i.preorder():
+                if v_i.parent is None:
+                    if v_copy[self.vi_to_v[v_i]].parent is not None:
+                        print('Here')
+                        return False
+                elif v_copy[self.vi_to_v[v_i.parent]] is not \
+                     v_copy[self.vi_to_v[v_i]].parent:
+                    print(i, 'Here2', v_i)
+                    print(self.T.to_newick())
+                    return False
+        
+        return True
                 
 
 if __name__ == '__main__':
@@ -152,7 +196,6 @@ if __name__ == '__main__':
     # ----- TESTING THIS MODULE -----
     
     import random
-    import numpy as np
     
     N = 20
     contraction_prob = 0.9
@@ -177,9 +220,7 @@ if __name__ == '__main__':
         partial_trees.append(T_i)
     
     CR = _RefinementConstructor(partial_trees)
-    CR._build_tree()
-    cr_tree = CR.T
-    
+    cr_tree = CR.run()
     
     print('----------')
     if cr_tree:

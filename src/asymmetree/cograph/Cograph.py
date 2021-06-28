@@ -182,7 +182,25 @@ class Cotree(Tree):
                             yield t1, t3, t2
     
 
-    def copy(self):
+    def copy(self, mapping=False):
+        """Return a copy of the cotree.
+        
+        Constructs a deep copy of the tree, i.e. to the level of nodes.
+        By default, the node attributes are all immutable data types.
+        Hence, the original tree is not affected by operations on the copy.
+        
+        Parameters
+        ----------
+        mapping : bool
+            If True, additionally return the mapping from original to copied
+            nodes as dictionary.
+        
+        Returns
+        -------
+        Cotree or tuple of Cotree and dict
+            A copy of the tree and optionally the mapping from original to 
+            copied nodes.
+        """
         
         if not self.root:
             return Cotree(None)
@@ -196,7 +214,10 @@ class Cotree(Tree):
             if orig.parent:
                 orig_to_new[orig.parent].add_child(new)
         
-        return Cotree(orig_to_new[self.root])
+        if mapping:
+            return Cotree(orig_to_new[self.root]), orig_to_new
+        else:
+            return Cotree(orig_to_new[self.root])
        
     
     @staticmethod
