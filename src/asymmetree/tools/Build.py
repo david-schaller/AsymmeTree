@@ -421,7 +421,7 @@ def BUILD_supertree(trees):
         R.update((*sorted(t[:2]), t[2])
                  for t in tree.get_triples(id_only=True))
     
-    build = Build(R, L, mitcut=False)
+    build = Build(R, L, mincut=False)
     tree = build.build_tree()
     
     return tree if tree else False    
