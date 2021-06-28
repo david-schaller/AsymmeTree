@@ -24,8 +24,37 @@ from asymmetree.datastructures.hdtgraph.DynamicGraph import HDTGraph
 __author__ = 'David Schaller'
 
 
+def build_st(trees):
+    """Supertree construction based on BuildST algorithm.
+    
+    Note that the graph connecting to trees in the input set whenever they
+    share at least one leaf ID must be connected. Otherwise, the implementation
+    returns False, even though a supertree may exist.
+    """
+    
+    st_builder = BuildST(trees)
+    return st_builder.run()
+
+
 class BuildST:
-    """Deng and Fernández-Baca's BuildST algorithm."""
+    """BuildST algorithm.
+    
+    Note that the graph connecting to trees in the input set whenever they
+    share at least one leaf ID must be connected. Otherwise, the implementation
+    returns False, even though a supertree may exist.
+    
+    Parameters
+    ----------
+    hdt : bool
+        If True, the dynamic graph data structure is used as described in the
+        references paper.
+    
+    References
+    ----------
+    - Yun Deng and David Fernández-Baca. Fast Compatibility Testing for
+      Rooted Phylogenetic Trees. 27th Annual Symposium on Combinatorial
+      Pattern Matching (CPM 2016). DOI: 10.4230/LIPIcs.CPM.2016.12
+    """
     
     def __init__(self, trees, hdt=True):
         """Constructor for BuildST algorithm."""
@@ -495,7 +524,7 @@ if __name__ == '__main__':
     t = PhyloTree.random_colored_tree(N, 3, binary=False)
     print(t.to_newick(color=False, distance=False, label_inner=False))
     
-    partial_trees = []
+    trees = []
     for i in range(10):
         
         mark = np.random.choice(N, size=N//2)
@@ -509,10 +538,9 @@ if __name__ == '__main__':
                     v.label = str(v.ID)
                 j += 1
         obs_tree = observable_tree(t)
-        partial_trees.append(obs_tree)
+        trees.append(obs_tree)
     
-    st_builder = BuildST(partial_trees)
-    supertree = st_builder.run()
+    supertree = build_st(trees)
         
     print(supertree.to_newick())
     
