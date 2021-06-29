@@ -704,7 +704,7 @@ class Tree:
         i1, i2 = 0, 0
         while i2 < len(hierarchy2):
             
-            if i2 >= len(hierarchy1):
+            if i1 >= len(hierarchy1):
                 return False
             
             if hierarchy1[i1] == hierarchy2[i2]:
