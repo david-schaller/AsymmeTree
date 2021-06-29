@@ -399,6 +399,55 @@ def best_pair_merge_first(R, L, triple_weights=None, return_root=False):
     return root if return_root else PhyloTree(root)
 
 
+def minimal_identifying_triple_set(tree):
+    """Construct a minimal set of triples that identifies the tree.
+    
+    Parameters
+    ----------
+    tree : Tree
+    
+    References
+    ----------
+    - Stefan Grünewald, Mike Steel and M. Shel Swenson. Closure operations in
+      phylogenetics. Mathematical Biosciences 208 (2007) 521–537.
+      DOI: 10.1016/j.mbs.2006.11.005
+    """
+    
+    # representative leaf for each vertex
+    repres = {}
+    
+    for v in tree.postorder():
+        repres[v] = repres[v.children[0]] if v.children else v.ID
+    
+    for u, v in tree.inner_edges():
+        W = [c for c in v.children]
+        for v2 in u.children:
+            if v is not v2:
+                for i in range(len(W)-1):
+                    yield (repres[W[i]], repres[W[i+1]],
+                           repres[v2])
+                    
+
+def tree_profile_to_triples(trees):
+    """Construct leaf set and reprentative triples from a profile of trees.
+    
+    Parameters
+    ----------
+    trees : sequence of Tree instances
+    """
+    
+    L = set()
+    R = set()
+        
+    for tree in trees:
+        
+        L.update(l.ID for l in tree.leaves())
+        R.update((*sorted(t[:2]), t[2])
+                 for t in minimal_identifying_triple_set(tree))
+    
+    return L, R
+
+
 def BUILD_supertree(trees):
     """Supertree construction based on the BUILD algorithm.
     
@@ -412,14 +461,7 @@ def BUILD_supertree(trees):
         A supertree for the input trees if existent, False otherwise.
     """
     
-    L = set()
-    R = set()
-        
-    for tree in trees:
-        
-        L.update(l.ID for l in tree.leaves())
-        R.update((*sorted(t[:2]), t[2])
-                 for t in tree.get_triples(id_only=True))
+    L, R = tree_profile_to_triples(trees)
     
     build = Build(R, L, mincut=False)
     tree = build.build_tree()
