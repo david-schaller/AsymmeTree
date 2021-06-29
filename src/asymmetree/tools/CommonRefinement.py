@@ -205,9 +205,13 @@ class _RefinementConstructor:
             T_copy.contract(to_contract)
             
             for v_i in T_i.preorder():
-                if v_i.parent is None:
+                if v_i not in self.vi_to_v:
+                    return False
+                elif v_i.parent is None:
                     if v_copy[self.vi_to_v[v_i]].parent is not None:
                         return False
+                elif v_i.parent not in self.vi_to_v:
+                    return False
                 elif v_copy[self.vi_to_v[v_i.parent]] is not \
                      v_copy[self.vi_to_v[v_i]].parent:
                     return False
