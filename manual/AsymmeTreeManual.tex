@@ -133,9 +133,8 @@ It includes a simulator for species and gene trees with asymmetric evolution
 rates, tools for the inference and analysis of phylogenetic best matches 
 \citep{geiss2019a,geiss2020c} (resp. best hits) from known gene trees or 
 evolutionary distances. Moreover, it includes tools for the analysis of 
-horizontal gene transfer (HGT) events, an algorithm to compute supertrees 
-\citep{deng2016} and a method to estimate rooted species trees from an ensemble 
-of orthology/paralogy relations \citep{hellmuth2015}.
+horizontal gene transfer (HGT) events and a method to estimate rooted species 
+trees from an ensemble of orthology/paralogy relations \citep{hellmuth2015}.
 
 The library, and especially the simulator, is primarily designed to explore and
 validate mathematical concepts, and to test inference methods for various steps 
@@ -186,6 +185,7 @@ AssymmeTree has several dependencies (which are installed automatically when usi
 	\item \href{https://networkx.github.io}{NetworkX}
 	\item \href{http://www.scipy.org/install.html}{SciPy and NumPy}
 	\item \href{https://matplotlib.org/}{Matplotlib}
+  \item \href{https://github.com/david-schaller/tralda}{tralda}
 \end{itemize}
 
 The simulation of phylogenetic scenarios and sequences, as well as most 
@@ -205,7 +205,13 @@ variable.
 
 \section{Usage}
 
-AsymmeTree is divided into several subpackages and modules, an overview of which is given in Appendix~\ref{apx:package_structure}.
+AsymmeTree is divided into several subpackages and modules, an overview of 
+which is given in Appendix~\ref{apx:package_structure}.
+The package uses many classes and functions from the 
+\href{https://github.com/david-schaller/tralda}{tralda} library for 
+\textbf{tr}ee \textbf{al}gorithms and \textbf{da}ta structures.
+Therefore, an overview of this package is also given in 
+Appendix~\ref{apx:package_structure}.
 The API functions are described in the following sections and can be imported 
 directly from the respective subpackage (see examples).
 
@@ -219,7 +225,9 @@ best match graphs \citep{geiss2019a}.
 
 \subsection{Tree Data Structures}
 
-The two classes \texttt{Tree} and \texttt{PhyloTree} (inherits from \texttt{Tree}) implement tree data structures which are essential for most of the modules in the package.
+The two classes \texttt{Tree} (in \texttt{tralda}) and \texttt{PhyloTree} 
+(inherits from \texttt{Tree}) implement tree data structures which are 
+essential for most of the modules in the package.
 The latter contains converters and parsers for the Newick format and a NetworkX graph format.
 
 The vertices of a \texttt{PhyloTree} instance are of type \texttt{PhyloTreeNode} and contain the following attributes:
@@ -287,13 +295,14 @@ tree = PhyloTree.load('tree.json')
 An overview over selected functions of the tree classes is given in 
 Appendix~\ref{apx:tree-functions}.
 
-The class \texttt{LCA} can be initiated with an instance of type \texttt{Tree} 
+The class \texttt{LCA} (in \texttt{tralda}) can be initiated with an instance 
+of type \texttt{Tree} 
 or its inheriting classes and then provides functions for efficient last common 
 ancestor queries in that tree. 
 
 \begin{adjustwidth}{1cm}{1cm}\vspace{2mm}
 \begin{minted}[fontsize=\footnotesize]{python}
-from asymmetree.datastructures.Tree import LCA
+from tralda.datastructures import LCA
 
 # tree is of type 'Tree' (or an inheriting class)
 lca_T = LCA(tree)
@@ -979,45 +988,18 @@ can be supplied using the keyword parameters \texttt{lca\_T}
 and \texttt{lca\_S}, respectively. Otherwise, such instances are initiated 
 within the function.
 
-\subsection{Supertree Computation}
 
-The module \texttt{BuildST} contains an implementation of the BuildST algorithm described by \citet{deng2016} to compute a supertree from a given list of tree based on the leaf labels.
-The algorithm uses the dynamic graph data structure described by \citet{henzinger1995} and \citet{holm2001}.
-The latter can also be used separately:
+\subsection{ParaPhylo}
 
-\begin{adjustwidth}{1cm}{1cm}\vspace{2mm}
-\begin{minted}[fontsize=\footnotesize]{python}
-from asymmetree.datastructures import HDTGraph
-\end{minted}
-\end{adjustwidth}
-
-The class \texttt{BuildST} is initialized with a list of trees that are of type \texttt{Tree} (thus also \texttt{PhyloTree} is allowed).
-The method \texttt{run()} then returns a supertree if the trees in the list are compatible \emph{and} they overlap in their sets of leaf labels.
-More precisely, the graph on the set of input trees, in which two trees are connected by an edge if and only if they have at least one leaf label in common, must be connected.
-Example usage:
-
-\begin{adjustwidth}{1cm}{1cm}\vspace{2mm}
-\begin{minted}[fontsize=\footnotesize]{python}
-from asymmetree.tools import BuildST
-
-# tree_list is a list of 'Tree' instances
-st_builder = BuildST(tree_list)
-supertree = st_builder.run()
-
-if supertree:
-    print(supertree.to_newick())
-else:
-    print('could not build a supertree')
-\end{minted}
-\end{adjustwidth}
-
-
-
-\subsection{Cograph Editing and ParaPhylo}
-
-The subpackages \texttt{asymmetree.cograph} and \texttt{asymmetree.proteinortho} contain heuristics for cograph editing and a method to compute rooted species tree from orthology/paralogy relations.
-The latter is a reimplementation of \href{http://pacosy.informatik.uni-leipzig.de/208-0-ParaPhylo.html}{ParaPhylo} \citep{hellmuth2015} which uses heuristics for the NP-hard steps instead of exact ILP solutions.
-For cograph editing, the $\mathcal{O}(n^2)$ algorithm (where $n$ is the number of vertices in a connected graph) by \citet{crespelle2019} is applied.
+The subpackage \texttt{asymmetree.paraphylo} contains a method to compute 
+rooted species tree from orthology/paralogy relations.
+This is a re-implementation of 
+\href{http://pacosy.informatik.uni-leipzig.de/208-0-ParaPhylo.html}{ParaPhylo} 
+\citep{hellmuth2015} which uses heuristics for the NP-hard optimization steps 
+instead of exact ILP solutions.
+For cograph editing, the $\mathcal{O}(n^2)$ algorithm (where $n$ is the number 
+of vertices in a connected graph) by \citet{crespelle2019} is applied 
+(implemented in \texttt{tralda}).
 For the Maximum Consistent Triple Set problem, tree different heuristics are available:
 
 \vspace{3mm}
@@ -1070,6 +1052,8 @@ containing support values for the inner nodes.
 
 \section{Subpackages and Modules}\label{apx:package_structure}
 
+\subsection{\texttt{asymmetree}}
+
 {\footnotesize
 \setlength{\tabcolsep}{6pt}
 \renewcommand{\arraystretch}{1.4}
@@ -1093,31 +1077,10 @@ containing support values for the inner nodes.
   \multicolumn{2}{|l|}{\textbf{\texttt{datastructures}}}\\
   %--------------------------------------------------------------------------
   \hline
-  	%--------------------------------------------------------------------------
-  \texttt{Tree} &
-  Includes the basic class \texttt{Tree}, provides functions for tree 
-  traversals, Newick parser, etc. The class \texttt{LCA} provides efficient 
-  last common ancestor queries.\\
   %--------------------------------------------------------------------------
   \texttt{PhyloTree} &
   Includes the class \texttt{PhyloTree} for phylogenetic trees (inherits from 
   \texttt{Tree}), provides a Newick parser, etc. \\
-  %--------------------------------------------------------------------------
-  \texttt{LinkedList} &
-  Implementation of a linked list. \\
-  %--------------------------------------------------------------------------
-  \texttt{DoublyLinkedList} &
-  Implementation of a doubly-linked list. \\
-  %--------------------------------------------------------------------------
-  \texttt{AVLTree} &
-  Implementation of an ordered set (\texttt{TreeSet}) and an ordered dictionary 
-  (\texttt{TreeDict}) as a balanced binary search tree (AVL tree). \\
-  %--------------------------------------------------------------------------
-  \texttt{Partition} &
-  Dynamic partition that supports efficient merge operations. \\
-  %--------------------------------------------------------------------------
-  \texttt{hdtgraph.DynamicGraph} &
-  Dynamic graph data structure described by \citet{holm2001}. \\
   %--------------------------------------------------------------------------
 	\hline
 	%--------------------------------------------------------------------------
@@ -1181,17 +1144,6 @@ containing support values for the inner nodes.
 	\multicolumn{2}{|l|}{\textbf{\texttt{tools}}}\\
 	%--------------------------------------------------------------------------
 	\hline
-  %--------------------------------------------------------------------------
-  \texttt{Build} &
-  Includes the classes \texttt{Build} and \texttt{MTT} for triple 
-  consistency tests and tree construction \citep{aho1981, he2006}. \\
-	%--------------------------------------------------------------------------
-	\texttt{BuildST} &
-	Includes the class \texttt{BuildST} that computes a supertree from a given 
-	list of tress (with overlapping labels) \citep{deng2016}. \\
-	%--------------------------------------------------------------------------
-	\texttt{GraphTools} &
-	Miscellaneous functions for graphs, e.g.\ check for graph equality. \\
 	%--------------------------------------------------------------------------
 	\texttt{DistanceCalculation} &
 	Calculation of maximum likelihood distances of pairs of aligned sequences. \\
@@ -1228,21 +1180,6 @@ containing support values for the inner nodes.
 	Augmentation of the least resolved tree (w.r.t.\ some BMG) in order to identify all unambiguously false orthology assignments \citep{schaller2020}. \\
 	%--------------------------------------------------------------------------
 	\hline
-	%--------------------------------------------------------------------------
-	\multicolumn{2}{|l|}{\textbf{\texttt{cograph}}}\\
-	%--------------------------------------------------------------------------
-	\hline
-	%--------------------------------------------------------------------------
-	\texttt{Cograph} &
-	Includes the classes \texttt{Cotree} and \texttt{CotreeNode} as well as a 
-	generator for random cotrees/cographs. The class 
-	\texttt{LinearCographDetector} implements an $\mathcal{O}(|V|+|E|)$ algorithm 
-	for cograph detection and cotree construction \citep{corneil1985}.\\
-	%--------------------------------------------------------------------------
-	\texttt{CographEditor} &
-	Implements a heuristic for cograph editing \citep{crespelle2019}. \\
-  %--------------------------------------------------------------------------
-  \hline
   %--------------------------------------------------------------------------
   \multicolumn{2}{|l|}{\textbf{\texttt{hgt}}}\\
   %--------------------------------------------------------------------------
@@ -1278,6 +1215,102 @@ containing support values for the inner nodes.
 	Visualization of simulated gene trees (of type \texttt{PhyloTree}), experimental. \\
 	%--------------------------------------------------------------------------
 \end{longtable}
+}
+
+\subsection{\texttt{tralda}}
+
+{\footnotesize
+  \setlength{\tabcolsep}{6pt}
+  \renewcommand{\arraystretch}{1.4}
+  %\renewcommand\tabularxcolumn[1]{m{#1}}
+  \begin{longtable}{| p{4.0cm} | p{10cm} |}
+    \endfirsthead
+    \multicolumn{2}{c}{\textit{Table continued from previous page}}\\
+    \hline
+    \endhead
+    \hline \multicolumn{2}{r}{\textit{Table continued on next page}} \\
+    \endfoot
+    \hline
+    \endlastfoot
+    %
+    \hline
+    %--------------------------------------------------------------------------
+    \textbf{Packages and Modules} & \textbf{Description} \\
+    %--------------------------------------------------------------------------
+    \hline
+    %--------------------------------------------------------------------------
+    \multicolumn{2}{|l|}{\textbf{\texttt{datastructures}}}\\
+    %--------------------------------------------------------------------------
+    \hline
+    %--------------------------------------------------------------------------
+    \texttt{Tree} &
+    Includes the basic class \texttt{Tree}, provides functions for tree 
+    traversals, Newick parser, etc. The class \texttt{LCA} provides efficient 
+    last common ancestor queries.\\
+    %--------------------------------------------------------------------------
+    \texttt{LinkedList} &
+    Implementation of a linked list. \\
+    %--------------------------------------------------------------------------
+    \texttt{DoublyLinkedList} &
+    Implementation of a doubly-linked list. \\
+    %--------------------------------------------------------------------------
+    \texttt{AVLTree} &
+    Implementation of an ordered set (\texttt{TreeSet}) and an ordered 
+    dictionary 
+    (\texttt{TreeDict}) as a balanced binary search tree (AVL tree). \\
+    %--------------------------------------------------------------------------
+    \texttt{Partition} &
+    Dynamic partition that supports efficient merge operations. \\
+    %--------------------------------------------------------------------------
+    \texttt{hdtgraph.DynamicGraph} &
+    Dynamic graph data structure described by \citet{holm2001}. \\
+    %--------------------------------------------------------------------------
+    \hline
+    %--------------------------------------------------------------------------
+    \multicolumn{2}{|l|}{\textbf{\texttt{supertree}}}\\
+    %--------------------------------------------------------------------------
+    \hline
+    %--------------------------------------------------------------------------
+    \texttt{Build} &
+    Includes the classes \texttt{Build} and \texttt{MTT} for triple 
+    consistency tests and tree construction \citep{aho1981, he2006}. \\
+    %--------------------------------------------------------------------------
+    \texttt{BuildST} &
+    Includes the class \texttt{BuildST} that computes a supertree from a given 
+    list of tress (with overlapping labels) \citep{deng2016}. \\
+    %--------------------------------------------------------------------------
+    \texttt{CommonRefinement} &
+    Includes the class \texttt{LinCR} and function 
+    \texttt{linear\_common\_refinement()} for computing the common refinement 
+    for trees on the same leaf set in linear time. \\
+    %--------------------------------------------------------------------------
+    %--------------------------------------------------------------------------
+    \hline
+    %--------------------------------------------------------------------------
+    \multicolumn{2}{|l|}{\textbf{\texttt{tools}}}\\
+    %--------------------------------------------------------------------------
+    \hline
+    %--------------------------------------------------------------------------
+    \texttt{GraphTools} &
+    Miscellaneous functions for graphs, e.g.\ check for graph equality. \\
+    %--------------------------------------------------------------------------
+    \hline
+    %--------------------------------------------------------------------------
+    \multicolumn{2}{|l|}{\textbf{\texttt{cograph}}}\\
+    %--------------------------------------------------------------------------
+    \hline
+    %--------------------------------------------------------------------------
+    \texttt{Cograph} &
+    Includes the classes \texttt{Cotree} and \texttt{CotreeNode} as well as a 
+    generator for random cotrees/cographs. The class 
+    \texttt{LinearCographDetector} implements an $\mathcal{O}(|V|+|E|)$ 
+    algorithm 
+    for cograph detection and cotree construction \citep{corneil1985}.\\
+    %--------------------------------------------------------------------------
+    \texttt{CographEditor} &
+    Implements a heuristic for cograph editing \citep{crespelle2019}. \\
+    %--------------------------------------------------------------------------
+  \end{longtable}
 }
 
 
