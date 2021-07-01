@@ -3,10 +3,11 @@
 import itertools
 import networkx as nx
 
-from asymmetree.datastructures.Tree import LCA
+from tralda.datastructures import LCA
+from tralda.cograph import Cotree
+from tralda.supertree import Build
+
 from asymmetree.datastructures.PhyloTree import PhyloTree, PhyloTreeNode
-from asymmetree.cograph.Cograph import Cotree
-from asymmetree.tools.Build import Build
 from asymmetree.treeevolve.SpeciesTree import (simulate_timing,
                                                distance_from_timing)
 
@@ -143,6 +144,7 @@ class RsScenarioConstructor:
         if not S:
             return False
         else:
+            S = PhyloTree.to_phylotree(S)
             S.add_planted_root()
             S.reconstruct_IDs()
             simulate_timing(S)
@@ -209,8 +211,9 @@ class RsScenarioConstructor:
 
 if __name__ == '__main__':
     
+    import tralda.tools.GraphTools as gt
+    
     import asymmetree.treeevolve as te
-    import asymmetree.tools.GraphTools as gt
     from asymmetree.hgt.Fitch import undirected_fitch, rs_transfer_edges
     
     S = te.simulate_species_tree(10)

@@ -3,10 +3,10 @@
 import os
 import numpy as np
 
-from asymmetree.tools import GraphTools
+from tralda.tools import GraphTools
+
 from asymmetree.file_io import ScenarioFileIO
 import asymmetree.treeevolve as te
-
 import asymmetree.best_matches as bm
 from asymmetree.best_matches.Scenario import Scenario
 

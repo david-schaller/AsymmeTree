@@ -5,7 +5,7 @@ with open('README.md', 'r') as fh:
 
 setuptools.setup(
     name='asymmetree',
-    version='1.0.2',
+    version='2.0.0',
     author='David Schaller',
     author_email='sdavid@bioinf.uni-leipzig.de',
     description='Simulation of phylogenetic trees, sequences and genomes.',
@@ -25,5 +25,6 @@ setuptools.setup(
         'scipy>=1.3.0',
         'matplotlib>=3.0',
         'networkx>=2.2',
+        'tralda>=0.0.1',
    ],
 )

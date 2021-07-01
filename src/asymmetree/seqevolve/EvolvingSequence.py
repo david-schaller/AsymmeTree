@@ -10,9 +10,9 @@ Classes in this module:
 
 from enum import Enum, auto
 
-from asymmetree.datastructures.DoublyLinkedList import (DLList,
-                                                        DLListNode,
-                                                        DLListIterator)
+from tralda.datastructures.DoublyLinkedList import (DLList,
+                                                    DLListNode,
+                                                    DLListIterator)
 
 
 __author__ = 'David Schaller'

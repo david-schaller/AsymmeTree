@@ -4,10 +4,11 @@ import itertools
 
 import networkx as nx
 
-from asymmetree.cograph.CographEditor import CographEditor
+from tralda.cograph import CographEditor
+from tralda.datastructures import Tree, LCA
+from tralda.supertree import Build, greedy_BUILD, best_pair_merge_first
+
 from asymmetree.datastructures.PhyloTree import PhyloTree
-from asymmetree.datastructures.Tree import LCA
-from asymmetree.tools.Build import Build, greedy_BUILD, best_pair_merge_first
 
 
 __author__ = 'David Schaller'
@@ -126,7 +127,7 @@ class TreeReconstructor:
         if not root:
             raise RuntimeError('could not build a species tree')
         
-        self.S = PhyloTree(root)
+        self.S = PhyloTree.to_phylotree(Tree(root))
         
         return self.S
     

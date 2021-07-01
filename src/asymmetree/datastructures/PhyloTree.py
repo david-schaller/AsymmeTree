@@ -8,7 +8,7 @@ import collections, itertools, random, re, pickle, json, os
 import numpy as np
 import networkx as nx
 
-from asymmetree.datastructures.Tree import Tree, TreeNode
+from tralda.datastructures.Tree import Tree, TreeNode
 
 
 __author__ = 'David Schaller'
@@ -36,8 +36,8 @@ class PhyloTreeNode(TreeNode):
     See Also
     --------
     PhyloTree
-    TreeNode
-    CotreeNode
+    TreeNode (tralda package)
+    CotreeNode (tralda package)
     """
     
     __slots__ = ('color', 'dist', 'tstamp', 'transferred')
@@ -127,8 +127,8 @@ class PhyloTree(Tree):
     See Also
     --------
     PhyloTreeNode
-    Tree
-    Cotree
+    Tree (tralda package)
+    Cotree (tralda package)
     """
     
     # corresponding node type
@@ -951,7 +951,7 @@ class PhyloTree(Tree):
         
         Constructs a deep copy of the tree, i.e. to the level of nodes.
         By default, the node attributes are all immutable data types (except
-        `leaves` which is not copy, and may be recomputed later for the copy).
+        `leaves` which is not copied, and may be recomputed later for the copy).
         Hence, the original tree is not affected by operations on the copy.
         
         Parameters
@@ -985,6 +985,49 @@ class PhyloTree(Tree):
             return PhyloTree(orig_to_new[self.root]), orig_to_new
         else:
             return PhyloTree(orig_to_new[self.root])
+    
+    
+    @staticmethod
+    def to_phylotree(tree, mapping=False):
+        """Convert a Tree instance into a PhyloTree.
+        
+        By default, the node attributes are all immutable data types (except
+        `leaves` which is not copy, and may be recomputed later for the copy).
+        Hence, the original tree is not affected by operations on the copy.
+        
+        Parameters
+        ----------
+        tree : Tree
+        mapping : bool
+            If True, additionally return the mapping from original to the
+            newly created nodes (of type 'PhyloTreeNode') as dictionary.
+        
+        Returns
+        -------
+        PhyloTree or tuple of PhyloTree and dict
+            A PhyloTree version of the tree and optionally the mapping from
+            original to copied nodes.
+        """
+        
+        if not isinstance(tree, Tree) or isinstance(tree, PhyloTree):
+            raise TypeError("requires an instance of type 'Tree' (but not "\
+                            "'PhyloTree', use copy() for this purpose)")
+        
+        if not tree.root:
+            return PhyloTree(None)
+        
+        orig_to_new = {}
+        
+        for orig in tree.preorder():
+            new = PhyloTreeNode(orig.ID, label=orig.label)
+            orig_to_new[orig] = new
+            if orig.parent:
+                orig_to_new[orig.parent].add_child(new)
+        
+        if mapping:
+            return PhyloTree(orig_to_new[tree.root]), orig_to_new
+        else:
+            return PhyloTree(orig_to_new[tree.root])
     
     
     @staticmethod

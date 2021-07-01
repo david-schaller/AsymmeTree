@@ -11,7 +11,9 @@ import itertools
 
 import networkx as nx
 
-from asymmetree.tools.GraphTools import sort_by_colors
+from tralda.tools.GraphTools import sort_by_colors
+
+from asymmetree.datastructures.PhyloTree import PhyloTree
 
 
 __author__ = 'David Schaller'
@@ -25,6 +27,9 @@ __author__ = 'David Schaller'
 
 def orthology_from_tree(tree):
     """Constructs the true orthology graph from an event-labeled tree."""
+    
+    if not isinstance(tree, PhyloTree):
+        raise TypeError("not of type 'PhyloTree'")
     
     tree.supply_leaves()                                # assign list of leaves to each node
     TOG = nx.Graph()
@@ -44,6 +49,9 @@ def orthology_from_tree(tree):
 
 def bmg_from_tree(tree, supply_rbmg=False):
     """Construct a BMG (and optionally RBMG) from a given tree."""
+    
+    if not isinstance(tree, PhyloTree):
+        raise TypeError("not of type 'PhyloTree'")
     
     tree.supply_leaves()                                # assign list of leaves to each node
     bmg = nx.DiGraph()
@@ -77,6 +85,9 @@ def bmg_from_tree_quadratic(tree, supply_rbmg=False):
     Implementation of the quadratic algorithm in Geiss et al. 2020. Proven to
     run in O(|L|^2).
     """
+    
+    if not isinstance(tree, PhyloTree):
+        raise TypeError("not of type 'PhyloTree'")
     
     tree.supply_leaves()
     bmg = nx.DiGraph()

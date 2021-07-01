@@ -5,8 +5,8 @@ import itertools
 
 import networkx as nx
 
-from asymmetree.datastructures.Tree import LCA
-from asymmetree.tools.GraphTools import independent_sets
+from tralda.datastructures import LCA
+from tralda.tools.GraphTools import independent_sets
 
 
 __author__ = 'David Schaller'
@@ -149,8 +149,8 @@ def is_rs_fitch(G, color_set=None):
 
 if __name__ == '__main__':
     
+    import tralda.tools.GraphTools as gt
     import asymmetree.treeevolve as te
-    import asymmetree.tools.GraphTools as gt
     
     S = te.simulate_species_tree(10)
     TGT = te.simulate_dated_gene_tree(S, dupl_rate=1.0, loss_rate=0.5,

@@ -2,11 +2,11 @@
 
 import unittest
 
+import tralda.tools.GraphTools as gt
+from tralda.cograph import Cotree
 
 import asymmetree.treeevolve as te
 import asymmetree.hgt as hgt
-import asymmetree.tools.GraphTools as gt
-from asymmetree.cograph import Cotree
 
 
 __author__ = 'David Schaller'

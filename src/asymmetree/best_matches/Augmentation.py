@@ -3,7 +3,8 @@
 
 import networkx as nx
 
-from asymmetree.datastructures.Tree import TreeNode
+from tralda.datastructures import TreeNode
+
 from asymmetree.datastructures.PhyloTree import PhyloTreeNode
 
 
@@ -69,7 +70,7 @@ def _color_intersection_components(u):
 
 if __name__ == '__main__':
     
-    from asymmetree.datastructures import PhyloTree
+    from asymmetree.datastructures.PhyloTree import PhyloTree
     from asymmetree.best_matches.LeastResolvedTree import lrt_from_observable_tree
     
     T = PhyloTree.random_colored_tree(30, 5)

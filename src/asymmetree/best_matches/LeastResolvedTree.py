@@ -11,12 +11,14 @@ import itertools
 
 import networkx as nx
 
+from tralda.datastructures import Tree, TreeNode
+from tralda.tools.GraphTools import (sort_by_colors,
+                                     is_properly_colored,
+                                     graphs_equal)
+from tralda.supertree import Build
+
 from asymmetree.best_matches.TrueBMG import bmg_from_tree
 from asymmetree.datastructures.PhyloTree import PhyloTree, PhyloTreeNode
-from asymmetree.tools.GraphTools import (sort_by_colors,
-                                         is_properly_colored,
-                                         graphs_equal)
-from asymmetree.tools.Build import Build
 
 
 __author__ = 'David Schaller'
@@ -125,6 +127,10 @@ def _finalize(tree, G):
     
     if isinstance(tree, PhyloTreeNode):
         tree = PhyloTree(tree)
+    elif isinstance(tree, TreeNode):
+        tree = PhyloTree.to_phylotree(Tree(tree))
+    elif isinstance(tree, Tree):
+        tree = PhyloTree.to_phylotree(tree)
     
     # assign IDs to inner nodes
     tree.reconstruct_IDs()
@@ -259,6 +265,7 @@ def is_bmg(G):
             return False
         else:
             # a digraph is a BMG iff its equal to the BMG of BUILD(R)
+            subtree = PhyloTree.to_phylotree(subtree)
             subtree.reconstruct_info_from_graph(sg)
             if not graphs_equal(sg, bmg_from_tree(subtree)):
                 return False
