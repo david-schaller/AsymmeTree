@@ -6,7 +6,7 @@ import asymmetree.treeevolve as te
 
 __author__ = 'David Schaller'
 
-# specifify models
+# specify models
 subst_model = se.SubstModel('a', 'CUSTOM',
                             filename='../resources/subst_matrices/WAG.paml')
 indel_model = se.IndelModel(0.01, 0.01, length_distr=('zipf', 1.821))

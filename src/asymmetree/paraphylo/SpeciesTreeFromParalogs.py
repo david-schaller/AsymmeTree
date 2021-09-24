@@ -8,8 +8,6 @@ from tralda.cograph import CographEditor
 from tralda.datastructures import Tree, LCA
 from tralda.supertree import Build, greedy_BUILD, best_pair_merge_first
 
-from asymmetree.datastructures.PhyloTree import PhyloTree
-
 
 __author__ = 'David Schaller'
 
@@ -69,18 +67,18 @@ class TreeReconstructor:
     def _informative_triples(self, cotree, color_dict, weight=1.0):
         """Add informative species triples from a (co)tree to R."""
         
-        cotree.supply_leaves()
+        leaves = cotree.leaf_dict()
         
         for u in cotree.preorder():
             if u.label == 'parallel' or not u.children:
                 continue
             
             for v1, v2 in itertools.permutations(u.children, 2):
-                for x, y in itertools.combinations(v1.leaves, 2):
-                    for z in v2.leaves:
-                        X, Y, Z = (color_dict[x.ID],
-                                   color_dict[y.ID],
-                                   color_dict[z.ID])
+                for x, y in itertools.combinations(leaves[v1], 2):
+                    for z in leaves[v2]:
+                        X, Y, Z = (color_dict[x.label],
+                                   color_dict[y.label],
+                                   color_dict[z.label])
                         
                         if X != Y and X != Z and Y != Z:
                             self._add_triple(X, Y, Z, weight)
@@ -127,7 +125,7 @@ class TreeReconstructor:
         if not root:
             raise RuntimeError('could not build a species tree')
         
-        self.S = PhyloTree.to_phylotree(Tree(root))
+        self.S = Tree(root)
         
         return self.S
     
@@ -164,8 +162,8 @@ class TreeReconstructor:
         # internal node v --> support for T(v)
         support = {}
         
-        self.S.supply_leaves()
-        all_leaves = set(self.S.root.leaves)
+        leaves = self.S.leaf_dict()
+        all_leaves = set(leaves[self.S.root])
         
         for v in self.S.preorder():
             if not v.children or v is self.S.root:
@@ -173,13 +171,13 @@ class TreeReconstructor:
             
             numerator = 0
             denominator = 0
-            outspecies = all_leaves.difference(v.leaves)
+            outspecies = all_leaves.difference(leaves[v])
             
-            for l1, l2 in itertools.combinations(v.leaves, 2):
+            for l1, l2 in itertools.combinations(leaves[v], 2):
                 for l3 in outspecies:
-                    a = l1.ID
-                    b = l2.ID
-                    c = l3.ID
+                    a = l1.label
+                    b = l2.label
+                    c = l3.label
                     triple1 = (a, b, c) if a <= b else (b, a, c)
                     triple2 = (a, c, b) if a <= c else (c, a, b)
                     triple3 = (b, c, a) if b <= c else (c, b, a)
@@ -198,7 +196,7 @@ class TreeReconstructor:
     
     
     def newick_with_support(self, v=None, supports=None):
-        """Recursive PhyloTree --> Newick (str) function."""
+        """Recursive Tree --> Newick (str) function."""
         
         if v is None:
             supports = self._subtree_support()

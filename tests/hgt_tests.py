@@ -2,11 +2,13 @@
 
 import unittest
 
+import networkx as nx
+
 import tralda.tools.GraphTools as gt
-from tralda.cograph import Cotree
+from tralda.cograph import to_cotree
 
 import asymmetree.treeevolve as te
-import asymmetree.hgt as hgt
+import asymmetree.analysis as analysis
 
 
 __author__ = 'David Schaller'
@@ -28,11 +30,11 @@ class TestHGT(unittest.TestCase):
         OGT = te.observable_tree(TGT)
         
         # finally we can extract the LDT and Fitch graph
-        ldt = hgt.ldt_graph(OGT, S)
-        transfer_edges = hgt.rs_transfer_edges(OGT, S)
-        fitch = hgt.undirected_fitch(OGT, transfer_edges)
+        ldt = analysis.ldt_graph(OGT, S)
+        transfer_edges = analysis.rs_transfer_edges(OGT, S)
+        fitch = analysis.undirected_fitch(OGT, transfer_edges)
         
-        cotree = Cotree.cotree(ldt)
+        cotree = to_cotree(ldt)
         
         self.assertTrue( gt.is_subgraph(ldt, fitch) and cotree )
     
@@ -60,6 +62,31 @@ class TestHGT(unittest.TestCase):
         # print(OGT.to_newick())
         
         self.assertTrue(len(colors) == N and len(leaves) == N)
+        
+    
+    def test_rs_edges(self):
+        
+        S = te.simulate_species_tree(10)
+        TGT = te.simulate_dated_gene_tree(S, dupl_rate=1.0, loss_rate=0.5,
+                                          hgt_rate=0.5)
+        OGT = te.observable_tree(TGT)
+        
+        transf1 = analysis.true_transfer_edges(OGT)
+        transf2 = analysis.rs_transfer_edges(OGT, S)
+        
+        self.assertTrue( transf1.issuperset(transf2) )
+    
+    
+    def test_rs_fitch_counterexamle(self):
+        
+        G = nx.Graph()
+        G.add_node('a', color=1)
+        G.add_node('a2', color=1)
+        G.add_node('b', color=2)
+        G.add_node('b2', color=2)
+        G.add_edges_from([('a', 'a2'), ('a', 'b2'), ('b', 'a2'), ('b', 'b2')])
+        
+        self.assertFalse( analysis.is_rs_fitch(G, color_set=[1,2]) )
             
 
 if __name__ == '__main__':

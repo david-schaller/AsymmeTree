@@ -2,7 +2,8 @@
 
 import os
 
-from asymmetree.datastructures.PhyloTree import PhyloTree
+from tralda.datastructures.Tree import Tree
+
 import asymmetree.treeevolve as te
 import asymmetree.seqevolve as se
 from asymmetree.file_io.SeqFileIO import write_alignment, write_fasta
@@ -16,8 +17,8 @@ class GenomeSimulator:
     
     def __init__(self, species_tree, outdir=None):
         
-        if not isinstance(species_tree, PhyloTree):
-            raise TypeError("species tree must be of type 'PhyloTree'")
+        if not isinstance(species_tree, Tree):
+            raise TypeError("species tree must be of type 'Tree'")
         
         self.S = species_tree
         self.outdir = outdir
@@ -149,11 +150,11 @@ class GenomeSimulator:
         if not self.outdir:
             raise RuntimeError('no output directory specified for fasta files')
         
-        # list of all species IDs
+        # list of all species labels
         if include_inner:
-            species = [v.ID for v in self.S.preorder()]
+            species = [v.label for v in self.S.preorder()]
         else:
-            species = [v.ID for v in self.S.preorder() if not v.children]
+            species = [v.label for v in self.S.preorder() if not v.children]
         
         # labeled sequences sorted by color/species
         sorted_seqs = {s: [] for s in species}

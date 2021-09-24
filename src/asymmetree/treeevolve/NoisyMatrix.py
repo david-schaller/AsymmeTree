@@ -9,7 +9,8 @@ Introduce noise into a distance matrix.
 import random
 import numpy as np
 
-from asymmetree.datastructures.PhyloTree import PhyloTree, PhyloTreeNode
+from tralda.datastructures.Tree import Tree, TreeNode
+from asymmetree.tools.PhyloTreeTools import distance_matrix
 
 
 __author__ = "David Schaller"
@@ -200,24 +201,24 @@ def wrong_topology_matrix(OGT):
         return                                          # hence |E| should be even
     random.shuffle(distances)
     
-    random_tree = PhyloTree(PhyloTreeNode(0, dist=0.0))
+    random_tree = Tree(TreeNode(label=0, dist=0.0))
     id_counter = 1
     current_leaves = [random_tree.root]
     
     while distances:
         v = current_leaves.pop(random.randint(0, len(current_leaves)-1))
         dist1, dist2 = distances.pop(), distances.pop()
-        new_child1 = PhyloTreeNode(id_counter, dist=dist1)
-        new_child2 = PhyloTreeNode(id_counter+1, dist=dist2)
+        new_child1 = TreeNode(label=id_counter, dist=dist1)
+        new_child2 = TreeNode(label=id_counter+1, dist=dist2)
         v.add_child(new_child1)
         v.add_child(new_child2)
         current_leaves.extend(v.children)
         id_counter += 1
     
-    random_leaves = random_tree.supply_leaves()         # implicit random bijection
+    random_leaves = [l for l in random_tree.leaves()]   # implicit random bijection
     random.shuffle(random_leaves)                       # to original tree
     
-    _, D = random_tree.distance_matrix(leaf_order=random_leaves)
+    _, D = distance_matrix(random_tree, leaf_order=random_leaves)
     return D
 
 

@@ -2,7 +2,8 @@
 
 import unittest
 
-from asymmetree.datastructures import PhyloTreeNode
+from tralda.datastructures.Tree import TreeNode
+
 import asymmetree.seqevolve as se
 import asymmetree.treeevolve as te
 
@@ -37,12 +38,12 @@ class TestSeqEvolvePackage(unittest.TestCase):
         evolver.evolve_along_tree(species_tree, start_length=150)
         
         for node, sequence in evolver.sequences.items():
-            self.assertIsInstance(node, PhyloTreeNode)
+            self.assertIsInstance(node, TreeNode)
             self.assertIsInstance(sequence, se.EvoSeq)
         
         alignment_length = -1
         for node, aligned_seq in evolver.true_alignment().items():
-            self.assertIsInstance(node, PhyloTreeNode)
+            self.assertIsInstance(node, TreeNode)
             self.assertIsInstance(aligned_seq, str)
             
             # test whether all aligned sequences have the same length

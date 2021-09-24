@@ -82,8 +82,8 @@ def _check_alignment(alignment):
     seq_length = None                       # length of the aligned sequences
     for label, seq in alignment:
         
-        if len(label) > max_length:
-            max_length = len(label)
+        if len(str(label)) > max_length:
+            max_length = len(str(label))
             
         if seq_length is None:
             seq_length = len(seq)

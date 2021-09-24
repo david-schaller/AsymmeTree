@@ -75,7 +75,7 @@ class GeneTreeVis:
                 raise ValueError("distance mode '{}' not supported".format(distance))
             if not v.children:
                 self.leaf_counter += 1
-                if not v.is_loss() and v.color not in self.colors:
+                if v.event != 'L' and v.color not in self.colors:
                     self.colors[v.color] = len(self.colors)
                 
         self.ax.set_xlim(-0.1,xmax+0.5)
@@ -136,14 +136,14 @@ class GeneTreeVis:
             if not v.parent:
                 self.draw_root(*self.node_positions[v])
             elif v.children:
-                if v.label == 'D':
+                if v.event == 'D':
                     self.draw_dupl(*self.node_positions[v])
-                elif v.label == 'S':
+                elif v.event == 'S':
                     self.draw_spec(*self.node_positions[v])
-                if v.label == 'H':
+                if v.event == 'H':
                     self.draw_hgt(*self.node_positions[v])
             else:
-                if v.is_loss():
+                if v.event == 'L':
                     self.draw_loss(*self.node_positions[v])
                 else:
                     x, y = self.node_positions[v]

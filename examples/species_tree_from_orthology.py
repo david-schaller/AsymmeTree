@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from asymmetree.datastructures import PhyloTree
 import asymmetree.treeevolve as te
-from asymmetree.best_matches import TrueBMG
+from asymmetree.analysis.BestMatches import orthology_from_tree, bmg_from_tree
 from asymmetree.paraphylo import TreeReconstructor
+from asymmetree.tools.PhyloTreeTools import (to_newick, parse_newick,
+                                             reconstruct_timestamps)
 
 
 __author__ = 'David Schaller'
@@ -12,12 +13,11 @@ __author__ = 'David Schaller'
 # species tree
 
 #S = ts.simulate_species_tree(10)
-S = PhyloTree.parse_newick('(((((16:0.38786287055727103,(18:0.2071277923445058,19:0.2071277923445058)17:0.18073507821276524)12:0.10075553853805931,(14:0.13224182895383052,15:0.13224182895383052)13:0.3563765801414998)4:0.07517286794939665,(6:0.5373882998574596,(8:0.4434182448023457,(10:0.04929450217312242,11:0.04929450217312242)9:0.3941237426292233)7:0.0939700550551139)5:0.02640297718726732)2:0.2512472266526016,3:0.8150385036973286)1:0.18496149630267142)0:0.0;')
-S.reconstruct_IDs()
-S.reconstruct_timestamps()
+S = parse_newick('(((((16:0.38786287055727103,(18:0.2071277923445058,19:0.2071277923445058)17:0.18073507821276524)12:0.10075553853805931,(14:0.13224182895383052,15:0.13224182895383052)13:0.3563765801414998)4:0.07517286794939665,(6:0.5373882998574596,(8:0.4434182448023457,(10:0.04929450217312242,11:0.04929450217312242)9:0.3941237426292233)7:0.0939700550551139)5:0.02640297718726732)2:0.2512472266526016,3:0.8150385036973286)1:0.18496149630267142)0:0.0;')
+reconstruct_timestamps(S)
 
 print('------------- original species tree -------------')
-print(S.to_newick())
+print(to_newick(S))
 
 tr = TreeReconstructor(cotree_mode='best')
 
@@ -34,11 +34,11 @@ for i in range(100):
     OGT = te.observable_tree(TGT)
     
 #     #add orthology graph
-#    ortho_graph = TrueBMG.orthology_from_tree(OGT)
+#    ortho_graph = orthology_from_tree(OGT)
 #    tr.add_ortho_graph(ortho_graph)
     
     # add RBMG
-    _, rbmg = TrueBMG.bmg_from_tree(OGT, supply_rbmg=True)
+    _, rbmg = bmg_from_tree(OGT, supply_rbmg=True)
     tr.add_ortho_graph(rbmg)
     
 

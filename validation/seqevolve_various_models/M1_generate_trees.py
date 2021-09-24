@@ -2,8 +2,10 @@
 
 import os, pickle, glob
 
-from asymmetree.datastructures.PhyloTree import PhyloTree
+from tralda.datastructures.Tree import Tree
+
 import asymmetree.treeevolve as te
+from asymmetree.tools.PhyloTreeTools import distance_matrix
 
 
 def simulate(directory, number_of_trees, species_per_tree):
@@ -15,7 +17,7 @@ def simulate(directory, number_of_trees, species_per_tree):
         
         S = te.simulate_species_tree(50)
         T_simulator = te.GeneTreeSimulator(S)
-        T = T_simulator.simulate((0.0, 0.0, 0.0))   # dupl./loss/HGT disabled
+        T = T_simulator.simulate()   # dupl./loss/HGT disabled
         
         te.assign_rates(T, S, autocorr_variance=0.2)
         
@@ -32,7 +34,7 @@ def load(directory):
     for i in range(len(files)):
         with open('{}/scenario{}.pickle'.format(directory, i), 'rb') as f:
             T_nx = pickle.load(f)
-            T = PhyloTree.parse_nx(*T_nx)
+            T = Tree.parse_nx(*T_nx)
             trees.append(T)
             
     return trees
@@ -45,7 +47,7 @@ def true_distances(directory):
     matrices = []
     for T in trees:
         
-        leaves, D = T.distance_matrix()
+        leaves, D = distance_matrix(T)
         labels = [v.label for v in leaves]
         
         matrices.append((labels, D))
