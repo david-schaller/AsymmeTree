@@ -3,6 +3,7 @@
 from asymmetree.analysis.BestMatches import (orthology_from_tree,
                                              bmg_from_tree,
                                              extended_best_hits,
+                                             is_bmg,
                                              lrt_from_observable_tree,
                                              lrt_from_colored_graph,
                                              binary_refinable_tree,
