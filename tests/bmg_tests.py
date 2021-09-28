@@ -2,8 +2,9 @@
 
 import unittest
 
-from asymmetree.datastructures import PhyloTree
-import asymmetree.best_matches as bm
+import asymmetree.analysis as analysis
+
+from asymmetree.tools.PhyloTreeTools import random_colored_tree
 
 
 __author__ = 'David Schaller'
@@ -19,11 +20,11 @@ class TestBMG(unittest.TestCase):
         
         for _ in range(repeats):
             
-            tree = PhyloTree.random_colored_tree(N, colors)
-            bmg = bm.bmg_from_tree(tree)
+            tree = random_colored_tree(N, colors)
+            bmg = analysis.bmg_from_tree(tree)
             
-            lrt1 = bm.lrt_from_observable_tree(tree)
-            lrt2 = bm.lrt_from_colored_graph(bmg, mincut=False)
+            lrt1 = analysis.lrt_from_observable_tree(tree)
+            lrt2 = analysis.lrt_from_colored_graph(bmg, mincut=False)
             
             self.assertTrue( lrt1.equal_topology(lrt2) )
             

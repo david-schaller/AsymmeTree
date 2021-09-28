@@ -11,9 +11,12 @@ from collections import deque
 
 import numpy as np
 
-from asymmetree.datastructures.PhyloTree import (PhyloTree, PhyloTreeNode,
-                                                 delete_losses_and_contract,
-                                                 remove_planted_root)
+from tralda.datastructures.Tree import Tree, TreeNode
+
+from asymmetree.tools.PhyloTreeTools import (sorted_nodes,
+                                             sorted_edges,
+                                             delete_losses_and_contract,
+                                             remove_planted_root)
 
 
 __author__ = 'David Schaller'
@@ -32,13 +35,13 @@ def simulate_dated_gene_tree(S, **kwargs):
 
 class _Branch:
     
-    __slots__ = ('ID', 'array_id', 'rate',
+    __slots__ = ('label', 'array_id', 'rate',
                  'parent', 'S_u', 'S_v', 'transferred')
     
-    def __init__(self, ID, array_id, rate,
+    def __init__(self, label, array_id, rate,
                  parent, S_u, S_v, transferred):
         
-        self.ID = ID                                # unique branch id
+        self.label = label                          # unique branch label
         self.array_id = array_id                    # index in rate array
         self.rate = rate                            # total event rate
         
@@ -52,12 +55,12 @@ class GeneTreeSimulator:
     
     def __init__(self, S):
         
-        if not isinstance(S, PhyloTree) or not S.root:
-            raise TypeError("'S' must be a non-empty tree of type 'PhyloTree'")
+        if not isinstance(S, Tree) or not S.root:
+            raise TypeError("'S' must be a non-empty tree of type 'Tree'")
         
         self.S = S                                  # species tree
-        self.sorted_speciations = S.sorted_nodes()  # list of speciations sorted by time stamp
-        self.sorted_edges = S.sorted_edges()        # edges of the species tree
+        self.sorted_speciations = sorted_nodes(S)   # list of speciations sorted by time stamp
+        self.sorted_edges = sorted_edges(S)         # edges of the species tree
                                                     # sort (u,v) by tstamp of u
         self._analyze_secies_tree()
     
@@ -69,7 +72,7 @@ class GeneTreeSimulator:
         for u in self.S.postorder():
             
             if not u.children:
-                if u.is_loss():
+                if u.event == 'L':
                     self.S_subtree_survivors[u] = 0
                 else:
                     self.S_subtree_survivors[u] = 1
@@ -292,15 +295,16 @@ class GeneTreeSimulator:
         
         if len(self.S.root.children) > 1:
             # root is a speciation event
-            root = PhyloTreeNode(self.id_counter, label='S',
-                                 color=self.S.root.ID, 
-                                 dist=0.0, tstamp=self.S.root.tstamp)
+            root = TreeNode(label=0, event='S',
+                            color=self.S.root.label, 
+                            dist=0.0, tstamp=self.S.root.tstamp)
         else:                    
             # planted species tree
-            root = PhyloTreeNode(self.id_counter, color=self.S.root.ID,
-                                 dist=0.0, tstamp=self.S.root.tstamp)
+            root = TreeNode(label=0, event=None,
+                            color=self.S.root.label,
+                            dist=0.0, tstamp=self.S.root.tstamp)
             
-        T = PhyloTree(root)
+        T = Tree(root)
         self.id_counter += 1
         self.spec_queue.popleft()
         
@@ -338,10 +342,11 @@ class GeneTreeSimulator:
         
         for branch in branches:
             
-            spec_node = PhyloTreeNode(branch.ID, label='S',
-                                      color=S_v.ID, tstamp=S_v.tstamp,
-                                      dist=abs(S_v.tstamp-branch.parent.tstamp),
-                                      transferred=branch.transferred)
+            spec_node = TreeNode(label=branch.label,
+                                 event='S',
+                                 color=S_v.label, tstamp=S_v.tstamp,
+                                 dist=abs(S_v.tstamp-branch.parent.tstamp),
+                                 transferred=branch.transferred)
             branch.parent.add_child(spec_node)
             
             for S_w in S_v.children:
@@ -364,13 +369,13 @@ class GeneTreeSimulator:
             
             # losses and (extant) leaves
             if not S_v.children:
-                spec_node.label = '*' if S_v.is_loss() else str(spec_node.ID)
                 
                 self.ES_to_b[(S_u, S_v)].remove(branch)
                 self.total_rate -= branch.rate
                 branch.rate = 0.0
                 
-                if S_v.is_loss():
+                if S_v.label == 'L':
+                    spec_node.event = 'L'
                     self.total_surviving -= 1
                     self.surv_non_loss_lineages.discard(branch)
             
@@ -384,11 +389,12 @@ class GeneTreeSimulator:
         
         S_u, S_v = branch.S_u, branch.S_v
         
-        dupl_node = PhyloTreeNode(branch.ID, label='D',
-                                  color=(S_u.ID,S_v.ID),
-                                  tstamp=event_tstamp,
-                                  dist=abs(event_tstamp-branch.parent.tstamp),
-                                  transferred=branch.transferred)
+        dupl_node = TreeNode(label=branch.label,
+                             event='D',
+                             color=(S_u.label,S_v.label),
+                             tstamp=event_tstamp,
+                             dist=abs(event_tstamp-branch.parent.tstamp),
+                             transferred=branch.transferred)
         branch.parent.add_child(dupl_node)
         self.ES_to_b[(S_u, S_v)].remove(branch)
         self.surv_non_loss_lineages.discard(branch)
@@ -425,11 +431,12 @@ class GeneTreeSimulator:
         
         S_u, S_v = branch.S_u, branch.S_v
         
-        loss_node = PhyloTreeNode(branch.ID, label='*',
-                                  color=(S_u.ID,S_v.ID),
-                                  tstamp=event_tstamp,
-                                  dist=abs(event_tstamp-branch.parent.tstamp),
-                                  transferred=branch.transferred)
+        loss_node = TreeNode(label=branch.label,
+                             event='L',
+                             color=(S_u.label,S_v.label),
+                             tstamp=event_tstamp,
+                             dist=abs(event_tstamp-branch.parent.tstamp),
+                             transferred=branch.transferred)
         branch.parent.add_child(loss_node)
         self.ES_to_b[(S_u, S_v)].remove(branch)
         self.surv_non_loss_lineages.discard(branch)
@@ -452,11 +459,12 @@ class GeneTreeSimulator:
                                              exclude_edge=(S_u, S_v))
         if valid_edges:
             trans_edge = random.choice(valid_edges)
-            hgt_node = PhyloTreeNode(branch.ID, label='H',
-                                     color=(S_u.ID,S_v.ID),
-                                     tstamp=event_tstamp,
-                                     dist=abs(event_tstamp-branch.parent.tstamp),
-                                     transferred=branch.transferred)
+            hgt_node = TreeNode(label=branch.label,
+                                event='H',
+                                color=(S_u.label,S_v.label),
+                                tstamp=event_tstamp,
+                                dist=abs(event_tstamp-branch.parent.tstamp),
+                                transferred=branch.transferred)
             branch.parent.add_child(hgt_node)
             self.ES_to_b[(S_u, S_v)].remove(branch)
             self.surv_non_loss_lineages.discard(branch)
@@ -498,11 +506,12 @@ class GeneTreeSimulator:
     def _assert_no_extinction(self, T):
         """Returns False if gene family is extinct in some species."""
         
-        VS_to_VT = {l.ID: [] for l in self.S.preorder() if not l.children}
+        VS_to_VT = {l.label: [] for l in self.S.preorder() if not l.children and
+                                                                  l.event != 'L'}
         
         for v in T.preorder():
-            if not v.children and not v.is_loss():
-                VS_to_VT[v.color].append(v.ID)
+            if not v.children and v.event != 'L':
+                VS_to_VT[v.color].append(v.label)
                 
         for leaf_list in VS_to_VT.values():
             if not leaf_list:

@@ -22,7 +22,7 @@ class TestTreeEvolvePackage(unittest.TestCase):
             
             self.assertTrue(species_tree._assert_integrity())
             
-            leaves = species_tree.supply_leaves(exclude_losses=True)
+            leaves = [l for l in species_tree.leaves() if l.event != 'L']
             self.assertEqual(len(leaves), N)
             
             
@@ -41,12 +41,12 @@ class TestTreeEvolvePackage(unittest.TestCase):
                             prohibit_extinction='per_species')
             
             # check that there is no extinction in any species
-            color_dict = {l.ID: [] for l in species_tree.preorder()
-                          if not l.children}
+            color_dict = {l.label: [] for l in species_tree.preorder()
+                          if not l.children and l.event != 'L'}
             
             for v in gene_tree.preorder():
-                if not v.children and not v.is_loss():
-                    color_dict[v.color].append(v.ID)
+                if not v.children and v.event != 'L':
+                    color_dict[v.color].append(v.label)
                     
             for leaf_list in color_dict.values():
                 self.assertTrue(leaf_list)
@@ -56,7 +56,7 @@ class TestTreeEvolvePackage(unittest.TestCase):
                              prohibit_extinction='per_family')
             
             # check that there is no extinction in all species
-            self.assertTrue(gene_tree2.supply_leaves())
+            self.assertTrue([l for l in gene_tree2.leaves()])
             
 
 if __name__ == '__main__':

@@ -10,6 +10,7 @@ import numpy as np
 
 from asymmetree.treeevolve.GeneTree import GeneTreeSimulator
 from asymmetree.tools.Sampling import Sampler
+from asymmetree.tools.PhyloTreeTools import (sorted_nodes,)
 
 
 __author__ = 'David Schaller'
@@ -164,17 +165,17 @@ def _divergent_rates(T, S, sampler, CSN_weights):
             subfunctionalization and neofunctionalization
     """
     
-    T_nodes = T.sorted_nodes()
+    T_nodes = sorted_nodes(T)
     rates = {edge: [] for edge in T.edges()}        # edge --> list of (tstamp, rate) tuples
     
-    S_parents = {v.ID: v.parent.ID for v in S.preorder() if v.parent}
-    gene_counter = {(e[0].ID, e[1].ID): [] for e in S.edges()}
+    S_parents = {v.label: v.parent.label for v in S.preorder() if v.parent}
+    gene_counter = {(e[0].label, e[1].label): [] for e in S.edges()}
     marked = {v: 'conserved' for v in T_nodes}      # marked as conserved or divergent
     
     for u in T_nodes:
         
         # ----------------- SPECIATION -----------------
-        if u.label in ('S', ''):
+        if u.event in ('S', '', None):
             for v in u.children:
                 marked[v] = marked[u]
                 S_u = u.color
@@ -184,7 +185,7 @@ def _divergent_rates(T, S, sampler, CSN_weights):
                 rates[(u,v)].append((u.tstamp, new_rate))
             
         # ---------------- DUPLICATION -----------------
-        elif u.label == "D":
+        elif u.event == 'D':
             marked[u.children[0]], marked[u.children[1]] = _duplication_type(marked[u],
                                                                              CSN_weights)
             gene_counter[u.color].remove(u)
@@ -194,7 +195,7 @@ def _divergent_rates(T, S, sampler, CSN_weights):
                 rates[(u,v)].append((u.tstamp, new_rate))
         
         # ------------------- LOSS ---------------------
-        elif u.is_loss():
+        elif u.event == 'L':
             gene_counter[u.color].remove(u)
             if len(gene_counter[u.color]) == 1:
                 v = gene_counter[u.color][0]
@@ -203,7 +204,7 @@ def _divergent_rates(T, S, sampler, CSN_weights):
                     rates[(v.parent,v)].append((u.tstamp, 1.0))
         
         # ---------- HORIZONTAL GENE TRANSFER ----------
-        elif u.label == "H":
+        elif u.event == 'H':
             v1, v2 = u.children
             if v1.transferred:
                 v1, v2 = v2, v1         # now v2 is the transferred copy
@@ -249,17 +250,17 @@ def autocorrelation_factors(tree, variance):
         if not v.parent:
             # assign factor 1.0 to root (= expected value for all other nodes
             # and edges)
-            node_rates[v.ID] = 1.0
-            edge_rates[v.ID] = 1.0
+            node_rates[v.label] = 1.0
+            edge_rates[v.label] = 1.0
         else:
             var = variance * v.dist
             # ensure that exp. value is equal to parent's rate
-            mu = np.log(node_rates[v.parent.ID]) - var/2
+            mu = np.log(node_rates[v.parent.label]) - var/2
             
-            node_rates[v.ID] = np.exp(np.random.normal(mu, np.sqrt(var)))
+            node_rates[v.label] = np.exp(np.random.normal(mu, np.sqrt(var)))
             
             # edge rate as arithmetic mean of u and v
-            edge_rates[v.ID] = (node_rates[v.parent.ID] + node_rates[v.ID]) / 2
+            edge_rates[v.label] = (node_rates[v.parent.label] + node_rates[v.label]) / 2
             
     return node_rates, edge_rates
 

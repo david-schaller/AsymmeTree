@@ -2,10 +2,11 @@
 
 import os, glob
 
-from asymmetree.datastructures.PhyloTree import PhyloTree, PhyloTreeNode
+from tralda.datastructures.Tree import Tree, TreeNode
+
 from asymmetree.seqevolve import Evolver, SubstModel
 import asymmetree.tools.DistanceCalculation as dc
-from asymmetree.seqevolve.Alignment import write_to_file
+from asymmetree.file_io.SeqFileIO import write_alignment
 
 from validation import aux_functions
 
@@ -31,10 +32,10 @@ def simulate():
         
         for d in distances:
             
-            root = PhyloTreeNode(0, label='0', dist=0.0)
-            child = PhyloTreeNode(1, label='1', dist=d)
+            root = TreeNode(label=0, dist=0.0)
+            child = TreeNode(label=1, dist=d)
             root.add_child(child)
-            T = PhyloTree(root)
+            T = Tree(root)
             
             for subst_model in subst_models:
                 
@@ -55,11 +56,11 @@ def simulate():
                         for k, v in alignment.items():
                             seq = v
                             break
-                        alignment[PhyloTreeNode(2, label='2')] = seq
-                        alignment[PhyloTreeNode(3, label='3')] = seq
+                        alignment[TreeNode(label=2)] = seq
+                        alignment[TreeNode(label=3)] = seq
                         
-                        write_to_file(outfile, alignment,
-                                      alignment_format='phylip')
+                        write_alignment(outfile, alignment,
+                                        alignment_format='phylip')
                         
                     else:
                         evolver.true_alignment(include_inner=True,

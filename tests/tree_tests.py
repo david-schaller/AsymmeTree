@@ -2,7 +2,11 @@
 
 import unittest, os
 
-from asymmetree.datastructures import PhyloTree
+from tralda.datastructures.Tree import Tree
+
+from asymmetree.tools.PhyloTreeTools import (random_colored_tree,
+                                             to_newick,
+                                             parse_newick)
 
 
 __author__ = 'David Schaller'
@@ -18,13 +22,13 @@ class TestTrees(unittest.TestCase):
         
         for _ in range(repeats):
             
-            tree = PhyloTree.random_colored_tree(N, colors)
-            newick = tree.to_newick()
-            tree2 = PhyloTree.parse_newick(newick)
+            tree = random_colored_tree(N, colors)
+            newick = to_newick(tree)
+            tree2 = parse_newick(newick)
             
             # colors of tree must be converted to 'str'
-            label_color = [(v.label, str(v.color)) for v in tree.supply_leaves()]
-            label_color2 = [(v.label, v.color) for v in tree2.supply_leaves()]
+            label_color = [(v.label, v.color) for v in tree.leaves()]
+            label_color2 = [(v.label, v.color) for v in tree2.leaves()]
             
             self.assertListEqual(label_color, label_color2)
 
@@ -36,21 +40,21 @@ class TestTrees(unittest.TestCase):
         
         for _ in range(repeats):
             
-            tree = PhyloTree.random_colored_tree(N, colors)
+            tree = random_colored_tree(N, colors)
             
             tree1 = tree.copy()
             
             tree.serialize('testfile_tree.pickle')
             tree.serialize('testfile_tree.json')
-            tree2 = PhyloTree.load('testfile_tree.pickle')
-            tree3 = PhyloTree.load('testfile_tree.json')
+            tree2 = Tree.load('testfile_tree.pickle')
+            tree3 = Tree.load('testfile_tree.json')
             os.remove('testfile_tree.pickle')
             os.remove('testfile_tree.json')
             
-            tree_nodes = [v.ID for v in tree.preorder()]
-            tree1_nodes = [v.ID for v in tree1.preorder()]
-            tree2_nodes = [v.ID for v in tree2.preorder()]
-            tree3_nodes = [v.ID for v in tree3.preorder()]
+            tree_nodes = [v.label for v in tree.preorder()]
+            tree1_nodes = [v.label for v in tree1.preorder()]
+            tree2_nodes = [v.label for v in tree2.preorder()]
+            tree3_nodes = [v.label for v in tree3.preorder()]
             
             self.assertListEqual(tree_nodes, tree1_nodes)
             self.assertListEqual(tree_nodes, tree2_nodes)

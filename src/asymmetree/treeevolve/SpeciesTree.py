@@ -9,9 +9,10 @@ Simulate dated species trees.
 import random, sys
 import numpy as np
 
-from asymmetree.datastructures.PhyloTree import (PhyloTree, PhyloTreeNode,
-                                                 delete_losses_and_contract,
-                                                 remove_planted_root)
+from tralda.datastructures.Tree import Tree, TreeNode
+
+from asymmetree.tools.PhyloTreeTools import (delete_losses_and_contract,
+                                             remove_planted_root)
 
 
 __author__ = 'David Schaller'
@@ -45,7 +46,7 @@ def simulate_species_tree(N, model='innovation',
     if not isinstance(N, int) or N < 0:
         raise ValueError('N must be an int >=0')
     elif N == 0:
-        return PhyloTree(None)
+        return Tree(None)
     
     if not isinstance(model, str):
         raise ValueError("model must be of type 'str'")
@@ -181,7 +182,7 @@ def assign_losses(tree, proportion):
     """Randomly assigns a specified proportion of leaves as losses."""
     
     for leaf in tree.random_leaves(proportion):
-        leaf.label = '*'
+        leaf.event = 'L'
 
 
 # --------------------------------------------------------------------------
@@ -197,13 +198,13 @@ def _innovation_model(N, planted, ultrametric=True):
             height 1.0, else all edges have length 1.0; default is True
     """
     
-    tree = PhyloTree(PhyloTreeNode(0, label='0'))
+    tree = Tree(TreeNode(label=0, event='S'))
     tree.number_of_species = N
     node_counter = 1
     
     # planted tree (root is an implicit outgroup with outdegree = 1)
     if planted:
-        root = PhyloTreeNode(1, label='1')
+        root = TreeNode(label=1, event='S')
         tree.root.add_child(root)
         node_counter += 1
     else:
@@ -226,9 +227,9 @@ def _innovation_model(N, planted, ultrametric=True):
             
             new_s = s + (new_feature,)
             
-            child1 = PhyloTreeNode(node_counter, label=str(node_counter))
+            child1 = TreeNode(label=node_counter, event='S')
             species[s].add_child(child1)
-            child2 = PhyloTreeNode(node_counter+1, label=str(node_counter+1))
+            child2 = TreeNode(label=node_counter+1, event='S')
             species[s].add_child(child2)
             
             node_counter += 2
@@ -249,9 +250,9 @@ def _innovation_model(N, planted, ultrametric=True):
             
             if new_s not in species:    # LOSS EVENT
                 
-                child1 = PhyloTreeNode(node_counter, label=str(node_counter))
+                child1 = TreeNode(label=node_counter, event='S')
                 species[s].add_child(child1)
-                child2 = PhyloTreeNode(node_counter+1, label=str(node_counter+1))
+                child2 = TreeNode(label=node_counter+1, event='S')
                 species[s].add_child(child2)
 
                 node_counter += 2
@@ -312,7 +313,7 @@ def _yule(N, birth_rate):
     elif birth_rate <= 0.0:
         raise ValueError("birth rate must be >0")
     
-    tree = PhyloTree(PhyloTreeNode(0, label='0', dist=0.0, tstamp=0.0))
+    tree = Tree(TreeNode(label=0, event='S', dist=0.0, tstamp=0.0))
     tree.number_of_species = N
     
     branches = [(1, tree.root)]
@@ -326,9 +327,9 @@ def _yule(N, birth_rate):
         
         i = np.random.randint(len(branches))
         branch_id, parent = branches[i]
-        spec_node = PhyloTreeNode(branch_id, label=str(branch_id),
-                                  dist=forward_time-parent.tstamp,
-                                  tstamp=forward_time)
+        spec_node = TreeNode(label=branch_id, event='S',
+                             dist=forward_time-parent.tstamp,
+                             tstamp=forward_time)
         parent.add_child(spec_node)
         branches[i] = (node_counter, spec_node)
         branches.append((node_counter+1, spec_node))
@@ -339,9 +340,9 @@ def _yule(N, birth_rate):
     
     # finalize the branches
     for branch_id, parent in branches:
-        parent.add_child( PhyloTreeNode(branch_id, label=str(branch_id),
-                                        dist=forward_time-parent.tstamp,
-                                        tstamp=forward_time) )
+        parent.add_child( TreeNode(label=branch_id, event='S',
+                                   dist=forward_time-parent.tstamp,
+                                   tstamp=forward_time) )
     
     _reverse_time_stamps(tree)
     
@@ -355,7 +356,7 @@ def _yule_age(age, birth_rate):
     elif birth_rate <= 0.0:
         raise ValueError("birth rate must be >0")
     
-    tree = PhyloTree(PhyloTreeNode(0, label='0', dist=0.0, tstamp=0.0))
+    tree = Tree(TreeNode(label=0, event='S', dist=0.0, tstamp=0.0))
     
     branches = [(1, tree.root)]
     forward_time = 0.0
@@ -372,9 +373,9 @@ def _yule_age(age, birth_rate):
         
         i = np.random.randint(len(branches))
         branch_id, parent = branches[i]
-        spec_node = PhyloTreeNode(branch_id, label=str(branch_id),
-                                  dist=forward_time-parent.tstamp,
-                                  tstamp=forward_time)
+        spec_node = TreeNode(label=branch_id, event='S',
+                             dist=forward_time-parent.tstamp,
+                             tstamp=forward_time)
         parent.add_child(spec_node)
         branches[i] = (node_counter, spec_node)
         branches.append((node_counter+1, spec_node))
@@ -382,9 +383,9 @@ def _yule_age(age, birth_rate):
     
     # finalize the branches
     for branch_id, parent in branches:
-        parent.add_child( PhyloTreeNode(branch_id, label=str(branch_id),
-                                        dist=age-parent.tstamp,
-                                        tstamp=age) )
+        parent.add_child( TreeNode(label=branch_id, event='S',
+                                   dist=age-parent.tstamp,
+                                   tstamp=age) )
     
     # reverse such that t(root) = age and t(leaves) = 0.0
     _reverse_time_stamps(tree)
@@ -475,7 +476,7 @@ def _EBDP_backward(N, episodes, max_tries=500):
         t = 0.0
         i = 0
         
-        branches = [PhyloTreeNode(j, str(j), dist=0.0, tstamp=t)
+        branches = [TreeNode(label=j, event='S', dist=0.0, tstamp=t)
                     for j in range(N)]
         id_counter = N
         
@@ -484,7 +485,9 @@ def _EBDP_backward(N, episodes, max_tries=500):
             
             losses_to_add = round(len(branches) / rho_i) - len(branches)
             for j in range(losses_to_add):
-                branches.append( PhyloTreeNode(id_counter+j, '*', dist=0.0, tstamp=t) )
+                branches.append( TreeNode(label=id_counter,
+                                          event='L',
+                                          dist=0.0, tstamp=t) )
             id_counter += losses_to_add
             
             while branches:
@@ -500,8 +503,8 @@ def _EBDP_backward(N, episodes, max_tries=500):
                     
                     if birth_i > np.random.uniform(low=0.0, high=birth_i+death_i):
                         # speciation event drawn
-                        spec_node = PhyloTreeNode(id_counter, label=str(id_counter),
-                                                  dist=0.0, tstamp=t)
+                        spec_node = TreeNode(label=id_counter, event='S',
+                                             dist=0.0, tstamp=t)
                         id_counter += 1
                         if len(branches) > 1:
                             k, l = np.random.choice(len(branches), 2,
@@ -514,12 +517,13 @@ def _EBDP_backward(N, episodes, max_tries=500):
                             branches.pop(l)
                         else:
                             spec_node.add_child(branches[0])
-                            tree = PhyloTree(spec_node)
+                            tree = Tree(spec_node)
                             branches.clear()
                     else:
                         # extinction event drawn
-                        branches.append( PhyloTreeNode(id_counter, '*',
-                                                       dist=0.0, tstamp=t) )
+                        branches.append( TreeNode(label=id_counter,
+                                                  event='L',
+                                                  dist=0.0, tstamp=t) )
                         id_counter += 1
         
         # return tree with the following probability
@@ -614,9 +618,10 @@ def _EBDP_mass_extinction(branches, surviving_rate, t):
                            reverse=True)
     for j in chosen_losses:
         branch_id, parent = branches[j]
-        loss_node = PhyloTreeNode(branch_id, '*',
-                                  dist=t-parent.tstamp,
-                                  tstamp=t)
+        loss_node = TreeNode(label=branch_id,
+                             event='L',
+                             dist=t-parent.tstamp,
+                             tstamp=t)
         parent.add_child(loss_node)
         branches.pop(j)
     
@@ -624,7 +629,7 @@ def _EBDP_mass_extinction(branches, surviving_rate, t):
 def _EBDP_age_forward(age, episodes):
     """Episodic birth–death process (EBDP), forward algorithm with max. age."""
     
-    tree = PhyloTree(PhyloTreeNode(0, label='0', dist=0.0, tstamp=0.0))
+    tree = Tree(TreeNode(label=0, event='S', dist=0.0, tstamp=0.0))
     
     branches = [(1, tree.root)]
     forward_time = 0.0
@@ -656,26 +661,27 @@ def _EBDP_age_forward(age, episodes):
             
             if birth_rate > np.random.uniform(low=0.0, high=birth_rate+death_rate):
                 # speciation event drawn
-                spec_node = PhyloTreeNode(branch_id, label=str(branch_id),
-                                          dist=forward_time-parent.tstamp,
-                                          tstamp=forward_time)
+                spec_node = TreeNode(label=branch_id, event='S',
+                                     dist=forward_time-parent.tstamp,
+                                     tstamp=forward_time)
                 parent.add_child(spec_node)
                 branches[j] = (node_counter, spec_node)
                 branches.append((node_counter+1, spec_node))
                 node_counter += 2
             else:
                 # extinction event drawn
-                loss_node = PhyloTreeNode(branch_id, '*',
-                                          dist=forward_time-parent.tstamp,
-                                          tstamp=forward_time)
+                loss_node = TreeNode(label=branch_id,
+                                     event='L',
+                                     dist=forward_time-parent.tstamp,
+                                     tstamp=forward_time)
                 parent.add_child(loss_node)
                 branches.pop(j)
                 
     # finalize the (surviving) branches
     for branch_id, parent in branches:
-        parent.add_child( PhyloTreeNode(branch_id, label=str(branch_id),
-                                        dist=age-parent.tstamp,
-                                        tstamp=age) )
+        parent.add_child( TreeNode(label=branch_id, event='S',
+                                   dist=age-parent.tstamp,
+                                   tstamp=age) )
     
     # reverse such that t(root) = age and t(surviving leaves) = 0.0
     for v in tree.preorder():
