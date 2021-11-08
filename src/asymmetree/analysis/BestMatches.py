@@ -37,7 +37,7 @@ def orthology_from_tree(tree):
     
     Parameters
     ----------
-    tree: tree
+    tree : tree
         A tree with leaves that have the `label`, and inner vertices that have
         the `event` attribute set.
     
@@ -73,7 +73,7 @@ def bmg_from_tree(tree, supply_rbmg=False):
     
     Parameters
     ----------
-    tree: tree
+    tree : tree
         A tree with leaves that have the `label` and `color` attribute set.
     supply_rbmg : bool, optional
         If True, also return the symmetric part of the constructed BMG.
@@ -122,7 +122,7 @@ def bmg_from_tree_quadratic(tree, supply_rbmg=False):
     
     Parameters
     ----------
-    tree: tree
+    tree : tree
         A tree with leaves that have the `label` and `color` attribute set.
     supply_rbmg : bool, optional
         If True, also return the symmetric part of the constructed BMG.

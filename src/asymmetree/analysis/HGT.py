@@ -354,3 +354,102 @@ class RsScenarioConstructor:
                         w_K.transferred = 1
         
         return u_T
+    
+    
+# --------------------------------------------------------------------------
+#                  Compatibility of trees and partitions
+# --------------------------------------------------------------------------
+
+def is_compatible(T, partition, lca=None):
+    """Checks whether a tree and a partition are compatible.
+    
+    A tree with leaf set L and a partition of L are compatible if there is a
+    subset of tree edges such that the forest obtained by their removal induces
+    the partition in terms of membership to the same connected component.
+    In this case, the vertices can be uniquely colored according by set A if
+    they lie on a path connecting two elements from A.
+    
+    Parameters
+    ----------
+    T : Tree
+        A tree with unique leaf label.
+    partition : list or tuple
+        A partition of the labels of the trees' leaves.
+    
+    Returns
+    -------
+    dict or bool
+        A dictionary containing vertices of the tree that lie on a path
+        connecting two elements from the same set of the partition with the
+        index of this set as value; or False if the tree and the partition
+        are incompatible.
+    """
+    
+    if not isinstance(T, Tree):
+        raise TypeError("T must be of type 'Tree'")
+    
+    if not isinstance(partition, (list, tuple)):
+        raise TypeError("partition must be of type 'list' or 'tuple'")
+    
+    if not lca:
+        lca = LCA(T)
+    
+    # map labels to leaves of the tree
+    label_to_leaf = {v.label: v for v in T.leaves() if hasattr(v, 'label')}
+    
+    # color each vertex if lies on the path connecting two vertices from the
+    # same set
+    colored = {}
+    
+    for i, A in enumerate(partition):
+        
+        A_iterator = iter(A)
+        x_1 = label_to_leaf[next(A_iterator)]
+        current_lca = x_1
+        visited = {x_1}
+        colored[x_1] = i
+        
+        for x_label in A_iterator:
+            x = label_to_leaf[x_label]
+            new_lca = lca(x, current_lca)
+            
+            starts = [x]
+            if new_lca is not current_lca:
+                starts.append(current_lca.parent)
+                current_lca = new_lca
+            
+            for current in starts:
+            
+                while current:
+                    if current in visited:
+                        break
+                    
+                    if current in colored and colored[current] != i:
+                        return False
+                    else:
+                        colored[current] = i
+                        visited.add(current)
+                    
+                    if current is new_lca:
+                        break
+                    
+                    current = current.parent
+    
+    return colored
+            
+if __name__ == '__main__':
+    
+    import asymmetree.treeevolve as te
+    
+    S = te.simulate_species_tree(10)
+    T = te.simulate_dated_gene_tree(S, dupl_rate=0.5, loss_rate=0.5,
+                                    hgt_rate=1)
+    T = te.observable_tree(T)
+    
+    ufitch = undirected_fitch(T, true_transfer_edges(T))
+    P = independent_sets(ufitch)
+    
+    colored = is_compatible(T, P, lca=None)
+    print(P)
+    print(colored)
+    
