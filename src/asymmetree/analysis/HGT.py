@@ -365,9 +365,10 @@ def is_compatible(T, partition, lca=None):
     
     A tree with leaf set L and a partition of L are compatible if there is a
     subset of tree edges such that the forest obtained by their removal induces
-    the partition in terms of membership to the same connected component.
-    In this case, the vertices can be uniquely colored according by set A if
-    they lie on a path connecting two elements from A.
+    the given partition (in terms of membership to the same connected
+    component).
+    In this case, the vertices can be uniquely colored by set A of the
+    partition if they lie on a path connecting two elements from A.
     
     Parameters
     ----------
@@ -375,14 +376,22 @@ def is_compatible(T, partition, lca=None):
         A tree with unique leaf label.
     partition : list or tuple
         A partition of the labels of the trees' leaves.
+    lca : LCA, optional
+        Precomputed LCA datastructure for the tree. The default is None in
+        which case it is computed internally.
     
     Returns
     -------
-    dict or bool
+    bool
+        Returns False if the tree and the partition are incompatible, and
+        otherwise a tuple of a dict and a list.
+    dict
         A dictionary containing vertices of the tree that lie on a path
         connecting two elements from the same set of the partition with the
-        index of this set as value; or False if the tree and the partition
-        are incompatible.
+        index of this set as value.
+    list
+        A list containing the last common ancestor in the tree for each set
+        in the partition.
     """
     
     if not isinstance(T, Tree):
@@ -395,11 +404,14 @@ def is_compatible(T, partition, lca=None):
         lca = LCA(T)
     
     # map labels to leaves of the tree
-    label_to_leaf = {v.label: v for v in T.leaves() if hasattr(v, 'label')}
+    label_to_leaf = {v.label: v for v in T.leaves()}
     
     # color each vertex if lies on the path connecting two vertices from the
     # same set
-    colored = {}
+    vertex_coloring = {}
+    
+    # last common ancestors of the sets in the partition
+    lcas = []
     
     for i, A in enumerate(partition):
         
@@ -407,7 +419,7 @@ def is_compatible(T, partition, lca=None):
         x_1 = label_to_leaf[next(A_iterator)]
         current_lca = x_1
         visited = {x_1}
-        colored[x_1] = i
+        vertex_coloring[x_1] = i
         
         for x_label in A_iterator:
             x = label_to_leaf[x_label]
@@ -424,32 +436,138 @@ def is_compatible(T, partition, lca=None):
                     if current in visited:
                         break
                     
-                    if current in colored and colored[current] != i:
+                    if current in vertex_coloring and \
+                        vertex_coloring[current] != i:
                         return False
                     else:
-                        colored[current] = i
+                        vertex_coloring[current] = i
                         visited.add(current)
                     
                     if current is new_lca:
                         break
                     
                     current = current.parent
+        
+        lcas.append(current_lca)
     
-    return colored
+    return vertex_coloring, lcas
+
+
+def is_refinement_compatible(T, partition, lca=None):
+    """Checks whether a tree and a partition are refinement-compatible.
+    
+    A tree T with leaf set L and a partition of L are refinement-compatible if
+    there is a refinement T' of T for which a subset of edges of T' exists
+    such that the forest obtained by their removal induces the given partition
+    (in terms of membership to the same connected component).
+    In this case, the edges can be uniquely colored by set A of the partition
+    if they lie on a path connecting two elements from A.
+    
+    Parameters
+    ----------
+    T : Tree
+        A tree with unique leaf label.
+    partition : list or tuple
+        A partition of the labels of the trees' leaves.
+    lca : LCA, optional
+        Precomputed LCA datastructure for the tree. The default is None in
+        which case it is computed internally.
+    
+    Returns
+    -------
+    bool
+        Returns False if the tree and the partition are not refinement-
+        compatible, and otherwise a tuple of a dict and a list.
+    dict
+        A dictionary containing edges (tuples of TreeNode instances) of the
+        tree that lie on a path connecting two elements from the same set of
+        the partition with the index of this set as value.
+    list
+        A list containing the last common ancestor in the tree for each set
+        in the partition.
+    """
+    
+    if not isinstance(T, Tree):
+        raise TypeError("T must be of type 'Tree'")
+    
+    if not isinstance(partition, (list, tuple)):
+        raise TypeError("partition must be of type 'list' or 'tuple'")
+    
+    if not lca:
+        lca = LCA(T)
+    
+    # map labels to leaves of the tree
+    label_to_leaf = {v.label: v for v in T.leaves()}
+    
+    # color each vertex if lies on the path connecting two vertices from the
+    # same set
+    edge_coloring = {}
+    
+    # last common ancestors of the sets in the partition
+    lcas = []
+    
+    for i, A in enumerate(partition):
+        
+        A_iterator = iter(A)
+        current_lca = label_to_leaf[next(A_iterator)]
+        visited = set()
+        
+        for x_label in A_iterator:
+            x = label_to_leaf[x_label]
+            new_lca = lca(x, current_lca)
+            
+            starts = [x]
+            if new_lca is not current_lca:
+                starts.append(current_lca)
+                current_lca = new_lca
+            
+            for current in starts:
+            
+                while current:
+                    
+                    # parent is always defined since at least the first edge
+                    # must be added and if the root is reached, it must equal
+                    # new_lca
+                    e = (current.parent, current)
+                    
+                    if e in edge_coloring and \
+                        edge_coloring[e] != i:
+                        return False
+                    else:
+                        edge_coloring[e] = i
+                        visited.add(e[1])
+                    
+                    current = e[0]
+                    if current in visited or current is new_lca:
+                        break
+        
+        lcas.append(current_lca)
+    
+    return edge_coloring, lcas
+
             
 if __name__ == '__main__':
     
     import asymmetree.treeevolve as te
+    # from pprint import pprint
     
     S = te.simulate_species_tree(10)
     T = te.simulate_dated_gene_tree(S, dupl_rate=0.5, loss_rate=0.5,
                                     hgt_rate=1)
     T = te.observable_tree(T)
+    print(T.to_newick())
     
     ufitch = undirected_fitch(T, true_transfer_edges(T))
     P = independent_sets(ufitch)
     
-    colored = is_compatible(T, P, lca=None)
+    vertex_coloring, lcas = is_compatible(T, P, lca=None)
     print(P)
-    print(colored)
+    print(lcas)
+    
+    print('\n---- vertex coloring ----')
+    print(vertex_coloring)
+    
+    print('\n---- edge coloring ----')
+    edge_coloring, lcas = is_refinement_compatible(T, P, lca=None)
+    print(edge_coloring)
     
