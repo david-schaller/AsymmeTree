@@ -545,11 +545,80 @@ def is_refinement_compatible(T, partition, lca=None):
     
     return edge_coloring, lcas
 
+
+def fitch_orientation(T, partition, lca=None):
+    """(Un)ambiguously present or absent edges in the directed Fitch graph.
+    
+    Parameters
+    ----------
+    T : Tree
+        A tree with unique leaf label.
+    partition : list or tuple
+        A partition of the labels of the trees' leaves.
+    lca : LCA, optional
+        Precomputed LCA datastructure for the tree. The default is None in
+        which case it is computed internally.
+    
+    Returns
+    -------
+    bool
+        Returns False if the tree and the partition are incompatible.
+    2-dimensional array (list of lists)
+        Stores at indices i and j corresponding to sets A and B, resp., of the
+        partition whether (A, B) is 'essential', 'forbidden', or 'ambiguous'.
+    """
+    
+    if not isinstance(T, Tree):
+        raise TypeError("T must be of type 'Tree'")
+    
+    if not isinstance(partition, (list, tuple)):
+        raise TypeError("partition must be of type 'list' or 'tuple'")
+    
+    if not lca:
+        lca = LCA(T)
+    
+    compatibility = is_compatible(T, partition, lca=lca)
+    if compatibility:
+        vertex_coloring, lcas = compatibility
+    else:
+        return False
+    
+    # compute for each vertex its lowest colored (strict) ancestor
+    lowest_colored = {}
+    for v in T.preorder():
+        if not v.parent:
+            lowest_colored[v] = None
+        elif v.parent in vertex_coloring:
+            lowest_colored[v] = v.parent
+        else:
+            lowest_colored[v] = lowest_colored[v.parent]
+    
+    n = len(partition)
+    matrix = [[None for j in range(n)] for i in range(n)]
+    
+    for i in range(n):
+        for j in range(n):
+            
+            if i == j:
+                matrix[i][j] = 'forbidden'
+            # lca(B) < lca(A) and there is a colored vertex w with
+            # lca(B) < w <= lca(A)
+            elif (lca.ancestor_not_equal(lcas[i], lcas[j]) and
+                  lca(lowest_colored[lcas[j]], lcas[i]) is lcas[i]):
+                matrix[i][j] = 'essential'
+            # lca(A) < lca(B)
+            elif lca.ancestor_not_equal(lcas[j], lcas[i]):
+                matrix[i][j] = 'forbidden'
+            else:
+                matrix[i][j] = 'ambiguous'
+    
+    return matrix
+
             
 if __name__ == '__main__':
     
     import asymmetree.treeevolve as te
-    # from pprint import pprint
+    from pprint import pprint
     
     S = te.simulate_species_tree(10)
     T = te.simulate_dated_gene_tree(S, dupl_rate=0.5, loss_rate=0.5,
@@ -570,4 +639,8 @@ if __name__ == '__main__':
     print('\n---- edge coloring ----')
     edge_coloring, lcas = is_refinement_compatible(T, P, lca=None)
     print(edge_coloring)
+    
+    print('\n---- Fitch orientation ----')
+    matrix = fitch_orientation(T, P, lca=None)
+    pprint(matrix)
     
