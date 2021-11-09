@@ -584,14 +584,14 @@ def fitch_orientation(T, partition, lca=None):
         return False
     
     # compute for each vertex its lowest colored (strict) ancestor
-    lowest_colored = {}
+    lowest_colored_ancestor = {}
     for v in T.preorder():
         if not v.parent:
-            lowest_colored[v] = None
+            lowest_colored_ancestor[v] = None
         elif v.parent in vertex_coloring:
-            lowest_colored[v] = v.parent
+            lowest_colored_ancestor[v] = v.parent
         else:
-            lowest_colored[v] = lowest_colored[v.parent]
+            lowest_colored_ancestor[v] = lowest_colored_ancestor[v.parent]
     
     n = len(partition)
     matrix = [[None for j in range(n)] for i in range(n)]
@@ -604,13 +604,88 @@ def fitch_orientation(T, partition, lca=None):
             # lca(B) < lca(A) and there is a colored vertex w with
             # lca(B) < w <= lca(A)
             elif (lca.ancestor_not_equal(lcas[i], lcas[j]) and
-                  lca(lowest_colored[lcas[j]], lcas[i]) is lcas[i]):
+                  lca(lowest_colored_ancestor[lcas[j]], lcas[i]) is lcas[i]):
                 matrix[i][j] = 'essential'
             # lca(A) < lca(B)
             elif lca.ancestor_not_equal(lcas[j], lcas[i]):
                 matrix[i][j] = 'forbidden'
             else:
                 matrix[i][j] = 'ambiguous'
+    
+    return matrix
+
+
+def _find_child(u, v, lca):
+    """For v < u, find the child w of u such that v <= w."""
+    
+    for w in u.children:
+        if lca(v, w) is w:
+            return w
+    
+    raise RuntimeError('could not find corresponding child of u '\
+                       '(u not an ancestor of v?)')
+
+
+def fitch_orientation_for_refinements(T, partition, lca=None):
+    """(Un)ambiguously present or absent edges in the directed Fitch graph of
+    all compatible refinements.
+    
+    Parameters
+    ----------
+    T : Tree
+        A tree with unique leaf label.
+    partition : list or tuple
+        A partition of the labels of the trees' leaves.
+    lca : LCA, optional
+        Precomputed LCA datastructure for the tree. The default is None in
+        which case it is computed internally.
+    
+    Returns
+    -------
+    bool
+        Returns False if the tree and the partition are not refinement-
+        compatible.
+    2-dimensional array (list of lists)
+        Stores at indices i and j corresponding to sets A and B, resp., of the
+        partition whether (A, B) is 'essential', 'forbidden', or 'ambiguous'
+        for all refinements of the tree that ae compatible with the partition.
+    """
+    
+    if not isinstance(T, Tree):
+        raise TypeError("T must be of type 'Tree'")
+    
+    if not isinstance(partition, (list, tuple)):
+        raise TypeError("partition must be of type 'list' or 'tuple'")
+    
+    if not lca:
+        lca = LCA(T)
+    
+    r_compatibility = is_refinement_compatible(T, partition, lca=lca)
+    if r_compatibility:
+        edge_coloring, lcas = r_compatibility
+    else:
+        return False
+    
+    # compute for each vertex its lowest colored (strict) ancestor
+    lowest_colored_edge = {}
+    for v in T.preorder():
+        if not v.parent:
+            lowest_colored_edge[v] = None
+        elif (v.parent, v) in vertex_coloring:
+            lowest_colored_edge[v] = (v.parent, v)
+        else:
+            lowest_colored_edge[v] = lowest_colored_edge[v.parent]
+    
+    n = len(partition)
+    matrix = [[None for j in range(n)] for i in range(n)]
+    
+    for i in range(n):
+        for j in range(n):
+            
+            if i == j:
+                matrix[i][j] = 'forbidden'
+            
+            # to be implemented
     
     return matrix
 
