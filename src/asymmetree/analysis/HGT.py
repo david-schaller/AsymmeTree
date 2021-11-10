@@ -479,9 +479,9 @@ def is_refinement_compatible(T, partition, lca=None):
         Returns False if the tree and the partition are not refinement-
         compatible, and otherwise a tuple of a dict and a list.
     dict
-        A dictionary containing edges (tuples of TreeNode instances) of the
-        tree that lie on a path connecting two elements from the same set of
-        the partition with the index of this set as value.
+        A dictionary containing nodes v of the tree such that the edge
+        (parent(v), v) lies on a path connecting two elements from the same
+        set of the partition with the index of this set as value.
     list
         A list containing the last common ancestor in the tree for each set
         in the partition.
@@ -499,8 +499,8 @@ def is_refinement_compatible(T, partition, lca=None):
     # map labels to leaves of the tree
     label_to_leaf = {v.label: v for v in T.leaves()}
     
-    # color each vertex if lies on the path connecting two vertices from the
-    # same set
+    # color each vertex v if the edge (v.parent, v) lies on the path
+    # connecting two vertices from the same set
     edge_coloring = {}
     
     # last common ancestors of the sets in the partition
@@ -525,19 +525,17 @@ def is_refinement_compatible(T, partition, lca=None):
             
                 while current:
                     
+                    if current in edge_coloring and \
+                        edge_coloring[current] != i:
+                        return False
+                    else:
+                        edge_coloring[current] = i
+                        visited.add(current)
+                        
                     # parent is always defined since at least the first edge
                     # must be added and if the root is reached, it must equal
                     # new_lca
-                    e = (current.parent, current)
-                    
-                    if e in edge_coloring and \
-                        edge_coloring[e] != i:
-                        return False
-                    else:
-                        edge_coloring[e] = i
-                        visited.add(e[1])
-                    
-                    current = e[0]
+                    current = current.parent
                     if current in visited or current is new_lca:
                         break
         
@@ -601,10 +599,15 @@ def fitch_orientation(T, partition, lca=None):
             
             if i == j:
                 matrix[i][j] = 'forbidden'
-            # lca(B) < lca(A) and there is a colored vertex w with
-            # lca(B) < w <= lca(A)
-            elif (lca.ancestor_not_equal(lcas[i], lcas[j]) and
-                  lca(lowest_colored_ancestor[lcas[j]], lcas[i]) is lcas[i]):
+                continue
+            
+            u = lca(lcas[i], lcas[j])       # lca(lca(A), lca(B))
+            w = lowest_colored_ancestor[lcas[j]]
+            
+            # lca(B) < u and there is a colored vertex w with lca(B) < w <= u
+            if (lca.ancestor_not_equal(u, lcas[j]) and
+                w and 
+                lca(w, u) is u):
                 matrix[i][j] = 'essential'
             # lca(A) < lca(B)
             elif lca.ancestor_not_equal(lcas[j], lcas[i]):
@@ -671,8 +674,8 @@ def fitch_orientation_for_refinements(T, partition, lca=None):
     for v in T.preorder():
         if not v.parent:
             lowest_colored_edge[v] = None
-        elif (v.parent, v) in vertex_coloring:
-            lowest_colored_edge[v] = (v.parent, v)
+        elif v in edge_coloring:
+            lowest_colored_edge[v] = v
         else:
             lowest_colored_edge[v] = lowest_colored_edge[v.parent]
     
@@ -684,8 +687,27 @@ def fitch_orientation_for_refinements(T, partition, lca=None):
             
             if i == j:
                 matrix[i][j] = 'forbidden'
+                continue
             
-            # to be implemented
+            u = lca(lcas[i], lcas[j])       # lca(lca(A), lca(B))
+            v_A = lcas[i]                   # lca(A)
+            v_B = lcas[j]                   # lca(B)
+            lce_B = lowest_colored_edge[v_B]
+            
+            if (lca.ancestor_not_equal(u, v_B) and
+                lce_B and lca.ancestor_not_equal(u, lce_B)):
+                matrix[i][j] = 'essential'
+            elif (u.parent and
+                  lca.ancestor_not_equal(u, v_A) and
+                  u in edge_coloring and
+                  edge_coloring[u] == \
+                      edge_coloring.get(_find_child(u, v_A, lca))):
+                matrix[i][j] = 'essential'
+            elif (lca.ancestor_not_equal(v_B, v_A) and
+                  edge_coloring.get(_find_child(u, v_A, lca)) == j):
+                matrix[i][j] = 'forbidden'
+            else:
+                matrix[i][j] = 'ambiguous'
     
     return matrix
 
@@ -695,27 +717,40 @@ if __name__ == '__main__':
     import asymmetree.treeevolve as te
     from pprint import pprint
     
-    S = te.simulate_species_tree(10)
-    T = te.simulate_dated_gene_tree(S, dupl_rate=0.5, loss_rate=0.5,
-                                    hgt_rate=1)
-    T = te.observable_tree(T)
-    print(T.to_newick())
-    
-    ufitch = undirected_fitch(T, true_transfer_edges(T))
-    P = independent_sets(ufitch)
-    
-    vertex_coloring, lcas = is_compatible(T, P, lca=None)
-    print(P)
-    print(lcas)
-    
-    print('\n---- vertex coloring ----')
-    print(vertex_coloring)
-    
-    print('\n---- edge coloring ----')
-    edge_coloring, lcas = is_refinement_compatible(T, P, lca=None)
-    print(edge_coloring)
-    
-    print('\n---- Fitch orientation ----')
-    matrix = fitch_orientation(T, P, lca=None)
-    pprint(matrix)
+    i = 0
+    while True:
+        S = te.simulate_species_tree(10)
+        T = te.simulate_dated_gene_tree(S, dupl_rate=0.5, loss_rate=0.5,
+                                        hgt_rate=1)
+        T = te.observable_tree(T)
+        T.serialize('testfile.pickle')
+        # T = Tree.load('testfile.pickle')
+        print(T.to_newick())
+        
+        ufitch = undirected_fitch(T, true_transfer_edges(T))
+        P = independent_sets(ufitch)
+        
+        vertex_coloring, lcas = is_compatible(T, P, lca=None)
+        print(P)
+        print(lcas)
+        
+        print('\n---- vertex coloring ----')
+        print(vertex_coloring)
+        
+        print('\n---- edge coloring ----')
+        edge_coloring, lcas = is_refinement_compatible(T, P, lca=None)
+        print(edge_coloring)
+        
+        print('\n---- Fitch orientation ----')
+        matrix = fitch_orientation(T, P, lca=None)
+        pprint(matrix)
+        
+        print('\n---- Fitch orientation (refinement) ----')
+        matrix2 = fitch_orientation_for_refinements(T, P, lca=None)
+        pprint(matrix2)
+        
+        print(i, matrix == matrix2)
+        i += 1
+        if matrix != matrix2:
+            break
     
