@@ -547,6 +547,13 @@ def is_refinement_compatible(T, partition, lca=None):
 def fitch_orientation(T, partition, lca=None):
     """(Un)ambiguously present or absent edges in the directed Fitch graph.
     
+    The ordered pair (x, y) of two leaves x and y is in the Fitch relation
+    if the path from lca(x, y) to y contains a transfer edge. An undirected
+    Fitch relation ((x, y) if (x, y) or (y, x) in the directed relation) can
+    be represented by a partition (the maximal independent sets).
+    In combination with a tree, this partition determines to some extent the
+    directed Fitch relation.
+    
     Parameters
     ----------
     T : Tree
@@ -633,6 +640,13 @@ def fitch_orientation_for_refinements(T, partition, lca=None):
     """(Un)ambiguously present or absent edges in the directed Fitch graph of
     all compatible refinements.
     
+    The ordered pair (x, y) of two leaves x and y is in the Fitch relation
+    if the path from lca(x, y) to y contains a transfer edge. An undirected
+    Fitch relation ((x, y) if (x, y) or (y, x) in the directed relation) can
+    be represented by a partition (the maximal independent sets).
+    In combination with a tree, this partition determines to some extent the
+    directed Fitch relation w.r.t. the possible refinements of the tree.
+    
     Parameters
     ----------
     T : Tree
@@ -718,39 +732,39 @@ if __name__ == '__main__':
     from pprint import pprint
     
     i = 0
-    while True:
-        S = te.simulate_species_tree(10)
-        T = te.simulate_dated_gene_tree(S, dupl_rate=0.5, loss_rate=0.5,
-                                        hgt_rate=1)
-        T = te.observable_tree(T)
-        T.serialize('testfile.pickle')
-        # T = Tree.load('testfile.pickle')
-        print(T.to_newick())
-        
-        ufitch = undirected_fitch(T, true_transfer_edges(T))
-        P = independent_sets(ufitch)
-        
-        vertex_coloring, lcas = is_compatible(T, P, lca=None)
-        print(P)
-        print(lcas)
-        
-        print('\n---- vertex coloring ----')
-        print(vertex_coloring)
-        
-        print('\n---- edge coloring ----')
-        edge_coloring, lcas = is_refinement_compatible(T, P, lca=None)
-        print(edge_coloring)
-        
-        print('\n---- Fitch orientation ----')
-        matrix = fitch_orientation(T, P, lca=None)
-        pprint(matrix)
-        
-        print('\n---- Fitch orientation (refinement) ----')
-        matrix2 = fitch_orientation_for_refinements(T, P, lca=None)
-        pprint(matrix2)
-        
-        print(i, matrix == matrix2)
-        i += 1
-        if matrix != matrix2:
-            break
+    # while True:
+    S = te.simulate_species_tree(10)
+    T = te.simulate_dated_gene_tree(S, dupl_rate=0.5, loss_rate=0.5,
+                                    hgt_rate=1)
+    T = te.observable_tree(T)
+    # T.serialize('testfile.pickle')
+    # T = Tree.load('testfile.pickle')
+    print(T.to_newick())
+    
+    ufitch = undirected_fitch(T, true_transfer_edges(T))
+    P = independent_sets(ufitch)
+    
+    vertex_coloring, lcas = is_compatible(T, P, lca=None)
+    print(P)
+    print(lcas)
+    
+    print('\n---- vertex coloring ----')
+    print(vertex_coloring)
+    
+    print('\n---- edge coloring ----')
+    edge_coloring, lcas = is_refinement_compatible(T, P, lca=None)
+    print(edge_coloring)
+    
+    print('\n---- Fitch orientation ----')
+    matrix = fitch_orientation(T, P, lca=None)
+    pprint(matrix)
+    
+    print('\n---- Fitch orientation (refinement) ----')
+    matrix2 = fitch_orientation_for_refinements(T, P, lca=None)
+    pprint(matrix2)
+    
+    print(i, matrix == matrix2)
+        # i += 1
+        # if matrix != matrix2:
+        #     break
     
