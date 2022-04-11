@@ -4,7 +4,7 @@ import unittest
 
 import networkx as nx
 
-import tralda.tools.GraphTools as gt
+from tralda.tools.GraphTools import is_subgraph
 from tralda.cograph import to_cotree
 
 import asymmetree.treeevolve as te
@@ -23,8 +23,8 @@ class TestHGT(unittest.TestCase):
     
         # true gene tree (with losses)
         TGT = te.simulate_dated_gene_tree(S, dupl_rate=1.0,
-                                              loss_rate=0.5,
-                                              hgt_rate=0.2)
+                                             loss_rate=0.5,
+                                             hgt_rate=0.2)
         
         # observable gene tree
         OGT = te.observable_tree(TGT)
@@ -36,7 +36,7 @@ class TestHGT(unittest.TestCase):
         
         cotree = to_cotree(ldt)
         
-        self.assertTrue( gt.is_subgraph(ldt, fitch) and cotree )
+        self.assertTrue( is_subgraph(ldt, fitch) and cotree )
     
     
     def test_replacing_hgt(self):
@@ -45,7 +45,7 @@ class TestHGT(unittest.TestCase):
         
         S = te.simulate_species_tree(N, model='innovation')
     
-        # true gene tree (with losses)
+        # true gene tree
         TGT = te.simulate_dated_gene_tree(S, dupl_rate=0.0,
                                              loss_rate=0.0,
                                              hgt_rate=1.0,
@@ -62,6 +62,29 @@ class TestHGT(unittest.TestCase):
         # print(OGT.to_newick())
         
         self.assertTrue(len(colors) == N and len(leaves) == N)
+        
+    
+    def test_transfer_distance_bias(self):
+        
+        N = 20
+        
+        S = te.simulate_species_tree(N, model='innovation')
+    
+        # true gene tree (with losses)
+        TGT = te.simulate_dated_gene_tree(S, dupl_rate=0.5,
+                                             loss_rate=0.5,
+                                             hgt_rate=1.0,
+                                             prohibit_extinction='per_species',
+                                             replace_prob=0.5,
+                                             transfer_distance_bias='inverse')
+        
+        # observable gene tree
+        OGT = te.observable_tree(TGT)
+        
+        leaves = [v for v in OGT.leaves()]
+        colors = {v.color for v in leaves}
+        
+        self.assertTrue(len(colors) == N)
         
     
     def test_rs_edges(self):

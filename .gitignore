@@ -55,5 +55,6 @@ _minted*/
 
 # others
 examples/results/*
+validation/*/results/*
 testfile*
 *.DS_Store
