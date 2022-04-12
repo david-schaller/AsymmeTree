@@ -21,12 +21,47 @@ __author__ = "David Schaller"
 #   
 # --------------------------------------------------------------------------
 
-def noisy_matrix(orig_matrix, sd, metric_repair="reject"):
-    if metric_repair == "general":
+def noisy_matrix(orig_matrix, sd, metric_repair='reject'):
+    """Disturb a distance matrix (which must be a metric) with random noise.
+    
+    Parameters
+    ----------
+    orig_matrix : 2-dimensional numpy array
+        The distance matrix.
+    sd : float
+        Disturbance parameter. Serves as standard deviation of a normal
+        distrubition with mean 1.0.
+    metric_repair : str, optional
+        Strategy to ensure that the resulting matrix is still a metric and,
+        in particular, satisfies the triangle inequality.
+        The default is 'reject', see [1]. Other avaible options are 'general'
+        and 'DOMR', see [2].
+    
+    Returns
+    -------
+    2-dim. numpy array
+        The disturbed distance matrix.
+        
+    References
+    ----------
+    .. [1] P. F. Stadler, M. Geiß, D. Schaller, A. López Sánchez, M. González 
+       Laffitte, D. Valdivia, M. Hellmuth, M. Hernández Rosales.
+       From pairs of most similar sequences to phylogenetic best matches.
+       In: Alg. Mol. Biol., 2020, 15, 5.
+       doi: 10.1186/s13015-020-00165-2.
+    .. [2] A. C. Gilbert, L. Jain.
+       If it ain't broke, don't  x it: Sparse metric repair. 
+       In: 2017 55th Annual Allerton Conference on Communication, Control, and
+       Computing (Allerton), pages 612-619, Monticello, IL, USA, October 2017.
+       IEEE. ISBN 978-1-5386-3266-6.
+       doi: 10.1109/ALLERTON.2017.8262793.
+    """
+    
+    if metric_repair == 'general':
         return _noise_general_metric_repair(orig_matrix, sd)
-    elif metric_repair == "DOMR":
+    elif metric_repair == 'DOMR':
         return _noise_metric_repair_DOMR(orig_matrix, sd)
-    elif metric_repair == "reject":
+    elif metric_repair == 'reject':
         return _noise_reject_method(orig_matrix, sd)
     else:
         raise ValueError("illegal argument '{}'".format(metric_repair))
@@ -34,6 +69,7 @@ def noisy_matrix(orig_matrix, sd, metric_repair="reject"):
     
 def _noise_reject_method(orig_matrix, sd):
     """Return a matrix D' with noise by accept/reject algorithm."""
+    
     D = np.array(orig_matrix, copy=True)
     N = D.shape[0]
     
@@ -65,11 +101,12 @@ def _noise_reject_method(orig_matrix, sd):
 
 def _noise_metric_repair_DOMR(orig_matrix, sd):
     """Return a matrix D' with noise by metric repair (DOMR) algorithm."""
+    
     D = np.array(orig_matrix, copy=True)
     N = D.shape[0]
     
     for i in range(N-1):                        # noise introduction
-        for j in range(i+1,N):
+        for j in range(i+1, N):
             new_distance = 0.0
             while new_distance <= 0.0:
                 new_distance = D[i,j] * np.random.normal(loc=1.0, scale=sd)
@@ -88,6 +125,7 @@ def _noise_metric_repair_DOMR(orig_matrix, sd):
 
 def _noise_general_metric_repair(orig_matrix, sd):
     """Return a matrix D' with noise by metric repair (DOMR) algorithm."""
+    
     D = np.array(orig_matrix, copy=True)
     N = D.shape[0]
     
@@ -136,10 +174,29 @@ def convex_linear_comb(D1, D2, alpha=0.05, first_only=False):
         D1' = (1-alpha) * D1 + alpha * D2
         D2' = (1-alpha) * D2 + alpha * D1
     
-    Keyword arguments:
-        alpha -- distribution of the resp. disturbance matrix
-        first_only -- only return D1'
+    Parameters
+    ----------
+    D1 : 2-dimensional numpy array
+        The first distance matrix.
+    D2 : 2-dimensional numpy array
+        The second distance matrix.
+    alpha : float, optional
+        Disturbance parameter, the default is 0.05.
+    first_only : bool, optional
+        If True, only return the disturbed first matrix. The default is False.
+    
+    Returns
+    -------
+    2-dim. numpy array or tuple of 2 matrices
+        The disturbed distance matrix or matrices.
         
+    References
+    ----------
+    .. [1] P. F. Stadler, M. Geiß, D. Schaller, A. López Sánchez, M. González 
+       Laffitte, D. Valdivia, M. Hellmuth, M. Hernández Rosales.
+       From pairs of most similar sequences to phylogenetic best matches.
+       In: Alg. Mol. Biol., 2020, 15, 5.
+       doi: 10.1186/s13015-020-00165-2.
     """
     if not first_only:
         if D1.shape == D2.shape:
@@ -229,6 +286,7 @@ def wrong_topology_matrix(OGT):
 
 def _check_metric(matrix):
     """Check whether a given matrix is a metric."""
+    
     N = matrix.shape[0]
     for i in range(N):
         if matrix[i,i] != 0.0:
@@ -240,6 +298,7 @@ def _check_metric(matrix):
                 print("Not symmetrical for",i,j)
                 return False
             if abs(matrix[i,j] - np.min(matrix[i,:] + matrix[:,j])) > 1e-8:
-                print("Violation of triangle inequality!",i,j, np.min(matrix[i,:] + matrix[:,j]), matrix[i,j])
+                print("Violation of triangle inequality!",
+                      i, j, np.min(matrix[i,:] + matrix[:,j]), matrix[i,j])
                 return False
     return True

@@ -22,7 +22,8 @@ __author__ = 'David Schaller'
 #                         USER INTERFACE FUNCTION
 # --------------------------------------------------------------------------
 
-def simulate_species_tree(N, model='innovation',
+def simulate_species_tree(N, 
+                          model='innovation',
                           non_binary_prob=0.0,
                           planted=True,
                           remove_extinct=False,
@@ -30,16 +31,63 @@ def simulate_species_tree(N, model='innovation',
                           **kwargs):
     """Simulates a species tree S with N leaves.
     
-    Keyword parameters:
-        model -- simulation model to be applied; default is 'innovation'
-        non_binary_prob -- probability that an inner edge is contracted;
-            results in non-binary tree; default is 0.0
-        planted -- add a planted root that has the canonical root as its
-            single neighbor; default is True
-        remove_extinct -- remove all branches that lead to extinctions, only
-            relevant for some models; default is False
-        rescale_to_height -- determines the final distance from the root to the
-            (surviving) leaves, default is None, i.e. model dependent
+    Parameters
+    ----------
+    N : int
+        Number of leaves in the resulting tree that correspond to extant
+        species.
+    model : str, optional
+        Simulation model to be applied, the default is 'innovation', see [1].
+        Other available model are 'yule' [2], birth-death process ('BDP', [3]),
+        and episodic birth-death process ('EBDP', [4]).
+    non_binary_prob : float, optional
+        Probability that an inner edge is contracted; results in non-binary 
+        tree; default is 0.0, in which case the resulting tree is binary.
+    planted : bool, optional
+        Add a planted root that has the canonical root as its single neighbor; 
+        default is True.
+    remove_extinct : bool, optional
+        Remove all branches that lead to extinctions, only relevant for some
+        models; default is False.
+    rescale_to_height : bool, optional
+        Determines the final distance from the root to the (surviving) leaves,
+        default is None, i.e., model-dependent.
+    birth_rate : float, optional
+        The birth rate for models such as 'yule' and 'BDP'.
+    death_rate : float, optional
+        The death rate for models such as 'BDP'.
+    episodes : list, optional
+        The episodes for the model 'EBDP'.
+        
+    Raises
+    ------
+    ValueError
+        If unknown parameter values are passed.
+        
+    Returns
+    -------
+    Tree
+        The simulated species tree.
+        
+    References
+    ----------
+    .. [1] S. Keller-Schmidt, K. Klemm.
+       A model of macroevolution as a branching process based on innovations.
+       In: Adv. Complex Syst.,2012, 15, 1250043.
+       doi:10.1142/S0219525912500439.
+    .. [2] G. U. Yule.
+       A mathematical theory of evolution, based on the conclusions of Dr. J. 
+       C.Willis, F. R. S. 
+       In: Phil. Trans. R. Soc. Lond. B, 1924, 213, 21–87.
+       doi:10.1098/rstb.1925.0002.
+    .. [3] D. G. Kendall.
+       On the Generalized "Birth-and-Death" Process.
+       In: Ann. Math. Statist. 1948, 19, 1–15.
+       doi:10.1214/aoms/1177730285.
+    .. [4] T. Stadler.
+       Simulating trees with a fixed number of extant species.
+       In: Syst. Biol. 2011, 60, 676–684.
+       doi:10.1093/sysbio/syr029.
     """
     
     # parameter checking
@@ -100,10 +148,50 @@ def simulate_species_tree_age(age, model='yule',
                               **kwargs):
     """Simulates a (planted) species tree S of the specified age.
     
-    Keyword parameters:
-        model -- simulation model to be applied; default is 'yule'
-        non_binary_prob -- probability that an inner edge is contracted;
-                 results in non-binary tree; default is 0.0
+    Parameters
+    ----------
+    age : float
+        Simulation time, i.e., the time span from the root of the tree to the
+        leaves that correspond to extant species.
+    model : str, optional
+        Simulation model to be applied, the default is 'yule', see [1].
+        Other available model are birth-death process ('BDP', [2]), and
+        episodic birth-death process ('EBDP', [3]).
+    non_binary_prob : float, optional
+        Probability that an inner edge is contracted; results in non-binary 
+        tree; default is 0.0, in which case the resulting tree is binary.
+    birth_rate : float, optional
+        The birth rate for models such as 'yule' and 'BDP'.
+    death_rate : float, optional
+        The death rate for models such as 'BDP'.
+    episodes : list, optional
+        The episodes for the model 'EBDP'.
+        
+    Raises
+    ------
+    ValueError
+        If unknown or invalid parameter values are passed.
+        
+    Returns
+    -------
+    Tree
+        The simulated species tree.
+        
+    References
+    ----------
+    .. [1] G. U. Yule.
+       A mathematical theory of evolution, based on the conclusions of Dr. J. 
+       C.Willis, F. R. S. 
+       In: Phil. Trans. R. Soc. Lond. B, 1924, 213, 21–87.
+       doi:10.1098/rstb.1925.0002.
+    .. [2] D. G. Kendall.
+       On the Generalized "Birth-and-Death" Process.
+       In: Ann. Math. Statist. 1948, 19, 1–15.
+       doi:10.1214/aoms/1177730285.
+    .. [3] T. Stadler.
+       Simulating trees with a fixed number of extant species.
+       In: Syst. Biol. 2011, 60, 676–684.
+       doi:10.1093/sysbio/syr029.
     """
     
     # parameter checking
@@ -193,9 +281,27 @@ def assign_losses(tree, proportion):
 def _innovation_model(N, planted, ultrametric=True):
     """Builds a species tree S with N leaves with the innovation model.
     
-    Keyword arguments:
-        ultrametric - if True make tree ultrametric and rescale it to
-            height 1.0, else all edges have length 1.0; default is True
+    Parameters
+    ----------
+    N : int
+        Number of extant species in the resulting tree.
+    planted : bool
+        Add a planted root that has the canonical root as its single neighbor.
+    ultrametric : bool, optional
+        If True, make tree ultrametric and rescale it to height 1.0, else all
+        edges have length 1.0; the default is True.
+    
+    Returns
+    -------
+    Tree
+        The simulated species tree.
+    
+    References
+    ----------
+    .. [1] S. Keller-Schmidt, K. Klemm.
+       A model of macroevolution as a branching process based on innovations.
+       In: Adv. Complex Syst.,2012, 15, 1250043.
+       doi:10.1142/S0219525912500439.
     """
     
     tree = Tree(TreeNode(label=0, event='S'))
@@ -466,7 +572,15 @@ def _EBDP_check_episodes(**kwargs):
 
 
 def _EBDP_backward(N, episodes, max_tries=500):
-    """Episodic birth–death process (EBDP), backward algorithm by Stadler 2001."""
+    """Episodic birth–death process (EBDP).
+    
+    References
+    ----------
+    .. [1] T. Stadler.
+       Simulating trees with a fixed number of extant species.
+       In: Syst. Biol. 2011, 60, 676–684.
+       doi:10.1093/sysbio/syr029.
+    """
     
     birth_inv_sum = sum([1/episodes[i][0] for i in range(len(episodes))])
     
