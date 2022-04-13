@@ -2,7 +2,7 @@
 ![Logo](resources/logo/logo.png)
 
 [![license: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![pypi version](https://img.shields.io/badge/pypi-v2.1.0-blue.svg)](https://pypi.org/project/asymmetree/)
+[![pypi version](https://img.shields.io/badge/pypi-v2.2.0-blue.svg)](https://pypi.org/project/asymmetree/)
 
 AsymmeTree is an open-source Python library for the simulation and analysis of phylogenetic scenarios.
 It includes a simulator for species and gene trees with heterogeneous evolution rates, nucleotide and amino acid sequences with or without indels, as well as whole genomes/proteomes.
@@ -206,12 +206,18 @@ To simulate gene tree, use the class `GeneTreeSimulator` or the function
 | `hgt_rate=0.0` | horizontal gene transfer rate rate (`float`) |
 | `dupl_polytomy=0.0` | allows non-binary duplication events by drawing a number from a Poisson distribution with rate parameter `dupl_polytomy` (copy number = 2 + drawn number) (`float`) |
 | `prohibit_extinction='per_species'` | avoid loss events for genes that are the last survivor in their species branch (`'per_species'`), the last survivor of the whole family (`'per_family'`); or no constraints  (`False`) |
-| `replace_prob=0.0` | probability that a a transferred copy replaces one (randomly chosen) homolog in the receiving branch; default is `0.0` in which case all HGT events are additive (`float`) |
+| `replace_prob=0.0` | probability that an HGT event is replacing (rather than additive), i.e., it replaces a homolog in the receiving species branch; default is `0.0` in which case all HGT events are additive (`float`) |
+| `additive_transfer_distance_bias=False` | specifies whether closer related species have a higher probability to be the recipient species in an additive HGT event. The default is False, in which case the recipient species is chosen at random among the co-existing species. The options `'inverse'` and `'exponential'` mean that a species branch is sampled weighted by 1/t or e^(-t), resp., where t is the elapsed time between the last common ancestor of the two species branches and the time of the event |
+| `replacing_transfer_distance_bias=False` | specifies whether closer related gene branches have a higher probability to be replaced in a replacing HGT event. The default is False, in which case the replaced gene is chosen at random among the co-existing gene branches. The options `'inverse'` and `'exponential'` mean that a species branch is sampled weighted by 1/t or e^(-t), resp., where t is the elapsed time between the last common ancestor of the two gene branches and the time of the event |
+| `transfer_distance_bias=False` | sets a common bias mode for additive and replacing HGT, see description of parameters `additive_transfer_distance_bias` and `replacing_transfer_distance_bias`. If the latter are no set to the default (False), then these optioned are prioritized. |
 
 For the constraints to avoid extinction, the loss rates in the respective branches are temporarily set to zero.
 Note that if replacing HGT is enabled (`replace_prob` >0.0), then the resulting tree may contain loss leaves even if the loss rate is zero since replacement is modeled by a loss of a paralog.
 Hence, constructing the observable tree (see below) also becomes relevant in
 the latter setting.
+
+AsymmeTree supports transfer distance bias for horizontal gene transfers similar as the tool SaGePhy (Kundu and Bansal 2019).
+If this bias is enabled, then, in case of an additive transfer (no homolog in the recipient species is replaced), the time elapsed since the last common ancestor of the **species** branches and the HGT event is used for computing the weights, whereas, for a replacing transfer, the time elapsed since the last common ancestor of the respective **gene** branches and the HGT event is used.
 </details>
 
 The function `observable_tree(tree)` returns the observable part of a gene tree, i.e., it copies the tree, removes all branches that lead to loss events only and suppresses all inner nodes with only one child.

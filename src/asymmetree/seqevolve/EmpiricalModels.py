@@ -1,5 +1,14 @@
 # -*- coding: utf-8 -*-
 
+"""Empirical models for amino acid sequence evolution.
+
+The values in the matrices and the equilibrium frequencies are taken from [1].
+
+References
+----------
+.. [1] http://giphy.pasteur.fr/empirical-models-of-amino-acid-substitution/
+"""
+
 import numpy as np
 
 
