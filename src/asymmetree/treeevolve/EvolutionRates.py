@@ -10,7 +10,7 @@ import numpy as np
 
 from asymmetree.treeevolve.GeneTree import GeneTreeSimulator
 from asymmetree.tools.Sampling import Sampler
-from asymmetree.tools.PhyloTreeTools import (sorted_nodes,)
+from asymmetree.tools.PhyloTreeTools import sorted_nodes
 
 
 __author__ = 'David Schaller'
@@ -29,19 +29,35 @@ def simulate_gene_trees(S, N=1,
     """Simulates dated gene trees with non-ultrametric edge lengths along a
     species tree.
     
-    Keyword arguments:
-        N -- number of gene trees to be simulated, default is 1, in which case
-            a tree is returned, otherwise a list is returned
-        dupl_rate -- (distribution for the) duplication rate,
-            default is constant 0.0
-        loss_rate -- (distribution for the) loss rate,
-            default is constant 0.0
-        hgt_rate -- (distribution for the) HGT rate,
-            default is constant 0.0
-        base_rate -- (distribution for the) evolution rate at the roots of
-            the gene trees, default is constant 1.0
-        kwargs -- see arguments of GeneTreeSimulator.simulate and assign_rates
-        """
+    Parameters
+    ----------
+    S : Tree
+        The species tree along which the gene trees are simulated.
+    N : int, optional
+        Number of gene trees to be simulated, default is 1, in which case a
+        tree is returned, otherwise a list is returned.
+    dupl_rate : float or tuple
+        The (distribution for the) duplication rate, see documentation for
+        available option. The default is constant 0.0.
+    loss_rate : float or tuple
+        The (distribution for the) loss rate, see documentation for
+        available option. The default is constant 0.0.
+    hgt_rate : float or tuple
+        The (distribution for the) HGT rate, see documentation for
+        available option. The default is constant 0.0.
+    base_rate : float or tuple
+        The (distribution for the) evolution rate at the roots of the gene
+        trees, see documentation for available options. The default is
+        constant 1.0.
+    kwargs : optional
+        See documentation or parameters of GeneTreeSimulator.simulate and
+        assign_rates for additional parameters.
+    
+    Returns
+    -------
+    Tree or list
+        Return a single gene tree if N = 1 and a list of gene tree if N > 1.
+    """
     
     gene_trees = []
     simulator = GeneTreeSimulator(S)
@@ -57,7 +73,6 @@ def simulate_gene_trees(S, N=1,
     
     # main simulation and imbalancing
     for i in range(N):
-        
         TGT = simulator.simulate(dupl_rate=dupl_rate_sampler.draw(),
                                  loss_rate=loss_rate_sampler.draw(),
                                  hgt_rate=hgt_rate_sampler.draw(),
@@ -68,12 +83,7 @@ def simulate_gene_trees(S, N=1,
                      **kwargs)
         gene_trees.append(TGT)
     
-    if N == 1:
-        return gene_trees[0]
-    else:
-        return gene_trees
-    
-
+    return gene_trees[0] if N == 1 else gene_trees
     
 
 # --------------------------------------------------------------------------
@@ -93,17 +103,55 @@ def assign_rates(T, S, base_rate=1.0,
     The assigned rates are used to modify the length ('dist') of the edges of
     the (originally ultrametric) dated gene tree.
     
-    Keyword arguments:
-    base_rate -- mean of substitution rate for conserved genes
-    autocorr_factors -- autocorrelation rate factors for the edges of S
-    autocorr_variance -- autocorrelation variance factor for lognormal
-        distribution, only relevant if 'autocorrelation_rates' are not supplied 
-    rate_increase -- distribution of the (relative) rate increase (w.r.t. the
-        base rate) for divergent genes, i.e. to a factor 1 + x, default is gamma
-        distribution with shape 0.5 and scale 2.2
-    CSN_weights -- weights for choice between conservation, subfunctionalization
-        and neofunctionalization
-    inplace -- if False, copy the tree before imbalancing
+    Parameters
+    ----------
+    T : Tree
+        The gene tree.
+    S : Tree
+        The species tree.
+    base_rate : float, optional
+        Mean of substitution rate for conserved genes.
+    autocorr_factors : dict, optional
+        A dictonary containing autocorrelation rate factors for the edges of S
+        (key = v.label for edge (v.parent, v); value = the rate as a float).
+        The default is None, in which case autocorrelation factors are 
+        generated if 'autocorr_variance' > 0.0, or no such modification is
+        applied. See [1] for theoretical background.
+    autocorr_variance : float, optional
+        Autocorrelation variance factor for a lognormal distribution, only
+        considered if 'autocorrelation_rates' are not supplied. See [1] for
+        theoretical background.
+    rate_increase : float or tuple, optional
+        Distribution of the (relative) rate increase (w.r.t. the base rate)
+        for divergent genes, i.e. to a factor 1 + x. The default is a Gamma
+        distribution with shape 0.5 and scale 2.2, which was fitted to the
+        data in [2].
+    CSN_weights : tuple, optional
+        Weights for choice between conservation, subfunctionalization and
+        neofunctionalization. The default is (1, 1, ,1), i.e., all three modes
+        are equally likely to be chosen at each duplication event.
+    inplace : bool, optional
+        If False, copy the tree before imbalancing. The deafault is True.
+    
+    Returns
+    -------
+    Tree
+        The original instance of the gene tree (inplace=True) or a copy of
+        the gene tree (inplace=False) with modified 'dist' attributes of the
+        nodes.
+    
+    References
+    ----------
+    .. [1] H. Kishino, J. L. Thorne, and W. J. Bruno.
+       Performance of a Divergence Time Estimation Method under a Probabilistic
+       Model of Rate Evolution. 
+       In: Molecular Biology and Evolution, 18(3):352-361, March 2001.
+       doi: 10.1093/oxfordjournals.molbev.a003811.
+    .. [2] K. P. Byrne and K. H. Wolfe.
+       Consistent Patterns of Rate Asymmetry and Gene Loss Indicate Widespread
+       Neofunctionalization of Yeast Genes After Whole-Genome Duplication.
+       In: Genetics, 175(3):1341-1350, March 2007.
+       doi: 10.1534/genetics.106.066951.
     """
     
     if not inplace:
@@ -159,10 +207,25 @@ def _duplication_type(marked_as, CSN_weights):
 
 def _divergent_rates(T, S, sampler, CSN_weights):
     """
-    Parameters:
-        sampler -- sampler for rate increase for divergent genes
-        CSN_weights -- weights for choice between conservation,
-            subfunctionalization and neofunctionalization
+    Assign divergent genes and manipulate the distances in the gene tree.
+    
+    Parameters
+    ----------
+    T : Tree
+        The gene tree.
+    S : Tree
+        The species tree.
+    sampler : asymmetree.tools.Sampling.Sampler
+        Sampler for rate increase for divergent genes.
+    CSN_weights : tuple
+         Weights for choice between conservation, subfunctionalization and
+         neofunctionalization.
+    
+    Returns
+    -------
+    Tree
+        The original gene tree instance with manipulated 'dist' attributes of
+        its nodes.
     """
     
     T_nodes = sorted_nodes(T)
@@ -241,6 +304,32 @@ def autocorrelation_factors(tree, variance):
     The parameter 'variance' is a hyperparameter for a log-normal distribution
     from which offspring rates are drawn. The overall variance of this
     distribution is 'variance' * divergence time.
+    The rates are first computed for the nodes, the rates of the edges are
+    assigned afterwards as the arithmetic mean of the rates of the two incident
+    nodes.
+    
+    Parameters
+    ----------
+    tree : Tree
+        The species tree.
+    variance : float
+        The hyperparameter for a log-normal distribution from which offspring
+        rates are drawn at each node.
+    
+    Returns
+    -------
+    tuple of two dicts
+        A dict mapping the labels of the nodel to their assigned rated, and a
+        second dict mapping the labels of v of edges (v.parent, v) to the
+        assigned rates of the edges.
+    
+    References
+    ----------
+    .. [1] H. Kishino, J. L. Thorne, and W. J. Bruno.
+       Performance of a Divergence Time Estimation Method under a Probabilistic
+       Model of Rate Evolution. 
+       In: Molecular Biology and Evolution, 18(3):352-361, March 2001.
+       doi: 10.1093/oxfordjournals.molbev.a003811.
     """
     
     node_rates = {}                 # maps node v --> rate of v
