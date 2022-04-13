@@ -25,7 +25,18 @@ __author__ = 'David Schaller'
 # --------------------------------------------------------------------------
 
 def true_transfer_edges(T):
-    """Returns a set containing v if (u, v) is labeled as a transfer edge."""
+    """Returns a set containing v if (u, v) is labeled as a transfer edge.
+    
+    Parameters
+    ----------
+    T : Tree
+        A tree whose nodes have the 'transferred' attribute.
+    
+    Returns
+    -------
+    set
+        The subset of TreeNode instances in the tree for which transferred is 1.
+    """
     
     return {v for _, v in T.edges() if v.transferred}
 
@@ -35,6 +46,23 @@ def rs_transfer_edges(T, S, lca_S=None):
     
     An edge (u,v) in T is an (rs-)transfer edge if u and v are mapped to
     incomparable nodes/edges in the species tree S.
+    
+    Parameters
+    ----------
+    T : Tree
+        The gene tree.
+    S : Tree
+        The species tree corresponding to the gene tree.
+    lca_S : tralda.datastructures.Tree.LCA, optional
+        Instance of LCA corresponding to the species tree, default is None
+        in which case a new instance is created and used.
+    
+    Returns
+    -------
+    set
+        The subset of TreeNode instances in the tree for which the 'color'
+        attributes of its incident edges refer to incomparable branches in the
+        species tree.
     """
     
     if not isinstance(lca_S, LCA):
@@ -52,11 +80,24 @@ def rs_transfer_edges(T, S, lca_S=None):
 def fitch(tree, transfer_edges, supply_undirected=False, lca_T=None):
     """Returns the (directed) Fitch graph.
     
-    Keyword arguments:
-        supply_undirected - additionally return the undirected Fitch graph,
-            default is False
-        lca_T - instance of LCA corresponding to the tree, default is False
-            in which case a new instance is created and used
+    Parameters
+    ----------
+    tree : Tree
+        The gene tree.
+    transfer_edges : iterable
+        The subset of TreeNode instances in the tree that are transfer edges.
+    supply_undirected : bool, optional
+        If True, additionally return the undirected Fitch graph, default is
+        False.
+    lca_T : tralda.datastructures.Tree.LCA, optional
+        Instance of LCA corresponding to the tree, default is False in which
+        case a new instance is created and used.
+        
+    Returns
+    -------
+    networkx.DiGraph or tuple
+        The directed Fitch graph or a tuple containing the directed Fitch graph
+        (networkx.DiGraph) and the undirected Fitch graph (networkx.Graph).
     """
     
     if not isinstance(lca_T, LCA):
@@ -96,9 +137,20 @@ def fitch(tree, transfer_edges, supply_undirected=False, lca_T=None):
 def undirected_fitch(tree, transfer_edges, lca_T=None):
     """Returns the undirected Fitch graph.
     
-    Keyword arguments:
-        lca_T - instance of LCA corresponding to the tree, default is False
-            in which case a new instance is created and used
+    Parameters
+    ----------
+    tree : Tree
+        The gene tree.
+    transfer_edges : iterable
+        The subset of TreeNode instances in the tree that are transfer edges.
+    lca_T : tralda.datastructures.Tree.LCA, optional
+        Instance of LCA corresponding to the tree, default is False in which
+        case a new instance is created and used.
+        
+    Returns
+    -------
+    networkx.Graph
+        The undirected Fitch graph (networkx.Graph).
     """
     
     return fitch(tree, transfer_edges, supply_undirected=True, lca_T=lca_T)[1]
@@ -128,7 +180,28 @@ def _rs_fitch_aux_graph(G, color_set, ind_sets, ignore_set):
 def is_rs_fitch(G, color_set=None):
     """Checks whether a given graph is an rs-Fitch graph.
     
-    I.e. whether the graph is the Fitch graph of some relaxed scenario (rs).
+    I.e. whether the graph is the Fitch graph of some relaxed scenario (rs),
+    see [1].
+    
+    Parameters
+    ----------
+    G : networkx.Graph
+        A graph whose nodes have the 'color' attribute.
+    color_set : set, optional
+        The set of colors appearing in the graph. The default is None, in which
+        case such a set is created internally.
+    
+    Returns
+    -------
+    bool
+        True if the graph is an rs-Fitch graph as defined in [1].
+        
+    References
+    ----------
+    .. [1] D. Schaller, M. Lafond, P.F. Stadler, N. Wieseke, M. Hellmuth.
+       Indirect identification of horizontal gene transfer.
+       In: Journal of Mathematical Biology, 2021, 83(1):10.
+       doi: 10.1007/s00285-021-01631-0.
     """
     
     if color_set is None:
@@ -164,6 +237,31 @@ def is_rs_fitch(G, color_set=None):
 # --------------------------------------------------------------------------
 
 def below_equal_above(T, S, lca_T=None, lca_S=None):
+    """Detemine the pairs of genes that diverged later, at the same time, or 
+    earlier as their species.
+    
+    Returns three graphs with the leaves of the gene tree T as vertex set, and 
+    edges ab if and only if a and b diverged later, at the same time, or later,
+    resp., than the corresponding species A and B in the species tree S.
+    
+    Parameters
+    ----------
+    T : Tree
+        The gene tree.
+    S : Tree
+        The corresponding species tree.
+    lca_T : tralda.datastructures.Tree.LCA, optional
+        Instance of LCA corresponding to the gene tree, default is False in
+        which case a new instance is created and used.
+    lca_S : tralda.datastructures.Tree.LCA, optional
+        Instance of LCA corresponding to the species tree, default is False in
+        which case a new instance is created and used.
+    
+    Returns
+    -------
+    tuple of three networkx.Graph instances
+        The below, equal, and above relation as described above.
+    """
     
     L_T = [l for l in T.leaves()]
     L_S = {l.label: l for l in S.leaves()}
@@ -198,20 +296,60 @@ def below_equal_above(T, S, lca_T=None, lca_S=None):
 
 
 def ldt_graph(T, S, lca_T=None, lca_S=None):
-    """Later-divergence-time graph.
+    """Later-divergence-time graph, see [1].
     
     Returns a graph with the leaves of the gene tree T as vertex set, and 
     edges ab if and only if a and b diverged later than the corresponding
-    species A and B in the species tree S."""
+    species A and B in the species tree S.
     
-    ldt, _, _ = below_equal_above(T, S, lca_T=lca_T, lca_S=lca_S)
-    return ldt
+    Parameters
+    ----------
+    T : Tree
+        The gene tree.
+    S : Tree
+        The corresponding species tree.
+    lca_T : tralda.datastructures.Tree.LCA, optional
+        Instance of LCA corresponding to the gene tree, default is False in
+        which case a new instance is created and used.
+    lca_S : tralda.datastructures.Tree.LCA, optional
+        Instance of LCA corresponding to the species tree, default is False in
+        which case a new instance is created and used.
+    
+    References
+    ----------
+    .. [1] D. Schaller, M. Lafond, P.F. Stadler, N. Wieseke, M. Hellmuth.
+       Indirect identification of horizontal gene transfer.
+       In: Journal of Mathematical Biology, 2021, 83(1):10.
+       doi: 10.1007/s00285-021-01631-0.
+    """
+    
+    return below_equal_above(T, S, lca_T=lca_T, lca_S=lca_S)[0]
 
 
 class RsScenarioConstructor:
+    """Construct an rs-scenario for a given LDT graph.
     
+    Implementation of the algorithm presented in [1].
+    
+    References
+    ----------
+    .. [1] D. Schaller, M. Lafond, P.F. Stadler, N. Wieseke, M. Hellmuth.
+       Indirect identification of horizontal gene transfer.
+       In: Journal of Mathematical Biology, 2021, 83(1):10.
+       doi: 10.1007/s00285-021-01631-0.
+    """
     
     def __init__(self, colored_cograph, color_set=None):
+        """Constructor.
+        
+        Parameters
+        ----------
+        colored_cograph : networkx.Graph
+            A cograph whose nodes have the 'color' attribute.
+        color_set : set, optional
+            The set of colors appearing in the graph. The default is None,
+            in which case such a set is created internally.
+        """
         
         self.G = colored_cograph
         
@@ -227,6 +365,14 @@ class RsScenarioConstructor:
         
         
     def run(self):
+        """Construct an rs-scenario consisting of a species and gene tree.
+        
+        Returns
+        -------
+        tuple of two Tree instances or bool
+            The species and gene tree, or False if the supplied graph was 
+            not an LDT graph.
+        """
         
         self.S = self._species_tree()
         if not self.S:
@@ -724,47 +870,4 @@ def fitch_orientation_for_refinements(T, partition, lca=None):
                 matrix[i][j] = 'ambiguous'
     
     return matrix
-
-            
-if __name__ == '__main__':
-    
-    import asymmetree.treeevolve as te
-    from pprint import pprint
-    
-    i = 0
-    # while True:
-    S = te.simulate_species_tree(10)
-    T = te.simulate_dated_gene_tree(S, dupl_rate=0.5, loss_rate=0.5,
-                                    hgt_rate=1)
-    T = te.observable_tree(T)
-    # T.serialize('testfile.pickle')
-    # T = Tree.load('testfile.pickle')
-    print(T.to_newick())
-    
-    ufitch = undirected_fitch(T, true_transfer_edges(T))
-    P = independent_sets(ufitch)
-    
-    vertex_coloring, lcas = is_compatible(T, P, lca=None)
-    print(P)
-    print(lcas)
-    
-    print('\n---- vertex coloring ----')
-    print(vertex_coloring)
-    
-    print('\n---- edge coloring ----')
-    edge_coloring, lcas = is_refinement_compatible(T, P, lca=None)
-    print(edge_coloring)
-    
-    print('\n---- Fitch orientation ----')
-    matrix = fitch_orientation(T, P, lca=None)
-    pprint(matrix)
-    
-    print('\n---- Fitch orientation (refinement) ----')
-    matrix2 = fitch_orientation_for_refinements(T, P, lca=None)
-    pprint(matrix2)
-    
-    print(i, matrix == matrix2)
-        # i += 1
-        # if matrix != matrix2:
-        #     break
     

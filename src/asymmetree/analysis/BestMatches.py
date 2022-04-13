@@ -83,6 +83,15 @@ def bmg_from_tree(tree, supply_rbmg=False):
     -------
     networx.DiGraph or pair of networx.DiGraph and networx.Graph
         The constructed BMG and optionally its symmetric part.
+    
+    References
+    ----------
+    .. [1] M. Geiß, E. Chávez, M. González Laffitte, A. López Sánchez, B. M. R. 
+       Stadler, D. I. Valdivia, M. Hellmuth, M. Hernández Rosales, and P. F.
+       Stadler.
+       Best match graphs.
+       In: Journal of Mathematical Biology, 78:2015–2057, 2019.
+       doi:10.1007/s00285-019-01332-9.
     """
     
     if not isinstance(tree, Tree):
@@ -117,7 +126,7 @@ def bmg_from_tree(tree, supply_rbmg=False):
 def bmg_from_tree_quadratic(tree, supply_rbmg=False):
     """Construct a BMG (and optionally RBMG) from a given tree in O(|L|^2).
     
-    Implementation of the quadratic algorithm in Geiss et al. 2020. Proven to
+    Implementation of the quadratic algorithm in [1]. Proven to
     run in O(|L|^2).
     
     Parameters
@@ -132,6 +141,14 @@ def bmg_from_tree_quadratic(tree, supply_rbmg=False):
     -------
     networx.DiGraph or pair of networx.DiGraph and networx.Graph
         The constructed BMG and optionally its symmetric part.
+    
+    References
+    ----------
+    .. [1] M. Geiß, M. E. González Laffitte, A. López Sánchez, D. I. Valdivia,
+    M. Hellmuth, M. Hernández Rosales, and P. F. Stadler.
+    Best match graphs and reconciliation of gene trees with species trees.
+    In: Journal of Mathematical Biology, 80:1459–1495, 2020.
+    doi: 10.1007/s00285-020-01469-y.
     """
     
     if not isinstance(tree, Tree):
@@ -174,6 +191,9 @@ def bmg_from_tree_quadratic(tree, supply_rbmg=False):
 def extended_best_hits(leaves, D, epsilon=1e-8, supply_rbmg=False):
     """Compute BMG and RBMG from a distances matrix D.
     
+    Apporximation of best matches as the genes within a tolerance range from
+    the gene with the smallest distance, see [1].
+    
     Parameters
     ----------
     leaves : list of TreeNode instances with `label` attribute
@@ -192,6 +212,14 @@ def extended_best_hits(leaves, D, epsilon=1e-8, supply_rbmg=False):
     -------
     networx.DiGraph or pair of networx.DiGraph and networx.Graph
         The constructed BMG and optionally its symmetric part.
+        
+    References
+    ----------
+    .. [1] P. F. Stadler, M. Geiß, D. Schaller, A. López Sánchez, M. Gonzalez
+    Laffitte, D. I. Valdivia, M. Hellmuth, and M. Hernández Rosales.
+    From pairs of most similar sequences to phylogenetic best matches.
+    In: Algorithms for Molecular Biology, 15:5, 2020.
+    doi: 10.1186/s13015-020-00165-2.
     """
     
     bmg = nx.DiGraph()
@@ -225,7 +253,32 @@ def extended_best_hits(leaves, D, epsilon=1e-8, supply_rbmg=False):
 # --------------------------------------------------------------------------
 
 def informative_triples(graph, color_dict=None):
-    """Compute the informative triples of a colored digraph."""
+    """Compute the informative triples of a colored digraph.
+    
+    Parameters
+    ----------
+    graph : networkx.DiGraph
+        A digraph whose nodes have the 'color' attribute.
+    color_dict : dict, optional
+        A dict containing the colors that appear in the graph as keys and the
+        list of nodes with the respective color as values. The default is False
+        in which case this dict is computed internally.
+    
+    Returns
+    -------
+    list
+        Each item in the list is a tuple (a, b1, b2) of three nodes such that
+        a b1 | b2 is an informative triple in the graph, see [1].
+    
+    References
+    ----------
+    .. [1] M. Geiß, E. Chávez, M. González Laffitte, A. López Sánchez, B. M. R. 
+       Stadler, D. I. Valdivia, M. Hellmuth, M. Hernández Rosales, and P. F.
+       Stadler.
+       Best match graphs.
+       In: Journal of Mathematical Biology, 78:2015–2057, 2019.
+       doi:10.1007/s00285-019-01332-9.
+    """
     
     if not isinstance(graph, nx.DiGraph):
         raise TypeError("must be a NetworkX 'Digraph'")
@@ -245,7 +298,30 @@ def informative_triples(graph, color_dict=None):
 
 
 def forbidden_triples(graph, color_dict=None):
-    """Compute the forbidden triples of a colored digraph."""
+    """Compute the forbidden triples of a colored digraph.
+    
+    Parameters
+    ----------
+    graph : networkx.DiGraph
+        A digraph whose nodes have the 'color' attribute.
+    color_dict : dict, optional
+        A dict containing the colors that appear in the graph as keys and the
+        list of nodes with the respective color as values. The default is False
+        in which case this dict is computed internally.
+    
+    Returns
+    -------
+    list
+        Each item in the list is a tuple (a, b1, b2) of three nodes such that
+        a b1 | b2 is a forbidden triple in the graph, see [1].
+    
+    References
+    ----------
+    .. [1] D. Schaller, P. F. Stadler, and M. Hellmuth.
+       Complexity of modification problems for best match graphs.
+       In: Theoretical Computer Science, 865:63–84, 2021.
+       doi:10.1016/j.tcs.2021.02.037.
+    """
     
     if not isinstance(graph, nx.DiGraph):
         raise TypeError("must be a NetworkX 'Digraph'")
@@ -266,7 +342,31 @@ def forbidden_triples(graph, color_dict=None):
 
 
 def informative_forbidden_triples(graph, color_dict=None):
-    """Compute the informative and forbidden triples of a colored digraph."""
+    """Compute the informative and forbidden triples of a colored digraph.
+    
+    Parameters
+    ----------
+    graph : networkx.DiGraph
+        A digraph whose nodes have the 'color' attribute.
+    color_dict : dict, optional
+        A dict containing the colors that appear in the graph as keys and the
+        list of nodes with the respective color as values. The default is False
+        in which case this dict is computed internally.
+    
+    Returns
+    -------
+    tuple of two lists
+        Each item in the first (resp. second) list is a tuple (a, b1, b2) of
+        three nodes such that a b1 | b2 is a informative (resp. forbidden)
+        triple in the graph, see [1].
+    
+    References
+    ----------
+    .. [1] D. Schaller, P. F. Stadler, and M. Hellmuth.
+       Complexity of modification problems for best match graphs.
+       In: Theoretical Computer Science, 865:63–84, 2021.
+       doi:10.1016/j.tcs.2021.02.037.
+    """
     
     if not isinstance(graph, nx.DiGraph):
         raise TypeError("must be a NetworkX 'Digraph'")
@@ -292,7 +392,33 @@ def informative_forbidden_triples(graph, color_dict=None):
 
 
 def binary_explainable_triples(graph, color_dict=None):
-    """Extended informative triple set for binary-explainable graphs."""
+    """Extended informative triple set for binary-explainable graphs.
+    
+    Parameters
+    ----------
+    graph : networkx.DiGraph
+        A digraph whose nodes have the 'color' attribute.
+    color_dict : dict, optional
+        A dict containing the colors that appear in the graph as keys and the
+        list of nodes with the respective color as values. The default is False
+        in which case this dict is computed internally.
+    
+    Returns
+    -------
+    tuple of two lists
+        Each item in the  list is a tuple (a, b, c) of three nodes such that
+        ab|c is a triple displayed by every binary tree that explains the graph
+        (if existent), see [1].
+    
+    References
+    ----------
+    .. [1] D. Schaller, M. Geiß, M. Hellmuth, and P. F. Stadler.
+       Best match graphs with binary trees.
+       In: C. Martín-Vide, M. A. Vega-Rodríguez, and T. Wheeler, editors,
+       Algorithms for Computational Biology, 8th AlCoB, volume 12715 of Lecture
+       Notes in Computer Science, pages 82–93, 2021.
+       doi: 10.1007/978-3-030-74432-8_6.
+    """
     
     if not isinstance(graph, nx.DiGraph):
         raise TypeError("must be a NetworkX 'Digraph'")
@@ -343,6 +469,24 @@ def lrt_from_observable_tree(T):
     
     The unique Least Resolved Tree from a leaf-colored (observable)
     gene tree is computed by contraction of all redundant edges.
+    
+    Parameters
+    ----------
+    T : Tree
+        A tree whose nodes have the 'color' attribute.
+    
+    Returns
+    -------
+    Tree
+        The unique least resolved tree (w.r.t. best matches), see [1].
+    
+    References
+    ----------
+    .. [1] D. Schaller, M. Geiß, P. F. Stadler, and M. Hellmuth.
+    Complete characterization of incorrect orthology assignments in best match
+    graphs. 
+    In: Journal of Mathematical Biology, 82:20, 2021.
+    doi: 10.1007/s00285-021-01564-8.
     """
     
     lrt = T.copy()
@@ -432,7 +576,26 @@ def redundant_edges(T, subtree_colors, arc_colors):
 def is_bmg(G):
     """Determine whether a colored digraph is a BMG.
     
-    If the graph is a BMG, then its LRT is returned.
+    If the graph is a BMG, then its LRT is returned, see [1].
+    
+    Parameters
+    ----------
+    G : networkx.DiGraph
+        A digraph whose nodes have the 'color' attribute.
+    
+    Returns
+    -------
+    Tree or bool
+        The least-resolved tree if the graph was a BMG, and False otherwise.
+    
+    References
+    ----------
+    .. [1] D. Schaller, M. Geiß, E. Chávez, M. González Laffitte, A. López
+       Sánchez, B. M. R. Stadler, D. I. Valdivia, M. Hellmuth, M. Hernández
+       Rosales, and P. F. Stadler.
+       Corrigendum to 'Best match graphs'.
+       In: Journal of Mathematical Biology, 82:47, 2021. 
+       doi: 10.1007/s00285-021-01601-6.
     """
     
     if not isinstance(G, nx.DiGraph):
@@ -517,8 +680,26 @@ def correct_bmg(bmg_original):
 # --------------------------------------------------------------------------
             
 class TwoColoredLRT:
+    """Construct the least-resolved tree of a 2-colored best match graph.
+    
+    Implementation of the efficient algorithm in [1].
+    
+    References
+    ----------
+    .. [1] D. Schaller, M. Geiß, M. Hellmuth, and P. F. Stadler.
+       Least resolved trees for two-colored best match graphs.
+       In: Journal of Graph Algorithms and Applications, 25(1):397–416, 2021.
+       doi: 10.7155/jgaa.00564.
+    """
     
     def __init__(self, digraph):
+        """Constructor.
+        
+        Parameters
+        ----------
+        G : networkx.DiGraph
+            A digraph whose nodes have the 'color' attribute.
+        """
         
         if not isinstance(digraph, nx.DiGraph):
             raise TypeError('not a digraph')
@@ -528,6 +709,14 @@ class TwoColoredLRT:
                 
     
     def build_tree(self):
+        """Construct the least-resolved tree.
+        
+        Returns
+        -------
+        Tree or bool
+            The least-resolved tree if the graph was a 2-colored BMG, and
+            False otherwise.
+        """
         
         if not is_properly_colored(self.digraph):
             raise RuntimeError('not a properly colored digraph')
@@ -602,7 +791,25 @@ class TwoColoredLRT:
 def lrt_from_2bmg(G):
     """Effieciently constructs the LRT for a 2-BMG via the support vertices.
     
-    Returns false if the graph is not a 2-colored BMG.
+    Implementation of the efficient algorithm in [1].
+    
+    Parameters
+    ----------
+    G : networkx.DiGraph
+        A digraph whose nodes have the 'color' attribute.
+    
+    Returns
+    -------
+    Tree or bool
+        The least-resolved tree if the graph was a 2-colored BMG, and
+        False otherwise.
+    
+    References
+    ----------
+    .. [1] D. Schaller, M. Geiß, M. Hellmuth, and P. F. Stadler.
+       Least resolved trees for two-colored best match graphs.
+       In: Journal of Graph Algorithms and Applications, 25(1):397–416, 2021.
+       doi: 10.7155/jgaa.00564.
     """
     
     builder = TwoColoredLRT(G)
@@ -618,7 +825,34 @@ def binary_refinable_tree(G, mincut=False, weighted_mincut=False):
     
     The BRT of a BMG can, if it exists, be refined arbitrarily and such that
     it still explains the BMG. In particular, all binary explainations are 
-    refinements of the BRT."""
+    refinements of the BRT.
+    
+    Parameters
+    ----------
+    G : networkx.DiGraph
+        A digraph whose nodes have the 'color' attribute.
+    mincut : bool, optional
+        Handle inconsistencies that occur if the supplied graph is not a
+        binary-explainable BMG. The default is True.
+    weighted_mincut : bool, optional
+        If True, apply a weighted mincut heuristic. The deafault is False.
+    
+    Returns
+    -------
+    Tree or bool
+        The unique binary-resovable tree if the graph is a binary-explainable
+        BMG, see [1], or a heuristic tree if it is not but 'mincut' is True,
+        or False if neither is the case.
+    
+    References
+    ----------
+    .. [1] D. Schaller, M. Geiß, M. Hellmuth, and P. F. Stadler.
+       Best match graphs with binary trees.
+       In: C. Martín-Vide, M. A. Vega-Rodríguez, and T. Wheeler, editors,
+       Algorithms for Computational Biology, 8th AlCoB, volume 12715 of Lecture
+       Notes in Computer Science, pages 82–93, 2021.
+       doi: 10.1007/978-3-030-74432-8_6.
+    """
     
     L = {v for v in G.nodes()}
     R = binary_explainable_triples(G)
@@ -634,7 +868,30 @@ def binary_refinable_tree(G, mincut=False, weighted_mincut=False):
 # --------------------------------------------------------------------------
 
 def augment_and_label(tree, inplace=False):
-    """Augment tree and add event labeling based on color intersections."""
+    """Augment tree and add event labeling based on color intersections.
+    
+    Parameters
+    ----------
+    tree : Tree
+        A tree whose nodes have the 'color' attribute.
+    inplace : bool, optional
+        If True, the supplied tree instance is directly manipulated, otherwise 
+        the tree is copied first. The default is False.
+        
+    Returns
+    -------
+    Tree
+        The unique augmented and duplication/loss-labeled tree as defined in
+        [1].
+    
+    References
+    ----------
+    .. [1] D. Schaller, M. Geiß, P. F. Stadler, and M. Hellmuth.
+    Complete characterization of incorrect orthology assignments in best match
+    graphs. 
+    In: Journal of Mathematical Biology, 82:20, 2021.
+    doi: 10.1007/s00285-021-01564-8.
+    """
     
     if not inplace:
         tree = tree.copy()
