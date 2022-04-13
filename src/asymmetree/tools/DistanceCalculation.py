@@ -1,16 +1,19 @@
 # -*- coding: utf-8 -*-
 
+"""Calculation of sequence distances for various models.
+
+References
+----------
+.. [1] Z. Yang.
+   Computational molecular evolution.
+   Oxford series in ecology and evolution. Oxford University Press, 2006.
+   ISBN 978-0-19-856699-1 978-0-19-856702-8.
+"""
+
 import numpy as np
 import scipy.optimize
 
 from asymmetree.seqevolve import SubstModel
-
-"""Calculation of sequence distances for various models.
-
-References:
-    Ziheng Yang (2006). Computational Molecular Evolution.
-    Oxford Series in Ecology and Evolution.
-"""
 
 
 __author__ = 'David Schaller'
@@ -40,7 +43,8 @@ def maximum_likelihood_distance(seq1, seq2,
     if x0 == 0.0:
         return x0
     
-    opt_result = scipy.optimize.minimize(_likelihood, x0, args=(seqs, subst_model),
+    opt_result = scipy.optimize.minimize(_likelihood, x0, 
+                                         args=(seqs, subst_model),
                                          bounds=((MIN_LENGTH, None),),)
     
     if opt_result.success:
@@ -71,7 +75,7 @@ def _likelihood(x, seqs, subst_model):
 def _to_indices(seq1, seq2, subst_model):
     
     if len(seq1) != len(seq2):
-        raise ValueError("unequal sequence lengths: {} and {}".format(len(seq1), len(seq2)))
+        raise ValueError('unequal sequence lengths: {len(seq1)} and {len(seq2)}')
 
     seq1_indeces, seq2_indeces = [], []
     
@@ -88,15 +92,21 @@ def _to_indices(seq1, seq2, subst_model):
 def p_distance(seq1, seq2, exclude_gaps=True):
     """Calculate the p-distance of two aligned sequences.
     
-    = length-normalized Hamming distance.
+    Equals the (length-)normalized Hamming distance.
     
-    Keyword arguments:
-        exclude_gaps - ignore columns with a gap in one sequence,
-           gaps in both sequences are always ignored; default=True.
+    Paramaters
+    ----------
+    seq1 : str
+        Sequence 1.
+    seq2 : str
+        Sequence 2.
+    exclude_gaps : bool, optional
+        Ignore columns with a gap in one sequence, gaps in both sequences are
+        always ignored. The default is True.
     """
     
     if len(seq1) != len(seq2):
-        raise ValueError("unequal sequence lengths: {} and {}".format(len(seq1), len(seq2)))
+        raise ValueError(f'unequal sequence lengths: {len(seq1)} and {len(seq2)}')
         
     diffs, valid_columns = 0, 0
     
@@ -187,7 +197,7 @@ def _IV_proportions(seq1, seq2):
     pyrimidines = {'C', 'c', 'T', 't', 'U', 'u', 'Y', 'y'}
     
     if len(seq1) != len(seq2):
-        raise ValueError("unequal sequence lengths: {} and {}".format(len(seq1), len(seq2)))
+        raise ValueError(f'unequal sequence lengths: {len(seq1)} and {len(seq2)}')
         
     transitions, transversions, valid_columns = 0, 0, 0
     

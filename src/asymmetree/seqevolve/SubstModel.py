@@ -1,5 +1,15 @@
 # -*- coding: utf-8 -*-
 
+"""Substitution models for nucleotide and amino acid evolution.
+
+References
+----------
+.. [1] Z. Yang.
+   Computational molecular evolution.
+   Oxford series in ecology and evolution. Oxford University Press, 2006.
+   ISBN 978-0-19-856699-1 978-0-19-856702-8.
+"""
+
 import numpy as np
 from scipy import linalg
 
@@ -11,7 +21,7 @@ __author__ = 'David Schaller'
 
 
 class SubstModel:
-    
+    """Substitution model for nucleotide or amino acid evolution."""
     
     nuc_models = {'JC69', 'K80', 'GTR', 'CUSTOM'}
     aa_models = {'JC69', 'CUSTOM'}
@@ -22,6 +32,29 @@ class SubstModel:
     
     def __init__(self, model_type, model_name,
                  **kwargs):
+        """Constructor.
+        
+        Parameters
+        ----------
+        model_type : str
+            Available options are 'n' for nucleotide and 'a' for amino acid
+            sequences.
+        model_name : str
+            Availbale are e.g. 'JC69' (nuc./a.a.), 'K80' (nuc.), 'GTR' (nuc.),
+            'WAG' (a.a.), 'JTT' (a.a.), 'BLOSUM62' (a.a.), 'LG' (a.a.), and
+            'DAYHOFF' (a.a.).
+            For the option 'CUSTOM', the keyword parameter 'filename' has to
+            be specified with a path to a custom model in paml format.
+        kwargs : optional
+            Some models require additional parameters, e.g. 'K80' requires the
+            parameter 'kappa' and 'GTR' requires 'abcdef' and 'f', see
+            documention for details.
+        
+        Raises
+        ------
+        ValueError
+            If an invalid model was specified.
+        """
         
         self.model_type = model_type.lower()
         self.model_name = model_name.upper()
@@ -131,7 +164,17 @@ class SubstModel:
     def transition_prob_matrix(self, t):
         """Calculate the transition probability matrix P(t).
         
-        P(t) = U x e^(Lambda*t) x U^(-1)."""
+        P(t) = U x e^(Lambda*t) x U^(-1).
+        
+        Parameters
+        ----------
+        t : float
+            The time / evolutinary distance.
+        
+        Returns
+        -------
+        2-dimensional numpy array
+        """
         
         # ensure that eigensystem has been computed
         self.eigensystem()
@@ -143,6 +186,25 @@ class SubstModel:
         
     
     def to_indices(self, sequence):
+        """Convert a sequence into a list of indices the represent the positions
+        of the letters in the alphabet of the model.
+        
+        Parameters
+        ----------
+        sequence : iterable
+            The sequence to be converted.
+        
+        Returns
+        -------
+        list
+            The list of indices.
+        
+        Raises
+        ------
+        ValueError
+            If the sequence contains a letter that is not in the alphabet of
+            the model.
+        """
         
         try:
             result = [self.alphabet_dict[letter] for letter in sequence]
@@ -153,6 +215,18 @@ class SubstModel:
     
     
     def to_sequence(self, evoseq):
+        """Construct the str representation of a sequence.
+        
+        Parameters
+        ----------
+        evoseq : asymmetree.seqevolve.EvolvingSequence.EvoSeq
+            The sequence to be converted.
+        
+        Returns
+        -------
+        str
+            The nucleotide or amino acid sequence depending on the model.
+        """
         
         return ''.join(self.alphabet[x._value] for x in evoseq)
     
@@ -163,6 +237,24 @@ class SubstModel:
     
     
 def diagonalize(Q, freqs):
+    """Diagonalize a matrix.
+    
+    Parameters
+    ----------
+    Q : 2-dimensional numpy array
+        Rate matrix.
+    freqs : 1-dimensional numpy array
+        stationary frequencies
+    
+    Returns
+    -------
+    1-dimensional numpy array
+        Eigenvalues.
+    2-dimensional numpy array
+        Diagonalized matrix.
+    2-dimensional numpy array
+        Inverse of the diagonalized matrix.
+    """
         
     # matrix is already symmetric
     if np.allclose(Q, Q.T):

@@ -1,5 +1,16 @@
 # -*- coding: utf-8 -*-
 
+"""Evolve sequences along a tree using specific models for substitution, indels,
+and rate heterogeneity.
+
+References
+----------
+.. [1] Z. Yang.
+   Computational molecular evolution.
+   Oxford series in ecology and evolution. Oxford University Press, 2006.
+   ISBN 978-0-19-856699-1 978-0-19-856702-8.
+"""
+
 import numpy as np
 
 from asymmetree.seqevolve.EvolvingSequence import EvoSeq, State
@@ -16,6 +27,24 @@ class Evolver:
                  indel_model=None, het_model=None,
                  jump_chain=False,
                  **kwargs):
+        """Constructor of class 'Evolver'.
+        
+        Parameters
+        ----------
+        subst_model : SubstModel
+            Substitution model.
+        indel_model : IndelModel, optional
+            Model for insertions and deletions, default is None.
+        het_model : HetModel, optional
+            Model for substitution rate heterogeneity, default is None.
+        jump_chain : bool, optional
+            If True, draw substitution in a Gillespie process instead of
+            constructing the exchange probability matrix P via matrix
+            diagonalization. The jump chain mode is expected to be faster if
+            the rate heterogeneity is large, and therefore automatically
+            switched on if the het_model has more than 5 classes or is set to
+            sitewise.
+        """
         
         self.subst_model = subst_model
         
@@ -31,6 +60,29 @@ class Evolver:
         
     
     def evolve_along_tree(self, tree, start_length=200, start_seq=None):
+        """Constructor of class 'Evolver'.
+        
+        If 'start_seq' is not supplied, then the sequence at the root is
+        constructed randomly using the stationary probabilities of the
+        specified substitution model.
+        
+        Parameters
+        ----------
+        tree : Tree
+            The tree along which sequences are simulated.
+        start_length : int, optional
+            The length of the sequence at the root. The default is 200.
+            This parameter is ignored when 'start_seq' is supplied.
+        start_seq : str, optional
+            The start sequence for the root of the tree. The default is None,
+            in which case a sequence is constructed at random.
+        
+        Returns
+        -------
+        dict
+            A dict containing the TreeNode instances in the tree as keys and 
+            the simulated sequences as values (instances of type EvoSeq).
+        """
         
         self.tree = tree
         self.site_counter = 0
@@ -102,6 +154,27 @@ class Evolver:
     
     def true_alignment(self, include_inner=True, write_to=None,
                        alignment_format='phylip'):
+        """Construct the 'true' alignment of the simulated sequences.
+        
+        Parameters
+        ----------
+        include_inner : bool, optional
+            If True, the alignment also contains the sequences of the inner
+            nodes of the tree. The default is True.
+        write_to : str, optional
+            The path and filename to the file into which the alignment shall
+            be written. The default is None, in which case nothing is written
+            to a file.
+        alignment_format : str
+            Format of the alignment that is written to a file. The default is
+            'phylip'.
+        
+        Returns
+        -------
+        dict
+            A dict containing the TreeNode instances in the tree as keys and 
+            the str sequences as values that include the necessary gaps.
+        """
         
         alg_builder = AlignmentBuilder(self.tree, self.sequences,
                                        self.subst_model.alphabet,

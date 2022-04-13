@@ -8,18 +8,27 @@ __author__ = 'David Schaller'
 
 
 class Sampler:
-    
+    """Campling from from a variety of distributions."""
     
     def __init__(self, params, minimum=None, maximum=None, discrete=False,
                  shift=0):
         """Constructor for class Sampler.
         
-        Keyword argument:
-            minimum - minimum value to be sampled
-            maximum - maximum value to be sampled
-            discrete - if True, round sampled values in case of a continuous
-                distribution
-            shift - shift distribution along x-axis
+        Parameters
+        ----------
+        params : float or tuple
+            The distribution and its parameters, see documentation for
+            available options.
+        minimum : float, optional
+            Minimum value to be sampled. The default is None.
+        maximum : float, optional
+            Maximum value to be sampled. The default is None.
+        discrete : bool, optional
+            If True, round sampled values in case of a continuous
+                distribution. The default is False.
+        shift : float, optional
+            Shift distribution along x-axis. The default is 0, i.e., the
+            distribution is not shifted.
         """
         
         self._params = params
@@ -28,7 +37,16 @@ class Sampler:
         self._max = maximum
         self._shift = shift
         
+        # function to be defined in _check_distribution
+        self.draw = None
+        
         self._check_distribution()
+    
+    
+    def __call__(self):
+        """Draw a value from the specified distribution."""
+        
+        return self.draw()
         
     
     def _check_distribution(self):

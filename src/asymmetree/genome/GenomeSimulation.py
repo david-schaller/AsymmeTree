@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+"""Simulation of genomes."""
+
 import os
 
 from tralda.datastructures.Tree import Tree
@@ -16,6 +18,18 @@ __author__ = 'David Schaller'
 class GenomeSimulator:
     
     def __init__(self, species_tree, outdir=None):
+        """Constructor of the class 'GenomeSimulator'.
+        
+        Parameters
+        ----------
+        species_tree : Tree
+            The species tree along which gene trees are simulated.
+        outdir : str, optional
+            The path to a directory into which the results of the simulation
+            (serialized trees, one fasta file per genome, one 'true' alignement
+            per gene family). The default is None, in which case nothing is
+            saved to file.
+        """
         
         if not isinstance(species_tree, Tree):
             raise TypeError("species tree must be of type 'Tree'")
@@ -52,6 +66,20 @@ class GenomeSimulator:
     
     def simulate_gene_trees(self, N,
                             **kwargs):
+        """Simulate gene trees.
+        
+        Simulates the 'true gene trees' which still contain the loss events as
+        well as the 'observable gene tree' in which the loss branches are
+        removed.
+        
+        Parameters
+        ----------
+        N : int
+            Number of gene trees to be simulated.
+        kwargs : optional
+            See function 'simulate_gene_trees' in 'treeevolve' subpackage or 
+            documentation.
+        """
         
         self.number_of_families = N
         
@@ -71,6 +99,8 @@ class GenomeSimulator:
                 filename = self._path('true_gene_trees',
                                       'gene_tree{}.json'.format(i))
                 self.true_gene_trees[i].serialize(filename, mode='json')
+        
+        return self.true_gene_trees, self.observable_gene_trees
                 
     
     def simulate_sequences(self, subst_model,
@@ -81,6 +111,39 @@ class GenomeSimulator:
                            write_fastas=True,
                            write_alignments=True,
                            **kwargs):
+        """Simulate sequences along the observable gene trees.
+        
+        Parameters
+        ----------
+        subst_model : SubstModel
+            Substitution model.
+        root_genome : list, optional
+            List of sequences for the roots of the gene trees, must contain the
+            same number of str sequences as trees that were simulated. 
+            The sequences must be compatible with the specified substitution 
+            model (model_type='n'/'a'). The default is None, in which case new
+            sequences are generated at random.
+        length_distr : tuple, optional
+            Distribution of the length of the root sequences if root genome is
+            not supplied. See documentation for available options.
+        min_length : int, optional
+            Minimal length at which the distribution of lengths is truncated;
+            must be less than the mean of this distribution. The default is 10.
+        max_length : int, optional
+            Maximal length at which the distribution of lengths is truncated;
+            must be less than the mean of this distribution. The default is
+            None, in which case the distribution is not truncated.
+        write_fastas : bool, optional
+            If True and an output directory was speci ed, write the sequences
+            (one file per species) into the directory 'fasta_files' in the
+            output directory. The default is True.
+        write_alignments : bool, optional
+            If True and an output directory was speci ed, write the true 
+            alignments (one file per gene tree) into the directory 'alignments'
+            in the output directory. The default is True.
+        kwargs : optional
+            See class 'Evolver' in the 'seqevolve' subpackage or documentation.
+        """
         
         self.subst_model = subst_model
         

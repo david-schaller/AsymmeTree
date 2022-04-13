@@ -8,9 +8,24 @@ __author__ = 'David Schaller'
 
 
 class AlignmentBuilder:
-    
+    """Construction of the true alignment of simulated sequences."""
     
     def __init__(self, tree, sequence_dict, alphabet, include_inner=True):
+        """Constructor of class 'AlignmentBuilder'.
+        
+        Parameters
+        ----------
+        tree : Tree
+            The tree along which the sequences where simulated.
+        sequence_dict : dict
+            A dict containing the TreeNode instances in the tree as keys and 
+            the simulated sequences as values (instances of type EvoSeq).
+        alphabet
+            The alphabet of the substitution model that was used.
+        include_inner : bool, optional
+            If True, the alignment also contains the sequences of the inner
+            nodes of the tree. The default is True.
+        """
         
         self.tree = tree
         self.sequence_dict = sequence_dict
@@ -23,6 +38,14 @@ class AlignmentBuilder:
         
         
     def build(self):
+        """Build the true alignment.
+        
+        Returns
+        -------
+        dict
+            A dict containing the TreeNode instances in the tree as keys and 
+            the str sequences as values that include the necessary gaps.
+        """
         
         self._get_preorder()
         self._sort_sites()
