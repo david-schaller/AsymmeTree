@@ -42,6 +42,8 @@ AsymmeTree has several dependencies (which are installed automatically when usin
 
 AsymmeTree is divided into several subpackages and modules, an overview of
 which is given below.
+See also the following [documentation](https://david-schaller.github.io/docs/asymmetree/) generated from the code documentation.
+
 The package uses many classes and functions from the
 [tralda](https://github.com/david-schaller/tralda) library for
 **tr**ee **al**gorithms and **da**ta structures.
