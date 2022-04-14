@@ -23,7 +23,7 @@ class TestBMG(unittest.TestCase):
             tree = random_colored_tree(N, colors)
             bmg = analysis.bmg_from_tree(tree)
             
-            lrt1 = analysis.lrt_from_observable_tree(tree)
+            lrt1 = analysis.lrt_from_tree(tree)
             lrt2 = analysis.lrt_from_colored_graph(bmg, mincut=False)
             
             self.assertTrue( lrt1.equal_topology(lrt2) )

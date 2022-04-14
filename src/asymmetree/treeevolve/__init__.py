@@ -1,6 +1,28 @@
 # -*- coding: utf-8 -*-
 
-from asymmetree.treeevolve.GeneTree import simulate_dated_gene_tree, GeneTreeSimulator, observable_tree
+"""Simulation of species and gene trees.
+
+The subpackage asymmetree.treeevolve contains modules for the simulation and
+manipulation of species trees and gene trees. In terms of divergence time,
+these trees define an ultrametric on the set of their (extant) leaves. Gene
+trees, furthermore, can be manipulated with a realistic rate heterogeneity
+among their branches resulting in general additive distances (but no longer
+ultrametric).
+
+A typical simulation consists of the following steps:
+    
+(1) dated species tree (models e.g. 'innovation', 'Yule', and '(episodic)
+    birth-death process')
+    
+(2) dated gene tree(s) (birth-death process with speciations as additional
+    branching events)
+
+(3) assignment of asymmetric evolution rates to paralogous genes
+
+(4) pruned gene tree(s) (removal of all branches that lead to losses only)
+"""
+
+from asymmetree.treeevolve.GeneTree import simulate_dated_gene_tree, GeneTreeSimulator, prune_losses
 from asymmetree.treeevolve.SpeciesTree import simulate_species_tree, simulate_species_tree_age
 from asymmetree.treeevolve.EvolutionRates import assign_rates, autocorrelation_factors, simulate_gene_trees
 from asymmetree.treeevolve.NoisyMatrix import noisy_matrix, convex_linear_comb, wrong_topology_matrix

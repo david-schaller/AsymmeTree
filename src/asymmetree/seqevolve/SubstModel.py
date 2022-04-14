@@ -32,8 +32,7 @@ class SubstModel:
     
     def __init__(self, model_type, model_name,
                  **kwargs):
-        """Constructor.
-        
+        """
         Parameters
         ----------
         model_type : str

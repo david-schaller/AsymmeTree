@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Species Tree Simulator.
-
-Simulate dated species trees.
+Simulation of dated species trees.
 """
 
 import random, sys

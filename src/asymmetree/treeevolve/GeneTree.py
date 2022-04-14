@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 
 """
-Gene Tree Simulator.
-
-Simulate dated gene trees.
+Simulation of dated gene trees.
 """
 
 import random, warnings
 from collections import deque
 from dataclasses import dataclass
+from warnings import warn
 
 import numpy as np
 
@@ -655,13 +654,36 @@ class GeneTreeSimulator:
         
 
 # --------------------------------------------------------------------------
-#                 CONSTRUCTION OF THE OBSERVABLE TREE
+#                           PRUNE LOSS BRANCHES
 # --------------------------------------------------------------------------
+
+def prune_losses(tree):
+    """Prune all loss branches.
+    
+    Returns a copy of the tree with all branches that lead to losses only
+    removed and superfluous vertices suppressed. Additionally, if the root of
+    the tree has only a single child, then this 'planted edge' is also removed.    
+    
+    Parameters
+    ----------
+    tree : Tree
+        The tree to be pruned.
+    
+    Returns
+    -------
+    Tree
+        A pruned version of the tree.
+    """
+    
+    pruned_tree = delete_losses_and_contract(tree, inplace=False)
+    
+    remove_planted_root(pruned_tree, inplace=True)
+    
+    return pruned_tree
+
 
 def observable_tree(tree):
     
-    obs_tree = delete_losses_and_contract(tree, inplace=False)
-    
-    remove_planted_root(obs_tree, inplace=True)
-    
-    return obs_tree
+    warn('This method is deprecated. Use prune_losses() instead.',
+         DeprecationWarning, stacklevel=2)
+    return prune_losses(tree)

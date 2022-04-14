@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import asymmetree.treeevolve as te
-from asymmetree.analysis.BestMatches import lrt_from_observable_tree
+from asymmetree.analysis.BestMatches import lrt_from_tree
 from asymmetree.tools.PhyloTreeTools import (to_newick,)
 
 D = 1.0
@@ -37,14 +37,14 @@ print('all species have at least one copy:', TGT_simulator._assert_no_extinction
 #                       OBSERVABLE GENE TREE
 # --------------------------------------------------------------------------
 
-OGT = te.observable_tree(TGT)
-print('------------- OGT -------------')
-print(to_newick(OGT))
+PGT = te.prune_losses(TGT)
+print('------------- PGT -------------')
+print(to_newick(PGT))
 
 # --------------------------------------------------------------------------
 #                       LEAST RESOLVED TREE
 # --------------------------------------------------------------------------
 
-lrt = lrt_from_observable_tree(OGT)
+lrt = lrt_from_tree(PGT)
 print('------------- LRT -------------')
 print(to_newick(lrt))

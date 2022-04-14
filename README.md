@@ -103,7 +103,7 @@ A typical simulation consists of the following steps:
 * dated species tree (models e.g. 'innovation', 'Yule', and '(episodic) birth-death process')
 * dated gene tree(s) (birth-death process with speciations as additional branching events)
 * assignment of asymmetric evolution rates to paralogous genes
-* observable gene tree(s) (removal of all branches that lead to losses only)
+* pruned gene tree(s) (removal of all branches that lead to losses only)
 
 The resulting gene trees have edge lengths (`dist`) that correspond to the product of the divergence time between the respective nodes and the evolutionary rates that were assigned to them.
 Such a tree defines a distance matrix on its set of leaves (more precisely, an additive metric).
@@ -130,7 +130,7 @@ Alternatively, sequences can be simulated along the tree, from which distances c
                         rate_increase=('gamma', 0.5, 2.2))
 
     # remove all gene loss branches
-    T = te.observable_tree(TGT)
+    T = te.prune_losses(TGT)
 
     # print the resulting tree in Newick format and save it to file
     print(to_newick(T))
@@ -213,14 +213,14 @@ To simulate gene tree, use the class `GeneTreeSimulator` or the function
 
 For the constraints to avoid extinction, the loss rates in the respective branches are temporarily set to zero.
 Note that if replacing HGT is enabled (`replace_prob` >0.0), then the resulting tree may contain loss leaves even if the loss rate is zero since replacement is modeled by a loss of a paralog.
-Hence, constructing the observable tree (see below) also becomes relevant in
+Hence, constructing the pruned tree (see below) also becomes relevant in
 the latter setting.
 
 AsymmeTree supports transfer distance bias for horizontal gene transfers similar as the tool SaGePhy (Kundu and Bansal 2019).
 If this bias is enabled, then, in case of an additive transfer (no homolog in the recipient species is replaced), the time elapsed since the last common ancestor of the **species** branches and the HGT event is used for computing the weights, whereas, for a replacing transfer, the time elapsed since the last common ancestor of the respective **gene** branches and the HGT event is used.
 </details>
 
-The function `observable_tree(tree)` returns the observable part of a gene tree, i.e., it copies the tree, removes all branches that lead to loss events only and suppresses all inner nodes with only one child.
+The function `prune_losses(tree)` returns the observable part of a gene tree, i.e., it copies the tree, removes all branches that lead to loss events only and suppresses all inner nodes with only one child.
 It also removes the planted root.
 
 <details>
@@ -239,8 +239,8 @@ It also removes the planted root.
                                        hgt_rate=0.1,
                                        replace_prob=0.5)
 
-    # observable gene tree
-    ogt = te.observable_tree(tree)
+    # prune all loss branches and the planted root
+    ogt = te.prune_losses(tree)
 
 </details>
 
@@ -295,8 +295,8 @@ For available distributions and their syntax see below.
                                autocorr_variance=0.2,
                                rate_increase=('gamma', 0.5, 2.2))
 
-    # observable gene tree
-    ogt = te.observable_tree(tree)
+    # pruned gene tree
+    ogt = te.prune_losses(tree)
 
 </details>
 
@@ -308,10 +308,10 @@ Such data can either be modeled by simulating sequences, or by disturbing the di
 <details>
 <summary>The latter alternative is described briefly in this section. (Click to expand)</summary>
 
-The additive (i.e., noiseless) distance from an **observable** gene tree can be computed using the function `distance_matrix(tree)` from `asymmetree.tools.PhyloTreeTools`.
+The additive (i.e., noiseless) distance from a **pruned** gene tree can be computed using the function `distance_matrix(tree)` from `asymmetree.tools.PhyloTreeTools`.
 It returns a tuple containing a list of leaves in the tree (corresponding to the row/column order) and the distance matrix as a 2-dimensional `numpy` array.
 
-    # tree is an observable gene tree
+    # tree is a pruned gene tree
     leaves, D = tree.distance_matrix()
     leaf_index_dict = {leaf: i for i, leaf in enumerate(leaves)}
 
@@ -591,7 +591,7 @@ The gene trees and the sequences are simulated in subsequent steps using the cla
 The first step (i) takes the same keyword parameters as input as the function `simulate_gene_trees()` where `N` is the number of gene families to be simulated.
 Thus, rates for the three event types (`dupl_rate`, `loss_rate`, `hgt_rate`), autocorrelation (`autocorr_variance`), the distribution of base rates (`base_rate_distr`) etc. can be specified.
 
-The second step (ii) simulates the sequences along the observable part (without loss branches) of the simulated gene trees.
+The second step (ii) simulates the sequences along the pruned part (without loss branches) of the simulated gene trees.
 The function takes the following parameters as input:
 
 | Parameter (with default value) | Description and type |
@@ -606,7 +606,7 @@ The function takes the following parameters as input:
 | `write_fastas=True` | if `True `and an output directory was specified, write the `sequences` (one file **per species**) into the directory 'fasta_files' in the output directory (`bool`) |
 | `write_alignments=True` | if `True` and an output directory was specified, write the true alignments (one file **per gene tree**) into the directory 'alignments' in the output directory (`bool`) |
 
-After step (i), the `list`s of full and observable gene trees are accessible via the attributes `true_gene_trees` and `observable_gene_trees`, respectively.
+After step (i), the `list`s of full and pruned gene trees are accessible via the attributes `true_gene_trees` and `pruned_gene_trees`, respectively.
 Moreover, the full gene trees are serialized into the directory 'true_gene_trees' if an output directory was specified.
 After step (ii), the `list`s of sequence `dict`s are accessible via the attribute `sequence_dicts`.
 
@@ -656,7 +656,7 @@ The module `asymmetree.analysis.BestMatches` contains methods for extracting BMG
 
     from asymmetree.analysis import orthology_from_tree, bmg_from_tree
 
-    # tree is an observable gene tree
+    # tree is a pruned gene tree
     orthology_graph = orthology_from_tree(tree)
 
     # best match graph and reciprocal best match graph as a tuple
@@ -767,7 +767,7 @@ For example, the function `reconstruct_from_proteinortho(filename, triple_mode='
 | --- | --- |
 | `asymmetree.treeevolve` | --- |
 | `asymmetree.treeevolve.SpeciesTree` | simulator for dated species trees with different models |
-| `asymmetree.treeevolve.GeneTree` | simulator for dated gene trees, construction of the observable gene tree |
+| `asymmetree.treeevolve.GeneTree` | simulator for dated gene trees, construction of the pruned gene tree |
 | `asymmetree.treeevolve.EvolutionRates` | simulation of evolution rate asymmetries, autocorrelation between ancestors and descendants as well as correlation between genes in the same species |
 | `asymmetree.treeevolve.NoisyMatrix` | generation of a noisy matrix (random perturbation or wrong topology noise) |
 | `asymmetree.seqevolve` | --- |

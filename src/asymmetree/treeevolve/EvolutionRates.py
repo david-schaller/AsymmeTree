@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Assign asymmetric evolution rates to the branches of a gene tree.
+Evolution rate heterogeneity.
 
 Introduce evolution rate asymmetries and autocorrelation.
 """

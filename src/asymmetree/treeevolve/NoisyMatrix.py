@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 
 """
-Noisy Matrix.
+Simulation of noisy distance matrices.
 
-Introduce noise into a distance matrix.
+Distances derived from (real-life) gene or protein sequences are burdened with
+noise. Such data can either be modeled by simulating sequences, or by
+disturbing the distances specified by a given tree directly. This module
+implements functions for the latter alternative.
 """
 
 import random
@@ -249,11 +252,11 @@ def convex_linear_comb(D1, D2, alpha=0.05, first_only=False):
             return D1_alpha
 
 
-def wrong_topology_matrix(OGT):
+def wrong_topology_matrix(PGT):
     """Return a wrong topology matrix by rearranging the edges of a binary tree."""
     
-    distances = [v.dist for v in OGT.preorder()][1:]    # do not include root,
-    if len(distances) % 2 != 0:                         # observable gene tree (OGT)
+    distances = [v.dist for v in PGT.preorder()][1:]    # do not include root,
+    if len(distances) % 2 != 0:                         # pruned gene tree (PGT)
         print("List of distances is not even!")         # is binary and not planted,
         return                                          # hence |E| should be even
     random.shuffle(distances)

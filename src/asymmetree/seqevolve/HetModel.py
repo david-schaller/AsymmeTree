@@ -33,8 +33,7 @@ class HetModel:
     """
     
     def __init__(self, alpha, classes=5, sitewise=False, invariant=0.0):
-        """Constructor of class 'HetModel'.
-        
+        """
         Parameters
         ----------
         alpha : float

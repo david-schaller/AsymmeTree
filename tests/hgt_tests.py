@@ -26,13 +26,13 @@ class TestHGT(unittest.TestCase):
                                              loss_rate=0.5,
                                              hgt_rate=0.2)
         
-        # observable gene tree
-        OGT = te.observable_tree(TGT)
+        # pruned gene tree
+        PGT = te.prune_losses(TGT)
         
         # finally we can extract the LDT and Fitch graph
-        ldt = analysis.ldt_graph(OGT, S)
-        transfer_edges = analysis.rs_transfer_edges(OGT, S)
-        fitch = analysis.undirected_fitch(OGT, transfer_edges)
+        ldt = analysis.ldt_graph(PGT, S)
+        transfer_edges = analysis.rs_transfer_edges(PGT, S)
+        fitch = analysis.undirected_fitch(PGT, transfer_edges)
         
         cotree = to_cotree(ldt)
         
@@ -52,14 +52,14 @@ class TestHGT(unittest.TestCase):
                                              prohibit_extinction='per_species',
                                              replace_prob=1.0,)
         
-        # observable gene tree
-        OGT = te.observable_tree(TGT)
+        # pruned gene tree
+        PGT = te.prune_losses(TGT)
         
-        leaves = [v for v in OGT.leaves()]
+        leaves = [v for v in PGT.leaves()]
         colors = {v.color for v in leaves}
         
         # print(TGT.to_newick())
-        # print(OGT.to_newick())
+        # print(PGT.to_newick())
         
         self.assertTrue(len(colors) == N and len(leaves) == N)
         
@@ -78,10 +78,10 @@ class TestHGT(unittest.TestCase):
                                              replace_prob=0.5,
                                              transfer_distance_bias='inverse')
         
-        # observable gene tree
-        OGT = te.observable_tree(TGT)
+        # pruned gene tree
+        PGT = te.prune_losses(TGT)
         
-        leaves = [v for v in OGT.leaves()]
+        leaves = [v for v in PGT.leaves()]
         colors = {v.color for v in leaves}
         
         self.assertTrue(len(colors) == N)
@@ -92,10 +92,10 @@ class TestHGT(unittest.TestCase):
         S = te.simulate_species_tree(10)
         TGT = te.simulate_dated_gene_tree(S, dupl_rate=1.0, loss_rate=0.5,
                                           hgt_rate=0.5)
-        OGT = te.observable_tree(TGT)
+        PGT = te.prune_losses(TGT)
         
-        transf1 = analysis.true_transfer_edges(OGT)
-        transf2 = analysis.rs_transfer_edges(OGT, S)
+        transf1 = analysis.true_transfer_edges(PGT)
+        transf2 = analysis.rs_transfer_edges(PGT, S)
         
         self.assertTrue( transf1.issuperset(transf2) )
     

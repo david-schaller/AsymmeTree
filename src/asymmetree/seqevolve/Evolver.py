@@ -27,8 +27,7 @@ class Evolver:
                  indel_model=None, het_model=None,
                  jump_chain=False,
                  **kwargs):
-        """Constructor of class 'Evolver'.
-        
+        """
         Parameters
         ----------
         subst_model : SubstModel
@@ -60,7 +59,7 @@ class Evolver:
         
     
     def evolve_along_tree(self, tree, start_length=200, start_seq=None):
-        """Constructor of class 'Evolver'.
+        """Evolve sequence along a tree.
         
         If 'start_seq' is not supplied, then the sequence at the root is
         constructed randomly using the stationary probabilities of the

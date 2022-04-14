@@ -18,8 +18,7 @@ __author__ = 'David Schaller'
 class GenomeSimulator:
     
     def __init__(self, species_tree, outdir=None):
-        """Constructor of the class 'GenomeSimulator'.
-        
+        """
         Parameters
         ----------
         species_tree : Tree
@@ -42,7 +41,7 @@ class GenomeSimulator:
             self.S.serialize(self._path('species_tree.json'), mode='json')
             
         self.true_gene_trees = []
-        self.observable_gene_trees = []
+        self.pruned_gene_trees = []
         
     
     def _check_outdir(self):
@@ -69,7 +68,7 @@ class GenomeSimulator:
         """Simulate gene trees.
         
         Simulates the 'true gene trees' which still contain the loss events as
-        well as the 'observable gene tree' in which the loss branches are
+        well as the 'pruned gene trees' in which the loss branches are
         removed.
         
         Parameters
@@ -87,7 +86,7 @@ class GenomeSimulator:
         if N == 1:
             self.true_gene_trees = [self.true_gene_trees]
         
-        self.observable_gene_trees = [te.observable_tree(tree)
+        self.pruned_gene_trees = [te.prune_losses(tree)
                                       for tree in self.true_gene_trees]
         
         # sequences should be emptied here if methods were called before
@@ -100,7 +99,7 @@ class GenomeSimulator:
                                       'gene_tree{}.json'.format(i))
                 self.true_gene_trees[i].serialize(filename, mode='json')
         
-        return self.true_gene_trees, self.observable_gene_trees
+        return self.true_gene_trees, self.pruned_gene_trees
                 
     
     def simulate_sequences(self, subst_model,
@@ -111,7 +110,7 @@ class GenomeSimulator:
                            write_fastas=True,
                            write_alignments=True,
                            **kwargs):
-        """Simulate sequences along the observable gene trees.
+        """Simulate sequences along the (pruned) gene trees.
         
         Parameters
         ----------
@@ -169,13 +168,13 @@ class GenomeSimulator:
         
         for i in range(self.number_of_families):
             
-            OGT = self.observable_gene_trees[i]
+            PGT = self.pruned_gene_trees[i]
             
             if root_genome:
-                evolver.evolve_along_tree(OGT, start_seq=root_genome[i].upper())
+                evolver.evolve_along_tree(PGT, start_seq=root_genome[i].upper())
                 
             else:
-                evolver.evolve_along_tree(OGT, start_length=self.sampler.draw())
+                evolver.evolve_along_tree(PGT, start_length=self.sampler.draw())
                 
             self.sequence_dicts.append(evolver.sequences)
             
@@ -193,7 +192,7 @@ class GenomeSimulator:
         if not self.outdir:
             raise RuntimeError('no output directory specified for alignments')        
         
-        alg_builder = se.AlignmentBuilder(self.observable_gene_trees[family_id],
+        alg_builder = se.AlignmentBuilder(self.pruned_gene_trees[family_id],
                                           self.sequence_dicts[family_id],
                                           self.subst_model.alphabet,
                                           include_inner=False)

@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+"""Constructing the true alignment of simulated sequences."""
+
 import numpy as np
 import networkx as nx
 
@@ -11,8 +13,7 @@ class AlignmentBuilder:
     """Construction of the true alignment of simulated sequences."""
     
     def __init__(self, tree, sequence_dict, alphabet, include_inner=True):
-        """Constructor of class 'AlignmentBuilder'.
-        
+        """
         Parameters
         ----------
         tree : Tree

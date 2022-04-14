@@ -31,14 +31,14 @@ for i in range(100):
                           autocorr_variance=0.2,
                           rate_increase=('gamma', 0.5, 2.2),
                           CSN_weights=(1, 1, 1))
-    OGT = te.observable_tree(TGT)
+    PGT = te.prune_losses(TGT)
     
 #     #add orthology graph
-#    ortho_graph = orthology_from_tree(OGT)
+#    ortho_graph = orthology_from_tree(PGT)
 #    tr.add_ortho_graph(ortho_graph)
     
     # add RBMG
-    _, rbmg = bmg_from_tree(OGT, supply_rbmg=True)
+    _, rbmg = bmg_from_tree(PGT, supply_rbmg=True)
     tr.add_ortho_graph(rbmg)
     
 

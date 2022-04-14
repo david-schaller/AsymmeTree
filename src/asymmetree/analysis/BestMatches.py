@@ -5,7 +5,15 @@ Orthology graph, BMG, RBMG.
 
 This module provides classes concerning colored graphs and colored
 (phylogenetic) trees, including a BMG(Tree)-function, and computation of an
-LRT from a (not necessarily valid) BMG or from an observable gene tree.
+LRT from a (not necessarily valid) BMG or from a (pruned) gene tree.
+
+Phylogenetic best matches of a gene x of species X are defined as those genes
+y of another species Y that share the lowest common ancestor with x in the gene
+tree among all genes in that species. In contrast, two genes are orthologs if
+their last common ancestor was a speciation event. Orthology and reciprocal
+best matches are closely related. The module asymmetree.analysis. BestMatches
+contains methods for extracting BMGs from trees, least resolved trees of BMG,
+and orthology graphs from trees.
 """
 
 import itertools
@@ -464,16 +472,16 @@ def _finalize(tree, G):
 #                      LRT FROM OBSERVABLE GENE TREE
 # --------------------------------------------------------------------------
 
-def lrt_from_observable_tree(T):
+def lrt_from_tree(T):
     """Computes the Least Resolved Tree from a tree.
     
-    The unique Least Resolved Tree from a leaf-colored (observable)
+    The unique Least Resolved Tree from a leaf-colored (pruned)
     gene tree is computed by contraction of all redundant edges.
     
     Parameters
     ----------
     T : Tree
-        A tree whose nodes have the 'color' attribute.
+        A tree whose leaf nodes have the 'color' attribute.
     
     Returns
     -------
@@ -693,8 +701,7 @@ class TwoColoredLRT:
     """
     
     def __init__(self, digraph):
-        """Constructor.
-        
+        """
         Parameters
         ----------
         G : networkx.DiGraph

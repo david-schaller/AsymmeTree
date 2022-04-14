@@ -13,14 +13,14 @@ from asymmetree.tools.PhyloTreeTools import (to_newick,)
 S = te.simulate_species_tree(10)
 TGT = te.simulate_dated_gene_tree(S, dupl_rate=1.0, loss_rate=0.5,
                                   hgt_rate=0.5)
-OGT = te.observable_tree(TGT)
+PGT = te.prune_losses(TGT)
 
 print('--- S ---\n', to_newick(S))
 print(to_newick(S, distance=False, label_inner=False))
-print('--- OGT ---\n', to_newick(OGT))
+print('--- PGT ---\n', to_newick(PGT))
 
-ldt, above, equal = below_equal_above(OGT, S)
-fitch = undirected_fitch(OGT, rs_transfer_edges(OGT, S))
+ldt, above, equal = below_equal_above(PGT, S)
+fitch = undirected_fitch(PGT, rs_transfer_edges(PGT, S))
 n = ldt.order()
 print('Genes:', n, 'Total relations:', int(n * (n-1) / 2))
 print('< {}\n= {}\n> {}'.format(ldt.size(), equal.size(), above.size()))

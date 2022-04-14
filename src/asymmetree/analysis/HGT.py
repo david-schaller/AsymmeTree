@@ -1,5 +1,21 @@
 # -*- coding: utf-8 -*-
 
+"""HGT, xenology and Fitch graphs.
+
+This module contains several functions for the analysis of horizontal gene
+transfer events in the simulated scenarios. In particular, the directed and
+undirected Fitch graph can be extracted, as well as the pairs of genes that
+diverged later than the respective species in which they reside, i.e. the
+later-divergence-time (LDT) graph, see [1]. The latter situation is indicative 
+or the presence of HGT events in the scenario.
+
+References
+----------
+.. [1] D. Schaller, M. Lafond, P.F. Stadler, N. Wieseke, M. Hellmuth.
+   Indirect identification of horizontal gene transfer.
+   In: Journal of Mathematical Biology, 2021, 83(1):10.
+   doi: 10.1007/s00285-021-01631-0.
+"""
 
 import itertools
 
@@ -340,8 +356,7 @@ class RsScenarioConstructor:
     """
     
     def __init__(self, colored_cograph, color_set=None):
-        """Constructor.
-        
+        """
         Parameters
         ----------
         colored_cograph : networkx.Graph

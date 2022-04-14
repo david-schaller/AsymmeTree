@@ -28,8 +28,7 @@ class IndelModel:
                  min_length=1,
                  max_length=None,
                  **kwargs):
-        """Constructor for the class 'IndelModel'.
-        
+        """
         Parameters
         ----------
         insertition_rate : float

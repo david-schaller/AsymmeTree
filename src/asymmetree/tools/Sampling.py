@@ -12,8 +12,7 @@ class Sampler:
     
     def __init__(self, params, minimum=None, maximum=None, discrete=False,
                  shift=0):
-        """Constructor for class Sampler.
-        
+        """
         Parameters
         ----------
         params : float or tuple
