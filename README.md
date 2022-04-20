@@ -119,7 +119,7 @@ Alternatively, sequences can be simulated along the tree, from which distances c
     from asymmetree.tools.PhyloTreeTools import to_newick
 
     # simulate and species tree with 10 leaves
-    S = te.simulate_species_tree(10, planted=True, non_binary_prob=0.2)
+    S = te.simulate_species_tree(10, planted=True, contraction_probability=0.2)
 
     # simulate a gene tree along the species tree S
     T = simulate_dated_gene_tree(S, dupl_rate=D, loss_rate=L, hgt_rate=H,
@@ -142,7 +142,7 @@ Alternatively, sequences can be simulated along the tree, from which distances c
 
 #### Species trees
 
-The function `simulate_species_tree(N)` simulates a dated species tree with `N` leaves (i.e. recent species) using the specified model.
+The function `simulate_species_tree(N, **kwargs)` simulates a dated species tree with `N` leaves (i.e. recent species) using the specified model.
 
 <details>
 <summary>The following models are available: (Click to expand)</summary>
@@ -165,10 +165,12 @@ The function `simulate_species_tree(N)` simulates a dated species tree with `N` 
 | `birthrate=1.0` | birth rate, only relevant for models `'yule'` and `'BDP'` |
 | `deathrate=1.0` | death rate, only relevant for model `'BDP'` |
 | `episodes=None` | episodes for episodic birth-death process, only relevant for `'EBDP'`, the episodes of the `'EBDP'` model must be supplied as a list of tuples/lists where each episode has the structure `(birthrate, deathrate, proportion_of_survivors, time_stamp)`, the first elements in this list correspond to the most recent ones, i.e., the first episode should have a time stamp of 0.0. |
-| `non_binary_prop=0.0` | probability that an inner edge is contracted, results in a non-binary tree |
 | `planted=True` | add a planted root that has the first true speciation node as its single neighbor, this way duplication (and loss) events can occur before the first speciation event in a subsequent gene tree simulation |
 | `remove_extinct=False` | remove all branches leading to losses, only relevant for models with death events |
-| `rescale_to_height=None` | specify the divergence time between the (planted) root and the leaves i.e. the final height of the dated tree |
+| `rescale_to_height=False` | specify the divergence time between the (planted) root and the leaves i.e. the final height of the dated tree |
+| `contraction_probability=0.0` | probability that an inner edge is contracted; the default is 0.0, in which case the tree is binary; only one of this parameter and `contraction_proportion` may be non-zero |
+| `contraction_proportion=0.0` | the proportion of inner edges to be contracted.; the default is 0.0, in which case the tree is binary; only one of this parameter and `contraction_probability` may be non-zero |
+|  `contraction_bias=False` | specifies whether shorter edges, i.e., with a smaller difference t of the time stamps, have a higher probability to be contracted; only relevant if `contraction_proportion > 0.0`; the default is False, in which case all edges have the same probability to be contracted, the options `'inverse'` and `'exponential'` mean that an edge is sampled weighted by 1/t or e^(-t), respectively |
 
 </details>
 
@@ -179,7 +181,7 @@ For any model, the root of the resulting tree has the maximal time stamp and all
 
     import asymmetree.treeevolve as te
 
-    S1 = te.simulate_species_tree(10, planted=True, non_binary_prob=0.2)
+    S1 = te.simulate_species_tree(10, planted=True, contraction_probability=0.2)
     print(S1.to_newick())
 
     S2 = te.simulate_species_tree(10, model='EBDP',
@@ -188,6 +190,8 @@ For any model, the root of the resulting tree has the maximal time stamp and all
     print(S2.to_newick())
 
 </details>
+
+Alternatively, the function `simulate_species_tree_age(age, model='yule', **kwargs)` simulates a species tree of a specific age, i.e., the resulting tree covers a specific period of time. In this case, the number of extant leaves of the resulting tree is not fixed. Available models are `'yule'`, `'BDP'`, and `'EBDP'` with their corresponding parameters as for the functions `simulate_species_tree(N, **kwargs)`.
 
 #### Gene trees
 

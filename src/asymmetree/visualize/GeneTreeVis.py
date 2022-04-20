@@ -260,7 +260,7 @@ if __name__ == '__main__':
     
     import asymmetree.treeevolve as te
     
-    S = te.simulate_species_tree(6, planted=True, non_binary_prob=0.2)
+    S = te.simulate_species_tree(6, planted=True, contraction_probability=0.2)
     
     TGT_simulator = te.GeneTreeSimulator(S)
     TGT = TGT_simulator.simulate(dupl_rate=1.0,

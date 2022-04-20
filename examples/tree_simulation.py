@@ -13,7 +13,9 @@ H = 0.0
 #                            SPECIES TREE
 # --------------------------------------------------------------------------
 
-S = te.simulate_species_tree(10, planted=True, non_binary_prob=0.2)
+S = te.simulate_species_tree(10, planted=True, contraction_probability=0.0,
+                             contraction_proportion=0.2,
+                             contraction_bias='exponential')
 print('------------- S -------------')
 print(to_newick(S))
 

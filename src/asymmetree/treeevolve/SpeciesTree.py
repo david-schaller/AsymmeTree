@@ -22,10 +22,9 @@ __author__ = 'David Schaller'
 
 def simulate_species_tree(N, 
                           model='innovation',
-                          non_binary_prob=0.0,
                           planted=True,
                           remove_extinct=False,
-                          rescale_to_height=None,
+                          rescale_to_height=False,
                           **kwargs):
     """Simulates a species tree S with N leaves.
     
@@ -38,24 +37,36 @@ def simulate_species_tree(N,
         Simulation model to be applied, the default is 'innovation', see [1].
         Other available model are 'yule' [2], birth-death process ('BDP', [3]),
         and episodic birth-death process ('EBDP', [4]).
-    non_binary_prob : float, optional
-        Probability that an inner edge is contracted; results in non-binary 
-        tree; default is 0.0, in which case the resulting tree is binary.
     planted : bool, optional
         Add a planted root that has the canonical root as its single neighbor; 
         default is True.
     remove_extinct : bool, optional
         Remove all branches that lead to extinctions, only relevant for some
         models; default is False.
-    rescale_to_height : bool, optional
+    rescale_to_height : bool or float, optional
         Determines the final distance from the root to the (surviving) leaves,
-        default is None, i.e., model-dependent.
+        default is False, i.e., model-dependent.
     birth_rate : float, optional
         The birth rate for models such as 'yule' and 'BDP'.
     death_rate : float, optional
         The death rate for models such as 'BDP'.
     episodes : list, optional
         The episodes for the model 'EBDP'.
+    contraction_probability : float, optional
+        Probability that an inner edge is contracted. The default is 0.0, in
+        which case the tree is binary. Only one of this parameter and
+        'contraction_proportion' may be non-zero.
+    contraction_proportion : float, optional
+        The proportion of inner edges to be contracted. The default is 0.0, in
+        which case the tree is binary. Only one of this parameter and 
+        'contraction_probabilty' may be non-zero.
+    contraction_bias : str, optional
+        Specifies whether shorter edges, i.e., with a smaller difference t of
+        the time stamps, have a higher probability to be contracted. Only
+        relevant if 'contraction_proportion' > 0.0. The default is False,
+        in which case all edges have the same probability to be contracted.
+        The options 'inverse' and 'exponential' mean that an edge is sampled
+        weighted by 1/t or e^(-t), respectively.
         
     Raises
     ------
@@ -96,15 +107,12 @@ def simulate_species_tree(N,
     
     if not isinstance(model, str):
         raise ValueError("model must be of type 'str'")
-    
-    if non_binary_prob < 0.0 or non_binary_prob > 1.0:
-        raise ValueError('contraction prob. must be in [0.0, 1.0]')
         
-    if (rescale_to_height is not None and
+    if (rescale_to_height is not False and
         (not isinstance(rescale_to_height, (int, float)) or
          rescale_to_height < 0.0)):
         raise ValueError('height must be a number >=0')
-    elif rescale_to_height is not None and N == 1 and not planted:
+    elif rescale_to_height is not False and N == 1 and not planted:
         raise ValueError('rescaling is not applicable to unplanted trees '\
                          'with only one leaf')
     
@@ -129,21 +137,16 @@ def simulate_species_tree(N,
         remove_planted_root(tree, inplace=True)
     
     # make tree non_binary by random contraction of edges
-    if non_binary_prob > 0.0:
-         edges = _select_edges_for_contraction(tree, non_binary_prob,
-                                               exclude_planted_edge=True)
-         tree.contract(edges)
+    nonbinary(tree, inplace=True, **kwargs)
     
     # rescale to specified height
-    if rescale_to_height is not None:
+    if rescale_to_height is not False:
         _rescale(tree, rescale_to_height, inplace=True)
         
     return tree
 
 
-def simulate_species_tree_age(age, model='yule',
-                              non_binary_prob=0.0,
-                              **kwargs):
+def simulate_species_tree_age(age, model='yule', **kwargs):
     """Simulates a (planted) species tree S of the specified age.
     
     Parameters
@@ -155,15 +158,27 @@ def simulate_species_tree_age(age, model='yule',
         Simulation model to be applied, the default is 'yule', see [1].
         Other available model are birth-death process ('BDP', [2]), and
         episodic birth-death process ('EBDP', [3]).
-    non_binary_prob : float, optional
-        Probability that an inner edge is contracted; results in non-binary 
-        tree; default is 0.0, in which case the resulting tree is binary.
     birth_rate : float, optional
         The birth rate for models such as 'yule' and 'BDP'.
     death_rate : float, optional
         The death rate for models such as 'BDP'.
     episodes : list, optional
         The episodes for the model 'EBDP'.
+    contraction_probability : float, optional
+        Probability that an inner edge is contracted. The default is 0.0, in
+        which case the tree is binary. Only one of this parameter and
+        'contraction_proportion' may be non-zero.
+    contraction_proportion : float, optional
+        The proportion of inner edges to be contracted. The default is 0.0, in
+        which case the tree is binary. Only one of this parameter and 
+        'contraction_probabilty' may be non-zero.
+    contraction_bias : str, optional
+        Specifies whether shorter edges, i.e., with a smaller difference t of
+        the time stamps, have a higher probability to be contracted. Only
+        relevant if 'contraction_proportion' > 0.0. The default is False,
+        in which case all edges have the same probability to be contracted.
+        The options 'inverse' and 'exponential' mean that an edge is sampled
+        weighted by 1/t or e^(-t), respectively.
         
     Raises
     ------
@@ -200,9 +215,6 @@ def simulate_species_tree_age(age, model='yule',
         
     if not isinstance(model, str):
         raise ValueError("model must be of type 'str'")
-        
-    if non_binary_prob < 0.0 or non_binary_prob > 1.0:
-        raise ValueError("contraction prob. must be in [0.0, 1.0]")
     
     # main simulation algorithm
     if model.lower() == 'yule':
@@ -215,11 +227,78 @@ def simulate_species_tree_age(age, model='yule',
         raise ValueError("model '{}' is not available".format(model))
         
     # make tree non_binary by random contraction of edges
-    if non_binary_prob > 0.0:
-         edges = _select_edges_for_contraction(tree, non_binary_prob,
-                                               exclude_planted_edge=True)
-         tree.contract(edges)
+    nonbinary(tree, inplace=True, **kwargs)
         
+    return tree
+
+
+def nonbinary(tree,
+              contraction_probability=0.0,
+              contraction_proportion=0.0,
+              contraction_bias=False,
+              inplace=False,
+              **kwargs):
+    """Introduce multifurcation into a tree by contraction of inner edges.
+    
+    Parameters
+    ----------
+    tree : Tree
+        The tree whose edges shall be contracted.
+    contraction_probability : float, optional
+        Probability that an inner edge is contracted; results in non-binary 
+        tree; default is 0.0. Only one of this parameter and 
+        'contraction_proportion' may be non-zero.
+    contraction_proportion : float, optional
+        The proportion of inner edges to be contracted; results in non-binary 
+        tree; default is 0.0. Only one of this parameter and 
+        'contraction_probabilty' may be non-zero.
+    contraction_bias : str, optional
+        Specifies whether shorter edges, i.e., with a smaller difference t of
+        the time stamps, have a higher probability to be contracted. Only
+        relevant if 'contraction_proportion' > 0.0. The default is False,
+        in which case all edges have the same probability to be contracted.
+        The options 'inverse' and 'exponential' mean that an edge is sampled
+        weighted by 1/t or e^(-t), respectively.
+    inplace : bool, optional
+        If True, the edges are contracted in the original tree instance;
+        otherwise a copy of the tree in which edges are contracted is returned.
+    
+    Returns
+    -------
+    Tree
+        The tree whose edges have been contracted according to the parameters.
+    
+    Raises
+    ------
+    ValueError
+        If both contraction_probability and contraction_proportion are
+        non-zero or do not lie in the interval [0, 1].
+    """
+    
+    if contraction_probability != 0.0 and contraction_proportion != 0.0:
+        raise ValueError("only one of parameters 'contraction_probability' "\
+                         "and 'contraction_proportion' may be non-zero")
+    
+    if contraction_probability < 0.0 or contraction_probability > 1.0:
+        raise ValueError('contraction probability must be in [0.0, 1.0]')
+    
+    if contraction_proportion < 0.0 or contraction_proportion > 1.0:
+        raise ValueError('contraction proportion must be in [0.0, 1.0]')
+    
+    if not inplace:
+        tree = tree.copy()
+    
+    if contraction_probability > 0.0:
+         edges = _select_edges_by_probability(tree, contraction_probability,
+                                              exclude_planted_edge=True)
+         tree.contract(edges)
+         
+    elif contraction_proportion > 0.0:
+        edges = _select_edges_by_proportion(tree, contraction_proportion,
+                                            contraction_bias,
+                                            exclude_planted_edge=True)
+        tree.contract(edges)
+    
     return tree
 
 
@@ -249,7 +328,7 @@ def _rescale(tree, height, inplace=True):
     return tree
             
             
-def _select_edges_for_contraction(tree, p, exclude_planted_edge=True):
+def _select_edges_by_probability(tree, p, exclude_planted_edge=True):
     
     edges = []
     
@@ -262,6 +341,29 @@ def _select_edges_for_contraction(tree, p, exclude_planted_edge=True):
             edges.append((u,v))
     
     return edges
+
+
+def _select_edges_by_proportion(tree, p, weighting, exclude_planted_edge=True):
+    
+    edges = [e for e in tree.inner_edges() if not
+             (exclude_planted_edge and (e[0] is tree.root) and len(e[0].children) == 1)]
+    
+    # number of edges to be sampled
+    k = round(p * len(edges))
+    
+    if not weighting:
+        return random.choices(edges, k=k)
+    else:
+        distances = [abs(u.tstamp-v.tstamp) for u, v in edges]
+        if weighting == 'inverse':
+            weights = 1 / np.asarray(distances)
+        elif weighting == 'exponential':
+            weights = np.exp(-np.asarray(distances))
+        else:
+            raise ValueError(f'unknown mode for weighted sampling: {weighting}')
+        
+        return random.choices(edges, weights=weights, k=k)
+
 
 
 def assign_losses(tree, proportion):

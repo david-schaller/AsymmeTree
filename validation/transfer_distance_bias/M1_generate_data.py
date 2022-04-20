@@ -28,7 +28,7 @@ if not os.path.exists(result_dir):
     
 # species tree
 S_min, S_max = 10, 100   # number of species
-non_binary_prob = 0.0
+contraction_probability = 0.0
     
 rates = [(0.25, 0.25, 0.25), (0.5, 0.5, 0.5),
          (0.5, 0.5, 1.0), (0.5, 0.5, 1.5),
@@ -86,7 +86,7 @@ def simulation(sim_ID, repeat, rate_combination, bias_mode):
     # species tree
     S = te.simulate_species_tree(np.random.randint(S_min, S_max+1),
                                  model='innovations',
-                                 non_binary_prob=non_binary_prob,)
+                                 contraction_probability=contraction_probability,)
     # S.serialize(os.path.join(result_dir, tree_dir, f'S_{sim_ID}.pickle'))
     
     # gene tree
