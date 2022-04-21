@@ -24,5 +24,5 @@ A typical simulation consists of the following steps:
 
 from asymmetree.treeevolve.GeneTree import simulate_dated_gene_tree, GeneTreeSimulator, prune_losses
 from asymmetree.treeevolve.SpeciesTree import simulate_species_tree, simulate_species_tree_age
-from asymmetree.treeevolve.EvolutionRates import assign_rates, autocorrelation_factors, simulate_gene_trees
-from asymmetree.treeevolve.NoisyMatrix import noisy_matrix, convex_linear_comb, wrong_topology_matrix
+from asymmetree.treeevolve.RateHeterogeneity import rate_heterogeneity, autocorrelation_factors, simulate_gene_trees
+from asymmetree.treeevolve.DistanceNoise import noisy_matrix, convex_linear_comb, wrong_topology_matrix

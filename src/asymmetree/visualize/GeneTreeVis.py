@@ -269,6 +269,6 @@ if __name__ == '__main__':
                                  dupl_polytomy=0.5,
                                  replace_prob=0.5,
                                  transfer_distance_bias='inverse')
-    TGT = te.assign_rates(TGT, S)
+    TGT = te.rate_heterogeneity(TGT, S)
     
     gtv = GeneTreeVis(TGT)

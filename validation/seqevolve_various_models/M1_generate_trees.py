@@ -19,7 +19,7 @@ def simulate(directory, number_of_trees, species_per_tree):
         T_simulator = te.GeneTreeSimulator(S)
         T = T_simulator.simulate()   # dupl./loss/HGT disabled
         
-        te.assign_rates(T, S, autocorr_variance=0.2)
+        te.rate_heterogeneity(T, S, autocorr_variance=0.2)
         
         T_nx = T.to_nx()
         with open('{}/scenario{}.pickle'.format(directory, i), 'wb') as f:

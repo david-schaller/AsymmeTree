@@ -83,11 +83,9 @@ class GenomeSimulator:
         self.number_of_families = N
         
         self.true_gene_trees = te.simulate_gene_trees(self.S, N=N, **kwargs)
-        if N == 1:
-            self.true_gene_trees = [self.true_gene_trees]
         
         self.pruned_gene_trees = [te.prune_losses(tree)
-                                      for tree in self.true_gene_trees]
+                                  for tree in self.true_gene_trees]
         
         # sequences should be emptied here if methods were called before
         if hasattr(self, 'sequence_dicts'):
@@ -174,7 +172,7 @@ class GenomeSimulator:
                 evolver.evolve_along_tree(PGT, start_seq=root_genome[i].upper())
                 
             else:
-                evolver.evolve_along_tree(PGT, start_length=self.sampler.draw())
+                evolver.evolve_along_tree(PGT, start_length=self.sampler())
                 
             self.sequence_dicts.append(evolver.sequences)
             

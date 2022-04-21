@@ -127,9 +127,9 @@ Alternatively, sequences can be simulated along the tree, from which distances c
 
     # simulate evolution rates for the  branches in the gene tree
     # and update the distances in T accordingly
-    T = te.assign_rates(T, S, base_rate=1,
-                        autocorr_variance=0.2,
-                        rate_increase=('gamma', 0.5, 2.2))
+    T = te.rate_heterogeneity(T, S, base_rate=1,
+                              autocorr_variance=0.2,
+                              rate_increase=('gamma', 0.5, 2.2))
 
     # remove all gene loss branches
     T = te.prune_losses(TGT)
@@ -252,9 +252,9 @@ It also removes the planted root.
 
 #### Assignment of variable evolution rates
 
-The module `EvolutionRates` contains functions to model realistic (asymmetric) evolution rates for a given gene tree.
+The module `RateHeterogeneity` contains functions to model realistic (asymmetric) evolution rates for a given gene tree.
 Moreover, correlation of the evolution rates between genes of the same (and closely related) species is introduced (autocorrelation, Kishino 2001).
-The function `assign_rates(T, S)` takes a gene tree `T` and the **corresponding** species tree `S` as input, and manipulates the branch length of the gene tree.
+The function `rate_heterogeneity(T, S)` takes a gene tree `T` and the **corresponding** species tree `S` as input, and manipulates the branch length of the gene tree.
 
 <details>
 <summary>The following keyword parameters are available: (Click to expand)</summary>
@@ -274,8 +274,7 @@ It is recommended to apply the rate assignment to the true gene tree that still 
 Note that the rates are used to manipulate the `dist` attributes in the gene tree and not returned explicitly.
 
 The function `simulate_gene_trees(S)` combines the simulation of dated gene trees and the rate assignment into one step.
-If `N=1`, a single gene tree is returned.
-Otherwise, a `list` of gene trees is returned that shared the same rate factors for the branches in the species tree (autocorrelation factors) in the rate assignment procedure.
+It returns a `list` of gene trees that shared the same rate factors for the branches in the species tree (autocorrelation factors) in the rate assignment procedure.
 Moreover, a distribution for the base rate (assigned the planted edge of the gene tree) and for the event rates can be specified with the parameters `base_rate`, `dupl_rate`, `loss_rate`, and `hgt_rate`.
 For available distributions and their syntax see below.
 
@@ -288,21 +287,21 @@ For available distributions and their syntax see below.
 
     # true gene tree (with losses)
     tree = te.simulate_dated_gene_tree(S, dupl_rate=1.0, loss_rate=0.5, hgt_rate=0.1)
-    te.assign_rates(tree, S, base_rate=1,
-                    autocorr_variance=0.2,
-                    rate_increase=('gamma', 0.5, 2.2))
+    te.rate_heterogeneity(tree, S, base_rate=1,
+                          autocorr_variance=0.2,
+                          rate_increase=('gamma', 0.5, 2.2))
 
     # or in a single step
-    tree = simulate_gene_trees(S, N=1,
-                               dupl_rate=('gamma', 1.0, 0.8),   # distribution
-                               loss_rate=0.5,                   # or constant value
-                               hgt_rate=0.1,
-                               base_rate=('constant', 1.0),
-                               autocorr_variance=0.2,
-                               rate_increase=('gamma', 0.5, 2.2))
+    trees = simulate_gene_trees(S, N=10,
+                                dupl_rate=('gamma', 1.0, 0.8),   # distribution
+                                loss_rate=0.5,                   # or constant value
+                                hgt_rate=0.1,
+                                base_rate=('constant', 1.0),
+                                autocorr_variance=0.2,
+                                rate_increase=('gamma', 0.5, 2.2))
 
-    # pruned gene tree
-    ogt = te.prune_losses(tree)
+    # pruned gene trees 
+    pruned_trees = [te.prune_losses(tree) for tree in trees]
 
 </details>
 
@@ -321,7 +320,7 @@ It returns a tuple containing a list of leaves in the tree (corresponding to the
     leaves, D = tree.distance_matrix()
     leaf_index_dict = {leaf: i for i, leaf in enumerate(leaves)}
 
-In the next step, noise can be introduced into a distance matrix using the `asymmetree.treeevolve.NoisyMatrix` module.
+In the next step, noise can be introduced into a distance matrix using the `asymmetree.treeevolve.DistanceNoise` module.
 Random noise can be simulated with the function `noisy_matrix(orig_matrix, sd)`.
 
 The following keyword parameters are available:
@@ -774,8 +773,8 @@ For example, the function `reconstruct_from_proteinortho(filename, triple_mode='
 | `asymmetree.treeevolve` | --- |
 | `asymmetree.treeevolve.SpeciesTree` | simulator for dated species trees with different models |
 | `asymmetree.treeevolve.GeneTree` | simulator for dated gene trees, construction of the pruned gene tree |
-| `asymmetree.treeevolve.EvolutionRates` | simulation of evolution rate asymmetries, autocorrelation between ancestors and descendants as well as correlation between genes in the same species |
-| `asymmetree.treeevolve.NoisyMatrix` | generation of a noisy matrix (random perturbation or wrong topology noise) |
+| `asymmetree.treeevolve.RateHeterogeneity` | simulation of evolution rate asymmetries, autocorrelation between ancestors and descendants as well as correlation between genes in the same species |
+| `asymmetree.treeevolve.DistanceNoise` | generation of a noisy matrix (random perturbation or wrong topology noise) |
 | `asymmetree.seqevolve` | --- |
 | `asymmetree.seqevolve.Evolver` | includes the class `Evolver` for the simulation of sequences along a phylogenetic tree |
 | `asymmetree.seqevolve.EvolvingSequence` | data structure for sequences that are under evolution based on a doubly-linked list |

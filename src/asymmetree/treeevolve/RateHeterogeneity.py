@@ -6,6 +6,8 @@ Evolution rate heterogeneity.
 Introduce evolution rate asymmetries and autocorrelation.
 """
 
+from warnings import warn
+
 import numpy as np
 
 from asymmetree.treeevolve.GeneTree import GeneTreeSimulator
@@ -20,7 +22,8 @@ __author__ = 'David Schaller'
 #                         USER INTERFACE FUNCTION
 # --------------------------------------------------------------------------
 
-def simulate_gene_trees(S, N=1,
+def simulate_gene_trees(S,
+                        N=1,
                         dupl_rate=0.0,
                         loss_rate=0.0,
                         hgt_rate=0.0,
@@ -50,13 +53,13 @@ def simulate_gene_trees(S, N=1,
         trees, see documentation for available options. The default is
         constant 1.0.
     kwargs : optional
-        See documentation or parameters of GeneTreeSimulator.simulate and
-        assign_rates for additional parameters.
+        See documentation or parameters of GeneTreeSimulator.simulate() and
+        rate_heterogeneity() for additional parameters.
     
     Returns
     -------
-    Tree or list
-        Return a single gene tree if N = 1 and a list of gene tree if N > 1.
+    list
+        A list of simulated gene tree.
     """
     
     gene_trees = []
@@ -73,33 +76,40 @@ def simulate_gene_trees(S, N=1,
     
     # main simulation and imbalancing
     for i in range(N):
-        TGT = simulator.simulate(dupl_rate=dupl_rate_sampler.draw(),
-                                 loss_rate=loss_rate_sampler.draw(),
-                                 hgt_rate=hgt_rate_sampler.draw(),
+        TGT = simulator.simulate(dupl_rate=dupl_rate_sampler(),
+                                 loss_rate=loss_rate_sampler(),
+                                 hgt_rate=hgt_rate_sampler(),
                                  **kwargs)
-        assign_rates(TGT, S,
-                     base_rate=base_rate_sampler.draw(),
-                     autocorr_factors=autocorr_factors,
-                     **kwargs)
+        rate_heterogeneity(TGT, S,
+                           base_rate=base_rate_sampler(),
+                           autocorr_factors=autocorr_factors,
+                           **kwargs)
         gene_trees.append(TGT)
     
-    return gene_trees[0] if N == 1 else gene_trees
+    return gene_trees
     
 
 # --------------------------------------------------------------------------
-#                      IMBALANCING OF THE GENE TREE
+#                      evolution rate heterogeneity
 # --------------------------------------------------------------------------
 
-
-def assign_rates(T, S, base_rate=1.0,
-                 autocorr_factors=None,
-                 autocorr_variance=0.0,
-                 rate_increase=('gamma', 0.5, 2.2),
-                 CSN_weights=(1, 1, 1),
-                 inplace=True,
-                 **kwargs):
-    """Assigns realistic evolution rates to a TRUE gene tree.
+def rate_heterogeneity(T, S,
+                       base_rate=1.0,
+                       autocorr_factors=None,
+                       autocorr_variance=0.0,
+                       rate_increase=('gamma', 0.5, 2.2),
+                       CSN_weights=(1, 1, 1),
+                       inplace=True,
+                       **kwargs):
+    """Introduces evolution rate heterogeneity into a gene tree.
     
+    The function applies rate multiplier for three sources of evolution rate
+    heterogeneity: (i) gene-family-specific heterogeneity is modeled through
+    the 'base_rate' parameter; (ii) for species-specific heterogeneity an
+    autocorrelated relaxed molecular clock model as in [1] is used; and (iii)
+    for paralog-secific heterogeneity it is chosen between the three modes
+    conservation, subfunctionalization, and neofunctionalization for the rates
+    of the descendant lineages of a duplication event.
     The assigned rates are used to modify the length ('dist') of the edges of
     the (originally ultrametric) dated gene tree.
     
@@ -157,57 +167,49 @@ def assign_rates(T, S, base_rate=1.0,
     if not inplace:
         T = T.copy()
      
-    # factors for subfunctionalization/neofunctionalization
-    CSN_weights = np.asarray(CSN_weights) / sum(CSN_weights)
-    sampler = Sampler(rate_increase, shift=1.0)
-    _divergent_rates(T, S, sampler, CSN_weights)
+    # paralog-specific rate heterogeneity (neo- and subfunctionalization)
+    _divergent_rates(T, S, 
+                     Sampler(rate_increase, shift=1.0), 
+                     np.asarray(CSN_weights) / sum(CSN_weights))
     
-    # autocorrelation
+    # species-specific rate heterogeneity (autocorrelation)
+    if not autocorr_factors and autocorr_variance > 0.0:
+        _, autocorr_factors = autocorrelation_factors(S, autocorr_variance)
     if autocorr_factors:
-        _apply_autocorrelation(T, autocorr_factors, inplace=True)
-    elif autocorr_variance > 0.0:
-        _, edge_rates = autocorrelation_factors(S, autocorr_variance)
-        _apply_autocorrelation(T, edge_rates, inplace=True)
+        for v in T.preorder():
+            if v.parent:
+                edge_ID = v.color[1] if isinstance(v.color, (tuple, list)) \
+                                     else v.color
+                v.dist *= autocorr_factors[edge_ID]
     
-    # finally apply base rate
+    # gene-family-specific rate heterogeneity (base rate)
     for v in T.preorder():
         v.dist *= base_rate
     
     return T
 
+def assign_rates(T, S, **kwargs):
+    
+    warn('This method is deprecated. Use rate_heterogeneity() instead.',
+         DeprecationWarning, stacklevel=2)
+    return rate_heterogeneity(T, S, **kwargs)
+
 
 # --------------------------------------------------------------------------
-#                       EVOLUTION RATE ASYMMETRY
+#     paralog-specific rate heterogeneity (neo- and subfunctionalization)
 # --------------------------------------------------------------------------
 
 def _adjust_distances(T, rates):
     
     for edge, rate_list in rates.items():
-        time_points = np.asarray([tstamp for tstamp, _ in rate_list] + [edge[1].tstamp])
+        time_points = np.asarray([tstamp for tstamp, _ in rate_list] +
+                                 [edge[1].tstamp])
         rate_values = np.asarray([rate for _, rate in rate_list])
         edge[1].dist = np.dot(-np.diff(time_points), rate_values)
-        
-
-def _duplication_type(marked_as, CSN_weights):
-    
-    if marked_as == 'divergent':
-        return 'divergent', 'divergent'
-    else:
-        r = np.random.choice(3, p=CSN_weights)
-        if r == 0:                                  # conservation
-            return 'conserved', 'conserved'
-        elif r == 1:                                # subfunctionalization
-            return 'divergent', 'divergent'
-        else:                                       # neofunctionalization
-            if np.random.uniform() < 0.5:
-                return 'divergent', 'conserved'
-            else:
-                return 'conserved', 'divergent'
 
 
 def _divergent_rates(T, S, sampler, CSN_weights):
-    """
-    Assign divergent genes and manipulate the distances in the gene tree.
+    """Assign divergent genes and manipulate the distances in the gene tree.
     
     Parameters
     ----------
@@ -229,11 +231,15 @@ def _divergent_rates(T, S, sampler, CSN_weights):
     """
     
     T_nodes = sorted_nodes(T)
-    rates = {edge: [] for edge in T.edges()}        # edge --> list of (tstamp, rate) tuples
+    
+    # edge --> list of (tstamp, rate) tuples
+    rates = {edge: [] for edge in T.edges()}
     
     S_parents = {v.label: v.parent.label for v in S.preorder() if v.parent}
-    gene_counter = {(e[0].label, e[1].label): [] for e in S.edges()}
-    marked = {v: 'conserved' for v in T_nodes}      # marked as conserved or divergent
+    gene_counter = {(u.label, v.label): [] for u, v in S.edges()}
+    
+    # nodes willl be marked as conserved or divergent
+    marked = {v: 'conserved' for v in T_nodes}
     
     for u in T_nodes:
         
@@ -242,25 +248,51 @@ def _divergent_rates(T, S, sampler, CSN_weights):
             for v in u.children:
                 marked[v] = marked[u]
                 S_u = u.color
-                S_v = v.color if not isinstance(v.color, (tuple, list)) else v.color[1]
+                S_v = v.color if not isinstance(v.color, (tuple, list)) \
+                      else v.color[1]
                 gene_counter[(S_u, S_v)].append(v)
-                new_rate = sampler.draw() if marked[v] == 'divergent' else 1.0
+                new_rate = sampler() if marked[v] == 'divergent' else 1.0
                 rates[(u,v)].append((u.tstamp, new_rate))
             
         # ---------------- DUPLICATION -----------------
         elif u.event == 'D':
-            marked[u.children[0]], marked[u.children[1]] = _duplication_type(marked[u],
-                                                                             CSN_weights)
+            
             gene_counter[u.color].remove(u)
-            for v in u.children:
+            
+            # will contain the indices of the conserved descendants
+            conserved = set()
+            
+            if marked[u] != 'divergent':
+                # if parental lineage was divergent or subfunctionalization
+                # is drawn below, all descendant lineages are divergent
+                
+                r = np.random.choice(3, p=CSN_weights)
+                if r == 0:
+                    # conservation: all descendants conserved
+                    conserved.update(range(len(u.children)))
+                elif r == 2:
+                    # neofunctionalization: exactly 1 descendant conserved
+                    conserved.add(np.random.randint(len(u.children)))
+                    
+            for i, v in enumerate(u.children):
+                
+                if i in conserved:
+                    marked[v] = 'conserved'
+                    new_rate = 1.0
+                else:
+                    marked[v] = 'divergent'
+                    new_rate = sampler()
+                    
                 gene_counter[u.color].append(v)
-                new_rate = sampler.draw() if marked[v] == 'divergent' else 1.0
                 rates[(u,v)].append((u.tstamp, new_rate))
         
         # ------------------- LOSS ---------------------
         elif u.event == 'L':
             gene_counter[u.color].remove(u)
+            
             if len(gene_counter[u.color]) == 1:
+                # if only one lineage remains in the species, set its status
+                # to conserved
                 v = gene_counter[u.color][0]
                 if marked[v] == 'divergent':
                     marked[v] = 'conserved'
@@ -279,27 +311,32 @@ def _divergent_rates(T, S, sampler, CSN_weights):
             if u.parent:
                 rates[(u,v1)].append((u.tstamp, rates[(u.parent,u)][-1][1]))
             else:
-                new_rate = sampler.draw() if marked[v1] == 'divergent' else 1.0
+                new_rate = sampler() if marked[v1] == 'divergent' else 1.0
                 rates[(u,v1)].append((u.tstamp, new_rate))
             
             # transferred copy
-            marked[v2] = 'divergent'
-            if isinstance(v2.color, (tuple, list)):
-                gene_counter[v2.color].append(v2)
+            S_edge = v2.color if isinstance(v2.color, (tuple, list)) \
+                     else (S_parents[v2.color], v2.color)
+            gene_counter[S_edge].append(v2)
+            if len(gene_counter[S_edge]) == 1:
+                marked[v2] = 'conserved'
+                new_rate = 1.0
             else:
-                gene_counter[(S_parents[v2.color], v2.color)].append(v2)
-            new_rate = sampler.draw() if marked[v2] == 'divergent' else 1.0
+                marked[v2] = 'divergent'
+                new_rate = sampler()
             rates[(u,v2)].append((u.tstamp, new_rate))
             
     _adjust_distances(T, rates)
+    
     return T
 
 # --------------------------------------------------------------------------
-#                         AUTOCORRELATION
+#           species-specific rate heterogeneity (autocorrelation)
 # --------------------------------------------------------------------------
     
 def autocorrelation_factors(tree, variance):
-    """Geometric Brownian motion process to assign rate factors to species tree.
+    """Geometric Brownian motion process to assign rate factors to a species
+    tree.
     
     The parameter 'variance' is a hyperparameter for a log-normal distribution
     from which offspring rates are drawn. The overall variance of this
@@ -349,19 +386,7 @@ def autocorrelation_factors(tree, variance):
             node_rates[v.label] = np.exp(np.random.normal(mu, np.sqrt(var)))
             
             # edge rate as arithmetic mean of u and v
-            edge_rates[v.label] = (node_rates[v.parent.label] + node_rates[v.label]) / 2
+            edge_rates[v.label] = (node_rates[v.parent.label] + 
+                                   node_rates[v.label]) / 2
             
     return node_rates, edge_rates
-
-
-def _apply_autocorrelation(T, edge_rates, inplace=True):
-    
-    if not inplace:
-        T = T.copy()
-    
-    for v in T.preorder():
-        if v.parent:
-            edge_ID = v.color[1] if isinstance(v.color, (tuple, list)) else v.color
-            v.dist *= edge_rates[edge_ID]
-    
-    return T
