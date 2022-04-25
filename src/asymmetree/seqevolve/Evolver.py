@@ -25,7 +25,7 @@ class Evolver:
     
     def __init__(self, subst_model,
                  indel_model=None, het_model=None,
-                 jump_chain=False,
+                 gillespie=False,
                  **kwargs):
         """
         Parameters
@@ -36,12 +36,12 @@ class Evolver:
             Model for insertions and deletions, default is None.
         het_model : HetModel, optional
             Model for substitution rate heterogeneity, default is None.
-        jump_chain : bool, optional
-            If True, draw substitution in a Gillespie process instead of
-            constructing the exchange probability matrix P via matrix
-            diagonalization. The jump chain mode is expected to be faster if
-            the rate heterogeneity is large, and therefore automatically
-            switched on if the het_model is set to sitewise.
+        gillespie : bool, optional
+            If True, the Gillespie algorithm is used instead of constructing
+            the exchange probability matrix P via matrix diagonalization. The
+            Gillespie algorithm is expected to be faster if the rate
+            heterogeneity is large, and therefore automatically switched on
+            if the het_model is set to sitewise.
         """
         
         self.subst_model = subst_model
@@ -49,10 +49,10 @@ class Evolver:
         self.indel_model = indel_model
         self.het_model = het_model
         
-        if jump_chain or (het_model and het_model.sitewise):
-            self._jump_chain = True
+        if gillespie or (het_model and het_model.sitewise):
+            self._gillespie = True
         else:
-            self._jump_chain = False
+            self._gillespie = False
         
     
     def evolve_along_tree(self, tree, start_length=200, start_seq=None):
@@ -97,7 +97,8 @@ class Evolver:
             if v.parent is None:
                 self.sequences[v] = root_seq
             else:
-                self.sequences[v] = self._evolve(self.sequences[v.parent], v.dist)
+                self.sequences[v] = self._evolve(self.sequences[v.parent],
+                                                 v.dist)
                 
         return self.sequences
           
@@ -140,10 +141,12 @@ class Evolver:
             if self.het_model:
                 self.het_model.assign(child_seq)
         
-        if not self._jump_chain:
-            self._substitute(child_seq, distance)               # apply transition prob. matrix
+        if not self._gillespie:
+            # use transition prob. matrix
+            self._substitute(child_seq, distance)
         else:
-            self._substitute_jump_chain(child_seq, distance)    # apply jump chain
+            # use Gillespie algorithm
+            self._substitute_gillespie(child_seq, distance)
         
         return child_seq
     
@@ -228,42 +231,46 @@ class Evolver:
                     r = site.rate_factor
                     
                     if r > 0.0:
-                        P[c] = np.cumsum(self.subst_model.transition_prob_matrix(r * t),
-                                         axis=1)
+                        P[c] = np.cumsum(
+                            self.subst_model.transition_prob_matrix(r * t),
+                            axis=1)
                     elif r == 0:
-                        P[c] = np.cumsum(np.identity(len(self.subst_model.alphabet)),
-                                         axis=1)
+                        P[c] = np.cumsum(
+                            np.identity(len(self.subst_model.alphabet)),
+                            axis=1)
         
         return P
         
     
     # --------------------------------------------------------------------------
-    #                        Substitution by Jump chain
+    #                   Substitution by Gillespie algorithm
     # --------------------------------------------------------------------------
     
-    def _substitute_jump_chain(self, sequence, t):
+    def _substitute_gillespie(self, sequence, t):
         
         total_rate = self._total_subst_rate(sequence, exclude_inserted=True)
         
-        # jump chain algorithm for inherited positions
+        # Gillespie algorithm for inherited positions
         current_time = 0.0
         while current_time < t:
             
-            current_time += np.random.exponential(1/total_rate) if total_rate > 0.0 else float('inf')
+            current_time += np.random.exponential(1/total_rate) \
+                            if total_rate > 0.0 else float('inf')
             
             if current_time < t:
                 
                 site, mutation = self._draw_substitution(sequence, total_rate)
                 
-                total_rate += site.rate_factor * self.subst_model.Q[site._value, site._value]
-                total_rate -= site.rate_factor * self.subst_model.Q[mutation, mutation]
+                total_rate += site.rate_factor * self.subst_model.Q[site._value,
+                                                                    site._value]
+                total_rate -= site.rate_factor * self.subst_model.Q[mutation,
+                                                                    mutation]
                 site._value = mutation
         
         # choose random characters for insertions
         r = np.random.random(sequence.count_status(State.INSERTION))
         pos = 0
         for site in sequence:
-            
             if site.status == State.INSERTION:
                 site._value = np.argmax(self.subst_model.freqs_cumulative > r[pos])
                 pos += 1
@@ -278,7 +285,8 @@ class Evolver:
             if exclude_inserted and site.status == State.INSERTION:
                 continue
             
-            total -= site.rate_factor * self.subst_model.Q[site._value, site._value]
+            total -= site.rate_factor * self.subst_model.Q[site._value,
+                                                           site._value]
             
         return total
     
@@ -295,7 +303,8 @@ class Evolver:
                 continue
             
             # use negative value on the diagonal of the rate matrix Q
-            site_rate = - site.rate_factor * self.subst_model.Q[site._value, site._value]
+            site_rate = - site.rate_factor * self.subst_model.Q[site._value,
+                                                                site._value]
             current_sum += site_rate
             
             if current_sum > r:
@@ -333,7 +342,8 @@ class Evolver:
             ins_rate, del_rate = self.indel_model.get_rates(len(sequence))
             total_rate = ins_rate + del_rate
             
-            current_time += np.random.exponential(1/total_rate) if total_rate > 0.0 else float('inf')
+            current_time += np.random.exponential(1/total_rate) \
+                            if total_rate > 0.0 else float('inf')
             
             if current_time < t:
                 

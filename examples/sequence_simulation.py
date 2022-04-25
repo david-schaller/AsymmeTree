@@ -13,7 +13,7 @@ indel_model = se.IndelModel(0.01, 0.01, length_distr=('zipf', 1.821))
 #indel_model = se.IndelModel(0.01, 0.01, length_distr=('negative_binomial', 1, 0.5))
 
 # initialize evolver
-evolver = se.Evolver(subst_model, indel_model=indel_model, jump_chain=False)
+evolver = se.Evolver(subst_model, indel_model=indel_model, gillespie=False)
 print(evolver.subst_model.Q)
 
 # simulate along a tree

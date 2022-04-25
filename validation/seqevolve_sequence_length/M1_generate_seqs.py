@@ -44,7 +44,7 @@ def simulate():
             
             for subst_model in subst_models:
                 
-                evolver = Evolver(subst_model, jump_chain=False)
+                evolver = Evolver(subst_model, gillespie=False)
                 
                 for l in lengths:
                     

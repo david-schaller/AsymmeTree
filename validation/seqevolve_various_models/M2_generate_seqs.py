@@ -23,7 +23,7 @@ for subst_model in subst_models:
     if not os.path.exists(dir_name):
         os.mkdir(dir_name) 
         
-    evolver = Evolver(subst_model, jump_chain=False)
+    evolver = Evolver(subst_model, gillespie=False)
     
     for i in range(len(trees)):
         

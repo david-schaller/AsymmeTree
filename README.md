@@ -525,7 +525,7 @@ The `dist` attribute is also used as the duration of the Markov process in which
 | `subst_model` | substitution model (`SubstModel`) |
 | `indel_model=None` | model for insertions and deletions (`IndelModel`) |
 | `het_model=None` | model for among site heterogeneity and invariant sites (`HetModel`) |
-| `jump_chain=False` | if `True`, an alternative Gillespie-like (Gillespie 1976) algorithm is applied for the substitution process instead of the computation of P=e<sup>Qt</sup> (`bool`) |
+| `gillespie=False` | if `True`, the Gillespie algorithm is used for the substitution process instead of the computation of P=e<sup>Qt</sup> (`bool`) |
 
 </details>
 

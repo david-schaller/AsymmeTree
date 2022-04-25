@@ -20,7 +20,7 @@ subst_models = [SubstModel('n', 'JC69'),
 
 repeats = (0, 100)
 
-directory = 'testfiles_sequences_jump_chain'
+directory = 'testfiles_sequences_gillespie'
 
 # adjust path to TREE-PUZZLE binary here
 puzzle_path = '/Users/david/opt/tree-puzzle-5.rc16-macosx/bin/puzzle'
@@ -44,7 +44,7 @@ def simulate():
             
             for subst_model in subst_models:
                 
-                evolver = Evolver(subst_model, jump_chain=True)
+                evolver = Evolver(subst_model, gillespie=True)
                 
                 for l in lengths:
                     
@@ -82,7 +82,7 @@ def simulate():
                     stats.append((subst_model.model_name, d, l, i,
                                   evolve_time,align_time))
     
-    stats_file = 'results/stats_jump_chain.csv'
+    stats_file = 'results/stats_gillespie.csv'
     
     with open(stats_file, 'w') as f:
         
@@ -135,6 +135,6 @@ def calculate_distances(outfile):
 
 if __name__ == '__main__':
     
-     simulate()
+    simulate()
     
-    calculate_distances('results/all_distances_jump_chain.csv')
+    calculate_distances('results/all_distances_gillespie.csv')
