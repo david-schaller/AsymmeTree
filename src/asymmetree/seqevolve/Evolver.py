@@ -25,7 +25,7 @@ class Evolver:
     
     def __init__(self, subst_model,
                  indel_model=None, het_model=None,
-                 gillespie=False,
+                 gillespie='auto',
                  **kwargs):
         """
         Parameters
@@ -40,8 +40,9 @@ class Evolver:
             If True, the Gillespie algorithm is used instead of constructing
             the exchange probability matrix P via matrix diagonalization. The
             Gillespie algorithm is expected to be faster if the rate
-            heterogeneity is large, and therefore automatically switched on
-            if the het_model is set to sitewise.
+            heterogeneity is large. The default is 'auto', in which case the 
+            exchange probability matrix is used except if sitewise rate
+            heterogeneity is enabled.
         """
         
         self.subst_model = subst_model
@@ -49,10 +50,13 @@ class Evolver:
         self.indel_model = indel_model
         self.het_model = het_model
         
-        if gillespie or (het_model and het_model.sitewise):
-            self._gillespie = True
+        if gillespie == 'auto':
+            if het_model and het_model.sitewise:
+                self._gillespie = True
+            else:
+                self._gillespie = False
         else:
-            self._gillespie = False
+            self._gillespie = bool(gillespie)
         
     
     def evolve_along_tree(self, tree, start_length=200, start_seq=None):
