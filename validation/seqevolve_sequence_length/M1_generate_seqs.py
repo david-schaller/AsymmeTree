@@ -21,6 +21,8 @@ subst_models = [SubstModel('n', 'JC69'),
 repeats = (0, 100)
 
 directory = 'testfiles_sequences'
+
+# adjust path to TREE-PUZZLE binary here
 puzzle_path = '/Users/david/opt/tree-puzzle-5.rc16-macosx/bin/puzzle'
 
 if not os.path.exists(directory):

@@ -64,7 +64,7 @@ def all_nuc_distances(directory, model):
         pickle.dump(matrices, f)
         
 
-def puzzle_distances(directory, model):
+def puzzle_distances(directory, puzzle_path, model):
     
     files = glob.glob(directory + '/*.phylip')
     matrices = []
@@ -73,8 +73,9 @@ def puzzle_distances(directory, model):
         
         print("Model '{}', File {} of {}".format(model, i+1, len(files)))
         
-        aux_functions.calc_distances("{}/{}.phylip".format(directory, i),
-                                  model=model)
+        aux_functions.calc_distances(puzzle_path,
+                                     "{}/{}.phylip".format(directory, i),
+                                     model=model)
         
         D, labels = aux_functions.parse_distance_matrix("{}/{}.phylip.dist".format(directory, i))
         
@@ -91,7 +92,7 @@ def summarize_distances(models, directories, outfile):
     for directory in directories:
         
         with open(directory + '/distances.pickle', 'rb') as f:
-            distances.append( pickle.load(f))
+            distances.append( pickle.load(f) )
             
     true_distances = distances[0]
     
@@ -100,6 +101,9 @@ def summarize_distances(models, directories, outfile):
     for i in range(len(true_distances)):
         
         labels, true_D = true_distances[i]
+        
+        # convert labels to str
+        labels = [str(l) for l in labels]
         
         Ds = []
         for estimated_distances in distances[1:]:
@@ -132,10 +136,13 @@ if __name__ == '__main__':
     directories = ['testfiles_scenarios'] + ['testfiles_{}_seqs'.format(m) for m in models[1:]]
     outfile = 'results/all_distances.csv'
     
+    # adjust path to TREE-PUZZLE binary here
+    puzzle_path = '/Users/david/opt/tree-puzzle-5.rc16-macosx/bin/puzzle'
+    
     all_nuc_distances(directories[1], models[1])
     all_nuc_distances(directories[2], models[2])
     
-    puzzle_distances(directories[3], models[3])
-    puzzle_distances(directories[4], models[4])
+    puzzle_distances(directories[3], puzzle_path, models[3])
+    puzzle_distances(directories[4], puzzle_path, models[4])
     
     summarize_distances(models, directories, outfile)

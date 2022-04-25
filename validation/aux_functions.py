@@ -81,7 +81,6 @@ def calc_distances(puzzle_path, infile, model='WAG'):
     
     for _ in range(1):
         proc.communicate(communication)
-        print('here')
       
         
 def parse_phylip_alignment(filename):

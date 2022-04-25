@@ -23,7 +23,7 @@ for i in range(len(models)):
     X = df_nonan['true'].values.reshape(-1, 1)
     Y = df_nonan[model].values.reshape(-1, 1)
 
-    axs[i].scatter(df['true'], df[model], marker=".")
+    axs[i].scatter(df['true'], df[model], marker=".", s=3)
     axs[i].set_xlim(0.0, max(df['true']))
     axs[i].set_ylim(0.0, 5.5)
     axs[i].tick_params(axis='both', which='major', labelsize=fs)
