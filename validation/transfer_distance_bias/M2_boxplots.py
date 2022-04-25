@@ -17,7 +17,7 @@ if not os.path.exists(plot_dir):
     
 quotient = True
 
-filename = 'boxplots.pdf'
+filename = 'transfer_distance_boxplots.pdf'
 
 df = pd.read_csv('results/distances.csv')
 df.sort_values('sim_ID', inplace=True)
@@ -50,9 +50,9 @@ sns.boxplot(x='bias_mode', y='distance', hue='type', data=df, ax=axs[0],
 
 
 
-axs[0].set_xlabel('transfer distance bias', fontsize=fs)
-axs[0].set_ylabel('elapsed time since divergence', fontsize=fs)
-axs[0].legend(title='', fontsize=fs-4, loc='upper right',
+axs[0].set_xlabel('transfer distance bias', fontsize=fs, labelpad=15)
+axs[0].set_ylabel('elapsed time since divergence', fontsize=fs, labelpad=15)
+axs[0].legend(title='', fontsize=fs-2, loc='upper right',
               fancybox=True, shadow=True, )
 axs[0].tick_params(axis='both', which='major', labelsize=fs-2)
     

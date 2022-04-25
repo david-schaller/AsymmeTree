@@ -20,9 +20,10 @@ print(evolver.subst_model.Q)
 T = te.simulate_species_tree(5)
 evolver.evolve_along_tree(T, start_length=150)
 
+evolver.write_sequences('testfile.fasta', include_inner=True)
 for node, sequence in evolver.sequences.items():
     print(node.label, subst_model.to_sequence(sequence))
-    
+
 alg_seq = evolver.true_alignment(write_to='testfile.alignment')
 for node, sequence in alg_seq.items():
     print(node.label, sequence)

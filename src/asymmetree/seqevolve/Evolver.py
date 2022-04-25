@@ -15,7 +15,7 @@ import numpy as np
 
 from asymmetree.seqevolve.EvolvingSequence import EvoSeq, State
 from asymmetree.seqevolve.Alignment import AlignmentBuilder
-from asymmetree.file_io.SeqFileIO import write_alignment
+from asymmetree.file_io.SeqFileIO import write_alignment, write_fasta
 
 
 __author__ = 'David Schaller'
@@ -153,6 +153,46 @@ class Evolver:
             self._substitute_gillespie(child_seq, distance)
         
         return child_seq
+    
+    
+    def get_sequences(self, include_inner=True):
+        """Return the simulated sequence as strings.
+        
+        Parameters
+        ----------
+        include_inner : bool, optional
+            If True, the sequences of the inner nodes of the tree are also
+            includes. The default is True.
+        
+        Returns
+        -------
+        dict
+            A dictionary with the tree nodes as keys and the str sequence
+            (without gaps) as values.
+        """
+        
+        if include_inner:
+            return {v: self.subst_model.to_sequence(seq)
+                    for v, seq in self.sequences.items()}
+        else:
+            return {v: self.subst_model.to_sequence(seq)
+                    for v, seq in self.sequences.items() if v.is_leaf()}
+    
+    
+    def write_sequences(self, filename, include_inner=True):
+        """Write the simulated sequences into a file in fasta format.
+        
+        Parameters
+        ----------
+        filename: str
+            The path and filename to the file into which the sequences shall
+            be written.
+        include_inner : bool, optional
+            If True, the sequences of the inner nodes of the tree are also
+            written to the file. The default is True.
+        """
+        
+        write_fasta(filename, self.get_sequences(include_inner=include_inner))
     
     
     def true_alignment(self, include_inner=True, write_to=None,

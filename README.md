@@ -544,6 +544,7 @@ Once the `Evolver` is initialized, its function `evolve_along_tree(tree)` can be
 
 The sequences of a simulation run are returned by this function (and also available via the attribute `sequences` as long as the function has not been called again), which is a `dict` containing the nodes (inner and leaf nodes) as keys and instances of type `EvoSeq` as values.
 The latter can be converted into `str` using `subst_model.to_sequence(evo_seq)`.
+In addition, the `str` representations of the simulated sequences can be obtained and written to file (in fasta format) using the functions `get_sequences()` and `write_sequences()`, resp., of an `Evolver` instance.
 
 The function `true_alignment()` can be used to compute (and optionally write into a file) the 'true' alignment of a simulation run.
 

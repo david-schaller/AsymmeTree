@@ -25,7 +25,7 @@ def labeled_sequences(sequences):
     for key, sequence in sequences:
         
         if isinstance(key, TreeNode):
-            result.append( (key.label, sequence) )
+            result.append( (str(key.label), sequence) )
         else:
             result.append( (str(key),  sequence) )
             
