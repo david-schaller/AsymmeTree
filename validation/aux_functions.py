@@ -60,11 +60,11 @@ def rearrange_matrix(D, labels, target_labels):
     return D_new
 
 
-def calc_distances(infile, model='WAG'):
+def calc_distances(puzzle_path, infile, model='WAG'):
     
     models = ['WAG', 'DAYHOFF', 'JTT', 'MTREV24', 'BLOSUM62', 'VT']
     
-    args = ['puzzle', infile]
+    args = [puzzle_path + ' ' + infile]
     
     communication = b'k\nk\nk\n'
     
@@ -77,10 +77,11 @@ def calc_distances(infile, model='WAG'):
     
     communication += b'y\n'
     
-    proc = subprocess.Popen(args, stdin=subprocess.PIPE)
+    proc = subprocess.Popen(args, shell=True, stdin=subprocess.PIPE)
     
     for _ in range(1):
         proc.communicate(communication)
+        print('here')
       
         
 def parse_phylip_alignment(filename):
@@ -106,7 +107,7 @@ def parse_phylip_alignment(filename):
             sequences[label] = seq_part
             
         while len(sequences[labels[0]]) < length:
-            f.readline()
+            line = f.readline()
             
             for i in range(n):
                 line = f.readline()

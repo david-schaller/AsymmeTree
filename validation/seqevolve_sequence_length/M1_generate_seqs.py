@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import os, glob
+import os, glob, time
 
 from tralda.datastructures.Tree import Tree, TreeNode
 
@@ -21,12 +21,15 @@ subst_models = [SubstModel('n', 'JC69'),
 repeats = (0, 100)
 
 directory = 'testfiles_sequences'
+puzzle_path = '/Users/david/opt/tree-puzzle-5.rc16-macosx/bin/puzzle'
 
 if not os.path.exists(directory):
     os.mkdir(directory)
    
 
 def simulate():
+    
+    stats = []
     
     for i in range(*repeats):
         
@@ -48,11 +51,17 @@ def simulate():
                                                              d, l, i)
                     print("Processing '{}'".format(outfile))
                     
+                    start_time = time.time()
                     evolver.evolve_along_tree(T, start_length=l)
+                    evolve_time = time.time() - start_time
+                    
                     if subst_model.model_name in ('WAG', 'JTT'):
                         
+                        start_time = time.time()
                         # treepuzzle accepts only >= 3 sequences
                         alignment = evolver.true_alignment(include_inner=True)
+                        align_time = time.time() - start_time
+                        
                         for k, v in alignment.items():
                             seq = v
                             break
@@ -63,8 +72,22 @@ def simulate():
                                         alignment_format='phylip')
                         
                     else:
+                        start_time = time.time()
                         evolver.true_alignment(include_inner=True,
                                                write_to=outfile)
+                        align_time = time.time() - start_time
+                    
+                    stats.append((subst_model.model_name, d, l, i,
+                                  evolve_time,align_time))
+    
+    stats_file = 'results/stats.csv'
+    
+    with open(stats_file, 'w') as f:
+        
+        f.write('model,d,length,i,evolve_time,align_time')
+        
+        for row in stats:
+            f.write('\n' + ','.join(str(value) for value in row))
 
 
 def calculate_distances(outfile):
@@ -89,7 +112,7 @@ def calculate_distances(outfile):
             
         elif model in ('WAG', 'JTT'):
             
-            aux_functions.calc_distances(file, model=model)
+            aux_functions.calc_distances(puzzle_path, file, model=model)
             D_unsorted, D_labels = aux_functions.parse_distance_matrix(file + '.dist')
             D = aux_functions.rearrange_matrix(D_unsorted, D_labels, ['0', '1', '2', '3'])
             d_hat = D[0, 1]
@@ -110,6 +133,6 @@ def calculate_distances(outfile):
 
 if __name__ == '__main__':
     
-#    simulate()
+    simulate()
     
     calculate_distances('results/all_distances.csv')

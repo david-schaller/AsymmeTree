@@ -101,7 +101,7 @@ def _write_phylip(f, alignment):
     
     f.write('  {} {} i'.format(len(alignment), seq_length))
     
-    format_str = '\n{:' + str(max_length+1) + '}'
+    format_str = '\n{:<' + str(max_length+1) + '}'
     current = 0
     
     while current < seq_length:
@@ -129,7 +129,7 @@ def _write_clustal(f, alignment):
     
     f.write('CLUSTAL W (1.8) multiple sequence alignment\n\n')
     
-    format_str = '\n{:' + str(max_length+4) + '}{}'
+    format_str = '\n{:<' + str(max_length+4) + '}{}'
     current = 0
     
     while current < seq_length:

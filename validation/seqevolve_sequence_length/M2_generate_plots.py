@@ -60,7 +60,7 @@ for i in range(len(models)):
                 verticalalignment='top',
                 transform=axs[i].transAxes,
                 fontsize=fs)
-    axs[i].legend(loc='upper left')
+    axs[i].legend(title='seq. length', loc='upper left')
     
     sns.barplot(y='proportion_nan', x='d',
                 data=df_na,
