@@ -41,8 +41,7 @@ class Evolver:
             constructing the exchange probability matrix P via matrix
             diagonalization. The jump chain mode is expected to be faster if
             the rate heterogeneity is large, and therefore automatically
-            switched on if the het_model has more than 5 classes or is set to
-            sitewise.
+            switched on if the het_model is set to sitewise.
         """
         
         self.subst_model = subst_model
@@ -50,9 +49,7 @@ class Evolver:
         self.indel_model = indel_model
         self.het_model = het_model
         
-        if (jump_chain or 
-            (het_model and het_model.sitewise) or
-            (het_model and het_model.classes > 5)):     # determine best cutoff
+        if jump_chain or (het_model and het_model.sitewise):
             self._jump_chain = True
         else:
             self._jump_chain = False
