@@ -135,6 +135,6 @@ def calculate_distances(outfile):
 
 if __name__ == '__main__':
     
-    simulate()
+    # simulate()
     
     calculate_distances('results/all_distances_gillespie.csv')

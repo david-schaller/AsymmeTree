@@ -21,9 +21,7 @@ def simulate(directory, number_of_trees, species_per_tree):
         
         te.rate_heterogeneity(T, S, autocorr_variance=0.2)
         
-        T_nx = T.to_nx()
-        with open('{}/scenario{}.pickle'.format(directory, i), 'wb') as f:
-            pickle.dump(T_nx, f)
+        T.serialize('{}/scenario{}.pickle'.format(directory, i))
     
        
 def load(directory):
@@ -32,10 +30,7 @@ def load(directory):
     trees = []
     
     for i in range(len(files)):
-        with open('{}/scenario{}.pickle'.format(directory, i), 'rb') as f:
-            T_nx = pickle.load(f)
-            T = Tree.parse_nx(*T_nx)
-            trees.append(T)
+        trees.append(Tree.load('{}/scenario{}.pickle'.format(directory, i)))
             
     return trees
 
