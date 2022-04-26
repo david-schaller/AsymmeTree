@@ -34,7 +34,37 @@ class TestSeqEvolvePackage(unittest.TestCase):
         
         evolver = se.Evolver(subst_model,
                              indel_model=indel_model,
-                             het_model=het_model)
+                             het_model=het_model,
+                             gillespie=False)
+        evolver.evolve_along_tree(species_tree, start_length=150)
+        
+        for node, sequence in evolver.sequences.items():
+            self.assertIsInstance(node, TreeNode)
+            self.assertIsInstance(sequence, se.EvoSeq)
+        
+        alignment_length = -1
+        for node, aligned_seq in evolver.true_alignment().items():
+            self.assertIsInstance(node, TreeNode)
+            self.assertIsInstance(aligned_seq, str)
+            
+            # test whether all aligned sequences have the same length
+            if alignment_length == -1:
+                alignment_length = len(aligned_seq)
+            else:
+                self.assertEqual(len(aligned_seq), alignment_length)
+    
+    def test_simulation_gillespie(self):
+        
+        species_tree = te.simulate_species_tree(10, model='innovation')
+
+        subst_model = se.SubstModel('a', 'JTT')
+        indel_model = se.IndelModel(0.01, 0.01, length_distr=('zipf', 1.821))
+        het_model = se.HetModel(2.0, classes=10, invariant=0.1)
+        
+        evolver = se.Evolver(subst_model,
+                             indel_model=indel_model,
+                             het_model=het_model,
+                             gillespie=True)
         evolver.evolve_along_tree(species_tree, start_length=150)
         
         for node, sequence in evolver.sequences.items():

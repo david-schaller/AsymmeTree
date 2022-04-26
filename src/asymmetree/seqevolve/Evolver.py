@@ -292,84 +292,123 @@ class Evolver:
     
     def _substitute_gillespie(self, sequence, t):
         
-        total_rate = self._total_subst_rate(sequence, exclude_inserted=True)
+        r = np.random.random(len(sequence))
         
-        # Gillespie algorithm for inherited positions
-        current_time = 0.0
-        while current_time < t:
+        for pos, site in enumerate(sequence):
             
-            current_time += np.random.exponential(1/total_rate) \
-                            if total_rate > 0.0 else float('inf')
-            
-            if current_time < t:
-                
-                site, mutation = self._draw_substitution(sequence, total_rate)
-                
-                total_rate += site.rate_factor * self.subst_model.Q[site._value,
-                                                                    site._value]
-                total_rate -= site.rate_factor * self.subst_model.Q[mutation,
-                                                                    mutation]
-                site._value = mutation
-        
-        # choose random characters for insertions
-        r = np.random.random(sequence.count_status(State.INSERTION))
-        pos = 0
-        for site in sequence:
+            # choose random characters for insertions
             if site.status == State.INSERTION:
-                site._value = np.argmax(self.subst_model.freqs_cumulative > r[pos])
-                pos += 1
+                site._value = np.argmax(self.subst_model.freqs_cumulative 
+                                        > r[pos])
                 
-    
-    def _total_subst_rate(self, sequence, exclude_inserted=True):
-        
-        total = 0.0
-        
-        for site in sequence:
-            
-            if exclude_inserted and site.status == State.INSERTION:
-                continue
-            
-            total -= site.rate_factor * self.subst_model.Q[site._value,
-                                                           site._value]
-            
-        return total
-    
-    
-    def _draw_substitution(self, sequence, total_rate):
-        
-        chosen_site, chosen_mutation = None, None
-        r = np.random.uniform(low=0.0, high=total_rate)
-        
-        current_sum = 0.0
-        for site in sequence:
-            
-            if site.status == State.INSERTION:
-                continue
-            
-            # use negative value on the diagonal of the rate matrix Q
-            site_rate = - site.rate_factor * self.subst_model.Q[site._value,
-                                                                site._value]
-            current_sum += site_rate
-            
-            if current_sum > r:
-                chosen_site = site
-                
-                # rescale the "rest" of r for application on the rate matrix Q
-                r = (r - current_sum + site_rate) / site.rate_factor
-                
-                break
-            
-        current_sum = 0.0
-        for i in range(len(self.subst_model.alphabet)):
-            
-            if i != site._value:            # skip the entry on diagonal
-                current_sum += self.subst_model.Q[site._value, i]
-                
-                if current_sum > r:
-                    chosen_mutation = i
-                    break
+            # Gillespie algorithm for inherited positions
+            else:
+                current_time = 0.0
+                while current_time < t:
                     
-        return chosen_site, chosen_mutation
+                    # use negative value on the diagonal of the rate matrix Q
+                    rate = - site.rate_factor * self.subst_model.Q[site._value,
+                                                                   site._value]
+                    
+                    current_time += np.random.exponential(1/rate) \
+                                    if rate > 0.0 else float('inf')
+                    
+                    if current_time >= t:
+                        break
+                        
+                    r_mutation = - r[pos] * self.subst_model.Q[site._value,
+                                                               site._value]
+                    current_sum = 0.0
+                    for i in range(len(self.subst_model.alphabet)):
+                        
+                        # skip the entry on diagonal
+                        if i != site._value:
+                            current_sum += self.subst_model.Q[site._value, i]
+                            
+                            if current_sum > r_mutation:
+                                mutation = i
+                                break
+                    
+                    site._value = mutation
+        
+    #     total_rate = self._total_subst_rate(sequence, exclude_inserted=True)
+        
+    #     # Gillespie algorithm for inherited positions
+    #     current_time = 0.0
+    #     while current_time < t:
+            
+    #         current_time += np.random.exponential(1/total_rate) \
+    #                         if total_rate > 0.0 else float('inf')
+            
+    #         if current_time < t:
+                
+    #             site, mutation = self._draw_substitution(sequence, total_rate)
+                
+    #             total_rate += site.rate_factor * self.subst_model.Q[site._value,
+    #                                                                 site._value]
+    #             total_rate -= site.rate_factor * self.subst_model.Q[mutation,
+    #                                                                 mutation]
+    #             site._value = mutation
+        
+    #     # choose random characters for insertions
+    #     r = np.random.random(sequence.count_status(State.INSERTION))
+    #     pos = 0
+    #     for site in sequence:
+    #         if site.status == State.INSERTION:
+    #             site._value = np.argmax(self.subst_model.freqs_cumulative > r[pos])
+    #             pos += 1
+                
+    
+    # def _total_subst_rate(self, sequence, exclude_inserted=True):
+        
+    #     total = 0.0
+        
+    #     for site in sequence:
+            
+    #         if exclude_inserted and site.status == State.INSERTION:
+    #             continue
+            
+    #         total -= site.rate_factor * self.subst_model.Q[site._value,
+    #                                                        site._value]
+            
+    #     return total
+    
+    
+    # def _draw_substitution(self, sequence, total_rate):
+        
+    #     chosen_site, chosen_mutation = None, None
+    #     r = np.random.uniform(low=0.0, high=total_rate)
+        
+    #     current_sum = 0.0
+    #     for site in sequence:
+            
+    #         if site.status == State.INSERTION:
+    #             continue
+            
+    #         # use negative value on the diagonal of the rate matrix Q
+    #         site_rate = - site.rate_factor * self.subst_model.Q[site._value,
+    #                                                             site._value]
+    #         current_sum += site_rate
+            
+    #         if current_sum > r:
+    #             chosen_site = site
+                
+    #             # rescale the "rest" of r for application on the rate matrix Q
+    #             r = (r - current_sum + site_rate) / site.rate_factor
+                
+    #             break
+            
+    #     current_sum = 0.0
+    #     for i in range(len(self.subst_model.alphabet)):
+            
+    #         if i != site._value:            # skip the entry on diagonal
+    #             current_sum += self.subst_model.Q[site._value, i]
+                
+    #             if current_sum > r:
+    #                 chosen_mutation = i
+    #                 break
+                    
+    #     return chosen_site, chosen_mutation
     
     
     # --------------------------------------------------------------------------
