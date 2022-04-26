@@ -292,14 +292,12 @@ class Evolver:
     
     def _substitute_gillespie(self, sequence, t):
         
-        r = np.random.random(len(sequence))
-        
-        for pos, site in enumerate(sequence):
+        for site in sequence:
             
             # choose random characters for insertions
             if site.status == State.INSERTION:
                 site._value = np.argmax(self.subst_model.freqs_cumulative 
-                                        > r[pos])
+                                        > np.random.random())
                 
             # Gillespie algorithm for inherited positions
             else:
@@ -316,8 +314,9 @@ class Evolver:
                     if current_time >= t:
                         break
                         
-                    r_mutation = - r[pos] * self.subst_model.Q[site._value,
-                                                               site._value]
+                    r_mutation = - np.random.random() * self.subst_model.Q[
+                                                            site._value,
+                                                            site._value]
                     current_sum = 0.0
                     for i in range(len(self.subst_model.alphabet)):
                         
@@ -351,8 +350,7 @@ class Evolver:
             
             if current_time < t:
                 
-                r = np.random.random()
-                if r < ins_rate / total_rate:
+                if np.random.random() < ins_rate / total_rate:
                     self._insertion(sequence)
                 else:
                     self._deletion(sequence)

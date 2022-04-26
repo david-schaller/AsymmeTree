@@ -39,7 +39,7 @@ for i in range(len(models)):
                 ax=axs[i],
                 fliersize=2, linewidth=0.7)
     
-    axs[i].set_ylim(0, 3.5)
+    axs[i].set_ylim(0, 7)
     axs[i].set_ylabel('estimated distance', fontsize=fs)
     
     if i > 2:
@@ -47,7 +47,7 @@ for i in range(len(models)):
     else:
         axs[i].set_xlabel('')
         
-    axs[i].set_yticks([0, 1, 2, 3])
+    axs[i].set_yticks([0, 1, 2, 3, 4, 5, 6])
     axs[i].tick_params(axis='both', which='major', labelsize=fs)
     
     xw = 1 / (len(distances))
@@ -69,7 +69,7 @@ for i in range(len(models)):
                 palette='pastel')
     
     ax_twin.legend().set_visible(False)
-    ax_twin.set_ylim(0, 3.5)
+    ax_twin.set_ylim(0, 7)
     ax_twin.set_ylabel('Proportion NaN', fontsize=fs)
     ax_twin.set_yticks([0,1])
     ax_twin.tick_params(axis='both', which='major', labelsize=fs, colors='grey')

@@ -335,8 +335,7 @@ def _divergent_rates(T, S, sampler, CSN_weights):
 # --------------------------------------------------------------------------
     
 def autocorrelation_factors(tree, variance):
-    """Geometric Brownian motion process to assign rate factors to a species
-    tree.
+    """Lognormal model to assign rate factors to a species tree.
     
     The parameter 'variance' is a hyperparameter for a log-normal distribution
     from which offspring rates are drawn. The overall variance of this
