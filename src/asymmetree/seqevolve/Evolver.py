@@ -41,8 +41,8 @@ class Evolver:
             the exchange probability matrix P via matrix diagonalization. The
             Gillespie algorithm is expected to be faster if the rate
             heterogeneity is large. The default is 'auto', in which case the 
-            exchange probability matrix is used except if sitewise rate
-            heterogeneity is enabled.
+            exchange probability matrix is used except if rate heterogeneity
+            is enabled.
         """
         
         self.subst_model = subst_model
@@ -51,7 +51,7 @@ class Evolver:
         self.het_model = het_model
         
         if gillespie == 'auto':
-            if het_model and het_model.sitewise:
+            if het_model and (het_model.classes > 1 or het_model.sitewise):
                 self._gillespie = True
             else:
                 self._gillespie = False
