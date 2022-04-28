@@ -71,4 +71,43 @@ for i in range(repeats):
                     f.write(f'[TREE] t1 {newick2}\n')
                     f.write(f'[PARTITIONS] p1 [t1 m1 {l}]\n')
                     f.write(f'[EVOLVE] p1 1 {outfile}\n')
+                
+                wdir = os.path.join(seq_directory, f'alf{j}_{i}_{N}_{l}')
+                tree_file = os.path.join(tree_directory, f'tree_{i}_{N}_nolabel')
+                rate_var_model = 'Gamma, 5, 0, 1' if j == 2 else ''
+                
+                # configuration files for INDELible
+                with open(os.path.join(tree_directory,
+                                       f'alf{j}_{i}_{N}_{l}.drw'), 'w') as f:
+                    f.write(f"# name of simulation\n"
+                             "mname := uuid;\n\n"
+
+                             "# directories for file storage\n"
+                            f"wdir := '{wdir}';\n"
+                             "dbdir := 'DB/';\n"
+                             "dbAncdir := 'DBancestral/';\n\n"
+
+                             "# time scale for simulation (PAM is default)\n"
+                             "unitIsPam := false:\n\n"
+
+                             "# parameters concerning the root genome\n"
+                             "realseed := false;\n"
+                             "protStart := 1;\n"
+                            f"minGeneLength := {l};\n"
+                             "gammaLengthDist := [1, 1];\n"
+                             "blocksize := 1:\n\n"
+
+                             "# parameters concerning the species tree\n"
+                             "treeType := 'Custom';\n"
+                            f"treeFile := '{tree_file}';\n\n"
+
+                             "# parameters concerning the substitution models\n"
+                             "substModels := [SubstitutionModel('WAG')];\n"
+                             "indelModels := [IndelModel(0)];\n"
+                            f"rateVarModels := [RateVarModel({rate_var_model})];\n"
+                             "modelAssignments := [1]:\n"
+                             "modelSwitchS := [[1]]:\n"
+                             "modelSwitchD := [[1]]:\n"
+                            )
+
             
