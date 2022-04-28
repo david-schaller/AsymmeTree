@@ -44,10 +44,14 @@ for i in range(repeats):
         newick = to_newick(S, color=False, distance=True, label_inner=True)
         
         delattr(S.root, 'dist')
-        newick_indelible = to_newick(S, color=False, distance=True, label_inner=False)
+        newick2 = to_newick(S, color=False, distance=True, label_inner=False)
         
         with open(os.path.join(tree_directory, f'tree_{i}_{N}'), 'w') as f:
             f.write(newick)
+            f.write('\n')
+        
+        with open(os.path.join(tree_directory, f'tree_{i}_{N}_nolabel'), 'w') as f:
+            f.write(newick2)
             f.write('\n')
         
         for l in lengths:
@@ -64,7 +68,7 @@ for i in range(repeats):
                              '  [submodel] WAG\n')
                     if j == 2:
                         f.write('  [rates] 0 1 5\n')
-                    f.write(f'[TREE] t1 {newick_indelible}\n')
+                    f.write(f'[TREE] t1 {newick2}\n')
                     f.write(f'[PARTITIONS] p1 [t1 m1 {l}]\n')
                     f.write(f'[EVOLVE] p1 1 {outfile}\n')
             

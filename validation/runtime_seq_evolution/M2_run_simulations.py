@@ -107,11 +107,12 @@ for i, N, l in itertools.product(repeats[:2], tree_sizes, lengths):
         
         rate_het = f'-a {het_alpha} -g {het_classes}' if j == 2 else ''
         
-        call = f'{binary_path} -m WAG -l {l} {rate_het} < {tree_file} > {outfile}'
+        call = f'{binary_path} -m WAG -l {l} {rate_het} < {tree_file}_nolabel > {outfile}'
         args = [call.encode('utf-8')]
         
         start_time = time()
         proc = subprocess.Popen(args, shell=True, stdin=subprocess.PIPE)
+        proc.wait()
         end_time = time() - start_time
         
         with open(resultfile, 'a') as f:
@@ -131,6 +132,7 @@ for i, N, l in itertools.product(repeats[:2], tree_sizes, lengths):
         proc = subprocess.Popen(args, shell=True, stdin=subprocess.PIPE)
         start_time = time()
         proc.communicate(config_file)
+        proc.wait()
         end_time = time() - start_time
         
         with open(resultfile, 'a') as f:
