@@ -239,51 +239,30 @@ class Evolver:
     def _substitute(self, sequence, t):
         
         # (cumulative) transition probability matrices
-        P = self._cumulative_P_matrices(sequence, t)
+        P = {}
         
         r = np.random.random(len(sequence))
-        pos = 0
         
-        for site in sequence:
-            
+        for i, site in enumerate(sequence):
+
             if site.status == State.INHERITED:
                 # mutate according to matrix of the corresponding class
-                site._value = np.argmax(P[site.rate_class][site._value, :] > r[pos])
+                
+                d = site.rate_factor * t
+                
+                if d not in P:
+                    if d > 0.0:
+                        P[d] = np.cumsum(
+                            self.subst_model.transition_prob_matrix(d),
+                            axis=1)
+                    else:
+                        continue
+                
+                site._value = np.argmax(P[d][site._value, :] > r[i])
             
             else:
                 # choose random character
-                site._value = np.argmax(self.subst_model.freqs_cumulative > r[pos])
-            
-            pos += 1
-    
-    
-    def _cumulative_P_matrices(self, sequence, t):
-        
-        P = {}
-        
-        if not self.het_model:
-            P[0] = np.cumsum(self.subst_model.transition_prob_matrix(t),
-                             axis=1)
-
-        else:
-            for site in sequence:
-                
-                c = site.rate_class
-                
-                if c not in P:
-                    
-                    r = site.rate_factor
-                    
-                    if r > 0.0:
-                        P[c] = np.cumsum(
-                            self.subst_model.transition_prob_matrix(r * t),
-                            axis=1)
-                    elif r == 0:
-                        P[c] = np.cumsum(
-                            np.identity(len(self.subst_model.alphabet)),
-                            axis=1)
-        
-        return P
+                site._value = np.argmax(self.subst_model.freqs_cumulative > r[i])
         
     
     # --------------------------------------------------------------------------
@@ -336,7 +315,7 @@ class Evolver:
     # --------------------------------------------------------------------------
         
     def _generate_indels(self, sequence, t):
-        """Generates indels by a Gillespie process."""
+        """Generates indels using the Gillespie algorithm."""
         
         current_time = 0.0
         
