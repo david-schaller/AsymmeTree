@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import os, glob, re, itertools
+import os, glob, re, itertools, subprocess
 
 from time import time
 
@@ -93,6 +93,44 @@ for i, N, l in itertools.product(repeats[:2], tree_sizes, lengths):
         evolver = pyvolve.Evolver(partitions=partition, tree=tree) 
         evolver(seqfile=outfile)
         
+        end_time = time() - start_time
+        
+        with open(resultfile, 'a') as f:
+            f.write(f'\n{i},{N},{l},{tool},{j},{end_time}')
+    
+    
+    tool = 'seqgen'
+    binary_path = '/home/david/opt/Seq-Gen-1.3.4/bin/seq-gen'
+    
+    for j in range(1,3):
+        outfile = os.path.join(seq_directory, f'{tool}{j}_{i}_{N}_{l}')
+        
+        rate_het = f'-a {het_alpha} -g {het_classes}' if j == 2 else ''
+        
+        call = f'{binary_path} -m WAG -l {l} {rate_het} < {tree_file} > {outfile}'
+        args = [call.encode('utf-8')]
+        
+        start_time = time()
+        proc = subprocess.Popen(args, shell=True, stdin=subprocess.PIPE)
+        end_time = time() - start_time
+        
+        with open(resultfile, 'a') as f:
+            f.write(f'\n{i},{N},{l},{tool},{j},{end_time}')
+            
+    
+    tool = 'indelible'
+    binary_path = '/home/david/opt/INDELibleV1.03/bin/indelible'
+    
+    for j in range(1,3):
+        
+        config_file = os.path.join(tree_directory,
+                                    f'tree_{i}_{N}_{l}.indelible{j}')
+        config_file = config_file.encode('utf-8') + b'\n'
+        args = [binary_path]
+        
+        proc = subprocess.Popen(args, shell=True, stdin=subprocess.PIPE)
+        start_time = time()
+        proc.communicate(config_file)
         end_time = time() - start_time
         
         with open(resultfile, 'a') as f:

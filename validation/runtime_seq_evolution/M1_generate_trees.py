@@ -1,17 +1,31 @@
 # -*- coding: utf-8 -*-
 
-import os
+import os, decimal
 
 import asymmetree.treeevolve as te
 from asymmetree.tools.PhyloTreeTools import to_newick
 
-directory = 'testfiles_trees'
+tree_directory = 'testfiles_trees'
+seq_directory = 'testfiles_seqs'
+
 tree_sizes = [10, 20, 50] #, 100, 200]
 lengths = [50, 100, 200] #, 500, 1000, 2000]
 repeats = 100
 
-if not os.path.exists(directory):
-    os.mkdir(directory)
+if not os.path.exists(tree_directory):
+    os.mkdir(tree_directory)
+
+
+
+ctx = decimal.Context()
+ctx.prec = 20
+
+def float_to_str(f):
+    """Convert the given float to a string, without resorting to scientific 
+    notation.
+    """
+    d1 = ctx.create_decimal(repr(f))
+    return format(d1, 'f')
 
 
 for i in range(repeats):
@@ -25,35 +39,32 @@ for i in range(repeats):
         
         for v in S.preorder():
             v.label = f't{v.label}'
+            v.dist = float_to_str(v.dist)
         
         newick = to_newick(S, color=False, distance=True, label_inner=True)
         
-        with open(os.path.join(directory, f'tree_{i}_{N}'), 'w') as f:
+        delattr(S.root, 'dist')
+        newick_indelible = to_newick(S, color=False, distance=True, label_inner=False)
+        
+        with open(os.path.join(tree_directory, f'tree_{i}_{N}'), 'w') as f:
             f.write(newick)
             f.write('\n')
         
         for l in lengths:
             
-            outfile1 = os.path.join('indelible1', f'seqs_{i}_{N}_{l}')
+            for j in range(1,3):
             
-            # configuration files for INDELible
-            with open(os.path.join(directory, f'tree_{i}_{N}_{l}.indelible1'), 'w') as f:
-                f.write( '[TYPE] AMINOACID 1\n'\
-                         '[MODEL] m1\n'\
-                         '  [submodel] WAG\n')
-                f.write(f'[TREE] t1 {newick}\n')
-                f.write(f'[PARTITIONS] p1 [t1 m1 {l}]\n')
-                f.write(f'[EVOLVE] p1 1 {outfile1}\n')
-            
-            outfile2 = os.path.join('indelible2', f'seqs_{i}_{N}_{l}')
-            
-            # configuration files for INDELible
-            with open(os.path.join(directory, f'tree_{i}_{N}_{l}.indelible2'), 'w') as f:
-                f.write( '[TYPE] AMINOACID 2\n'\
-                         '[MODEL] m1\n'\
-                         '  [submodel] WAG\n'\
-                         '  [rates] 0 1 5\n')
-                f.write(f'[TREE] t1 {newick}\n')
-                f.write(f'[PARTITIONS] p1 [t1 m1 {l}]\n')
-                f.write(f'[EVOLVE] p1 1 {outfile2}\n')
+                outfile = os.path.join(seq_directory, f'indelible{j}_{i}_{N}_{l}')
+                
+                # configuration files for INDELible
+                with open(os.path.join(tree_directory,
+                                       f'tree_{i}_{N}_{l}.indelible{j}'), 'w') as f:
+                    f.write(f'[TYPE] AMINOACID {j}\n'\
+                             '[MODEL] m1\n'\
+                             '  [submodel] WAG\n')
+                    if j == 2:
+                        f.write('  [rates] 0 1 5\n')
+                    f.write(f'[TREE] t1 {newick_indelible}\n')
+                    f.write(f'[PARTITIONS] p1 [t1 m1 {l}]\n')
+                    f.write(f'[EVOLVE] p1 1 {outfile}\n')
             
