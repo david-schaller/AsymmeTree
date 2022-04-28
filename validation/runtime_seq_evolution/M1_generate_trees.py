@@ -9,7 +9,7 @@ tree_directory = 'testfiles_trees'
 seq_directory = 'testfiles_seqs'
 
 tree_sizes = [10, 20, 50] #, 100, 200]
-lengths = [50, 100, 200] #, 500, 1000, 2000]
+lengths = [50, 100, 200, 500, 1000, 2000]
 repeats = 100
 
 if not os.path.exists(tree_directory):
@@ -62,7 +62,7 @@ for i in range(repeats):
                 
                 # configuration files for INDELible
                 with open(os.path.join(tree_directory,
-                                       f'tree_{i}_{N}_{l}.indelible{j}'), 'w') as f:
+                                       f'indelible{j}_{i}_{N}_{l}.txt'), 'w') as f:
                     f.write(f'[TYPE] AMINOACID {j}\n'\
                              '[MODEL] m1\n'\
                              '  [submodel] WAG\n')
@@ -107,7 +107,9 @@ for i in range(repeats):
                             f"rateVarModels := [RateVarModel({rate_var_model})];\n"
                              "modelAssignments := [1]:\n"
                              "modelSwitchS := [[1]]:\n"
-                             "modelSwitchD := [[1]]:\n"
+                             "modelSwitchD := [[1]]:\n\n"
+                             
+                             "simOutput := {'Fasta', NULL}:\n"
                             )
 
             

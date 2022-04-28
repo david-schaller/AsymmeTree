@@ -23,8 +23,8 @@ for direct in (seq_directory, result_directory):
     if not os.path.exists(direct):
         os.mkdir(direct)
 
-files = glob.glob(os.path.join(tree_directory, 'tree*'))
-regex = re.compile(r".*tree\_([0-9]+)\_([0-9]+)\_([0-9]+)\.indelible")
+files = glob.glob(os.path.join(tree_directory, '*'))
+regex = re.compile(r".*indelible1\_([0-9]+)\_([0-9]+)\_([0-9]+)\.txt")
 
 tree_sizes = set()
 lengths = set()
@@ -125,13 +125,30 @@ for i, N, l in itertools.product(repeats[:2], tree_sizes, lengths):
     for j in range(1,3):
         
         config_file = os.path.join(tree_directory,
-                                    f'tree_{i}_{N}_{l}.indelible{j}')
+                                    f'indelible{j}_{i}_{N}_{l}.txt')
         config_file = config_file.encode('utf-8') + b'\n'
         args = [binary_path]
         
         proc = subprocess.Popen(args, shell=True, stdin=subprocess.PIPE)
         start_time = time()
         proc.communicate(config_file)
+        proc.wait()
+        end_time = time() - start_time
+        
+        with open(resultfile, 'a') as f:
+            f.write(f'\n{i},{N},{l},{tool},{j},{end_time}')
+    
+    tool = 'alf'
+    binary_path = 'alfsim'
+    
+    for j in range(1,3):
+        
+        config_file = os.path.join(tree_directory,
+                                    f'alf{j}_{i}_{N}_{l}.drw')
+        args = [binary_path + ' ' + config_file]
+        
+        start_time = time()
+        proc = subprocess.Popen(args, shell=True, stdin=subprocess.PIPE)
         proc.wait()
         end_time = time() - start_time
         
