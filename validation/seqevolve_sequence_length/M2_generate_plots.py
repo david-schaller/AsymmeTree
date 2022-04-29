@@ -78,4 +78,4 @@ for i in range(len(models)):
 
 
 plt.tight_layout()
-plt.savefig("results/distance_boxplot.pdf", dpi=450)
+plt.savefig('results/distance_boxplot.pdf')
