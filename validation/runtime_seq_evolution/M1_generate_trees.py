@@ -8,8 +8,8 @@ from asymmetree.tools.PhyloTreeTools import to_newick
 tree_directory = 'testfiles_trees'
 seq_directory = 'testfiles_seqs'
 
-tree_sizes = [10, 20, 50] #, 100, 200]
-lengths = [50, 100, 200, 500, 1000, 2000]
+tree_sizes = [20, 50, 100]
+lengths = [100, 500, 2000]
 repeats = 100
 
 if not os.path.exists(tree_directory):

@@ -47,7 +47,7 @@ print(lengths)
 with open(resultfile, 'w') as f:
     f.write('repeat,N,l,tool,mode,time')
 
-for i, N, l in itertools.product(repeats[:2], tree_sizes, lengths):
+for i, N, l in itertools.product(repeats, tree_sizes, lengths):
     print(i, N, l)
     tree_file = os.path.join(tree_directory, f'tree_{i}_{N}')
     
