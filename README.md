@@ -170,7 +170,8 @@ The function `simulate_species_tree(N, **kwargs)` simulates a dated species tree
 | `rescale_to_height=False` | specify the divergence time between the (planted) root and the leaves i.e. the final height of the dated tree |
 | `contraction_probability=0.0` | probability that an inner edge is contracted; the default is 0.0, in which case the tree is binary; only one of this parameter and `contraction_proportion` may be non-zero |
 | `contraction_proportion=0.0` | the proportion of inner edges to be contracted.; the default is 0.0, in which case the tree is binary; only one of this parameter and `contraction_probability` may be non-zero |
-|  `contraction_bias=False` | specifies whether shorter edges, i.e., with a smaller difference t of the time stamps, have a higher probability to be contracted; only relevant if `contraction_proportion > 0.0`; the default is False, in which case all edges have the same probability to be contracted, the options `'inverse'` and `'exponential'` mean that an edge is sampled weighted by 1/t or e^(-t), respectively |
+| `contraction_bias=False` | specifies whether shorter edges, i.e., with a smaller difference t of the time stamps, have a higher probability to be contracted; only relevant if `contraction_proportion > 0.0`; the default is False, in which case all edges have the same probability to be contracted, the options `'inverse'` and `'exponential'` mean that an edge is sampled weighted by 1/(a * t) or e^(-a * t), respectively, where a is a user-defined factor (`bias_strength`) |
+| `bias_strength=1.0` | intensity factor for preferring shorter edges to be contracted |
 
 </details>
 

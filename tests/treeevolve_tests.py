@@ -18,7 +18,9 @@ class TestTreeEvolvePackage(unittest.TestCase):
         for model in ('innovation', 'yule', 'BDP', 'EBDP'):
             
             species_tree = te.simulate_species_tree(N, model=model,
-                                                    non_binary=0.2)
+                                                    contraction_proportion=0.2,
+                                                    contraction_bias='inverse',
+                                                    bias_strength=1.5)
             
             self.assertTrue(species_tree._assert_integrity())
             
@@ -34,7 +36,7 @@ class TestTreeEvolvePackage(unittest.TestCase):
         for _ in range(repeats):
             
             species_tree = te.simulate_species_tree(N, model='innovation',
-                                                    non_binary=0.2)
+                                                    contraction_probability=0.2)
             
             gene_tree = te.simulate_dated_gene_tree(species_tree,
                             dupl_rate=1.0, loss_rate=1.0, hgt_rate=0.5,

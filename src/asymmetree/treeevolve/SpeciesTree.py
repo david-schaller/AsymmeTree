@@ -178,7 +178,11 @@ def simulate_species_tree_age(age, model='yule', **kwargs):
         relevant if 'contraction_proportion' > 0.0. The default is False,
         in which case all edges have the same probability to be contracted.
         The options 'inverse' and 'exponential' mean that an edge is sampled
-        weighted by 1/t or e^(-t), respectively.
+        weighted by 1/(a * t) or e^(-a * t), respectively, where a is a
+        user-defined factor.
+    bias_strength : float, optional
+        Intensity factor for preferring shorter edges to be contracted. The
+        default is 1.0.
         
     Raises
     ------
@@ -236,6 +240,7 @@ def nonbinary(tree,
               contraction_probability=0.0,
               contraction_proportion=0.0,
               contraction_bias=False,
+              bias_strength=1.0,
               inplace=False,
               **kwargs):
     """Introduce multifurcation into a tree by contraction of inner edges.
@@ -258,7 +263,11 @@ def nonbinary(tree,
         relevant if 'contraction_proportion' > 0.0. The default is False,
         in which case all edges have the same probability to be contracted.
         The options 'inverse' and 'exponential' mean that an edge is sampled
-        weighted by 1/t or e^(-t), respectively.
+        weighted by 1/(a * t) or e^(-a * t), respectively, where a is a
+        user-defined factor.
+    bias_strength : float, optional
+        Intensity factor for preferring shorter edges to be contracted. The
+        default is 1.0.
     inplace : bool, optional
         If True, the edges are contracted in the original tree instance;
         otherwise a copy of the tree in which edges are contracted is returned.
@@ -285,6 +294,10 @@ def nonbinary(tree,
     if contraction_proportion < 0.0 or contraction_proportion > 1.0:
         raise ValueError('contraction proportion must be in [0.0, 1.0]')
     
+    if not isinstance(bias_strength, (int, float)) or \
+        bias_strength <= 0.0:
+        raise ValueError('factor for contraction bias must be > 0')
+    
     if not inplace:
         tree = tree.copy()
     
@@ -295,7 +308,7 @@ def nonbinary(tree,
          
     elif contraction_proportion > 0.0:
         edges = _select_edges_by_proportion(tree, contraction_proportion,
-                                            contraction_bias,
+                                            contraction_bias, bias_strength,
                                             exclude_planted_edge=True)
         tree.contract(edges)
     
@@ -343,10 +356,12 @@ def _select_edges_by_probability(tree, p, exclude_planted_edge=True):
     return edges
 
 
-def _select_edges_by_proportion(tree, p, weighting, exclude_planted_edge=True):
+def _select_edges_by_proportion(tree, p, weighting, weighting_factor,
+                                exclude_planted_edge=True):
     
-    edges = [e for e in tree.inner_edges() if not
-             (exclude_planted_edge and (e[0] is tree.root) and len(e[0].children) == 1)]
+    edges = [e for e in tree.inner_edges()
+             if not (exclude_planted_edge and (e[0] is tree.root) and 
+                     len(e[0].children) == 1)]
     
     # number of edges to be sampled
     k = round(p * len(edges))
@@ -356,9 +371,9 @@ def _select_edges_by_proportion(tree, p, weighting, exclude_planted_edge=True):
     else:
         distances = [abs(u.tstamp-v.tstamp) for u, v in edges]
         if weighting == 'inverse':
-            weights = 1 / np.asarray(distances)
+            weights = 1 / (weighting_factor * np.asarray(distances))
         elif weighting == 'exponential':
-            weights = np.exp(-np.asarray(distances))
+            weights = np.exp(-weighting_factor * np.asarray(distances))
         else:
             raise ValueError(f'unknown mode for weighted sampling: {weighting}')
         
