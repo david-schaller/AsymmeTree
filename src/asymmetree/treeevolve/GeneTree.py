@@ -55,24 +55,27 @@ def simulate_dated_gene_tree(S, **kwargs):
         to be the recipient species in an additive HGT event. The default
         is False, in which case the recipient species is chosen at random
         among the co-existing species. The options 'inverse' and
-        'exponential' mean that a species branch is sampled weighted by 1/t 
-        or e^(-t), resp., where t is the elapsed time between the last
-        common ancestor of the two species branches and the time of the
-        event, see [1].
+        'exponential' mean that a species branch is sampled weighted by
+        1/(a * t) or e^(-(a * t)), resp., where t is the elapsed time between
+        the last common ancestor of the two species branches and the time of
+        the event, see [1], and a is a user-defined factor.
     replacing_transfer_distance_bias : str or bool, optional
         Specifies whether closer related gene branches have a higher
         probability to be replaced in a replacing HGT event. The default
         is False, in which case the replaced gene is chosen at random
         among the co-existing gene branches. The options 'inverse' and
-        'exponential' mean that a species branch is sampled weighted by 1/t 
-        or e^(-t), resp., where t is the elapsed time between the last
-        common ancestor of the two gene branches and the time of the
-        event, see [1].
+        'exponential' mean that a species branch is sampled weighted by
+        1/(a * t) or e^(-(a * t)), resp., where t is the elapsed time between
+        the last common ancestor of the two gene branches and the time of the
+        event, see [1], and a is a user-defined factor.
     transfer_distance_bias : str or bool, optional
         Set a common bias mode for additive and replacing HGT, see
         description of parameters 'additive_transfer_distance_bias' and
         'replacing_transfer_distance_bias'. If the latter are no set to
         the default (False), then these optioned are prioritized.
+    transfer_distance_bias_strength : float, optional
+        Intensity of the transfer distance bias (factor a) for additive and
+        replacing HGT. The default is 1.0.
     
     Returns
     -------
@@ -154,6 +157,7 @@ class GeneTreeSimulator:
                  additive_transfer_distance_bias=False,
                  replacing_transfer_distance_bias=False,
                  transfer_distance_bias=False,
+                 transfer_distance_bias_strength=1.0,
                  **kwargs):
         """Simulate a gene tree along the specified species tree.
         
@@ -182,24 +186,27 @@ class GeneTreeSimulator:
             to be the recipient species in an additive HGT event. The default
             is False, in which case the recipient species is chosen at random
             among the co-existing species. The options 'inverse' and
-            'exponential' mean that a species branch is sampled weighted by 1/t 
-            or e^(-t), resp., where t is the elapsed time between the last
-            common ancestor of the two species branches and the time of the
-            event, see [1].
+            'exponential' mean that a species branch is sampled weighted by
+            1/(a * t) or e^(-(a * t)), resp., where t is the elapsed time between
+            the last common ancestor of the two species branches and the time of
+            the event, see [1], and a is a user-defined factor.
         replacing_transfer_distance_bias : str or bool, optional
             Specifies whether closer related gene branches have a higher
             probability to be replaced in a replacing HGT event. The default
             is False, in which case the replaced gene is chosen at random
             among the co-existing gene branches. The options 'inverse' and
-            'exponential' mean that a species branch is sampled weighted by 1/t 
-            or e^(-t), resp., where t is the elapsed time between the last
-            common ancestor of the two gene branches and the time of the
-            event, see [1].
+            'exponential' mean that a species branch is sampled weighted by
+            1/(a * t) or e^(-(a * t)), resp., where t is the elapsed time between
+            the last common ancestor of the two gene branches and the time of the
+            event, see [1], and a is a user-defined factor.
         transfer_distance_bias : str or bool, optional
             Set a common bias mode for additive and replacing HGT, see
             description of parameters 'additive_transfer_distance_bias' and
             'replacing_transfer_distance_bias'. If the latter are no set to
             the default (False), then these optioned are prioritized.
+        transfer_distance_bias_strength : float, optional
+            Intensity of the transfer distance bias (factor a) for additive and
+            replacing HGT. The default is 1.0.
         
         Returns
         -------
@@ -236,6 +243,7 @@ class GeneTreeSimulator:
                 raise ValueError(f"unknown mode for transfer distance bias: "\
                                  f"{m}")
         
+        # mode for transfer distance bias for additive and replacing HGT
         self._additive_transfer_distance_bias = additive_transfer_distance_bias
         self._replacing_transfer_distance_bias = replacing_transfer_distance_bias
         if transfer_distance_bias:
@@ -243,6 +251,12 @@ class GeneTreeSimulator:
                 self._additive_transfer_distance_bias = transfer_distance_bias
             if not replacing_transfer_distance_bias:
                 self._replacing_transfer_distance_bias = transfer_distance_bias
+        
+        # intensity factor for transfer distance bias
+        if not isinstance(transfer_distance_bias_strength, (int, float)) or \
+            transfer_distance_bias_strength <= 0.0:
+            raise ValueError('factor for transfer distance bias must be > 0')
+        self._transfer_distance_bias_strength = transfer_distance_bias_strength
         
         self._reset()
         
@@ -561,10 +575,11 @@ class GeneTreeSimulator:
             else:
                 distances = [(self.lca_S(S_edge, e).tstamp-event_tstamp)
                              for e in valid_species]
+                a = self._transfer_distance_bias_strength
                 if self._additive_transfer_distance_bias == 'inverse':
-                    weights = 1 / np.asarray(distances)
+                    weights = 1 / (a * np.asarray(distances))
                 elif self._additive_transfer_distance_bias == 'exponential':
-                    weights = np.exp(-np.asarray(distances))
+                    weights = np.exp(-a * np.asarray(distances))
                 
                 trans_edge = random.choices(valid_species, weights=weights)[0]
             
