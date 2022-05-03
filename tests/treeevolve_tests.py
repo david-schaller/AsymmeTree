@@ -42,6 +42,9 @@ class TestTreeEvolvePackage(unittest.TestCase):
                             dupl_rate=1.0, loss_rate=1.0, hgt_rate=0.5,
                             prohibit_extinction='per_species')
             
+            te.rate_heterogeneity(gene_tree, species_tree, 
+                                  autocorr_variance=0.2, inplace=True)
+            
             # check that there is no extinction in any species
             color_dict = {l.label: [] for l in species_tree.preorder()
                           if not l.children and l.event != 'L'}

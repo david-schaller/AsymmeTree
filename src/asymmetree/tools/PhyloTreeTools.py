@@ -92,6 +92,21 @@ def sorted_edges(tree):
                   key=lambda e: (e[0].tstamp, e[1].tstamp),
                   reverse=True)
 
+def distance_from_timing(tree):
+    """Adjusts all distances according to the time stamp difference.
+    
+    Parameters
+    ----------
+    tree : Tree
+        A phylogenetic tree with nodes that have a `tstamp` attribute.
+    """
+    
+    if tree.root:
+        tree.root.dist = 0.0
+    
+    for u, v in tree.edges():
+        v.dist = abs(u.tstamp - v.tstamp)
+
 
 def delete_and_reconnect(tree, node,
                          add_distances=True,

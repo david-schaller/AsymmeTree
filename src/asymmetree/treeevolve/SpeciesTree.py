@@ -10,7 +10,8 @@ import numpy as np
 from tralda.datastructures.Tree import Tree, TreeNode
 
 from asymmetree.tools.PhyloTreeTools import (delete_losses_and_contract,
-                                             remove_planted_root)
+                                             remove_planted_root,
+                                             distance_from_timing)
 
 
 __author__ = 'David Schaller'
@@ -142,6 +143,9 @@ def simulate_species_tree(N,
     # rescale to specified height
     if rescale_to_height is not False:
         _rescale(tree, rescale_to_height, inplace=True)
+    
+    # assign the distance attribute to all vertices
+    distance_from_timing(tree)
         
     return tree
 
@@ -232,6 +236,9 @@ def simulate_species_tree_age(age, model='yule', **kwargs):
         
     # make tree non_binary by random contraction of edges
     nonbinary(tree, inplace=True, **kwargs)
+    
+    # assign the distance attribute to all vertices
+    distance_from_timing(tree)
         
     return tree
 
@@ -301,16 +308,18 @@ def nonbinary(tree,
     if not inplace:
         tree = tree.copy()
     
+    edges = False
     if contraction_probability > 0.0:
          edges = _select_edges_by_probability(tree, contraction_probability,
                                               exclude_planted_edge=True)
-         tree.contract(edges)
          
     elif contraction_proportion > 0.0:
         edges = _select_edges_by_proportion(tree, contraction_proportion,
                                             contraction_bias, bias_strength,
                                             exclude_planted_edge=True)
+    if edges:
         tree.contract(edges)
+        distance_from_timing(tree)
     
     return tree
 
@@ -336,7 +345,6 @@ def _rescale(tree, height, inplace=True):
     
     for v in tree.preorder():
         v.tstamp *= scaling_factor
-        v.dist   *= scaling_factor
     
     return tree
             
@@ -483,7 +491,6 @@ def _innovation_model(N, planted, ultrametric=True):
                 
     if ultrametric:         
         simulate_timing(tree)
-        distance_from_timing(tree)
     
     return tree
 
@@ -504,17 +511,8 @@ def simulate_timing(tree):
             while pos.children:
                 length += 1
                 pos = pos.children[np.random.randint(len(pos.children))]
-            v.tstamp = v.parent.tstamp * (1 - 2 * np.random.uniform() / (length+1))
-            
-
-def distance_from_timing(tree):
-    """Adjusts all distances according to the time stamp difference."""
-    
-    if tree.root:
-        tree.root.dist = 0.0
-    
-    for u, v in tree.edges():
-        v.dist = abs(u.tstamp - v.tstamp)
+            v.tstamp = v.parent.tstamp * (1 - 2 * np.random.uniform() / 
+                                          (length+1))
 
 
 def _reverse_time_stamps(tree):
@@ -534,7 +532,7 @@ def _yule(N, birth_rate):
     elif birth_rate <= 0.0:
         raise ValueError("birth rate must be >0")
     
-    tree = Tree(TreeNode(label=0, event='S', dist=0.0, tstamp=0.0))
+    tree = Tree(TreeNode(label=0, event='S', tstamp=0.0))
     tree.number_of_species = N
     
     branches = [(1, tree.root)]
@@ -549,7 +547,6 @@ def _yule(N, birth_rate):
         i = np.random.randint(len(branches))
         branch_id, parent = branches[i]
         spec_node = TreeNode(label=branch_id, event='S',
-                             dist=forward_time-parent.tstamp,
                              tstamp=forward_time)
         parent.add_child(spec_node)
         branches[i] = (node_counter, spec_node)
@@ -562,7 +559,6 @@ def _yule(N, birth_rate):
     # finalize the branches
     for branch_id, parent in branches:
         parent.add_child( TreeNode(label=branch_id, event='S',
-                                   dist=forward_time-parent.tstamp,
                                    tstamp=forward_time) )
     
     _reverse_time_stamps(tree)
@@ -577,7 +573,7 @@ def _yule_age(age, birth_rate):
     elif birth_rate <= 0.0:
         raise ValueError("birth rate must be >0")
     
-    tree = Tree(TreeNode(label=0, event='S', dist=0.0, tstamp=0.0))
+    tree = Tree(TreeNode(label=0, event='S', tstamp=0.0))
     
     branches = [(1, tree.root)]
     forward_time = 0.0
@@ -595,7 +591,6 @@ def _yule_age(age, birth_rate):
         i = np.random.randint(len(branches))
         branch_id, parent = branches[i]
         spec_node = TreeNode(label=branch_id, event='S',
-                             dist=forward_time-parent.tstamp,
                              tstamp=forward_time)
         parent.add_child(spec_node)
         branches[i] = (node_counter, spec_node)
@@ -605,7 +600,6 @@ def _yule_age(age, birth_rate):
     # finalize the branches
     for branch_id, parent in branches:
         parent.add_child( TreeNode(label=branch_id, event='S',
-                                   dist=age-parent.tstamp,
                                    tstamp=age) )
     
     # reverse such that t(root) = age and t(leaves) = 0.0
@@ -705,7 +699,7 @@ def _EBDP_backward(N, episodes, max_tries=500):
         t = 0.0
         i = 0
         
-        branches = [TreeNode(label=j, event='S', dist=0.0, tstamp=t)
+        branches = [TreeNode(label=j, event='S', tstamp=t)
                     for j in range(N)]
         id_counter = N
         
@@ -715,8 +709,7 @@ def _EBDP_backward(N, episodes, max_tries=500):
             losses_to_add = round(len(branches) / rho_i) - len(branches)
             for j in range(losses_to_add):
                 branches.append( TreeNode(label=id_counter,
-                                          event='L',
-                                          dist=0.0, tstamp=t) )
+                                          event='L', tstamp=t) )
             id_counter += losses_to_add
             
             while branches:
@@ -733,7 +726,7 @@ def _EBDP_backward(N, episodes, max_tries=500):
                     if birth_i > np.random.uniform(low=0.0, high=birth_i+death_i):
                         # speciation event drawn
                         spec_node = TreeNode(label=id_counter, event='S',
-                                             dist=0.0, tstamp=t)
+                                             tstamp=t)
                         id_counter += 1
                         if len(branches) > 1:
                             k, l = np.random.choice(len(branches), 2,
@@ -751,16 +744,11 @@ def _EBDP_backward(N, episodes, max_tries=500):
                     else:
                         # extinction event drawn
                         branches.append( TreeNode(label=id_counter,
-                                                  event='L',
-                                                  dist=0.0, tstamp=t) )
+                                                  event='L', tstamp=t) )
                         id_counter += 1
         
         # return tree with the following probability
         if np.random.random() < (1 / birth_i) / birth_inv_sum:
-            
-            for v in tree.preorder():
-                if v.parent:
-                    v.dist = v.parent.tstamp - v.tstamp
             
             return tree
         
@@ -849,7 +837,6 @@ def _EBDP_mass_extinction(branches, surviving_rate, t):
         branch_id, parent = branches[j]
         loss_node = TreeNode(label=branch_id,
                              event='L',
-                             dist=t-parent.tstamp,
                              tstamp=t)
         parent.add_child(loss_node)
         branches.pop(j)
@@ -858,7 +845,7 @@ def _EBDP_mass_extinction(branches, surviving_rate, t):
 def _EBDP_age_forward(age, episodes):
     """Episodic birth–death process (EBDP), forward algorithm with max. age."""
     
-    tree = Tree(TreeNode(label=0, event='S', dist=0.0, tstamp=0.0))
+    tree = Tree(TreeNode(label=0, event='S', tstamp=0.0))
     
     branches = [(1, tree.root)]
     forward_time = 0.0
@@ -891,7 +878,6 @@ def _EBDP_age_forward(age, episodes):
             if birth_rate > np.random.uniform(low=0.0, high=birth_rate+death_rate):
                 # speciation event drawn
                 spec_node = TreeNode(label=branch_id, event='S',
-                                     dist=forward_time-parent.tstamp,
                                      tstamp=forward_time)
                 parent.add_child(spec_node)
                 branches[j] = (node_counter, spec_node)
@@ -901,7 +887,6 @@ def _EBDP_age_forward(age, episodes):
                 # extinction event drawn
                 loss_node = TreeNode(label=branch_id,
                                      event='L',
-                                     dist=forward_time-parent.tstamp,
                                      tstamp=forward_time)
                 parent.add_child(loss_node)
                 branches.pop(j)
@@ -909,7 +894,6 @@ def _EBDP_age_forward(age, episodes):
     # finalize the (surviving) branches
     for branch_id, parent in branches:
         parent.add_child( TreeNode(label=branch_id, event='S',
-                                   dist=age-parent.tstamp,
                                    tstamp=age) )
     
     # reverse such that t(root) = age and t(surviving leaves) = 0.0

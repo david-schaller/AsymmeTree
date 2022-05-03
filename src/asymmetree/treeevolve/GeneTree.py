@@ -16,7 +16,8 @@ from tralda.datastructures.Tree import Tree, TreeNode, LCA
 from asymmetree.tools.PhyloTreeTools import (sorted_nodes,
                                              sorted_edges,
                                              delete_losses_and_contract,
-                                             remove_planted_root)
+                                             remove_planted_root,
+                                             distance_from_timing)
 
 
 __author__ = 'David Schaller'
@@ -389,6 +390,9 @@ class GeneTreeSimulator:
                     self._hgt(event_tstamp, branch)
                 
                 t = event_tstamp
+        
+        # add the 'dist' attribute to the nodes
+        distance_from_timing(self.T)
 
         return self.T
     
@@ -419,12 +423,12 @@ class GeneTreeSimulator:
             # root is a speciation event
             root = TreeNode(label=0, event='S',
                             color=self.S.root.label, 
-                            dist=0.0, tstamp=self.S.root.tstamp)
+                            tstamp=self.S.root.tstamp)
         else:                    
             # planted species tree
             root = TreeNode(label=0, event=None,
                             color=self.S.root.label,
-                            dist=0.0, tstamp=self.S.root.tstamp)
+                            tstamp=self.S.root.tstamp)
             
         T = Tree(root)
         self.id_counter += 1
@@ -456,7 +460,6 @@ class GeneTreeSimulator:
             spec_node = TreeNode(label=branch.label,
                                  event='S',
                                  color=S_edge.label, tstamp=S_edge.tstamp,
-                                 dist=abs(S_edge.tstamp-branch.parent.tstamp),
                                  transferred=branch.transferred)
             branch.parent.add_child(spec_node)
             
@@ -494,7 +497,6 @@ class GeneTreeSimulator:
                              event='D',
                              color=(S_edge.parent.label, S_edge.label),
                              tstamp=event_tstamp,
-                             dist=abs(event_tstamp-branch.parent.tstamp),
                              transferred=branch.transferred)
         branch.parent.add_child(dupl_node)
         self.ES_to_b[S_edge].remove(branch)
@@ -523,7 +525,6 @@ class GeneTreeSimulator:
                              event='L',
                              color=(S_edge.parent.label, S_edge.label),
                              tstamp=event_tstamp,
-                             dist=abs(event_tstamp-branch.parent.tstamp),
                              transferred=branch.transferred)
         branch.parent.add_child(loss_node)
         self.ES_to_b[S_edge].remove(branch)
@@ -623,7 +624,6 @@ class GeneTreeSimulator:
                                 event='H',
                                 color=(S_edge.parent.label, S_edge.label),
                                 tstamp=event_tstamp,
-                                dist=abs(event_tstamp-branch.parent.tstamp),
                                 transferred=branch.transferred)
             branch.parent.add_child(hgt_node)
             self.ES_to_b[S_edge].remove(branch)

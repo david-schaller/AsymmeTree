@@ -194,7 +194,7 @@ class Visualizer:
                     self.write_label(x+self.symbolsize+0.02, y, text)
                 
     
-    def draw_leaf(self, x, y, color='white', leftalign=True):
+    def draw_leaf(self, x, y, color='white', leftalign=False):
         
         if leftalign:
             x += self.symbolsize/2
@@ -221,7 +221,7 @@ class Visualizer:
                      linestyle='-', linewidth=1)
     
     
-    def draw_root(self, x, y, rightalign=True):
+    def draw_root(self, x, y, rightalign=False):
         
         if rightalign:
             x -= self.symbolsize/2
@@ -297,6 +297,7 @@ if __name__ == '__main__':
     import asymmetree.treeevolve as te
     
     S = te.simulate_species_tree(6, planted=True, contraction_probability=0.2)
+    # S = te.simulate_species_tree(6, model='yule', birth_rate=1.0, rescale_to_height=1.0)
     
     T_simulator = te.GeneTreeSimulator(S)
     T = T_simulator.simulate(dupl_rate=1.0,
