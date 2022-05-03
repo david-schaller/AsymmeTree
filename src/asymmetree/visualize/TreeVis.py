@@ -10,38 +10,84 @@ import matplotlib.patches as mpatches
 __author__ = 'David Schaller'
 
 
-class GeneTreeVis:
+def assign_species_colors(tree):
     
-    def __init__(self, tree, scale_symbols=1.0, species_info=False):
+    return _assign_cmap({v.label for v in tree.leaves() if v.event != 'L'})
+
+
+def assign_gene_colors(tree, species_colors=None):
+    
+    if species_colors is None:
+        
+        species_colors = _assign_cmap({v.color for v in tree.leaves()
+                                       if v.event != 'L'})
+    
+    return {v.label: species_colors[v.color] for v in tree.leaves()
+            if v.event != 'L'}
+
+
+def assign_colors(species_tree, gene_tree):
+    
+    species_colors = assign_species_colors(species_tree)
+    
+    return species_colors, assign_gene_colors(gene_tree,
+                                              species_colors=species_colors)
+
+
+def _assign_cmap(colors):
+    
+    color_dict = {}
+    
+    if len(colors) <= 10:
+        cmap = plt.get_cmap('tab10')(np.arange(len(colors), dtype=int))
+    else:
+        cmap = plt.get_cmap('jet')(np.linspace(0, 1.0, len(colors)))
+        
+    for label, color in zip(colors, cmap):
+        color_dict[label] = color
+    
+    return color_dict
+
+
+def visualize(tree, color_dict=None, save_as=False, scale_symbols=1.0):
+    
+    vis = Visualizer(tree, color_dict=color_dict, scale_symbols=scale_symbols)
+    vis.draw(save_as=save_as)
+
+
+class Visualizer:
+    
+    def __init__(self, tree, color_dict=None,
+                 scale_symbols=1.0, species_info=False):
         
         self.tree = tree
+        
+        if color_dict:
+            self.colors = color_dict
+        else:
+            self.colors = {v.label: 'white' for v in tree.preorder()}
         
         self.species_info = species_info
         
         self.symbolsize = 0.03 * scale_symbols
         self.symbollw = 0.04
         self.leafs_per_vertical_unit = 15
-        self.symbol_zorder = 3      
-        
-        # print(tree.to_newick())
+        self.symbol_zorder = 3
         
         self.distance_dict = {}
-        self.colors = {}
         #self.divtime_dict {}
-        self.leaf_counter = 0
+        self.leaf_counter = sum(1 for _ in tree.leaves())
         self.node_positions = {}
         
-        self.draw()
-        
     
-    def draw(self):
+    def draw(self, distance_mode='evolutionary', save_as=False):
         
         self.fig, self.ax = plt.subplots()
         self.ax.set_aspect('equal')
         self.ax.invert_yaxis()
         
-        self.initial_traversal()
-        self.assign_colors()
+        self.initial_traversal(distance_mode)
+        # self.assign_colors()
         self.assign_positions()
         self.draw_edges()
         self.draw_nodes()
@@ -56,42 +102,30 @@ class GeneTreeVis:
         ymin, ymax = self.ax.get_ylim()
         self.fig.set_size_inches(5*abs(xmax-xmin), 5*abs(ymax-ymin)+0.4)
         plt.tight_layout()
-        plt.show()
+        if save_as:
+            plt.savefig(save_as)
+        else:
+            plt.show()
         
     
-    def initial_traversal(self, distance='evolutionary'):
+    def initial_traversal(self, distance_mode):
         
         xmax = 0.0
         
         for v in self.tree.preorder():
-            if distance == 'evolutionary':
+            if distance_mode == 'evolutionary':
                 if not v.parent:
                     self.distance_dict[v] = 0.0
                 else:
                     self.distance_dict[v] = self.distance_dict[v.parent] + v.dist
                     if self.distance_dict[v] > xmax:
                         xmax = self.distance_dict[v]
-            elif distance == 'divtime':
+            elif distance_mode == 'divergence time':
                 raise ValueError('divergence time not yet implemented')
             else:
-                raise ValueError("distance mode '{}' not supported".format(distance))
-            if not v.children:
-                self.leaf_counter += 1
-                if v.event != 'L' and v.color not in self.colors:
-                    self.colors[v.color] = len(self.colors)
+                raise ValueError(f"distance mode '{distance_mode}' not supported")
                 
         self.ax.set_xlim(-0.1,xmax+0.5)
-        
-    
-    def assign_colors(self):
-        
-        if len(self.colors) <= 10:
-            cmap = plt.get_cmap('tab10')(np.arange(len(self.colors), dtype=int))
-        else:
-            cmap = plt.get_cmap('jet')(np.linspace(0, 1.0, len(self.colors)))
-        for color_label, color in zip(self.colors.keys(), cmap):
-            self.colors[color_label] = color
-        # print(self.colors)
     
     
     def assign_positions(self):
@@ -116,7 +150,10 @@ class GeneTreeVis:
         
         for v in self.tree.preorder():
             if v.parent:
-                color = 'red' if v.transferred else 'black'
+                if hasattr(v, 'transferred') and v.transferred:
+                    color = 'red'
+                else:
+                    color = 'black'
                 self.ax.plot([self.node_positions[v.parent][0],
                               self.node_positions[v][0]],
                              [self.node_positions[v][1],
@@ -149,11 +186,10 @@ class GeneTreeVis:
                     self.draw_loss(*self.node_positions[v])
                 else:
                     x, y = self.node_positions[v]
-                    self.draw_leaf(x, y,
-                                   color=self.colors[v.color])
+                    self.draw_leaf(x, y, color=self.colors[v.label])
                     if not self.species_info:
                         text = str(v.label)
-                    else:
+                    elif hasattr(v, 'color'):
                         text = '{} <{}>'.format(v.label, v.color)
                     self.write_label(x+self.symbolsize+0.02, y, text)
                 
@@ -262,13 +298,17 @@ if __name__ == '__main__':
     
     S = te.simulate_species_tree(6, planted=True, contraction_probability=0.2)
     
-    TGT_simulator = te.GeneTreeSimulator(S)
-    TGT = TGT_simulator.simulate(dupl_rate=1.0,
-                                 loss_rate=1.0,
-                                 hgt_rate=1.0,
-                                 dupl_polytomy=0.5,
-                                 replace_prob=0.5,
-                                 transfer_distance_bias='inverse')
-    TGT = te.rate_heterogeneity(TGT, S)
+    T_simulator = te.GeneTreeSimulator(S)
+    T = T_simulator.simulate(dupl_rate=1.0,
+                             loss_rate=1.0,
+                             hgt_rate=1.0,
+                             dupl_polytomy=0.5,
+                             replace_prob=0.5,
+                             transfer_distance_bias='inverse')
     
-    gtv = GeneTreeVis(TGT)
+    # te.rate_heterogeneity(T, S, inplace=True)
+    
+    species_colors, gene_colors = assign_colors(S, T)
+    
+    visualize(S, color_dict=species_colors, save_as='testfile_speciestree.pdf')
+    visualize(T, color_dict=gene_colors, save_as='testfile_genetree.pdf')
