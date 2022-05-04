@@ -4,11 +4,6 @@ import asymmetree.treeevolve as te
 from asymmetree.analysis.BestMatches import lrt_from_tree
 from asymmetree.tools.PhyloTreeTools import (to_newick,)
 
-D = 1.0
-L = 1.0
-H = 0.0
-
-
 # --------------------------------------------------------------------------
 #                            SPECIES TREE
 # --------------------------------------------------------------------------
@@ -24,8 +19,12 @@ print(to_newick(S))
 # --------------------------------------------------------------------------
 
 TGT_simulator = te.GeneTreeSimulator(S)
-TGT = TGT_simulator.simulate(dupl_rate=D, loss_rate=L, hgt_rate=H,
+TGT = TGT_simulator.simulate(dupl_rate=1.0, loss_rate=1.0, hgt_rate=0.2,
                              prohibit_extinction='per_species')
+
+# --------------------------------------------------------------------------
+#                         RATE HETEROGENEITY
+# --------------------------------------------------------------------------
 
 TGT = te.rate_heterogeneity(TGT, S, base_rate=1.0,
                             autocorr_variance=0.2,
@@ -33,10 +32,11 @@ TGT = te.rate_heterogeneity(TGT, S, base_rate=1.0,
                             CSN_weights=(1, 1, 1))
 print('------------- TGT -------------')
 print(to_newick(TGT))
-print('all species have at least one copy:', TGT_simulator._assert_no_extinction(TGT))
+print('all species have at least one copy:', 
+      TGT_simulator._assert_no_extinction(TGT))
 
 # --------------------------------------------------------------------------
-#                       OBSERVABLE GENE TREE
+#                          PRUNED GENE TREE
 # --------------------------------------------------------------------------
 
 PGT = te.prune_losses(TGT)

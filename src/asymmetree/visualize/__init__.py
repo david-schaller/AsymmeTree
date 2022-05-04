@@ -1,3 +1,3 @@
 # -*- coding: utf-8 -*-
 
-"""Visualization of gene trees (experimental)."""
+"""Visualization of simulated species and gene trees."""

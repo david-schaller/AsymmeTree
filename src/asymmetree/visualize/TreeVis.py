@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Gene tree visualization."""
+"""Species and gene tree visualization."""
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -123,6 +123,7 @@ def visualize(tree, color_dict=None, save_as=False, scale_symbols=1.0,
 
 
 class Visualizer:
+    """Species and gene tree visualization."""
     
     def __init__(self, tree, color_dict=None,
                  scale_symbols=1.0, fontsize='medium',
@@ -389,26 +390,3 @@ class Visualizer:
                      fontsize=self.fontsize,
                      horizontalalignment='left',
                      verticalalignment='center')
-
-
-if __name__ == '__main__':
-    
-    import asymmetree.treeevolve as te
-    
-    S = te.simulate_species_tree(6, planted=True, contraction_probability=0.2)
-    # S = te.simulate_species_tree(6, model='yule', birth_rate=1.0, rescale_to_height=1.0)
-    
-    T_simulator = te.GeneTreeSimulator(S)
-    T = T_simulator.simulate(dupl_rate=1.0,
-                             loss_rate=1.0,
-                             hgt_rate=1.0,
-                             dupl_polytomy=0.5,
-                             replace_prob=0.5,
-                             transfer_distance_bias='inverse')
-    
-    # te.rate_heterogeneity(T, S, inplace=True)
-    
-    species_colors, gene_colors = assign_colors(S, T)
-    
-    visualize(S, color_dict=species_colors, save_as='testfile_speciestree.pdf')
-    visualize(T, color_dict=gene_colors, save_as='testfile_genetree.pdf')
