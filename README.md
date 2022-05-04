@@ -7,7 +7,7 @@
 AsymmeTree is an open-source Python library for the simulation and analysis of phylogenetic scenarios.
 It includes a simulator for species and gene trees with heterogeneous evolution rates, nucleotide and amino acid sequences with or without indels, as well as whole genomes/proteomes.
 
-Moreover, it includes tools for the extraction of information from the simulated scenarios such as orthology, best matches, and xenology, and a method to estimate rooted species trees from an ensemble of orthology/paralogy relations.
+Moreover, it includes a matplotlib-based visualization of the simulated tree as well as tools for the extraction of information from the simulated scenarios such as orthology, best matches, and xenology.
 
 The library is primarily designed to explore and validate mathematical concepts, and to test inference methods for various steps on the way to more realistically-available data, i.e., dated gene trees, additive distances of gene sets, noisy distances and finally sequences.
 
@@ -748,45 +748,6 @@ In order to reduce runtime, precomputed instances of the class `LCA` (see [trald
 
 </details>
 
-
-### Species trees from orthology
-
-The subpackage `asymmetree.paraphylo` contains a method to compute rooted species tree from orthology/paralogy relations.
-This is a reimplementation of [ParaPhylo](http://pacosy.informatik.uni-leipzig.de/208-0-ParaPhylo.html) which uses heuristics for the NP-hard optimization steps instead of exact ILP solutions.
-
-<details>
-<summary>Details and examples: (Click to expand)</summary>
-
-For cograph editing, the O(n<sup>2</sup>) algorithm (where n is the number of vertices in a connected graph) by Crespelle (2019) is applied (implemented in [tralda](https://github.com/david-schaller/tralda)).
-For the Maximum Consistent Triple Set problem, tree different heuristics are available (specified by the `mode` parameter of the `build_species_tree()` function, see below):
-
-| Parameter (with default value) | Description and type |
-| --- | ----------- |
-| `'BPMF'` | Best-Pair-Merge-First (Wu et al. 2004, modified for weighted triples) |
-| `'MINCUT'` | BUILD with weighted MinCut (Aho et al. 1981, Byrka et al. 2010) |
-| `'GREEDY'` | a greedy approch based on BUILD |
-
-
-The class `TreeReconstructor` in the module `asymmetree.paraphylo.SpeciesTreeFromParalogs` computes a species tree after it is provides with one or more NetworkX graphs that represent (estimated) orthology relations.
-To this end, the nodes in these graph must have a `color` attribute, since these will be the leaf labels in the reconstructed species tree.
-Example usage:
-
-    from asymmetree.paraphylo import TreeReconstructor
-
-    tree_reconstr = TreeReconstructor()
-
-    # ortho_relations is a list of orthology relations
-    for graph in ortho_relations:
-        tree_reconstr.add_ortho_graph(graph)
-
-    # finally an estimate the species tree can be computed
-    tree = tr.build_species_tree(mode='BPMF')
-    print(tree.to_newick())
-
-The module `asymmetree.paraphylo.SpeciesTreeFromProteinOrtho` contains functions to estimate a species tree from a ProteinOrtho (Lechner 2011) output file.
-For example, the function `reconstruct_from_proteinortho(filename, triple_mode='BPMF')` takes the filename to the output file and optionally the triple heuristic as input, and returns a tuple consisting of the estimated species tree (`Tree`) and a Newick representation (`str`) containing support values for the inner nodes.
-
-</details>
 
 ### Distributions for sampling
 
