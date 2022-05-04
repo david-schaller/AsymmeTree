@@ -202,7 +202,7 @@ class Visualizer:
         self.fig.set_size_inches(5*abs(xmax-xmin), 5*abs(ymax-ymin)+0.4)
         plt.tight_layout()
         if save_as:
-            plt.savefig(save_as)
+            plt.savefig(save_as, dpi=300)
         else:
             plt.show()
         

@@ -1,5 +1,5 @@
 # AsymmeTree
-![Logo](resources/logo/logo.png)
+![Logo](resources/images/logo.png)
 
 [![license: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![pypi version](https://img.shields.io/badge/pypi-v2.2.0-blue.svg)](https://pypi.org/project/asymmetree/)
@@ -303,7 +303,7 @@ For available distributions and their syntax see below.
                                 autocorr_variance=0.2,
                                 rate_increase=('gamma', 0.5, 2.2))
 
-    # pruned gene trees 
+    # pruned gene trees
     pruned_trees = [te.prune_losses(tree) for tree in trees]
 
 </details>
@@ -339,6 +339,45 @@ The function thus takes two distance matrices (`numpy` arrays) not necessarily o
 The contribution of the respective disturbance matrix is controlled by the keyword parameter `alpha` (default is `0.5`).
 If the keyword parameter `first_only` is `True`, only the first disturbed matrix is returned.
 Otherwise, both are returned in a `tuple`.
+
+</details>
+
+### Tree visualization
+
+The function `visualize(tree, color_dict=None, save_as=False)` in the module `asymmetree.visualize.TreeVis` uses matplotlib to draw a simulated species or gene tree. The `color_dict` parameter can be used to specify the colors of the (non-loss) leaves, and `save_as` is used to specify a filename where the image is saves.
+
+The function `assign_colors(species_tree, gene_tree)` of the module takes to trees as input and assign to each non-loss species leaf a unique color and to each non-color gene the assigned color of the species to which this gene belongs.
+
+<details>
+<summary>Example usage: (Click to expand)</summary>
+
+    import asymmetree.treeevolve as te
+    from asymmetree.visualize.TreeVis import visualize, assign_colors
+
+    S = te.simulate_species_tree(6, planted=True)
+
+    # dated gene tree (with losses)
+    T1 = te.simulate_dated_gene_tree(S, dupl_rate=0.5,
+                                     loss_rate=0.5, hgt_rate=0.5)
+    T2 = te.rate_heterogeneity(T1, S, base_rate=1.0,
+                               autocorr_variance=0.1,
+                               rate_increase=('gamma', 0.5, 2.2),
+                               inplace=False)
+
+    # pruned gene tree
+    T3 = te.prune_losses(T2)
+
+    # assign colors and visualize
+    species_colors, gene_colors = assign_colors(S, T1)
+    visualize(S, color_dict=species_colors, save_as='S.pdf')
+    visualize(T1, color_dict=gene_colors, save_as='T1.pdf')
+    visualize(T2, color_dict=gene_colors, save_as='T2.pdf')
+    visualize(T3, color_dict=gene_colors, save_as='T3.pdf')
+
+![tree1](resources/images/example-tree1.png)
+![tree2](resources/images/example-tree2.png)
+![tree3](resources/images/example-tree3.png)
+![tree4](resources/images/example-tree4.png)
 
 </details>
 
