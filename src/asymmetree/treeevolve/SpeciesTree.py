@@ -435,6 +435,7 @@ def _innovation_model(N, planted, ultrametric=True):
     if planted:
         root = TreeNode(label=1, event='S')
         tree.root.add_child(root)
+        tree.root.event = None      # planted root is not a speciation event
         node_counter += 1
     else:
         root = tree.root
@@ -532,7 +533,7 @@ def _yule(N, birth_rate):
     elif birth_rate <= 0.0:
         raise ValueError("birth rate must be >0")
     
-    tree = Tree(TreeNode(label=0, event='S', tstamp=0.0))
+    tree = Tree(TreeNode(label=0, event=None, tstamp=0.0))
     tree.number_of_species = N
     
     branches = [(1, tree.root)]
@@ -573,7 +574,7 @@ def _yule_age(age, birth_rate):
     elif birth_rate <= 0.0:
         raise ValueError("birth rate must be >0")
     
-    tree = Tree(TreeNode(label=0, event='S', tstamp=0.0))
+    tree = Tree(TreeNode(label=0, event=None, tstamp=0.0))
     
     branches = [(1, tree.root)]
     forward_time = 0.0
@@ -740,6 +741,8 @@ def _EBDP_backward(N, episodes, max_tries=500):
                         else:
                             spec_node.add_child(branches[0])
                             tree = Tree(spec_node)
+                            # planted root is not a speciation event
+                            spec_node.event = None
                             branches.clear()
                     else:
                         # extinction event drawn
@@ -845,7 +848,7 @@ def _EBDP_mass_extinction(branches, surviving_rate, t):
 def _EBDP_age_forward(age, episodes):
     """Episodic birth–death process (EBDP), forward algorithm with max. age."""
     
-    tree = Tree(TreeNode(label=0, event='S', tstamp=0.0))
+    tree = Tree(TreeNode(label=0, event=None, tstamp=0.0))
     
     branches = [(1, tree.root)]
     forward_time = 0.0

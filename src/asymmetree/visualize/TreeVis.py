@@ -11,11 +11,42 @@ __author__ = 'David Schaller'
 
 
 def assign_species_colors(tree):
+    """Assign a unique color to each (extant) species in a species tree.
+    
+    Parameters
+    ----------
+    tree : Tree
+        The species tree with uniquely labeled (non-loss) leaves.
+    
+    Returns
+    -------
+    dict
+        A dictonary containing the labels of the extant species as keys and
+        the assigned colors as values.
+    """
     
     return _assign_cmap({v.label for v in tree.leaves() if v.event != 'L'})
 
 
 def assign_gene_colors(tree, species_colors=None):
+    """Assign a color to each (extant) gene in a gene tree according to its
+    species.
+    
+    Parameters
+    ----------
+    tree : Tree
+        The gene tree whose (non-loss) leaves have the 'color' attribute, i.e,
+        the information to which species they belong.
+    species_colors : dict, optional
+        A dictonary containing the values of the 'color' attribute appearing
+        in the tree as keys and assigned colors as values.
+    
+    Returns
+    -------
+    dict
+        A dictonary containing the labels of the extant genes as keys and
+        the assigned colors as values.
+    """
     
     if species_colors is None:
         
@@ -27,6 +58,23 @@ def assign_gene_colors(tree, species_colors=None):
 
 
 def assign_colors(species_tree, gene_tree):
+    """Assign a color to each (extant) species and gene.
+    
+    Parameters
+    ----------
+    species_tree : Tree
+        The species tree with uniquely labeled (non-loss) leaves.
+    gene_tree : Tree
+        The gene tree whose (non-loss) leaves have the 'color' attribute, i.e,
+        the information to which species they belong, that furthermore appear
+        as labels of the (non-loss) leaves in the species tree.
+    
+    Returns
+    -------
+    tuple of two dicts
+        Dictonaries containing the labels of the extant species/genes as keys
+        and the assigned colors as values.
+    """
     
     species_colors = assign_species_colors(species_tree)
     
@@ -49,16 +97,52 @@ def _assign_cmap(colors):
     return color_dict
 
 
-def visualize(tree, color_dict=None, save_as=False, scale_symbols=1.0):
+def visualize(tree, color_dict=None, save_as=False, scale_symbols=1.0,
+              fontsize='medium'):
+    """Visualize a tree.
     
-    vis = Visualizer(tree, color_dict=color_dict, scale_symbols=scale_symbols)
+    Parameters
+    ----------
+    tree : Tree
+        A tree whose nodes have the 'dist' attribute.
+    color_dict : dict, optional
+        A dictonary containing as values the assigned color for each label
+        of the (non-loss) leaves.
+    save_as : str, optional
+        Save the image to a file. The default is False, in which case the
+        image is not saved.
+    scale_symbols : float, optional
+        Adjust the size of the event type symbols. The default is 1.0.
+    fontsize : str or float or int, optional
+        Adjust the size of the text. The default is 'medium'.
+    """
+    
+    vis = Visualizer(tree, color_dict=color_dict, scale_symbols=scale_symbols,
+                     fontsize=fontsize)
     vis.draw(save_as=save_as)
 
 
 class Visualizer:
     
     def __init__(self, tree, color_dict=None,
-                 scale_symbols=1.0, species_info=False):
+                 scale_symbols=1.0, fontsize='medium',
+                 species_info=False):
+        """
+        Parameters
+        ----------
+        tree : Tree
+            A tree whose nodes have the 'dist' attribute.
+        color_dict : dict, optional
+            A dictonary containing as values the assigned color for each label
+            of the (non-loss) leaves.
+        scale_symbols : float, optional
+            Adjust the size of the event type symbols. The default is 1.0.
+        fontsize : str or float or int, optional
+            Adjust the size of the text. The default is 'medium'.
+        species_info : bool, False
+            If True, write the reconciliation information behind the leaf
+            label if available. The default is False.
+        """
         
         self.tree = tree
         
@@ -70,6 +154,7 @@ class Visualizer:
         self.species_info = species_info
         
         self.symbolsize = 0.03 * scale_symbols
+        self.fontsize = fontsize
         self.symbollw = 0.04
         self.leafs_per_vertical_unit = 15
         self.symbol_zorder = 3
@@ -81,6 +166,18 @@ class Visualizer:
         
     
     def draw(self, distance_mode='evolutionary', save_as=False):
+        """Draw the tree and optionally save it to file.
+        
+        Parameters
+        ----------
+        distance_mode : str, optional
+            Information that is used for the length of the species edges.
+            Currently only 'evolutionary' is supported, in which case the
+            'dist' attribute is used.
+        save_as : str, optional
+            Save the image to a file. The default is False, in which case the
+            image is not saved.
+        """
         
         self.fig, self.ax = plt.subplots()
         self.ax.set_aspect('equal')
@@ -97,6 +194,7 @@ class Visualizer:
         self.ax.spines['top'].set_visible(False)
         self.ax.spines['left'].set_visible(False)
         self.ax.spines['right'].set_visible(False)
+        self.ax.tick_params(axis='x', labelsize=self.fontsize)
         
         xmin, xmax = self.ax.get_xlim()
         ymin, ymax = self.ax.get_ylim()
@@ -172,7 +270,7 @@ class Visualizer:
     def draw_nodes(self):
         
         for v in self.tree.preorder():
-            if not v.parent:
+            if not v.parent and not v.event:
                 self.draw_root(*self.node_positions[v])
             elif v.children:
                 if v.event == 'D':
@@ -288,6 +386,7 @@ class Visualizer:
     def write_label(self, x, y, text):
         
         self.ax.text(x, y, text,
+                     fontsize=self.fontsize,
                      horizontalalignment='left',
                      verticalalignment='center')
 

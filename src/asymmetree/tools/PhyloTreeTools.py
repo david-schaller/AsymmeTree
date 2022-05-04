@@ -137,7 +137,7 @@ def delete_and_reconnect(tree, node,
         return False
     
     for child in node.children:
-        if add_distances and hasattr(child, 'dist'):
+        if add_distances and hasattr(node, 'dist') and hasattr(child, 'dist'):
             child.dist += node.dist
         if (keep_transferred and 
             hasattr(node, 'transferred') and 
