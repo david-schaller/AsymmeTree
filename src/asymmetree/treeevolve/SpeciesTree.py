@@ -547,30 +547,40 @@ class _ForwardLineageSampler:
         self.node_counter = 2
         
         if self.innovation:
-            self.feature_counter = 1
-            self.feature_sets = [(0,)]
-            self.set_to_species = {(0,): 0}     # feature set --> lineage index
+            self.feature_counter = 0
+            self.feature_sets = [frozenset([])]
+            
+            # feature set --> lineage index
+            self.set_to_species = {frozenset([]): 0}
     
     
     def speciation(self, t):
         
         if self.innovation:
             
-            loss_candidates = []    # species for which loss of a feature 
-                                    # can trigger a speciation
+            loss_candidates = set()     # species for which loss of a feature 
+                                        # can trigger a speciation
             for s in self.feature_sets:
-                for i in range(0, len(s)):
-                    new_s = s[:i] + s[i+1:]
-                    if new_s not in self.set_to_species:
-                        loss_candidates.append( (s, new_s) )
+                for f in s:
+                    if s - {f} not in self.set_to_species:
+                        loss_candidates.add(s)
             
-            if not loss_candidates:     # speciation by gain of feature
+            if loss_candidates: # speciation by oss of feature
+            
+                loss_candidates = list(loss_candidates)
+                while True:
+                    s = random.choice(loss_candidates)
+                    f = np.random.randint(self.feature_counter)
+                    new_s = s - {f}
+                    if new_s not in self.set_to_species:
+                        break
+                    
+            else:               # speciation by gain of feature (innovation)
+                
                 s = random.choice(self.feature_sets)
                 new_feature = self.feature_counter
                 self.feature_counter += 1
-                new_s = s + (new_feature,)
-            else:                       # speciation by loss of feature
-                s, new_s = random.choice(loss_candidates)
+                new_s = s.union([new_feature])
             
             new_set_index = len(self.feature_sets)
             self.feature_sets.append(new_s)
