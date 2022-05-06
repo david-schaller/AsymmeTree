@@ -19,7 +19,7 @@ class TestHGT(unittest.TestCase):
     
     def test_ldt_fitch(self):
         
-        S = te.simulate_species_tree(20, model='innovation')
+        S = te.species_tree_N_age(20, 1.0, model='yule')
     
         # true gene tree (with losses)
         TGT = te.simulate_dated_gene_tree(S, dupl_rate=1.0,
@@ -43,7 +43,7 @@ class TestHGT(unittest.TestCase):
         
         N = 20
         
-        S = te.simulate_species_tree(N, model='innovation')
+        S = te.species_tree_N_age(N, 1.0, model='yule')
     
         # true gene tree
         TGT = te.simulate_dated_gene_tree(S, dupl_rate=0.0,
@@ -68,7 +68,7 @@ class TestHGT(unittest.TestCase):
         
         N = 20
         
-        S = te.simulate_species_tree(N, model='innovation')
+        S = te.species_tree_N_age(N, 1.0, model='yule')
     
         # true gene tree (with losses)
         TGT = te.simulate_dated_gene_tree(S, dupl_rate=0.5,
@@ -89,7 +89,7 @@ class TestHGT(unittest.TestCase):
     
     def test_rs_edges(self):
         
-        S = te.simulate_species_tree(10)
+        S = te.species_tree_N_age(10, 1.0, model='yule')
         TGT = te.simulate_dated_gene_tree(S, dupl_rate=1.0, loss_rate=0.5,
                                           hgt_rate=0.5)
         PGT = te.prune_losses(TGT)

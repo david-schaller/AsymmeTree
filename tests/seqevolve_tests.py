@@ -26,7 +26,7 @@ class TestSeqEvolvePackage(unittest.TestCase):
         
     def test_simulation(self):
         
-        species_tree = te.simulate_species_tree(10, model='innovation')
+        species_tree = te.species_tree_N_age(10, 1.0, model='yule')
 
         subst_model = se.SubstModel('a', 'JTT')
         indel_model = se.IndelModel(0.01, 0.01, length_distr=('zipf', 1.821))
@@ -55,7 +55,7 @@ class TestSeqEvolvePackage(unittest.TestCase):
     
     def test_simulation_gillespie(self):
         
-        species_tree = te.simulate_species_tree(10, model='innovation')
+        species_tree = te.species_tree_N_age(10, 1.0, model='yule')
 
         subst_model = se.SubstModel('a', 'JTT')
         indel_model = se.IndelModel(0.01, 0.01, length_distr=('zipf', 1.821))

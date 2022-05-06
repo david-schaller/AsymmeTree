@@ -34,8 +34,8 @@ for i in range(repeats):
     
     for N in tree_sizes:
         
-        S = te.simulate_species_tree(N, model='innovation',
-                                     planted=False)
+        S = te.species_tree_N_age(N, 1.0, model='yule',
+                                  innovation=True)
         
         for v in S.preorder():
             v.label = f't{v.label}'

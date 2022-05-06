@@ -10,7 +10,7 @@ from asymmetree.analysis import (undirected_fitch,
                                  RsScenarioConstructor,)
 from asymmetree.tools.PhyloTreeTools import (to_newick,)
 
-S = te.simulate_species_tree(10)
+S = te.species_tree_N_age(10, 1.0)
 TGT = te.simulate_dated_gene_tree(S, dupl_rate=1.0, loss_rate=0.5,
                                   hgt_rate=0.5)
 PGT = te.prune_losses(TGT)

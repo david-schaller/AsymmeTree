@@ -29,8 +29,7 @@ from tralda.supertree import Build
 from asymmetree.tools.PhyloTreeTools import (add_planted_root,
                                              phylo_tree_attributes,
                                              assign_missing_labels)
-from asymmetree.treeevolve.SpeciesTree import (simulate_timing,
-                                               distance_from_timing)
+from asymmetree.treeevolve.SpeciesTree import distance_from_timing
 
 
 __author__ = 'David Schaller'
@@ -342,6 +341,28 @@ def ldt_graph(T, S, lca_T=None, lca_S=None):
     return below_equal_above(T, S, lca_T=lca_T, lca_S=lca_S)[0]
 
 
+def _simulate_timing(tree):
+    """Simulates a timing for the tree.
+    
+    It is t(root) = 1 and t(x) = 0 for x in L(S)."""
+    
+    max_depth = {}
+    
+    for v in tree.postorder():
+        if not v.children:
+            max_depth[v] = 0
+        else:
+            max_depth[v] = max(max_depth[c] for c in v.children) + 1
+    
+    for v in tree.preorder():
+        if not v.children:
+            v.tstamp = 0.0
+        elif not v.parent:
+            v.tstamp = 1.0
+        else:
+            v.tstamp = v.parent.tstamp * (1 - 1 / (max_depth[v]+1))
+
+
 class RsScenarioConstructor:
     """Construct an rs-scenario for a given LDT graph.
     
@@ -455,7 +476,7 @@ class RsScenarioConstructor:
             phylo_tree_attributes(S, inplace=True)
             add_planted_root(S)
             assign_missing_labels(S)
-            simulate_timing(S)
+            _simulate_timing(S)
             distance_from_timing(S)
             return S
     

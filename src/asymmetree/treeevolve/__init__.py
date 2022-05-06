@@ -11,8 +11,8 @@ ultrametric).
 
 A typical simulation consists of the following steps:
     
-(1) dated species tree (models e.g. 'innovation', 'Yule', and '(episodic)
-    birth-death process')
+(1) dated species tree (models e.g. 'Yule', and '(episodic) birth-death
+    process')
     
 (2) dated gene tree(s) (birth-death process with speciations as additional
     branching events)
@@ -22,7 +22,16 @@ A typical simulation consists of the following steps:
 (4) pruned gene tree(s) (removal of all branches that lead to losses only)
 """
 
-from asymmetree.treeevolve.GeneTree import simulate_dated_gene_tree, GeneTreeSimulator, prune_losses
-from asymmetree.treeevolve.SpeciesTree import simulate_species_tree, simulate_species_tree_age
-from asymmetree.treeevolve.RateHeterogeneity import rate_heterogeneity, autocorrelation_factors, simulate_gene_trees
-from asymmetree.treeevolve.DistanceNoise import noisy_matrix, convex_linear_comb, wrong_topology_matrix
+from asymmetree.treeevolve.SpeciesTree import (species_tree_N,
+                                               species_tree_age,
+                                               species_tree_N_age,
+                                               nonbinary)
+from asymmetree.treeevolve.GeneTree import (simulate_dated_gene_tree,
+                                            GeneTreeSimulator,
+                                            prune_losses)
+from asymmetree.treeevolve.RateHeterogeneity import (rate_heterogeneity,
+                                                     autocorrelation_factors,
+                                                     simulate_gene_trees)
+from asymmetree.treeevolve.DistanceNoise import (noisy_matrix,
+                                                 convex_linear_comb,
+                                                 wrong_topology_matrix)

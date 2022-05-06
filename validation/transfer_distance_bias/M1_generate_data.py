@@ -84,9 +84,9 @@ def simulation(sim_ID, repeat, rate_combination, bias_mode):
     np.random.seed(int.from_bytes(os.urandom(4), byteorder='little'))
     
     # species tree
-    S = te.simulate_species_tree(np.random.randint(S_min, S_max+1),
-                                 model='innovations',
-                                 contraction_probability=contraction_probability,)
+    S = te.species_tree_N_age(np.random.randint(S_min, S_max+1), 1.0,
+                              model='yule',
+                              contraction_probability=contraction_probability,)
     # S.serialize(os.path.join(result_dir, tree_dir, f'S_{sim_ID}.pickle'))
     
     # gene tree

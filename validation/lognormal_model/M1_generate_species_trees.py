@@ -16,7 +16,7 @@ with open(filename, 'w') as f:
     for i in range(number_of_trees):
         print(i)
         
-        S = te.simulate_species_tree_age(1.0, birth_rate=3.0, model='yule')
+        S = te.species_tree_age(1.0, birth_rate=3.0, model='yule')
         n = sum(1 for _ in S.leaves())
         
         for variance in variances:

@@ -9,10 +9,10 @@ from asymmetree.visualize.TreeVis import visualize, assign_colors
 #                            SPECIES TREE
 # --------------------------------------------------------------------------
 
-S = te.simulate_species_tree(6, planted=True, contraction_probability=0.2)
-# S = te.simulate_species_tree(6, model='yule', birth_rate=1.0, 
-#                              rescale_to_height=1.0)
-
+S = te.species_tree_N_age(6, 1.0, model='BDP',
+                          innovation=True,
+                          birth_rate=1.0, death_rate=0.5,
+                          contraction_probability=0.2)
 
 # --------------------------------------------------------------------------
 #                             GENE TREE

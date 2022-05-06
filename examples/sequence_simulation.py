@@ -17,7 +17,7 @@ evolver = se.Evolver(subst_model, indel_model=indel_model, gillespie=False)
 print(evolver.subst_model.Q)
 
 # simulate along a tree
-T = te.simulate_species_tree(5)
+T = te.species_tree_N_age(5, 1.0)
 evolver.evolve_along_tree(T, start_length=150)
 
 evolver.write_sequences('testfile.fasta', include_inner=True)

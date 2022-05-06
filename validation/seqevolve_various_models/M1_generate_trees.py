@@ -15,7 +15,7 @@ def simulate(directory, number_of_trees, species_per_tree):
     
     for i in range(number_of_trees):
         
-        S = te.simulate_species_tree(50)
+        S = te.species_tree_N_age(50, 1.0)
         T_simulator = te.GeneTreeSimulator(S)
         T = T_simulator.simulate()   # dupl./loss/HGT disabled
         
