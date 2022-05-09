@@ -119,11 +119,11 @@ Alternatively, sequences can be simulated along the tree, from which distances c
     from asymmetree.tools.PhyloTreeTools import to_newick
 
     # simulate and species tree with 10 leaves
-    S = te.species_tree_N_age(10, 1.0, contraction_probability=0.2)
+    S = te.species_tree_n_age(10, 1.0, contraction_probability=0.2)
 
     # simulate a gene tree along the species tree S
-    T = simulate_dated_gene_tree(S, dupl_rate=D, loss_rate=L, hgt_rate=H,
-                                   prohibit_extinction='per_species')
+    T = dated_gene_tree(S, dupl_rate=D, loss_rate=L, hgt_rate=H,
+                        prohibit_extinction='per_species')
 
     # simulate evolution rates for the  branches in the gene tree
     # and update the distances in T accordingly
@@ -143,19 +143,19 @@ Alternatively, sequences can be simulated along the tree, from which distances c
 #### Species trees
 
 AsymmeTree implements functions to simulate species trees conditioned on
-* the number of (extant-species) leaves `N` (function `species_tree_N(N, **kwargs)`)
+* the number of (extant-species) leaves `n` (function `species_tree_n(n, **kwargs)`)
 * the time span `age` covered by the tree (function `species_tree_age(age, **kwargs)`), or
-* both `N` and `age` (function `species_tree_N_age(N, age, **kwargs)`).
+* both `n` and `age` (function `species_tree_n_age(n, age, **kwargs)`).
 
-under a pure-birth Yule model (Yule 1924), a constant-rate birth-death process (Kendall 1948, Hagen & Stadler 2018), or an episodic birth-death process (Stadler 2011). The latter is not available for conditioning on both `N` and `age`.
+under a pure-birth Yule model (Yule 1924), a constant-rate birth-death process (Kendall 1948, Hagen & Stadler 2018), or an episodic birth-death process (Stadler 2011). The latter is not available for conditioning on both `n` and `age`.
 The model is specified by setting the `'model'` parameter of the respective function to `'yule'` (default), `'BDP'`, or `'EBDP'`.
-Note that when conditioning to `N` alone, the time covered by the resulting trees varies between the simulations. Conversely, when conditioning to `age`, the number of leaves varies.
+Note that when conditioning to `n` alone, the time covered by the resulting trees varies between the simulations. Conversely, when conditioning to `age`, the number of leaves varies.
 
 All simulated trees are by default 'planted', i.e., the root has a single child and the edge to this child represents the ancestral lineage.
 For any model, the root of the resulting tree has the maximal time stamp and all (extant) species have time stamp 0.0.
 
 <details>
-<summary>The following keyword parameters are available for conditioning on N: (Click to expand)</summary>
+<summary>The following keyword parameters are available for conditioning on n: (Click to expand)</summary>
 
 | Parameter (with default value) | Description |
 | --- | ----------- |
@@ -173,17 +173,17 @@ For any model, the root of the resulting tree has the maximal time stamp and all
 
 </details>
 
-The available parameters for the functions `species_tree_age(age, **kwargs)`) and `species_tree_N_age(N, age, **kwargs)` are largely the same, but the available options differ slightly. See also the [documentation](https://david-schaller.github.io/docs/asymmetree/) generated from the docstrings.
+The available parameters for the functions `species_tree_age(age, **kwargs)`) and `species_tree_n_age(n, age, **kwargs)` are largely the same, but the available options differ slightly. See also the [documentation](https://david-schaller.github.io/docs/asymmetree/) generated from the docstrings.
 
 <details>
 <summary>Example usage: (Click to expand)</summary>
 
     import asymmetree.treeevolve as te
 
-    S1 = te.species_tree_N_age(10, 1.0, contraction_probability=0.2)
+    S1 = te.species_tree_n_age(10, 1.0, contraction_probability=0.2)
     print(S1.to_newick())
 
-    S2 = te.species_tree_N(10, model='EBDP',
+    S2 = te.species_tree_n(10, model='EBDP',
                            episodes=[(1.0, 0.3, 0.8, 0.0),
                                      (0.9, 0.4, 0.6, 0.3)])
     print(S2.to_newick())
@@ -195,7 +195,7 @@ The available parameters for the functions `species_tree_age(age, **kwargs)`) an
 Dated gene trees are simulated along a given species tree `S` using a birth-death process (Kendall 1948, Gillespie 1976) with speciation events as additional branching events (fixed time points given by the species tree). At each time point, the total event rate is given by the sum of the event rates over all branches that are currently active (not extinct).
 Thus, the total event rate in general increases during the simulation if the loss rate does not dominate the rates of the branching events.
 To simulate gene tree, use the class `GeneTreeSimulator` or the function
-`simulate_dated_gene_tree(S, **kwargs)` with a species tree of type `Tree`.
+`dated_gene_tree(S, **kwargs)` with a species tree of type `Tree`.
 
 </details>
 
@@ -238,11 +238,11 @@ It also removes the planted root.
     tree = tree_simulator.simulate(dupl_rate=1.0, loss_rate=0.5, hgt_rate=0.1)
 
     # or
-    tree = te.simulate_dated_gene_tree(S,
-                                       dupl_rate=1.0,
-                                       loss_rate=0.5,
-                                       hgt_rate=0.1,
-                                       replace_prob=0.5)
+    tree = te.dated_gene_tree(S,
+                              dupl_rate=1.0,
+                              loss_rate=0.5,
+                              hgt_rate=0.1,
+                              replace_prob=0.5)
 
     # prune all loss branches and the planted root
     ogt = te.prune_losses(tree)
@@ -272,7 +272,7 @@ The function `rate_heterogeneity(T, S)` takes a gene tree `T` and the **correspo
 It is recommended to apply the rate assignment to the true gene tree that still contains loss events.
 Note that the rates are used to manipulate the `dist` attributes in the gene tree and not returned explicitly.
 
-The function `simulate_gene_trees(S)` combines the simulation of dated gene trees and the rate assignment into one step.
+The function `gene_trees(S)` combines the simulation of dated gene trees and the rate assignment into one step.
 It returns a `list` of gene trees that shared the same rate factors for the branches in the species tree (autocorrelation factors) in the rate assignment procedure.
 Moreover, a distribution for the base rate (assigned the planted edge of the gene tree) and for the event rates can be specified with the parameters `base_rate`, `dupl_rate`, `loss_rate`, and `hgt_rate`.
 For available distributions and their syntax see below.
@@ -282,22 +282,22 @@ For available distributions and their syntax see below.
 
     import asymmetree.treeevolve as te
 
-    S = te.species_tree_N_age(10, 1.0)
+    S = te.species_tree_n_age(10, 1.0)
 
     # true gene tree (with losses)
-    tree = te.simulate_dated_gene_tree(S, dupl_rate=1.0, loss_rate=0.5, hgt_rate=0.1)
+    tree = te.dated_gene_tree(S, dupl_rate=1.0, loss_rate=0.5, hgt_rate=0.1)
     te.rate_heterogeneity(tree, S, base_rate=1,
                           autocorr_variance=0.2,
                           rate_increase=('gamma', 0.5, 2.2))
 
     # or in a single step
-    trees = simulate_gene_trees(S, N=10,
-                                dupl_rate=('gamma', 1.0, 0.8),   # distribution
-                                loss_rate=0.5,                   # or constant value
-                                hgt_rate=0.1,
-                                base_rate=('constant', 1.0),
-                                autocorr_variance=0.2,
-                                rate_increase=('gamma', 0.5, 2.2))
+    trees = gene_trees(S, n=10,
+                       dupl_rate=('gamma', 1.0, 0.8),   # distribution
+                       loss_rate=0.5,                   # or constant value
+                       hgt_rate=0.1,
+                       base_rate=('constant', 1.0),
+                       autocorr_variance=0.2,
+                       rate_increase=('gamma', 0.5, 2.2))
 
     # pruned gene trees
     pruned_trees = [te.prune_losses(tree) for tree in trees]
@@ -350,11 +350,11 @@ The function `assign_colors(species_tree, gene_tree)` of the module takes to tre
     import asymmetree.treeevolve as te
     from asymmetree.visualize.TreeVis import visualize, assign_colors
 
-    S = te.species_tree_N_age(6, 1.0)
+    S = te.species_tree_n_age(6, 1.0)
 
     # dated gene tree (with losses)
-    T1 = te.simulate_dated_gene_tree(S, dupl_rate=0.5,
-                                     loss_rate=0.5, hgt_rate=0.5)
+    T1 = te.dated_gene_tree(S, dupl_rate=0.5,
+                            loss_rate=0.5, hgt_rate=0.5)
     T2 = te.rate_heterogeneity(T1, S, base_rate=1.0,
                                autocorr_variance=0.1,
                                rate_increase=('gamma', 0.5, 2.2),
@@ -627,12 +627,12 @@ The module `asymmetree.genome.GenomeSimulation` provides functions that combine 
 In particular, the class `GenomeSimulator` combines multiple steps described in the previous sections in order to conveniently simulate whole genomes/proteomes.
 The (optional) output directory contains serialized trees, fasta files, and the true alignments.
 The gene trees and the sequences are simulated in subsequent steps using the classes' functions
-(i) `simulate_gene_trees(N, **kwargs)` and (ii) `simulate_sequences(subst_model, **kwargs)`.
+(i) `simulate_gene_trees(n, **kwargs)` and (ii) `simulate_sequences(subst_model, **kwargs)`.
 
 <details>
 <summary>Details: (Click to expand)</summary>
 
-The first step (i) takes the same keyword parameters as input as the function `simulate_gene_trees()` where `N` is the number of gene families to be simulated.
+The first step (i) takes the same keyword parameters as input as the function `simulate_gene_trees()` where `n` is the number of gene families to be simulated.
 Thus, rates for the three event types (`dupl_rate`, `loss_rate`, `hgt_rate`), autocorrelation (`autocorr_variance`), the distribution of base rates (`base_rate_distr`) etc. can be specified.
 
 The second step (ii) simulates the sequences along the pruned part (without loss branches) of the simulated gene trees.
@@ -643,7 +643,7 @@ The function takes the following parameters as input:
 | `subst_model` | substitution model (`SubstModel`) |
 | `indel_model=None` | model for insertions and deletions (`IndelModel`) |
 | `het_model=None` | model for among site heterogeneity and invariant sites (`HetModel`) |
-| `root_genome=None` | `list` of sequences for the roots of the gene trees; must contain the same number of `str` sequences as trees were simulated in step (i) i.e. `N`; sequences must be compatible with the specified substitution model (`model_type='n'`/`'a'`) |
+| `root_genome=None` | `list` of sequences for the roots of the gene trees; must contain the same number of `str` sequences as trees were simulated in step (i) i.e. `n`; sequences must be compatible with the specified substitution model (`model_type='n'`/`'a'`) |
 | `length_distr=('constant', 200)` | distribution of the length of the root sequences if `root_genome` is not supplied; see below |
 | `min_length=1` | `int` minimal value at which the specified distribution is truncated, must be less than the expected value of the distribution, `None` means no limit  |
 | `max_length=None` | `int` maximal value at which the specified distribution is truncated, must be greater than the expected value of the distribution, `None` means no limit  |
@@ -659,12 +659,12 @@ After step (ii), the `list`s of sequence `dict`s are accessible via the attribut
 <details>
 <summary>Example usage: (Click to expand)</summary>
 
-    from asymmetree.treeevolve import species_tree_N_age
+    from asymmetree.treeevolve import species_tree_n_age
     from asymmetree.genome import GenomeSimulator
     from asymmetree.seqevolve import SubstModel, IndelModel
 
     # simulate the common species tree
-    S = species_tree_N_age(10, 1.0, model='yule')
+    S = species_tree_n_age(10, 1.0, model='yule')
 
     # specify models for sequence evolution
     subst_model = SubstModel('a', 'JTT')

@@ -84,19 +84,19 @@ def simulation(sim_ID, repeat, rate_combination, bias_mode):
     np.random.seed(int.from_bytes(os.urandom(4), byteorder='little'))
     
     # species tree
-    S = te.species_tree_N_age(np.random.randint(S_min, S_max+1), 1.0,
+    S = te.species_tree_n_age(np.random.randint(S_min, S_max+1), 1.0,
                               model='yule',
                               contraction_probability=contraction_probability,)
     # S.serialize(os.path.join(result_dir, tree_dir, f'S_{sim_ID}.pickle'))
     
     # gene tree
-    T = te.simulate_dated_gene_tree(S,
-                                    dupl_rate=dupl_rate,
-                                    loss_rate=loss_rate,
-                                    hgt_rate=hgt_rate,
-                                    prohibit_extinction='per_family',
-                                    replace_prob=0.5,
-                                    transfer_distance_bias=bias_mode)
+    T = te.dated_gene_tree(S,
+                           dupl_rate=dupl_rate,
+                           loss_rate=loss_rate,
+                           hgt_rate=hgt_rate,
+                           prohibit_extinction='per_family',
+                           replace_prob=0.5,
+                           transfer_distance_bias=bias_mode)
     # T.serialize(os.path.join(result_dir, tree_dir, f'T_{sim_ID}.pickle'))
     
     # S = Tree.load(os.path.join(result_dir, tree_dir,

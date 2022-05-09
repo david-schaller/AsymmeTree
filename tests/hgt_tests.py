@@ -19,12 +19,12 @@ class TestHGT(unittest.TestCase):
     
     def test_ldt_fitch(self):
         
-        S = te.species_tree_N_age(20, 1.0, model='yule')
+        S = te.species_tree_n_age(20, 1.0, model='yule')
     
         # true gene tree (with losses)
-        TGT = te.simulate_dated_gene_tree(S, dupl_rate=1.0,
-                                             loss_rate=0.5,
-                                             hgt_rate=0.2)
+        TGT = te.dated_gene_tree(S, dupl_rate=1.0,
+                                 loss_rate=0.5,
+                                 hgt_rate=0.2)
         
         # pruned gene tree
         PGT = te.prune_losses(TGT)
@@ -43,14 +43,14 @@ class TestHGT(unittest.TestCase):
         
         N = 20
         
-        S = te.species_tree_N_age(N, 1.0, model='yule')
+        S = te.species_tree_n_age(N, 1.0, model='yule')
     
         # true gene tree
-        TGT = te.simulate_dated_gene_tree(S, dupl_rate=0.0,
-                                             loss_rate=0.0,
-                                             hgt_rate=1.0,
-                                             prohibit_extinction='per_species',
-                                             replace_prob=1.0,)
+        TGT = te.dated_gene_tree(S, dupl_rate=0.0,
+                                 loss_rate=0.0,
+                                 hgt_rate=1.0,
+                                 prohibit_extinction='per_species',
+                                 replace_prob=1.0,)
         
         # pruned gene tree
         PGT = te.prune_losses(TGT)
@@ -66,17 +66,17 @@ class TestHGT(unittest.TestCase):
     
     def test_transfer_distance_bias(self):
         
-        N = 20
+        n = 20
         
-        S = te.species_tree_N_age(N, 1.0, model='yule')
+        S = te.species_tree_n_age(n, 1.0, model='yule')
     
         # true gene tree (with losses)
-        TGT = te.simulate_dated_gene_tree(S, dupl_rate=0.5,
-                                             loss_rate=0.5,
-                                             hgt_rate=1.0,
-                                             prohibit_extinction='per_species',
-                                             replace_prob=0.5,
-                                             transfer_distance_bias='inverse')
+        TGT = te.dated_gene_tree(S, dupl_rate=0.5,
+                                 loss_rate=0.5,
+                                 hgt_rate=1.0,
+                                 prohibit_extinction='per_species',
+                                 replace_prob=0.5,
+                                 transfer_distance_bias='inverse')
         
         # pruned gene tree
         PGT = te.prune_losses(TGT)
@@ -84,14 +84,13 @@ class TestHGT(unittest.TestCase):
         leaves = [v for v in PGT.leaves()]
         colors = {v.color for v in leaves}
         
-        self.assertTrue(len(colors) == N)
+        self.assertTrue(len(colors) == n)
         
     
     def test_rs_edges(self):
         
-        S = te.species_tree_N_age(10, 1.0, model='yule')
-        TGT = te.simulate_dated_gene_tree(S, dupl_rate=1.0, loss_rate=0.5,
-                                          hgt_rate=0.5)
+        S = te.species_tree_n_age(10, 1.0, model='yule')
+        TGT = te.dated_gene_tree(S, dupl_rate=1.0, loss_rate=0.5, hgt_rate=0.5)
         PGT = te.prune_losses(TGT)
         
         transf1 = analysis.true_transfer_edges(PGT)

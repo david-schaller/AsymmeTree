@@ -21,17 +21,17 @@ __author__ = 'David Schaller'
 #                         USER INTERFACE FUNCTION
 # --------------------------------------------------------------------------
 
-def species_tree_N(N, 
+def species_tree_n(n, 
                    model='yule',
                    innovation=False,
                    planted=True,
                    remove_extinct=False,
                    **kwargs):
-    """Simulates a species tree S with N leaves.
+    """Simulates a species tree S with n leaves.
     
     Parameters
     ----------
-    N : int
+    n : int
         Number of leaves in the resulting tree that correspond to extant
         species.
     model : str, optional
@@ -106,9 +106,9 @@ def species_tree_N(N,
     """
     
     # parameter checking
-    if not isinstance(N, int) or N < 0:
-        raise ValueError('N must be an int >=0')
-    elif N == 0:
+    if not isinstance(n, int) or n < 0:
+        raise ValueError('n must be an int >=0')
+    elif n == 0:
         return Tree(None)
     
     if not isinstance(model, str):
@@ -116,11 +116,11 @@ def species_tree_N(N,
     
     # choice of the main simulation algorithm
     if model.lower() == 'yule':
-        tree = _yule_N(N, kwargs.get('birth_rate'), innovation)
+        tree = _yule_n(n, kwargs.get('birth_rate'), innovation)
     elif model.upper() == 'BDP':
-        tree = _BDP_N(N, **kwargs)
+        tree = _BDP_n(n, **kwargs)
     elif model.upper() == 'EBDP':
-        tree = _EBDP_N(N, **kwargs)
+        tree = _EBDP_n(n, **kwargs)
     else:
         raise ValueError(f"model '{model}' is not available")
         
@@ -246,23 +246,23 @@ def species_tree_age(age,
     return tree
 
 
-def species_tree_N_age(N, age, 
+def species_tree_n_age(n, age, 
                        model='yule',
                        innovation=False,
                        birth_rate=1.0,
                        death_rate=0.0,
                        **kwargs):
-    """Simulate a (planted) species tree S with N leaves and of the specified
+    """Simulate a (planted) species tree S with n leaves and of the specified
     age.
     
     The tree is sampled under the Yule or BDP model conditioned on the number
-    N of surviving species and with a given age [1].
+    n of surviving species and with a given age [1].
     The resulting tree does not contain loss leaves even if the specified death
     rate is > 0 as a consequence of the tree sampling method.
     
     Parameters
     ----------
-    N : int
+    n : int
         Number of leaves in the resulting tree that correspond to extant
         species.
     age : float
@@ -337,9 +337,9 @@ def species_tree_N_age(N, age,
     elif isinstance(age, int):
         age = float(age)
         
-    if not isinstance(N, int) or N < 0:
-        raise ValueError('N must be an int >=0')
-    elif N == 0:
+    if not isinstance(n, int) or n < 0:
+        raise ValueError('n must be an int >=0')
+    elif n == 0:
         return Tree(None)
         
     if not isinstance(model, str):
@@ -347,9 +347,9 @@ def species_tree_N_age(N, age,
     
     # main simulation algorithm
     if model.lower() == 'yule':
-        tree = _yule_N_age(N, age, kwargs.get('birth_rate'), innovation)
+        tree = _yule_n_age(n, age, kwargs.get('birth_rate'), innovation)
     elif model.upper() == 'BDP':
-        tree = _BDP_N_age(N, age,
+        tree = _BDP_n_age(n, age,
                           kwargs.get('birth_rate'), kwargs.get('death_rate'),
                           innovation)
     else:
@@ -648,7 +648,7 @@ class _ForwardLineageSampler:
         return self.tree
 
 
-def _yule_N(N, birth_rate, innovation):
+def _yule_n(n, birth_rate, innovation):
     
     if birth_rate is None:
         birth_rate = 1.0
@@ -658,7 +658,7 @@ def _yule_N(N, birth_rate, innovation):
     fls = _ForwardLineageSampler(innovation)
     t = 0.0
     
-    while len(fls.lineages) < N:
+    while len(fls.lineages) < n:
         rate = len(fls.lineages) * birth_rate
         t += np.random.exponential(1/rate)
         fls.speciation(t)
@@ -688,9 +688,9 @@ def _yule_age(age, birth_rate, innovation):
     return fls.finalize(age)
 
 
-def _yule_N_age(N, age, birth_rate, innovation):
+def _yule_n_age(n, age, birth_rate, innovation):
     
-    return _BDP_N_age(N, age, birth_rate, 0.0, innovation)
+    return _BDP_n_age(n, age, birth_rate, 0.0, innovation)
     
 
 def _BDP_age(age, innovation, **kwargs):
@@ -702,7 +702,7 @@ def _BDP_age(age, innovation, **kwargs):
     return _EBDP_age_forward(age, episodes, innovation)
 
 
-def _BDP_N_age(N, age, birth_rate, death_rate, innovation):
+def _BDP_n_age(n, age, birth_rate, death_rate, innovation):
     
     if birth_rate is None:
         birth_rate = 1.0
@@ -716,7 +716,7 @@ def _BDP_N_age(N, age, birth_rate, death_rate, innovation):
     fls = _ForwardLineageSampler(innovation)
     inner_vertices = []
     
-    while len(fls.lineages) < N:
+    while len(fls.lineages) < n:
         inner_vertices.append(fls.speciation(0.0))
     fls.finalize(0.0)
     
@@ -858,20 +858,20 @@ def _EBDP_age_forward(age, episodes, innovation):
 # --------------------------------------------------------------------------
 
 
-def _BDP_N(N, **kwargs):
+def _BDP_n(n, **kwargs):
     
     # remove potentially supplied 'episodes' argument
     episodes = _EBDP_check_episodes(birth_rate = kwargs.get('birth_rate'),
                                     death_rate = kwargs.get('death_rate'))
     
-    return _EBDP_backward(N, episodes)
+    return _EBDP_backward(n, episodes)
 
 
-def _EBDP_N(N, **kwargs):
+def _EBDP_n(n, **kwargs):
     
     episodes = _EBDP_check_episodes(**kwargs)
     
-    return _EBDP_backward(N, episodes)
+    return _EBDP_backward(n, episodes)
 
 
 def _EBDP_check_episodes(**kwargs):
@@ -930,7 +930,7 @@ def _EBDP_check_episodes(**kwargs):
         return [(1.0, 0.0, 1.0, 0.0)]
 
 
-def _EBDP_backward(N, episodes, max_tries=500):
+def _EBDP_backward(n, episodes, max_tries=500):
     """Episodic birth–death process (EBDP).
     
     References
@@ -950,8 +950,8 @@ def _EBDP_backward(N, episodes, max_tries=500):
         i = 0
         
         branches = [TreeNode(label=j, event='S', tstamp=t)
-                    for j in range(N)]
-        id_counter = N
+                    for j in range(n)]
+        id_counter = n
         
         while branches:
             birth_i, death_i, rho_i, t_i = episodes[i]

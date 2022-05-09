@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from asymmetree.treeevolve import species_tree_N_age
+from asymmetree.treeevolve import species_tree_n_age
 from asymmetree.genome import GenomeSimulator
 from asymmetree.seqevolve import SubstModel, IndelModel, HetModel
 
@@ -8,7 +8,7 @@ from asymmetree.seqevolve import SubstModel, IndelModel, HetModel
 __author__ = 'David Schaller'
 
 
-species_tree = species_tree_N_age(10, 1.0, model='yule')
+species_tree = species_tree_n_age(10, 1.0, model='yule')
 
 subst_model = SubstModel('a', 'JTT')
 indel_model = IndelModel(0.01, 0.01, length_distr=('zipf', 1.821))

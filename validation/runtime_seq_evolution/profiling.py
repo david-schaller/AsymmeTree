@@ -6,7 +6,7 @@ import asymmetree.treeevolve as te
 import asymmetree.seqevolve as se
 
 
-tree = te.species_tree_N_age(50, 1.0, model='yule')
+tree = te.species_tree_n_age(50, 1.0, model='yule')
 
 subst_model = se.SubstModel('a', 'WAG')
 

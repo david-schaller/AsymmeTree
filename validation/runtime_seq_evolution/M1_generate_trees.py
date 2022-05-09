@@ -32,9 +32,9 @@ for i in range(repeats):
     
     print(i)
     
-    for N in tree_sizes:
+    for n in tree_sizes:
         
-        S = te.species_tree_N_age(N, 1.0, model='yule',
+        S = te.species_tree_n_age(n, 1.0, model='yule',
                                   innovation=True)
         
         for v in S.preorder():
@@ -46,11 +46,11 @@ for i in range(repeats):
         delattr(S.root, 'dist')
         newick2 = to_newick(S, color=False, distance=True, label_inner=False)
         
-        with open(os.path.join(tree_directory, f'tree_{i}_{N}'), 'w') as f:
+        with open(os.path.join(tree_directory, f'tree_{i}_{n}'), 'w') as f:
             f.write(newick)
             f.write('\n')
         
-        with open(os.path.join(tree_directory, f'tree_{i}_{N}_nolabel'), 'w') as f:
+        with open(os.path.join(tree_directory, f'tree_{i}_{n}_nolabel'), 'w') as f:
             f.write(newick2)
             f.write('\n')
         
@@ -58,11 +58,11 @@ for i in range(repeats):
             
             for j in range(1,3):
             
-                outfile = os.path.join(seq_directory, f'indelible{j}_{i}_{N}_{l}')
+                outfile = os.path.join(seq_directory, f'indelible{j}_{i}_{n}_{l}')
                 
                 # configuration files for INDELible
                 with open(os.path.join(tree_directory,
-                                       f'indelible{j}_{i}_{N}_{l}.txt'), 'w') as f:
+                                       f'indelible{j}_{i}_{n}_{l}.txt'), 'w') as f:
                     f.write(f'[TYPE] AMINOACID {j}\n'\
                              '[MODEL] m1\n'\
                              '  [submodel] WAG\n')
@@ -72,13 +72,13 @@ for i in range(repeats):
                     f.write(f'[PARTITIONS] p1 [t1 m1 {l}]\n')
                     f.write(f'[EVOLVE] p1 1 {outfile}\n')
                 
-                wdir = os.path.join(seq_directory, f'alf{j}_{i}_{N}_{l}')
-                tree_file = os.path.join(tree_directory, f'tree_{i}_{N}_nolabel')
+                wdir = os.path.join(seq_directory, f'alf{j}_{i}_{n}_{l}')
+                tree_file = os.path.join(tree_directory, f'tree_{i}_{n}_nolabel')
                 rate_var_model = 'Gamma, 5, 0, 1' if j == 2 else ''
                 
                 # configuration files for INDELible
                 with open(os.path.join(tree_directory,
-                                       f'alf{j}_{i}_{N}_{l}.drw'), 'w') as f:
+                                       f'alf{j}_{i}_{n}_{l}.drw'), 'w') as f:
                     f.write(f"# name of simulation\n"
                              "mname := uuid;\n\n"
 

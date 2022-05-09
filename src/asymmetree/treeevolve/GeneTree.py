@@ -28,7 +28,7 @@ __author__ = 'David Schaller'
 # --------------------------------------------------------------------------
     
 
-def simulate_dated_gene_tree(S, **kwargs):
+def dated_gene_tree(S, **kwargs):
     """Simulate a gene tree along the specified species tree.
     
     Parameters

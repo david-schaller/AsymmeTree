@@ -8,7 +8,7 @@ from asymmetree.tools.PhyloTreeTools import (to_newick,)
 #                            SPECIES TREE
 # --------------------------------------------------------------------------
 
-S = te.species_tree_N_age(10, 1.0,
+S = te.species_tree_n_age(10, 1.0,
                           contraction_probability=0.0,
                           contraction_proportion=0.2,
                           contraction_bias='exponential')
@@ -19,9 +19,11 @@ print(to_newick(S))
 #                             GENE TREE
 # --------------------------------------------------------------------------
 
-TGT_simulator = te.GeneTreeSimulator(S)
-TGT = TGT_simulator.simulate(dupl_rate=1.0, loss_rate=1.0, hgt_rate=0.2,
-                             prohibit_extinction='per_species')
+TGT = te.dated_gene_tree(S,
+                         dupl_rate=1.0,
+                         loss_rate=1.0,
+                         hgt_rate=0.2,
+                         prohibit_extinction='per_species')
 
 # --------------------------------------------------------------------------
 #                         RATE HETEROGENEITY
@@ -33,8 +35,6 @@ TGT = te.rate_heterogeneity(TGT, S, base_rate=1.0,
                             CSN_weights=(1, 1, 1))
 print('------------- TGT -------------')
 print(to_newick(TGT))
-print('all species have at least one copy:', 
-      TGT_simulator._assert_no_extinction(TGT))
 
 # --------------------------------------------------------------------------
 #                          PRUNED GENE TREE

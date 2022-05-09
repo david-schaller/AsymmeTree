@@ -22,13 +22,13 @@ __author__ = 'David Schaller'
 #                         USER INTERFACE FUNCTION
 # --------------------------------------------------------------------------
 
-def simulate_gene_trees(S,
-                        N=1,
-                        dupl_rate=0.0,
-                        loss_rate=0.0,
-                        hgt_rate=0.0,
-                        base_rate=1.0,
-                        **kwargs):
+def gene_trees(S,
+               n=1,
+               dupl_rate=0.0,
+               loss_rate=0.0,
+               hgt_rate=0.0,
+               base_rate=1.0,
+               **kwargs):
     """Simulates dated gene trees with non-ultrametric edge lengths along a
     species tree.
     
@@ -36,7 +36,7 @@ def simulate_gene_trees(S,
     ----------
     S : Tree
         The species tree along which the gene trees are simulated.
-    N : int, optional
+    n : int, optional
         Number of gene trees to be simulated, default is 1, in which case a
         tree is returned, otherwise a list is returned.
     dupl_rate : float or tuple
@@ -75,7 +75,7 @@ def simulate_gene_trees(S,
     _, autocorr_factors = autocorrelation_factors(S, autocorr_variance)
     
     # main simulation and imbalancing
-    for i in range(N):
+    for i in range(n):
         TGT = simulator.simulate(dupl_rate=dupl_rate_sampler(),
                                  loss_rate=loss_rate_sampler(),
                                  hgt_rate=hgt_rate_sampler(),

@@ -22,16 +22,16 @@ A typical simulation consists of the following steps:
 (4) pruned gene tree(s) (removal of all branches that lead to losses only)
 """
 
-from asymmetree.treeevolve.SpeciesTree import (species_tree_N,
+from asymmetree.treeevolve.SpeciesTree import (species_tree_n,
                                                species_tree_age,
-                                               species_tree_N_age,
+                                               species_tree_n_age,
                                                nonbinary)
-from asymmetree.treeevolve.GeneTree import (simulate_dated_gene_tree,
+from asymmetree.treeevolve.GeneTree import (dated_gene_tree,
                                             GeneTreeSimulator,
                                             prune_losses)
 from asymmetree.treeevolve.RateHeterogeneity import (rate_heterogeneity,
                                                      autocorrelation_factors,
-                                                     simulate_gene_trees)
+                                                     gene_trees)
 from asymmetree.treeevolve.DistanceNoise import (noisy_matrix,
                                                  convex_linear_comb,
                                                  wrong_topology_matrix)

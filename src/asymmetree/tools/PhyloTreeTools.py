@@ -366,17 +366,17 @@ def count_node_types(tree):
     return counts
 
 
-def random_colored_tree(N, colors, binary=False, force_all_colors=False):
+def random_colored_tree(n, colors, binary=False, force_all_colors=False):
      """Create a random colored tree.
      
      The number of leaves and the color labels are specified in the
-     parameters `N` and `colors`, respectively. Each non-leaf node in the 
+     parameters n and `colors`, respectively. Each non-leaf node in the 
      resulting tree will have at least children (property of phylogenetic
      trees).
      
      Parameters
      ----------
-     N : int
+     n : int
          The desired number of leaves.
      colors : int or list
          The list of colors, or the desired number of colors in which case
@@ -390,26 +390,26 @@ def random_colored_tree(N, colors, binary=False, force_all_colors=False):
      Returns
      -------
      Tree
-         A random tree with `N` leaves and random leaf coloring.
+         A random tree with n leaves and random leaf coloring.
      
      Raises
      ------
      TypeError
-         If `N` is not an integer > 0.
+         If n is not an integer > 0.
      ValueError
-         If the number of colors is greater than `N` and `force_all_colors`
+         If the number of colors is greater than n and `force_all_colors`
          is true.
      """
      
-     tree = Tree.random_tree(N, binary=binary)
+     tree = Tree.random_tree(n, binary=binary)
          
      if isinstance(colors, int):
          colors = [i+1 for i in range(colors)]
      elif not isinstance(colors, collections.abc.Iterable):
          raise TypeError("'colors' must be of type 'int' or iterable")
          
-     if len(colors) > N and force_all_colors:
-         raise ValueError('cannot force all colors since #colors > N')
+     if len(colors) > n and force_all_colors:
+         raise ValueError('cannot force all colors since #colors > n')
      
      leaves = [l for l in tree.leaves()]
      

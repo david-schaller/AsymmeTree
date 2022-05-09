@@ -13,11 +13,11 @@ class TestTreeEvolvePackage(unittest.TestCase):
     
     def test_species_tree(self):
         
-        N = 30
+        n = 30
         
         for model in ('yule', 'BDP', 'EBDP'):
             
-            species_tree = te.species_tree_N(N, model=model,
+            species_tree = te.species_tree_n(n, model=model,
                                              innovation=True, # only rel. for yule
                                              contraction_proportion=0.2,
                                              contraction_bias='inverse',
@@ -26,22 +26,23 @@ class TestTreeEvolvePackage(unittest.TestCase):
             self.assertTrue(species_tree._assert_integrity())
             
             leaves = [l for l in species_tree.leaves() if l.event != 'L']
-            self.assertEqual(len(leaves), N)
+            self.assertEqual(len(leaves), n)
             
             
     def test_no_extinction(self):
         
-        N = 10
+        n = 10
         repeats = 20
         
         for _ in range(repeats):
             
-            species_tree = te.species_tree_N_age(N, 1.0, model='yule',
+            species_tree = te.species_tree_n_age(n, 1.0, model='yule',
                                                  contraction_probability=0.2)
             
-            gene_tree = te.simulate_dated_gene_tree(species_tree,
-                            dupl_rate=1.0, loss_rate=1.0, hgt_rate=0.5,
-                            prohibit_extinction='per_species')
+            gene_tree = te.dated_gene_tree(species_tree,
+                                           dupl_rate=1.0, loss_rate=1.0,
+                                           hgt_rate=0.5,
+                                           prohibit_extinction='per_species')
             
             te.rate_heterogeneity(gene_tree, species_tree, 
                                   autocorr_variance=0.2, inplace=True)
@@ -57,9 +58,10 @@ class TestTreeEvolvePackage(unittest.TestCase):
             for leaf_list in color_dict.values():
                 self.assertTrue(leaf_list)
                 
-            gene_tree2 = te.simulate_dated_gene_tree(species_tree,
-                             dupl_rate=1.0, loss_rate=1.0, hgt_rate=0.5,
-                             prohibit_extinction='per_family')
+            gene_tree2 = te.dated_gene_tree(species_tree,
+                                            dupl_rate=1.0, loss_rate=1.0,
+                                            hgt_rate=0.5,
+                                            prohibit_extinction='per_family')
             
             # check that there is no extinction in all species
             self.assertTrue([l for l in gene_tree2.leaves()])

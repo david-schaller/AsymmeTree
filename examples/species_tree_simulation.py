@@ -7,12 +7,12 @@ from asymmetree.tools.PhyloTreeTools import (to_newick,)
 __author__ = 'David Schaller'
 
 
-print('Yule N ------------------------')
-tree = te.species_tree_N(10, model='yule', birth_rate=1.0)
+print('Yule n ------------------------')
+tree = te.species_tree_n(10, model='yule', birth_rate=1.0)
 print(to_newick(tree))
 
-print('EBDP N ------------------------')
-tree2 = te.species_tree_N(10, model='EBDP',
+print('EBDP n ------------------------')
+tree2 = te.species_tree_n(10, model='EBDP',
                           episodes=[(1.0, 0.3, 0.8, 0.0),
                                     (0.9, 0.4, 0.6, 0.3)])
 print(to_newick(tree2))
@@ -31,12 +31,12 @@ print(to_newick(tree4))
 
 
 
-print('Yule N age ------------------------')
-tree5 = te.species_tree_N_age(10, 1.0, model='yule', birth_rate=1.0)
+print('Yule n age ------------------------')
+tree5 = te.species_tree_n_age(10, 1.0, model='yule', birth_rate=1.0)
 print(to_newick(tree5))
 
-print('EBDP N age ------------------------')
-tree6 = te.species_tree_N_age(10, 1.0, model='BDP',
+print('EBDP n age ------------------------')
+tree6 = te.species_tree_n_age(10, 1.0, model='BDP',
                               birth_rate=1.0,
                               death_rate=0.5)
 print(to_newick(tree6))

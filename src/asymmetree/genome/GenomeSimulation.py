@@ -63,7 +63,7 @@ class GenomeSimulator:
         return os.path.join(self.outdir, *args)
             
     
-    def simulate_gene_trees(self, N,
+    def simulate_gene_trees(self, n,
                             **kwargs):
         """Simulate gene trees.
         
@@ -73,16 +73,16 @@ class GenomeSimulator:
         
         Parameters
         ----------
-        N : int
+        n : int
             Number of gene trees to be simulated.
         kwargs : optional
-            See function 'simulate_gene_trees' in 'treeevolve' subpackage or 
+            See function 'gene_trees' in 'treeevolve' subpackage or 
             documentation.
         """
         
-        self.number_of_families = N
+        self.number_of_families = n
         
-        self.true_gene_trees = te.simulate_gene_trees(self.S, N=N, **kwargs)
+        self.true_gene_trees = te.gene_trees(self.S, n=n, **kwargs)
         
         self.pruned_gene_trees = [te.prune_losses(tree)
                                   for tree in self.true_gene_trees]
@@ -92,7 +92,7 @@ class GenomeSimulator:
             self.sequence_dicts.clear()
         
         if self.outdir:
-            for i in range(N):
+            for i in range(n):
                 filename = self._path('true_gene_trees',
                                       'gene_tree{}.json'.format(i))
                 self.true_gene_trees[i].serialize(filename, mode='json')

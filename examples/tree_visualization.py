@@ -9,22 +9,23 @@ from asymmetree.visualize.TreeVis import visualize, assign_colors
 #                            SPECIES TREE
 # --------------------------------------------------------------------------
 
-S = te.species_tree_N_age(6, 1.0, model='BDP',
+S = te.species_tree_n_age(6, 1.0, model='BDP',
                           innovation=True,
                           birth_rate=1.0, death_rate=0.5,
                           contraction_probability=0.2)
+
 
 # --------------------------------------------------------------------------
 #                             GENE TREE
 # --------------------------------------------------------------------------
 
-T_simulator = te.GeneTreeSimulator(S)
-T = T_simulator.simulate(dupl_rate=1.0,
-                         loss_rate=1.0,
-                         hgt_rate=1.0,
-                         dupl_polytomy=0.5,
-                         replace_prob=0.5,
-                         transfer_distance_bias='inverse')
+T = te.dated_gene_tree(S,
+                       dupl_rate=1.0,
+                       loss_rate=1.0,
+                       hgt_rate=1.0,
+                       dupl_polytomy=0.5,
+                       replace_prob=0.5,
+                       transfer_distance_bias='inverse')
 
 
 # --------------------------------------------------------------------------
