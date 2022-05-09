@@ -632,7 +632,7 @@ The gene trees and the sequences are simulated in subsequent steps using the cla
 <details>
 <summary>Details: (Click to expand)</summary>
 
-The first step (i) takes the same keyword parameters as input as the function `simulate_gene_trees()` where `n` is the number of gene families to be simulated.
+The first step (i) takes the same keyword parameters as input as the function `gene_trees()` where `n` is the number of gene families to be simulated.
 Thus, rates for the three event types (`dupl_rate`, `loss_rate`, `hgt_rate`), autocorrelation (`autocorr_variance`), the distribution of base rates (`base_rate_distr`) etc. can be specified.
 
 The second step (ii) simulates the sequences along the pruned part (without loss branches) of the simulated gene trees.
@@ -671,18 +671,18 @@ After step (ii), the `list`s of sequence `dict`s are accessible via the attribut
     indel_model = IndelModel(0.01, 0.01, length_distr=('zipf', 1.821))
 
     # initialy GenomeSimulator instance
-    genome_sim = GenomeSimulator(S, outdir='simulation_directory')
+    gs = GenomeSimulator(S, outdir='simulation_directory')
 
     # simulate 50 gene trees along the species tree S (and write them to file)
-    genome_sim.simulate_gene_trees(50, dupl_rate=1.0, loss_rate=0.5,
-                                   base_rate=('gamma', 1.0, 1.0),
-                                   prohibit_extinction='per_species')
+    gs.simulate_gene_trees(50, dupl_rate=1.0, loss_rate=0.5,
+                           base_rate=('gamma', 1.0, 1.0),
+                           prohibit_extinction='per_species')
 
     # simulate sequences along the gene trees
-    genome_sim.simulate_sequences(subst_model,
-                                  indel_model=indel_model,
-                                  het_model=None,
-                                  length_distr=('constant', 200))
+    gs.simulate_sequences(subst_model,
+                          indel_model=indel_model,
+                          het_model=None,
+                          length_distr=('constant', 200))
 
     # results have been written to directories 'true_gene_trees',
     # 'fasta_files' and 'alignments' in 'path/to/genome_directory'
