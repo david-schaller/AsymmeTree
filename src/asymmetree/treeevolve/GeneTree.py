@@ -100,8 +100,7 @@ def dated_gene_tree(S, **kwargs):
 class _Branch:
     
     label:          int         # unique branch label
-    array_id:       int         # index in rate array
-    rate:           float       # total event rate
+    list_id:       int          # index in list of branches
     parent:         TreeNode    # parent node
     S_edge:         TreeNode    # v of species tree edge (u, v) into which
                                 # the branch is embedded
@@ -259,43 +258,70 @@ class GeneTreeSimulator:
             raise ValueError('factor for transfer distance bias must be > 0')
         self._transfer_distance_bias_strength = transfer_distance_bias_strength
         
-        self._reset()
-        
         return self._run()
     
     
-    def _reset(self):
+    def _new_branch(self, parent, S_edge, transferred):
         
-        # queue for speciation events
-        self.spec_queue = deque(self.sorted_speciations)
-        self.id_counter = 0
+        new_branch = _Branch(self.id_counter, len(self.branches),
+                             parent, S_edge, transferred)
+        self.branches.append(new_branch)
         
-        # total event rate (all branches)
-        self.total_rate = 0.0
+        self.ES_to_b[S_edge].append(new_branch)
+        self.id_counter += 1
         
-        # keep track of surving branches that are in species branches with
-        # at least 1 surviving species leaf
-        self.surv_non_loss_lineages = set()
+        if self.S_subtree_survivors[S_edge]:
+            self.surv_non_loss_lineages.add(new_branch)
         
-        self.branches = []
+        return new_branch
+    
+    
+    def _remove_branch(self, branch):
         
-        # maps species tree branches to existing gene branches
-        self.ES_to_b = {S_edge: [] for _, S_edge in self.sorted_edges}
+        # efficient removal from list
+        if branch.list_id != len(self.branches) - 1:
+            branch2 = self.branches[-1]
+            self.branches[branch.list_id] = branch2
+            branch2.list_id = branch.list_id
+        self.branches.pop()
+        
+        self.ES_to_b[branch.S_edge].remove(branch)
+        self.surv_non_loss_lineages.discard(branch)
+    
+    
+    def _initiatialize_tree(self):
+        
+        if len(self.S.root.children) > 1:
+            # root is a speciation event
+            root = TreeNode(label=0, event='S',
+                            reconc=self.S.root.label, 
+                            tstamp=self.S.root.tstamp)
+        else:                    
+            # planted species tree
+            root = TreeNode(label=0, event=None,
+                            reconc=self.S.root.label,
+                            tstamp=self.S.root.tstamp)
+            
+        T = Tree(root)
+        self.id_counter += 1
+        self.spec_queue.popleft()
+                
+        for S_edge in self.S.root.children:
+            self._new_branch(T.root, S_edge, 0)
+            
+        return T
     
     
     def _get_branch_and_type(self):
         
-        r = np.random.uniform(high=self.total_rate)
-        current_sum = 0.0
-            
-        for i in range(len(self.branches)):
-            if r <= current_sum + self.branches[i].rate:
-                break
-            current_sum += self.branches[i].rate
+        total_rate = len(self.branches) * self.rate_sum
+        r = np.random.uniform(high=total_rate)
+        i = int(len(self.branches) * r / total_rate)
+        r2 = r - i * self.rate_sum
         
-        if r <= current_sum + self.d:
+        if r2 <= self.d:
             event_type = 'D'
-        elif r <= current_sum + self.d + self.l:
+        elif r2 <= self.d + self.l:
             event_type = 'L'
         else:
             event_type = 'H'
@@ -305,13 +331,27 @@ class GeneTreeSimulator:
 
     def _run(self):
         
+        # queue for speciation events
+        self.spec_queue = deque(self.sorted_speciations)
+        self.id_counter = 0
+        
+        # keep track of surving branches that are in species branches with
+        # at least 1 surviving species leaf
+        self.surv_non_loss_lineages = set()
+        
+        self.branches = []
+        
+        # maps species tree branches to existing gene branches
+        self.ES_to_b = {S_edge: [] for _, S_edge in self.sorted_edges}
+        
         self.T = self._initiatialize_tree()
         t = self.T.root.tstamp
         
         while self.spec_queue:
             
-            event_tstamp = t - np.random.exponential(1/self.total_rate) \
-                           if self.total_rate > 0.0 else -1
+            total_rate = len(self.branches) * self.rate_sum
+            event_tstamp = t - np.random.exponential(1/total_rate) \
+                           if total_rate > 0.0 else -1
             next_spec_tstamp = self.spec_queue[0].tstamp
             
             # speciation
@@ -340,52 +380,6 @@ class GeneTreeSimulator:
         distance_from_timing(self.T)
 
         return self.T
-    
-    
-    def _new_branch(self, rate, parent, S_edge, transferred, array_id=None):
-        
-        if array_id is None:
-            new_branch = _Branch(self.id_counter, len(self.branches), rate,
-                                 parent, S_edge, transferred)
-            self.branches.append(new_branch)
-        else:
-            new_branch = _Branch(self.id_counter, array_id, rate,
-                                 parent, S_edge, transferred)
-            self.branches[array_id] = new_branch
-        
-        self.ES_to_b[S_edge].append(new_branch)
-        self.id_counter += 1
-        
-        if self.S_subtree_survivors[S_edge]:
-            self.surv_non_loss_lineages.add(new_branch)
-        
-        return new_branch
-    
-    
-    def _initiatialize_tree(self):
-        
-        if len(self.S.root.children) > 1:
-            # root is a speciation event
-            root = TreeNode(label=0, event='S',
-                            reconc=self.S.root.label, 
-                            tstamp=self.S.root.tstamp)
-        else:                    
-            # planted species tree
-            root = TreeNode(label=0, event=None,
-                            reconc=self.S.root.label,
-                            tstamp=self.S.root.tstamp)
-            
-        T = Tree(root)
-        self.id_counter += 1
-        self.spec_queue.popleft()
-        
-        rate = self.rate_sum
-                
-        for S_edge in self.S.root.children:
-            self._new_branch(rate, T.root, S_edge, 0)
-            self.total_rate += rate
-            
-        return T
             
     
     def _speciation(self):
@@ -402,29 +396,14 @@ class GeneTreeSimulator:
                                  reconc=S_edge.label, tstamp=S_edge.tstamp,
                                  transferred=branch.transferred)
             branch.parent.add_child(spec_node)
+            self._remove_branch(branch)
             
             for S_w in S_edge.children:
-                
-                if S_w is S_edge.children[0]:
-                    self._new_branch(branch.rate, spec_node, S_w, 0,
-                                     array_id=branch.array_id)
-                else:
-                    self._new_branch(branch.rate, spec_node, S_w, 0)
+                self._new_branch(spec_node, S_w, 0)
             
-            # losses and (extant) leaves
-            if not S_edge.children:
-                
-                self.ES_to_b[S_edge].remove(branch)
-                self.total_rate -= branch.rate
-                branch.rate = 0.0
-                
-                if S_edge.label == 'L':
-                    spec_node.event = 'L'
-                    self.surv_non_loss_lineages.discard(branch)
-            
-            else:
-                self.total_rate += (len(S_edge.children) - 1) * branch.rate
-                self.surv_non_loss_lineages.discard(branch)
+            # loss leaves if it was a species extinction event
+            if (not S_edge.children) and S_edge.label == 'L':
+                spec_node.event = 'L'
             
     
     def _duplication(self, event_tstamp, branch):
@@ -437,17 +416,13 @@ class GeneTreeSimulator:
                              tstamp=event_tstamp,
                              transferred=branch.transferred)
         branch.parent.add_child(dupl_node)
-        self.ES_to_b[S_edge].remove(branch)
-        self.surv_non_loss_lineages.discard(branch)
+        self._remove_branch(branch)
         
         copy_number = 2 if self._dupl_polytomy <= 0.0 else \
                       2 + np.random.poisson(lam=self._dupl_polytomy)
         
         for i in range(copy_number):
-            self._new_branch(self.rate_sum, dupl_node, S_edge, 0,
-                             array_id=(branch.array_id if i == 0 else None))
-        
-        self.total_rate += (copy_number - 1) * (self.rate_sum)
+            self._new_branch(dupl_node, S_edge, 0)
             
             
     def _loss(self, event_tstamp, branch):
@@ -472,11 +447,7 @@ class GeneTreeSimulator:
                              tstamp=event_tstamp,
                              transferred=branch.transferred)
         branch.parent.add_child(loss_node)
-        self.ES_to_b[S_edge].remove(branch)
-        self.surv_non_loss_lineages.discard(branch)
-        branch.rate = 0.0
-        
-        self.total_rate -= self.rate_sum
+        self._remove_branch(branch)
             
     
     def _coexisting_species_edges(self, tstamp, exclude_edge=None):
@@ -565,17 +536,13 @@ class GeneTreeSimulator:
                                 tstamp=event_tstamp,
                                 transferred=branch.transferred)
             branch.parent.add_child(hgt_node)
-            self.ES_to_b[S_edge].remove(branch)
-            self.surv_non_loss_lineages.discard(branch)
+            self._remove_branch(branch)
             
             # original branch
-            self._new_branch(branch.rate, hgt_node, S_edge, 0, 
-                             array_id=branch.array_id)
+            self._new_branch(hgt_node, S_edge, 0)
             
             # receiving branch
-            self._new_branch(self.rate_sum, hgt_node, trans_edge, 1)
-            
-            self.total_rate += self.rate_sum
+            self._new_branch(hgt_node, trans_edge, 1)
         
         # replacing HGT leads to loss in the recipient species
         if replaced_gene_branch:
