@@ -39,6 +39,8 @@ def dated_gene_tree(S, **kwargs):
         Loss rate, default is 0.0.
     hgt_rate : float, optional
         Horizontal gene transfer rate, default is 0.0.
+    gc_rate : float, optional
+        Gene conversion rate, default is 0.0.
     dupl_polytomy : float, optional
         Allows non-binary duplication events by specifying the lambda
         parameter for a poisson distribution (copy number =
@@ -65,7 +67,7 @@ def dated_gene_tree(S, **kwargs):
         probability to be replaced in a replacing HGT event. The default
         is False, in which case the replaced gene is chosen at random
         among the co-existing gene branches. The options 'inverse' and
-        'exponential' mean that a species branch is sampled weighted by
+        'exponential' mean that a gene branch is sampled weighted by
         1/(a * t) or e^(-(a * t)), resp., where t is the elapsed time between
         the last common ancestor of the two gene branches and the time of the
         event, see [1], and a is a user-defined factor.
@@ -77,6 +79,18 @@ def dated_gene_tree(S, **kwargs):
     transfer_distance_bias_strength : float, optional
         Intensity of the transfer distance bias (factor a) for additive and
         replacing HGT. The default is 1.0.
+    gc_distance_bias : str or bool, optional
+        Specifies whether closer related gene branches have a higher
+        probability to be replaced in a gene conversion event. The default
+        is False, in which case the replaced gene is chosen at random
+        among the paralogs in the respective species lineage. The options
+        'inverse' and 'exponential' mean that a paralog is sampled weighted
+        by 1/(a * t) or e^(-(a * t)), resp., where t is the elapsed time
+        between the last common ancestor of the two gene branches and the
+        time of the event, see [1], and a is a user-defined factor.
+    gc_distance_bias_strength : float, optional
+        Intensity of the distance bias (factor a) for gene conversion.
+        The default is 1.0.
     
     Returns
     -------
@@ -100,7 +114,7 @@ def dated_gene_tree(S, **kwargs):
 class _Branch:
     
     label:          int         # unique branch label
-    list_id:       int          # index in list of branches
+    list_id:        int         # index in list of branches
     parent:         TreeNode    # parent node
     S_edge:         TreeNode    # v of species tree edge (u, v) into which
                                 # the branch is embedded
@@ -151,6 +165,7 @@ class GeneTreeSimulator:
                  dupl_rate=0.0,
                  loss_rate=0.0,
                  hgt_rate=0.0,
+                 gc_rate=0.0,
                  dupl_polytomy=0.0,
                  prohibit_extinction='per_species',
                  replace_prob=0.0,
@@ -158,6 +173,8 @@ class GeneTreeSimulator:
                  replacing_transfer_distance_bias=False,
                  transfer_distance_bias=False,
                  transfer_distance_bias_strength=1.0,
+                 gc_distance_bias=False,
+                 gc_distance_bias_strength=1.0,
                  **kwargs):
         """Simulate a gene tree along the specified species tree.
         
@@ -169,6 +186,8 @@ class GeneTreeSimulator:
             Loss rate, default is 0.0.
         hgt_rate : float, optional
             Horizontal gene transfer rate, default is 0.0.
+        gc_rate : float, optional
+            Gene conversion rate, default is 0.0.
         dupl_polytomy : float, optional
             Allows non-binary duplication events by specifying the lambda
             parameter for a poisson distribution (copy number =
@@ -195,7 +214,7 @@ class GeneTreeSimulator:
             probability to be replaced in a replacing HGT event. The default
             is False, in which case the replaced gene is chosen at random
             among the co-existing gene branches. The options 'inverse' and
-            'exponential' mean that a species branch is sampled weighted by
+            'exponential' mean that a gene branch is sampled weighted by
             1/(a * t) or e^(-(a * t)), resp., where t is the elapsed time between
             the last common ancestor of the two gene branches and the time of the
             event, see [1], and a is a user-defined factor.
@@ -207,6 +226,18 @@ class GeneTreeSimulator:
         transfer_distance_bias_strength : float, optional
             Intensity of the transfer distance bias (factor a) for additive and
             replacing HGT. The default is 1.0.
+        gc_distance_bias : str or bool, optional
+            Specifies whether closer related gene branches have a higher
+            probability to be replaced in a gene conversion event. The default
+            is False, in which case the replaced gene is chosen at random
+            among the paralogs in the respective species lineage. The options
+            'inverse' and 'exponential' mean that a paralog is sampled weighted
+            by 1/(a * t) or e^(-(a * t)), resp., where t is the elapsed time
+            between the last common ancestor of the two gene branches and the
+            time of the event, see [1], and a is a user-defined factor.
+        gc_distance_bias_strength : float, optional
+            Intensity of the distance bias (factor a) for gene conversion.
+            The default is 1.0.
         
         Returns
         -------
@@ -222,10 +253,16 @@ class GeneTreeSimulator:
            doi:10.1093/bioinformatics/btz081.
         """
         
-        self.rate_sum = dupl_rate + loss_rate + hgt_rate
+        self.rate_sum = 0.0
+        for rate in (dupl_rate, loss_rate, hgt_rate, gc_rate):
+            self.rate_sum += rate
+            if rate < 0.0:
+                raise ValueError(f'negative rate {rate}')
+        
         self.d = dupl_rate
         self.l = loss_rate
         self.h = hgt_rate
+        self.gc = gc_rate
         
         if prohibit_extinction not in (False, 'per_family', 'per_species'):
             raise ValueError(f"unknown mode prohibit_extinction attribute: "\
@@ -238,7 +275,8 @@ class GeneTreeSimulator:
         
         for m in (additive_transfer_distance_bias,
                   replacing_transfer_distance_bias,
-                  transfer_distance_bias):
+                  transfer_distance_bias,
+                  gc_distance_bias):
             if m not in (False, 'inverse', 'exponential'):
                 raise ValueError(f"unknown mode for transfer distance bias: "\
                                  f"{m}")
@@ -257,6 +295,12 @@ class GeneTreeSimulator:
             transfer_distance_bias_strength <= 0.0:
             raise ValueError('factor for transfer distance bias must be > 0')
         self._transfer_distance_bias_strength = transfer_distance_bias_strength
+        
+        self._gc_distance_bias = gc_distance_bias
+        if not isinstance(gc_distance_bias_strength, (int, float)) or \
+            gc_distance_bias_strength <= 0.0:
+            raise ValueError('factor for g.c. distance bias must be > 0')
+        self._gc_distance_bias_strength = gc_distance_bias_strength
         
         return self._run()
     
@@ -291,16 +335,10 @@ class GeneTreeSimulator:
     
     def _initiatialize_tree(self):
         
-        if len(self.S.root.children) > 1:
-            # root is a speciation event
-            root = TreeNode(label=0, event='S',
-                            reconc=self.S.root.label, 
-                            tstamp=self.S.root.tstamp)
-        else:                    
-            # planted species tree
-            root = TreeNode(label=0, event=None,
-                            reconc=self.S.root.label,
-                            tstamp=self.S.root.tstamp)
+        root = TreeNode(label=0, 
+                        event='S' if len(self.S.root.children) > 1 else None,
+                        reconc=self.S.root.label, 
+                        tstamp=self.S.root.tstamp)
             
         T = Tree(root)
         self.id_counter += 1
@@ -323,8 +361,10 @@ class GeneTreeSimulator:
             event_type = 'D'
         elif r2 <= self.d + self.l:
             event_type = 'L'
-        else:
+        elif r2 <= self.d + self.l + self.h:
             event_type = 'H'
+        else:
+            event_type = 'GC'
         
         return self.branches[i], event_type
 
@@ -373,6 +413,10 @@ class GeneTreeSimulator:
                 # HGT    
                 elif event_type == 'H':
                     self._hgt(event_tstamp, branch)
+                
+                # gene conversion
+                elif event_type == 'GC':
+                    self._gene_conversion(event_tstamp, branch)
                 
                 t = event_tstamp
         
@@ -509,10 +553,11 @@ class GeneTreeSimulator:
                 lca_T = LCA(self.T)
                 distances = [(lca_T(branch.parent, b.parent).tstamp-event_tstamp)
                              for b in valid_genes]
+                a = self._transfer_distance_bias_strength
                 if self._replacing_transfer_distance_bias == 'inverse':
-                    weights = 1 / np.asarray(distances)
+                    weights = 1 / (a * np.asarray(distances))
                 elif self._replacing_transfer_distance_bias == 'exponential':
-                    weights = np.exp(-np.asarray(distances))
+                    weights = np.exp(-a * np.asarray(distances))
                 
                 replaced_gene_branch = random.choices(valid_genes,
                                                       weights=weights)[0]
@@ -549,6 +594,55 @@ class GeneTreeSimulator:
             self._loss(event_tstamp, replaced_gene_branch)
             # save replaced gene information in HGT node
             hgt_node.replaced_gene = replaced_gene_branch.label
+    
+    
+    def _sample_replaced_gene_gc(self, event_tstamp, branch):
+        
+        candidates = [b for b in self.ES_to_b[branch.S_edge] if b is not branch]
+        
+        # no gene conversion possible if there is currently no other branch in
+        # the species lineage
+        if not candidates:
+            return
+        
+        if not self._gc_distance_bias:
+            return random.choice(candidates)
+        else:
+            lca_T = LCA(self.T)
+            distances = [(lca_T(branch.parent, b.parent).tstamp-event_tstamp)
+                         for b in candidates]
+            a = self._gc_distance_bias_strength
+            if self._gc_distance_bias == 'inverse':
+                weights = 1 / (a * np.asarray(distances))
+            elif self._gc_distance_bias == 'exponential':
+                weights = np.exp(-a * np.asarray(distances))
+            
+            return random.choices(candidates, weights=weights)[0]
+    
+    
+    def _gene_conversion(self, event_tstamp, branch):
+        
+        S_edge = branch.S_edge
+        
+        replaced_gene_branch = self._sample_replaced_gene_gc(event_tstamp,
+                                                             branch)
+        
+        if replaced_gene_branch:
+            gc_node = TreeNode(label=branch.label,
+                               event='GC',
+                               reconc=(S_edge.parent.label, S_edge.label),
+                               tstamp=event_tstamp,
+                               transferred=branch.transferred)
+            branch.parent.add_child(gc_node)
+            self._remove_branch(branch)
+            
+            self._new_branch(gc_node, S_edge, 0)
+            self._new_branch(gc_node, S_edge, 0)
+        
+            # gene conversion leads to loss of a homologous gene
+            self._loss(event_tstamp, replaced_gene_branch)
+            # save replaced gene information in GC node
+            gc_node.replaced_gene = replaced_gene_branch.label
         
 
 # --------------------------------------------------------------------------

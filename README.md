@@ -100,7 +100,7 @@ Gene trees, furthermore, can be manipulated with a realistic rate heterogeneity 
 
 A typical simulation consists of the following steps:
 * dated species tree (models e.g. 'Yule', and '(episodic) birth-death process'; conditioned on the number of leaves, the age of the tree, or both)
-* dated gene tree(s) (birth-death process with speciations as additional branching events)
+* dated gene tree(s) (gene duplications, losses, horizontal gene transfer (HGT), and gene conversion)
 * assignment of asymmetric evolution rates to paralogous genes
 * pruned gene tree(s) (removal of all branches that lead to losses only)
 
@@ -203,15 +203,17 @@ To simulate gene tree, use the class `GeneTreeSimulator` or the function
 | --- | ----------- |
 | `dupl_rate=0.0` | duplication rate (`float`) |
 | `loss_rate=0.0` | loss rate (`float`) |
-| `hgt_rate=0.0` | horizontal gene transfer rate rate (`float`) |
+| `hgt_rate=0.0` | horizontal gene transfer rate (`float`) |
+| `gc_rate=0.0` | gene conversion rate (`float`) |
 | `dupl_polytomy=0.0` | allows non-binary duplication events by drawing a number from a Poisson distribution with rate parameter `dupl_polytomy` (copy number = 2 + drawn number) (`float`) |
 | `prohibit_extinction='per_species'` | avoid loss events for genes that are the last survivor in their species branch (`'per_species'`), the last survivor of the whole family (`'per_family'`); or no constraints  (`False`) |
 | `replace_prob=0.0` | probability that an HGT event is replacing (rather than additive), i.e., it replaces a homolog in the receiving species branch; default is `0.0` in which case all HGT events are additive (`float`) |
 | `additive_transfer_distance_bias=False` | specifies whether closer related species have a higher probability to be the recipient species in an additive HGT event. The default is False, in which case the recipient species is chosen at random among the co-existing species. The options `'inverse'` and `'exponential'` mean that a species branch is sampled weighted by 1/(a * t) or e^(-a * t), resp., where t is the elapsed time between the last common ancestor of the two species branches and the time of the event and a is a user-defined factor (see `transfer_distance_bias_strength` below) |
 | `replacing_transfer_distance_bias=False` | specifies whether closer related gene branches have a higher probability to be replaced in a replacing HGT event. The default is False, in which case the replaced gene is chosen at random among the co-existing gene branches. The options `'inverse'` and `'exponential'` mean that a species branch is sampled weighted by 1/(a * t) or e^(-a * t), resp., where t is the elapsed time between the last common ancestor of the two gene branches and the time of the event and a is a user-defined factor (see `transfer_distance_bias_strength` below) |
 | `transfer_distance_bias=False` | sets a common bias mode for additive and replacing HGT, see description of parameters `additive_transfer_distance_bias` and `replacing_transfer_distance_bias`. If the latter are no set to the default (False), then these optioned are prioritized. |
-| `transfer_distance_bias_strength=1.0` | intensity of the transfer distance bias (factor a) for additive and
-replacing HGT |
+| `transfer_distance_bias_strength=1.0` | intensity of the transfer distance bias (factor a) for additive and replacing HGT |
+| `gc_distance_bias=False` | specifies whether closer related gene branches have a higher probability to be replaced in a gene conversion event; the default is False, in which case the replaced gene is chosen at random among the paralogs in the respective species lineage. The options `'inverse'` and `'exponential'` mean that a paralog is sampled weighted by 1/(a * t) or e^(-(a * t)), resp., where t is the elapsed time between the last common ancestor of the two gene branches and the time of the event, see [1], and a is a user-defined factor |
+| `gc_distance_bias_strength=1.0` | intensity of the distance bias (factor a) for gene conversion |
 
 For the constraints to avoid extinction, the loss rates in the respective branches are temporarily set to zero.
 Note that if replacing HGT is enabled (`replace_prob` >0.0), then the resulting tree may contain loss leaves even if the loss rate is zero since replacement is modeled by a loss of a paralog.

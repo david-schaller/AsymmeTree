@@ -23,6 +23,7 @@ TGT = te.dated_gene_tree(S,
                          dupl_rate=1.0,
                          loss_rate=1.0,
                          hgt_rate=0.2,
+                         gc_rate=0.2,
                          prohibit_extinction='per_species')
 
 # --------------------------------------------------------------------------

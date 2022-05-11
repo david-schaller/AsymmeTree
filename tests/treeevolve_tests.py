@@ -41,8 +41,10 @@ class TestTreeEvolvePackage(unittest.TestCase):
             
             gene_tree = te.dated_gene_tree(species_tree,
                                            dupl_rate=1.0, loss_rate=1.0,
-                                           hgt_rate=0.5,
-                                           prohibit_extinction='per_species')
+                                           hgt_rate=0.5, gc_rate=0.5,
+                                           prohibit_extinction='per_species',
+                                           gc_distance_bias='inverse',
+                                           gc_distance_bias_strength=1.5)
             
             te.rate_heterogeneity(gene_tree, species_tree, 
                                   autocorr_variance=0.2, inplace=True)

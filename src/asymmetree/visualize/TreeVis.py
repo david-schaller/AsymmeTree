@@ -278,8 +278,10 @@ class Visualizer:
                     self.draw_dupl(*self.node_positions[v])
                 elif v.event == 'S':
                     self.draw_spec(*self.node_positions[v])
-                if v.event == 'H':
+                elif v.event == 'H':
                     self.draw_hgt(*self.node_positions[v])
+                elif v.event == 'GC':
+                    self.draw_gc(*self.node_positions[v])
             else:
                 if v.event == 'L':
                     self.draw_loss(*self.node_positions[v])
@@ -382,6 +384,22 @@ class Visualizer:
                                  lw=self.symbolsize/self.symbollw,
                                  zorder=self.symbol_zorder)
         self.ax.add_patch(outer)
+    
+    
+    def draw_gc(self, x, y):
+        
+        coord = []
+        R = self.symbolsize/2
+        for i in range(5):
+            coord.append([x + 0.5 * R * np.cos(np.radians(54+i*72)),
+                          y - 0.5 * R * np.sin(np.radians(54+i*72))])
+            coord.append([x + R * np.cos(np.radians(90+i*72)),
+                          y - R * np.sin(np.radians(90+i*72))])
+
+        inner = mpatches.Polygon(coord, closed=True,
+                                 color='black', fill=True,
+                                 zorder=self.symbol_zorder)
+        self.ax.add_patch(inner)
     
     
     def write_label(self, x, y, text):

@@ -255,7 +255,7 @@ def _divergent_rates(T, S, sampler, CSN_weights):
                 rates[(u,v)].append((u.tstamp, new_rate))
             
         # ---------------- DUPLICATION -----------------
-        elif u.event == 'D':
+        elif u.event == 'D' or u.event == 'GC':
             
             gene_counter[u.reconc].remove(u)
             

@@ -20,9 +20,10 @@ S = te.species_tree_n_age(6, 1.0, model='BDP',
 # --------------------------------------------------------------------------
 
 T = te.dated_gene_tree(S,
-                       dupl_rate=1.0,
-                       loss_rate=1.0,
-                       hgt_rate=1.0,
+                       dupl_rate=0.7,
+                       loss_rate=0.7,
+                       hgt_rate=0.7,
+                       gc_rate=0.7,
                        dupl_polytomy=0.5,
                        replace_prob=0.5,
                        transfer_distance_bias='inverse')
