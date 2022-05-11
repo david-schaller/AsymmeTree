@@ -21,7 +21,7 @@ __author__ = 'David Schaller'
 
 default_attributes = {'label': '',
                       'event': None,
-                      'color': None,
+                      'reconc': None,
                       'dist': 1.0,
                       'tstamp': None,
                       'transferred': 0}
@@ -33,14 +33,14 @@ def node_to_str(node):
     Returns
     -------
     str
-        String representation of the node including color (if defined)
+        String representation of the node including reconc (if defined)
         and dist.
     """
     
-    if isinstance(node.color, (tuple, list)):
-        return '{}<{}-{}>:{}'.format(node.label, *node.color, node.dist)
-    elif node.color:
-        return '{}<{}>:{}'.format(node.label, node.color, node.dist)
+    if isinstance(node.reconc, (tuple, list)):
+        return '{}<{}-{}>:{}'.format(node.label, *node.reconc, node.dist)
+    elif node.reconc:
+        return '{}<{}>:{}'.format(node.label, node.reconc, node.dist)
     else:
         return '{}:{}'.format(node.label, node.dist)
 
@@ -172,43 +172,43 @@ def add_planted_root(tree):
     return tree.root
 
 
-def color_sorted_leaves(tree, return_list=False):
-    """Sort leaves by their color.
+def reconc_sorted_leaves(tree, return_list=False):
+    """Sort leaves by their reconciliation attribute.
     
     Parameters
     ----------
     tree : Tree
-        A tree with nodes that have a `color` attribute.
+        A tree with nodes that have a `reconc` attribute.
     return_list : bool, optional
         If True, also return a list of leaves such that leaves of the same
-        color appear as a coherent sequence (the default is False).
+        reconciliation appear as a coherent sequence (the default is False).
     
     Returns
     -------
     dict
-        A dictionary with colors as keys and a list of corresponding nodes
-        as values.
+        A dictionary with reconciliations as keys and a list of corresponding
+        nodes as values.
     list, optional
-        List of leaves such that leaves of the same color appear as a
+        List of leaves such that leaves of the same reconciliation appear as a
         coherent sequence.
     """
     
-    color_dict = {}
+    reconc_dict = {}
     
     for leaf in tree.leaves():
-        if leaf.color not in color_dict:
-            color_dict[leaf.color] = []
-        color_dict[leaf.color].append(leaf)
+        if leaf.reconc not in reconc_dict:
+            reconc_dict[leaf.reconc] = []
+        reconc_dict[leaf.reconc].append(leaf)
     
     if not return_list:
-        return color_dict
+        return reconc_dict
     else:
         leaves = []
-        for color, leaf_list in color_dict.items():
+        for reconc, leaf_list in reconc_dict.items():
             for leaf in leaf_list:
                 leaves.append(leaf)
         
-        return color_dict, leaves
+        return reconc_dict, leaves
     
     
 def distance_matrix(tree, leaf_order=None):
@@ -297,8 +297,8 @@ def distances_from_root(tree):
 
 
 def topology_only(tree, inplace=True):
-    """Reset colors, distances, time stamps, transfer status and inner
-    labels.
+    """Reset reconciliations, distances, time stamps, transfer status, and
+    inner labels.
     
     Parameters
     ----------
@@ -322,7 +322,7 @@ def topology_only(tree, inplace=True):
     for v in T.preorder():
         if v.children:
             v.label = ''
-            v.color = None
+            v.reconc = None
         v.dist = 1.0
         v.tstamp = None
         v.transferred = 0
@@ -369,8 +369,8 @@ def count_node_types(tree):
 def random_colored_tree(n, colors, binary=False, force_all_colors=False):
      """Create a random colored tree.
      
-     The number of leaves and the color labels are specified in the
-     parameters n and `colors`, respectively. Each non-leaf node in the 
+     The number of leaves and the reconciliation labels are specified in the
+     parameters n and colors, respectively. Each non-leaf node in the 
      resulting tree will have at least children (property of phylogenetic
      trees).
      
@@ -379,18 +379,19 @@ def random_colored_tree(n, colors, binary=False, force_all_colors=False):
      n : int
          The desired number of leaves.
      colors : int or list
-         The list of colors, or the desired number of colors in which case
-         the colors {1, ..., colors} are used.
+         The list of recociliations, or the desired number in which case the
+         reconciliations {1, ..., colors} are used.
      binary : bool, optional
          If True, forces the tree to be binary (the default is False).
      force_all_colors : bool
          If True, the resulting tree is guaranteed to have at least one leaf
-         of each color (the default is False).
+         of each reconciliation (the default is False).
      
      Returns
      -------
      Tree
-         A random tree with n leaves and random leaf coloring.
+         A random tree with n leaves to which the `reconc` attribute is
+         assigned at random.
      
      Raises
      ------
@@ -418,14 +419,14 @@ def random_colored_tree(n, colors, binary=False, force_all_colors=False):
          permutation = np.random.permutation(len(leaves))
          for i in range(len(leaves)):
              if i < len(colors):
-                 leaves[permutation[i]].color = colors[i]
+                 leaves[permutation[i]].reconc = colors[i]
              else:
                  # color the remaining leaves randomly
-                 leaves[permutation[i]].color = random.choice(colors)
+                 leaves[permutation[i]].reconc = random.choice(colors)
      else:
          # assign colors completely randomly
          for leaf in leaves:
-             leaf.color = random.choice(colors)
+             leaf.reconc = random.choice(colors)
              
      return tree
  
@@ -491,23 +492,28 @@ def assign_missing_labels(tree):
             labels.add(current_label)
 
 
-def reconstruct_color_from_graph(tree, G):
-    """Reconstruct the colors from a NetworkX Graph.
+def reconstruct_reconc_from_graph(tree, G):
+    """Reconstruct the reconciliations from a NetworkX Graph.
     
     Parameters
     ----------
     tree : Tree
     G : networkx.Graph
-        The graph from which labels and colors shall be reconstructed.
+        The graph from which labels and reconciliations shall be reconstructed.
     """
     
     for v in tree.preorder():
         if hasattr(v, 'label') and v.label in G:
-            if 'color' in G.nodes[v.label]:
-                if isinstance(G.nodes[v.label]['color'], list):
-                    v.color = tuple(G.nodes[v.label]['color'])
+            if 'reconc' in G.nodes[v.label]:
+                if isinstance(G.nodes[v.label]['reconc'], list):
+                    v.reconc = tuple(G.nodes[v.label]['reconc'])
                 else:
-                    v.color = G.nodes[v.label]['color']
+                    v.reconc = G.nodes[v.label]['reconc']
+            elif 'color' in G.nodes[v.label]:
+                if isinstance(G.nodes[v.label]['color'], list):
+                    v.reconc = tuple(G.nodes[v.label]['color'])
+                else:
+                    v.reconc = G.nodes[v.label]['color']
             
             
 def reconstruct_timestamps(tree):
@@ -619,8 +625,8 @@ def remove_planted_root(tree, inplace=True):
 #                          TREE  <--->  NEWICK
 # --------------------------------------------------------------------------
         
-def to_newick(tree, label=True, color=True, distance=True,
-                    label_inner=True, color_inner=False):
+def to_newick(tree, label=True, reconc=True, distance=True,
+                    label_inner=True, reconc_inner=False):
     """Return a Newick representation of the tree.
     
     This function overrides the function of the parent class.
@@ -630,8 +636,8 @@ def to_newick(tree, label=True, color=True, distance=True,
     label : bool, optional
         If True, the Newick str contains the labels of the nodes (the
         default is True).
-    color : bool, optional
-        If True, the Newick str contains the colors of the nodes in
+    reconc : bool, optional
+        If True, the Newick str contains the reconciliations of the nodes in
         <[...]> brackets (the default is True).
     distance : bool, optional
         If True, the Newick str contains the distances of the nodes in
@@ -639,9 +645,9 @@ def to_newick(tree, label=True, color=True, distance=True,
     label_inner : bool, optional
         If True, the Newick str also contains the labels of the inner 
         nodes (the default is True).
-    color_inner : bool, optional
-        If True, the Newick str contains the colors of the inner nodes (the
-        default is False).
+    reconc_inner : bool, optional
+        If True, the Newick str contains the reconciliations of the inner nodes
+        (the default is False).
     
     Returns
     -------
@@ -655,10 +661,10 @@ def to_newick(tree, label=True, color=True, distance=True,
             token = ''
             if label and hasattr(node, 'label'):
                 token += str(node.label)
-            if color and hasattr(node, 'color') and node.color:
-                token += '<{}-{}>'.format(*node.color) \
-                    if isinstance(node.color, (tuple, list)) \
-                    else '<{}>'.format(node.color)
+            if reconc and hasattr(node, 'reconc') and node.reconc:
+                token += '<{}-{}>'.format(*node.reconc) \
+                    if isinstance(node.reconc, (tuple, list)) \
+                    else '<{}>'.format(node.reconc)
             if distance and hasattr(node, 'dist'):
                 token += ":{}".format(node.dist)
             return token
@@ -669,10 +675,10 @@ def to_newick(tree, label=True, color=True, distance=True,
             token = ''
             if label and hasattr(node, 'label') and label_inner:
                 token += str(node.label)
-            if color_inner and hasattr(node, 'color') and node.color:
-                token += '<{}-{}>'.format(*node.color) \
-                    if isinstance(node.color, (tuple, list)) \
-                    else '<{}>'.format(node.color)
+            if reconc_inner and hasattr(node, 'reconc') and node.reconc:
+                token += '<{}-{}>'.format(*node.reconc) \
+                    if isinstance(node.reconc, (tuple, list)) \
+                    else '<{}>'.format(node.reconc)
             if distance and hasattr(node, 'dist'):
                 token += ':{}'.format(node.dist)
             return '({}){}'.format(s[:-1], token)
@@ -708,14 +714,14 @@ def parse_newick(newick):
     -----
     Do not use this function for serialization and reloading Tree
     objects. Use the `serialize()` function instead.
-    Labels and colors that are integer numbers are converted to int.
-    The colors (if present in <...> in the string) are parsed as strings
-    and need to be converted to integers afterwards if necessary.
+    Labels and reconciliations that are integer numbers are converted to int.
+    The reconciliations (if present in <...> in the string) are parsed as
+    strings and need to be converted to integers afterwards if necessary.
     """
     
-    # label<color>:distance
+    # label<reconc>:distance
     label_col_dist_regex = re.compile(r"'?([a-zA-Z0-9_]*)'?<(.*)>:(-?[0-9]*\.?[0-9]*[Ee]?-?[0-9]+)")
-    # label<color>
+    # label<reconc>
     label_col_regex = re.compile(r"'?([a-zA-Z0-9_]*)'?<(.*)>")
     # label:distance
     label_dist_regex = re.compile(r"'?([a-zA-Z0-9_]*)'?:(-?[0-9]*\.?[0-9]*[Ee]?-?[0-9]+)")
@@ -740,30 +746,30 @@ def parse_newick(newick):
                 parse_subtree(node, child[1:end])               # recursive call 'parse_subtree'
             child = child[end+1:].strip()
             label_col_dist = label_col_dist_regex.match(child)
-            if label_col_dist:                                  # CASE 1: label<color>:distance
+            if label_col_dist:                                  # CASE 1: label<reconc>:distance
                 node.label = to_int(label_col_dist.group(1))
-                node.color = to_int(label_col_dist.group(2))
+                node.reconc = to_int(label_col_dist.group(2))
                 node.dist = float(label_col_dist.group(3))
             else:
                 label_col = label_col_regex.match(child)
                 label_dist = label_dist_regex.match(child)
-                if label_col:                                   # CASE 2: label<color>
+                if label_col:                                   # CASE 2: label<reconc>
                     node.label = to_int(label_col.group(1))
-                    node.color = to_int(label_col.group(2))
+                    node.reconc = to_int(label_col.group(2))
                     node.dist = 1.0
                 elif label_dist:                                # CASE 3: label:distance
                     node.label = to_int(label_dist.group(1))
-                    node.color = None
+                    node.reconc = None
                     node.dist = float(label_dist.group(2))
                 else:                                           # CASE 4: label
                     node.label = to_int(child)
-                    node.color = None
+                    node.reconc = None
                     node.dist = 1.0
-            # color is a tuple
-            if node.color and isinstance(node.color, str) and node.color.find('-') != -1:
-                split_color = node.color.split('-')
-                node.color = (to_int(split_color[0]),
-                              to_int(split_color[1]))
+            # reconc is a tuple
+            if node.reconc and isinstance(node.reconc, str) and node.reconc.find('-') != -1:
+                split_reconc = node.reconc.split('-')
+                node.reconc = (to_int(split_reconc[0]),
+                              to_int(split_reconc[1]))
                     
     def split_children(child_string):
         """Splits a given string by all ',' that are not enclosed by parentheses."""

@@ -422,12 +422,12 @@ class GeneTreeSimulator:
         if len(self.S.root.children) > 1:
             # root is a speciation event
             root = TreeNode(label=0, event='S',
-                            color=self.S.root.label, 
+                            reconc=self.S.root.label, 
                             tstamp=self.S.root.tstamp)
         else:                    
             # planted species tree
             root = TreeNode(label=0, event=None,
-                            color=self.S.root.label,
+                            reconc=self.S.root.label,
                             tstamp=self.S.root.tstamp)
             
         T = Tree(root)
@@ -459,7 +459,7 @@ class GeneTreeSimulator:
             
             spec_node = TreeNode(label=branch.label,
                                  event='S',
-                                 color=S_edge.label, tstamp=S_edge.tstamp,
+                                 reconc=S_edge.label, tstamp=S_edge.tstamp,
                                  transferred=branch.transferred)
             branch.parent.add_child(spec_node)
             
@@ -495,7 +495,7 @@ class GeneTreeSimulator:
         
         dupl_node = TreeNode(label=branch.label,
                              event='D',
-                             color=(S_edge.parent.label, S_edge.label),
+                             reconc=(S_edge.parent.label, S_edge.label),
                              tstamp=event_tstamp,
                              transferred=branch.transferred)
         branch.parent.add_child(dupl_node)
@@ -523,7 +523,7 @@ class GeneTreeSimulator:
         
         loss_node = TreeNode(label=branch.label,
                              event='L',
-                             color=(S_edge.parent.label, S_edge.label),
+                             reconc=(S_edge.parent.label, S_edge.label),
                              tstamp=event_tstamp,
                              transferred=branch.transferred)
         branch.parent.add_child(loss_node)
@@ -622,7 +622,7 @@ class GeneTreeSimulator:
         if trans_edge:
             hgt_node = TreeNode(label=branch.label,
                                 event='H',
-                                color=(S_edge.parent.label, S_edge.label),
+                                reconc=(S_edge.parent.label, S_edge.label),
                                 tstamp=event_tstamp,
                                 transferred=branch.transferred)
             branch.parent.add_child(hgt_node)
@@ -659,7 +659,7 @@ class GeneTreeSimulator:
         
         for v in T.preorder():
             if not v.children and v.event != 'L':
-                VS_to_VT[v.color].append(v.label)
+                VS_to_VT[v.reconc].append(v.label)
                 
         for leaf_list in VS_to_VT.values():
             if not leaf_list:

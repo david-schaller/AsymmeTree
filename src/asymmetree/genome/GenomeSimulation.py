@@ -216,7 +216,7 @@ class GenomeSimulator:
         else:
             species = [v.label for v in self.S.preorder() if not v.children]
         
-        # labeled sequences sorted by color/species
+        # labeled sequences sorted by species
         sorted_seqs = {s: [] for s in species}
         
         for i in range(self.number_of_families):
@@ -228,7 +228,7 @@ class GenomeSimulator:
                 
                 label = self._compose_label(node, i)
                 sequence = self.subst_model.to_sequence(evoseq)
-                sorted_seqs[node.color].append( (label, sequence) )
+                sorted_seqs[node.reconc].append( (label, sequence) )
                 
         for spec, sequences in sorted_seqs.items():
             basename = '{}.f{}a'.format(spec, self.subst_model.model_type)
@@ -238,4 +238,4 @@ class GenomeSimulator:
     
     def _compose_label(self, node, family_id):
         
-        return 'fam{}gene{}spec{}'.format(family_id, node.label, node.color)
+        return 'fam{}gene{}spec{}'.format(family_id, node.label, node.reconc)

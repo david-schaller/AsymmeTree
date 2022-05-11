@@ -28,7 +28,7 @@ from tralda.tools.GraphTools import (sort_by_colors,
 from tralda.supertree import Build
 
 from asymmetree.tools.PhyloTreeTools import (topology_only,
-                                             reconstruct_color_from_graph)
+                                             reconstruct_reconc_from_graph)
 
 
 __author__ = 'David Schaller'
@@ -64,7 +64,7 @@ def orthology_from_tree(tree):
     TOG = nx.Graph()
     
     for v in leaves[tree.root]:
-        TOG.add_node(v.label, color=v.color)
+        TOG.add_node(v.label, color=v.reconc)
     
     for node in tree.preorder():
         if node.event == 'S':
@@ -82,7 +82,7 @@ def bmg_from_tree(tree, supply_rbmg=False):
     Parameters
     ----------
     tree : tree
-        A tree with leaves that have the `label` and `color` attribute set.
+        A tree with leaves that have the `label` and `reconc` attribute set.
     supply_rbmg : bool, optional
         If True, also return the symmetric part of the constructed BMG.
         The default is False.
@@ -110,17 +110,17 @@ def bmg_from_tree(tree, supply_rbmg=False):
     colors = set()
     
     for v in leaves[tree.root]:
-        colors.add(v.color)
-        bmg.add_node(v.label, color=v.color)
+        colors.add(v.reconc)
+        bmg.add_node(v.label, color=v.reconc)
     
     for u in leaves[tree.root]:
-        remaining = colors - set([u.color])             # colors to which no best match has yet been found
+        remaining = colors - set([u.reconc])            # colors to which no best match has yet been found
         parent = u.parent                               # start with direct parent of each node
         while remaining and parent:
             colors_here = set()
             for v in leaves[parent]:
-                if v.color in remaining:                # best match found
-                    colors_here.add(v.color)
+                if v.reconc in remaining:               # best match found
+                    colors_here.add(v.reconc)
                     bmg.add_edge(u.label, v.label)      # insert edge (u,v)
             remaining -= colors_here                    # update remaining colors
             parent = parent.parent
@@ -130,71 +130,6 @@ def bmg_from_tree(tree, supply_rbmg=False):
     else:
         return bmg, bmg.to_undirected(reciprocal=True)
     
-    
-def bmg_from_tree_quadratic(tree, supply_rbmg=False):
-    """Construct a BMG (and optionally RBMG) from a given tree in O(|L|^2).
-    
-    Implementation of the quadratic algorithm in [1]. Proven to
-    run in O(|L|^2).
-    
-    Parameters
-    ----------
-    tree : tree
-        A tree with leaves that have the `label` and `color` attribute set.
-    supply_rbmg : bool, optional
-        If True, also return the symmetric part of the constructed BMG.
-        The default is False.
-    
-    Returns
-    -------
-    networx.DiGraph or pair of networx.DiGraph and networx.Graph
-        The constructed BMG and optionally its symmetric part.
-    
-    References
-    ----------
-    .. [1] M. Geiß, M. E. González Laffitte, A. López Sánchez, D. I. Valdivia,
-    M. Hellmuth, M. Hernández Rosales, and P. F. Stadler.
-    Best match graphs and reconciliation of gene trees with species trees.
-    In: Journal of Mathematical Biology, 80:1459–1495, 2020.
-    doi: 10.1007/s00285-020-01469-y.
-    """
-    
-    if not isinstance(tree, Tree):
-        raise TypeError("not of type 'Tree'")
-    
-    leaves = tree.leaf_dict()
-    bmg = nx.DiGraph()
-    colors = set()
-    
-    # maps (v, color) --> 0 / 1
-    l = {}
-    
-    for v in leaves[tree.root]:
-        colors.add(v.color)
-        bmg.add_node(v.label, color=v.color)
-        l[v, v.color] = 1
-        
-    for v in tree.postorder():
-        
-        if not v.children:
-            continue
-        
-        for u1, u2 in itertools.combinations(v.children, 2):
-            for x, y in itertools.product(leaves[u1], leaves[u2]):
-                
-                if not l.get((u1, y.color)):
-                    bmg.add_edge(x.label, y.label)
-                if not l.get((u2, x.color)):
-                    bmg.add_edge(y.label, x.label)
-                    
-        for u, r in itertools.product(v.children, colors):
-            if l.get((u, r)):
-                l[v, r] = 1
-    
-    if not supply_rbmg:
-        return bmg
-    else:
-        return bmg, bmg.to_undirected(reciprocal=True)
     
 def extended_best_hits(leaves, D, epsilon=1e-8, supply_rbmg=False):
     """Compute BMG and RBMG from a distances matrix D.
@@ -235,20 +170,19 @@ def extended_best_hits(leaves, D, epsilon=1e-8, supply_rbmg=False):
     relative_threshold = 1 + epsilon
     
     for v in leaves:
-        bmg.add_node(v.label, color=v.color)
-        colors.add(v.color)
+        bmg.add_node(v.label, color=v.reconc)
+        colors.add(v.reconc)
     
     # ---- build BMG ----
-    for u in range(len(leaves)):
-        minima = {color: float('inf') for color in colors}
-        for v in range(len(leaves)):
-            if D[u,v] < minima[leaves[v].color]:
-                minima[leaves[v].color] = D[u,v]
-        for v in range(len(leaves)):
-            if (leaves[u].color != leaves[v].color and
-                D[u,v] <= relative_threshold * minima[leaves[v].color]):
-                bmg.add_edge(leaves[u].label, leaves[v].label,
-                             distance = D[u,v])
+    for i, u in enumerate(leaves):
+        minima = {c: float('inf') for c in colors}
+        for j, v in enumerate(leaves):
+            if D[i,j] < minima[v.reconc]:
+                minima[v.reconc] = D[i,j]
+        for j, v in enumerate(leaves):
+            if (u.reconc != v.reconc and
+                D[i,j] <= relative_threshold * minima[v.reconc]):
+                bmg.add_edge(u.label, v.label, distance = D[i,j])
     
     if not supply_rbmg:
         return bmg
@@ -462,8 +396,8 @@ def _finalize(tree, G):
     if isinstance(tree, TreeNode):
         tree = Tree(tree)
     
-    # assign colors to the leaves
-    reconstruct_color_from_graph(tree, G)
+    # assign reconciliationss to the leaves
+    reconstruct_reconc_from_graph(tree, G)
     
     return tree
 
@@ -475,13 +409,13 @@ def _finalize(tree, G):
 def lrt_from_tree(T):
     """Computes the Least Resolved Tree from a tree.
     
-    The unique Least Resolved Tree from a leaf-colored (pruned)
-    gene tree is computed by contraction of all redundant edges.
+    The unique Least Resolved Tree from a (pruned) gene tree is computed by
+    contraction of all redundant edges.
     
     Parameters
     ----------
     T : Tree
-        A tree whose leaf nodes have the 'color' attribute.
+        A tree whose leaf nodes have the 'reconc' attribute.
     
     Returns
     -------
@@ -511,26 +445,26 @@ def lrt_from_tree(T):
     # assign list of leaves to each node
     leaves = lrt.leaf_dict()
     
-    subtree_colors = {}
+    subtree_reconcs = {}
     for v in lrt.preorder():
-        subtree_colors[v] = {leaf.color for leaf in leaves[v]}
+        subtree_reconcs[v] = {leaf.reconc for leaf in leaves[v]}
         
-    arc_colors = _arc_colors(lrt, leaves, subtree_colors)
-    red_edges = redundant_edges(lrt, subtree_colors, arc_colors)
+    arc_colors = _arc_colors(lrt, leaves, subtree_reconcs)
+    red_edges = redundant_edges(lrt, subtree_reconcs, arc_colors)
     lrt.contract(red_edges)
     lrt = topology_only(lrt)
     
     return lrt
 
 
-def _arc_colors(T, leaves, subtree_colors):
+def _arc_colors(T, leaves, subtree_reconcs):
     """Color sets relevant for redundant edge computation.
     
     Computes for all inner vertices v the color set of y such that y with (x,y)
     is an arc in the BMG and lca(x,y) = v.
     """
     
-    all_colors = subtree_colors[T.root]
+    all_colors = subtree_reconcs[T.root]
     
     # color sets for all v
     arc_colors = {v: set() for v in T.preorder()}
@@ -538,7 +472,7 @@ def _arc_colors(T, leaves, subtree_colors):
     for u in leaves[T.root]:
         
         # colors to which no best match has yet been found
-        remaining = all_colors - {u.color}
+        remaining = all_colors - {u.reconc}
         
         # start with direct parent of each node
         current = u.parent
@@ -548,8 +482,8 @@ def _arc_colors(T, leaves, subtree_colors):
             for v in leaves[current]:
                 
                 # best match found
-                if v.color in remaining:
-                    colors_here.add(v.color)
+                if v.reconc in remaining:
+                    colors_here.add(v.reconc)
             
             arc_colors[current].update(colors_here)
             remaining -= colors_here
@@ -558,7 +492,7 @@ def _arc_colors(T, leaves, subtree_colors):
     return arc_colors
 
 
-def redundant_edges(T, subtree_colors, arc_colors):
+def redundant_edges(T, subtree_reconcs, arc_colors):
     
     red_edges = []
     
@@ -569,7 +503,7 @@ def redundant_edges(T, subtree_colors, arc_colors):
         
         for v2 in u.children:
             if v2 is not v:
-                aux_set.update(subtree_colors[v2])
+                aux_set.update(subtree_reconcs[v2])
         
         if not arc_colors[v].intersection(aux_set):
             red_edges.append((u, v))
@@ -634,7 +568,7 @@ def is_bmg(G):
             return False
         else:
             # a digraph is a BMG iff its equal to the BMG of BUILD(R)
-            reconstruct_color_from_graph(subtree, sg)
+            reconstruct_reconc_from_graph(subtree, sg)
             if not graphs_equal(sg, bmg_from_tree(subtree)):
                 return False
             subtrees.append(subtree)
@@ -761,7 +695,7 @@ class TwoColoredLRT:
         
     def _build_tree(self, G):
             
-        color_count = {color: 0 for color in self.color_dict.keys()}
+        color_count = {c: 0 for c in self.color_dict.keys()}
         for v in G.nodes():
             color_count[G.nodes[v]['color']] += 1
         other_color = {color: G.order() - count
@@ -880,7 +814,7 @@ def augment_and_label(tree, inplace=False):
     Parameters
     ----------
     tree : Tree
-        A tree whose nodes have the 'color' attribute.
+        A tree whose nodes have the 'reconc' attribute.
     inplace : bool, optional
         If True, the supplied tree instance is directly manipulated, otherwise 
         the tree is copied first. The default is False.
@@ -940,7 +874,7 @@ def _color_intersection_components(u, leaves):
         aux_graph.add_node(v)
         
         for x in leaves[v]:
-            aux_graph.add_edge(v, x.color)
+            aux_graph.add_edge(v, x.reconc)
             
     result = []
     

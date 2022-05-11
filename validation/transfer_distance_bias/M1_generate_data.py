@@ -126,14 +126,14 @@ def simulation(sim_ID, repeat, rate_combination, bias_mode):
             
             # additive HGT
             else:
-                donor_edge = S_label_to_node[v.color[1]]
+                donor_edge = S_label_to_node[v.reconc[1]]
                 for c in v.children:
                     if c.transferred:
-                        color = c.color
+                        reconc = c.reconc
                         break
-                if isinstance(color, tuple):
-                    color = color[1]
-                recip_edge = S_label_to_node[color]
+                if isinstance(reconc, tuple):
+                    reconc = reconc[1]
+                recip_edge = S_label_to_node[reconc]
                 distances_add.append( lca_S(donor_edge, recip_edge).tstamp - v.tstamp )
                 
     

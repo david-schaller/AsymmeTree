@@ -48,14 +48,14 @@ class TestTreeEvolvePackage(unittest.TestCase):
                                   autocorr_variance=0.2, inplace=True)
             
             # check that there is no extinction in any species
-            color_dict = {l.label: [] for l in species_tree.preorder()
+            reconc_dict = {l.label: [] for l in species_tree.preorder()
                           if not l.children and l.event != 'L'}
             
             for v in gene_tree.preorder():
                 if not v.children and v.event != 'L':
-                    color_dict[v.color].append(v.label)
+                    reconc_dict[v.reconc].append(v.label)
                     
-            for leaf_list in color_dict.values():
+            for leaf_list in reconc_dict.values():
                 self.assertTrue(leaf_list)
                 
             gene_tree2 = te.dated_gene_tree(species_tree,

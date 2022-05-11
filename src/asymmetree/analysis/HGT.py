@@ -75,7 +75,7 @@ def rs_transfer_edges(T, S, lca_S=None):
     Returns
     -------
     set
-        The subset of TreeNode instances in the tree for which the 'color'
+        The subset of TreeNode instances in the tree for which the 'reconc'
         attributes of its incident edges refer to incomparable branches in the
         species tree.
     """
@@ -86,7 +86,7 @@ def rs_transfer_edges(T, S, lca_S=None):
     transfer_edges = set()
     
     for u, v in T.edges():
-        if not lca_S.are_comparable(u.color, v.color):
+        if not lca_S.are_comparable(u.reconc, v.reconc):
             transfer_edges.add(v)
     
     return transfer_edges
@@ -128,7 +128,7 @@ def fitch(tree, transfer_edges, supply_undirected=False, lca_T=None):
     first_transfer = {}
     
     for x in leaves:
-        fitch.add_node(x.label, color=x.color)
+        fitch.add_node(x.label, color=x.reconc)
         
         current = x
         while current:
@@ -285,9 +285,9 @@ def below_equal_above(T, S, lca_T=None, lca_S=None):
     equal = nx.Graph()
     above = nx.Graph()
     for u in L_T:
-        below.add_node(u.label, color=u.color)
-        equal.add_node(u.label, color=u.color)
-        above.add_node(u.label, color=u.color)
+        below.add_node(u.label, color=u.reconc)
+        equal.add_node(u.label, color=u.reconc)
+        above.add_node(u.label, color=u.reconc)
     
     if not isinstance(lca_T, LCA):
         lca_T = LCA(T)
@@ -297,7 +297,7 @@ def below_equal_above(T, S, lca_T=None, lca_S=None):
     for a, b in itertools.combinations(L_T, 2):
         
         t_ab = lca_T.get(a, b).tstamp
-        t_AB = lca_S.get(L_S[a.color], L_S[b.color]).tstamp
+        t_AB = lca_S.get(L_S[a.reconc], L_S[b.reconc]).tstamp
         
         if t_ab < t_AB:
             below.add_edge(a.label, b.label)
@@ -430,7 +430,7 @@ class RsScenarioConstructor:
         # planted root
         add_planted_root(self.T)
         self.T.root.tstamp = self.S.root.tstamp
-        self.T.root.color = self.S.root.label
+        self.T.root.reconc = self.S.root.label
         
         # suppress all vertices with a single child except the planted root
         to_suppress = []
@@ -484,14 +484,14 @@ class RsScenarioConstructor:
     def _build_gene_tree(self, L, u_S):
         
         u_T = TreeNode(label='', event='D',
-                       color=(u_S.parent.label, u_S.label),
+                       reconc=(u_S.parent.label, u_S.label),
                        tstamp=u_S.tstamp + self.epsilon)
         
         # u_S is a leaf
         if not u_S.children:
             for x in L:
                 leaf = TreeNode(label=x,
-                                color=self.G.nodes[x]['color'],
+                                reconc=self.G.nodes[x]['color'],
                                 tstamp=0.0)
                 u_T.add_child(leaf)
         
@@ -510,7 +510,7 @@ class RsScenarioConstructor:
                 # choose v_S_star s.t. L(S(v_S_star)) \cap sigma(C) is non-empty
                 v_S_star = color_to_v_S[self.G.nodes[next(iter(C))]['color']]
                 v_T = TreeNode(label='', event='H',
-                               color=(u_S.label, v_S_star.label),
+                               reconc=(u_S.label, v_S_star.label),
                                tstamp=u_S.tstamp - self.epsilon)
                 u_T.add_child(v_T)
                 

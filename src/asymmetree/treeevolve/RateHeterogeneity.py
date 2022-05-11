@@ -178,8 +178,8 @@ def rate_heterogeneity(T, S,
     if autocorr_factors:
         for v in T.preorder():
             if v.parent:
-                edge_ID = v.color[1] if isinstance(v.color, (tuple, list)) \
-                                     else v.color
+                edge_ID = v.reconc[1] if isinstance(v.reconc, (tuple, list)) \
+                                     else v.reconc
                 v.dist *= autocorr_factors[edge_ID]
     
     # gene-family-specific rate heterogeneity (base rate)
@@ -247,9 +247,9 @@ def _divergent_rates(T, S, sampler, CSN_weights):
         if u.event in ('S', '', None):
             for v in u.children:
                 marked[v] = marked[u]
-                S_u = u.color
-                S_v = v.color if not isinstance(v.color, (tuple, list)) \
-                      else v.color[1]
+                S_u = u.reconc
+                S_v = v.reconc if not isinstance(v.reconc, (tuple, list)) \
+                      else v.reconc[1]
                 gene_counter[(S_u, S_v)].append(v)
                 new_rate = sampler() if marked[v] == 'divergent' else 1.0
                 rates[(u,v)].append((u.tstamp, new_rate))
@@ -257,7 +257,7 @@ def _divergent_rates(T, S, sampler, CSN_weights):
         # ---------------- DUPLICATION -----------------
         elif u.event == 'D':
             
-            gene_counter[u.color].remove(u)
+            gene_counter[u.reconc].remove(u)
             
             # will contain the indices of the conserved descendants
             conserved = set()
@@ -283,17 +283,17 @@ def _divergent_rates(T, S, sampler, CSN_weights):
                     marked[v] = 'divergent'
                     new_rate = sampler()
                     
-                gene_counter[u.color].append(v)
+                gene_counter[u.reconc].append(v)
                 rates[(u,v)].append((u.tstamp, new_rate))
         
         # ------------------- LOSS ---------------------
         elif u.event == 'L':
-            gene_counter[u.color].remove(u)
+            gene_counter[u.reconc].remove(u)
             
-            if len(gene_counter[u.color]) == 1:
+            if len(gene_counter[u.reconc]) == 1:
                 # if only one lineage remains in the species, set its status
                 # to conserved
-                v = gene_counter[u.color][0]
+                v = gene_counter[u.reconc][0]
                 if marked[v] == 'divergent':
                     marked[v] = 'conserved'
                     rates[(v.parent,v)].append((u.tstamp, 1.0))
@@ -306,8 +306,8 @@ def _divergent_rates(T, S, sampler, CSN_weights):
                 
             # untransferred copy
             marked[v1] = marked[u]
-            gene_counter[u.color].remove(u)
-            gene_counter[u.color].append(v1)
+            gene_counter[u.reconc].remove(u)
+            gene_counter[u.reconc].append(v1)
             if u.parent:
                 rates[(u,v1)].append((u.tstamp, rates[(u.parent,u)][-1][1]))
             else:
@@ -315,8 +315,8 @@ def _divergent_rates(T, S, sampler, CSN_weights):
                 rates[(u,v1)].append((u.tstamp, new_rate))
             
             # transferred copy
-            S_edge = v2.color if isinstance(v2.color, (tuple, list)) \
-                     else (S_parents[v2.color], v2.color)
+            S_edge = v2.reconc if isinstance(v2.reconc, (tuple, list)) \
+                     else (S_parents[v2.reconc], v2.reconc)
             gene_counter[S_edge].append(v2)
             if len(gene_counter[S_edge]) == 1:
                 marked[v2] = 'conserved'

@@ -41,10 +41,10 @@ for i in range(repeats):
             v.label = f't{v.label}'
             v.dist = float_to_str(v.dist)
         
-        newick = to_newick(S, color=False, distance=True, label_inner=True)
+        newick = to_newick(S, reconc=False, distance=True, label_inner=True)
         
         delattr(S.root, 'dist')
-        newick2 = to_newick(S, color=False, distance=True, label_inner=False)
+        newick2 = to_newick(S, reconc=False, distance=True, label_inner=False)
         
         with open(os.path.join(tree_directory, f'tree_{i}_{n}'), 'w') as f:
             f.write(newick)

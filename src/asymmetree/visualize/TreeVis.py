@@ -35,7 +35,7 @@ def assign_gene_colors(tree, species_colors=None):
     Parameters
     ----------
     tree : Tree
-        The gene tree whose (non-loss) leaves have the 'color' attribute, i.e,
+        The gene tree whose (non-loss) leaves have the 'reconc' attribute, i.e,
         the information to which species they belong.
     species_colors : dict, optional
         A dictonary containing the values of the 'color' attribute appearing
@@ -50,10 +50,10 @@ def assign_gene_colors(tree, species_colors=None):
     
     if species_colors is None:
         
-        species_colors = _assign_cmap({v.color for v in tree.leaves()
+        species_colors = _assign_cmap({v.reconc for v in tree.leaves()
                                        if v.event != 'L'})
     
-    return {v.label: species_colors[v.color] for v in tree.leaves()
+    return {v.label: species_colors[v.reconc] for v in tree.leaves()
             if v.event != 'L'}
 
 
@@ -65,7 +65,7 @@ def assign_colors(species_tree, gene_tree):
     species_tree : Tree
         The species tree with uniquely labeled (non-loss) leaves.
     gene_tree : Tree
-        The gene tree whose (non-loss) leaves have the 'color' attribute, i.e,
+        The gene tree whose (non-loss) leaves have the 'reconc' attribute, i.e,
         the information to which species they belong, that furthermore appear
         as labels of the (non-loss) leaves in the species tree.
     
@@ -288,8 +288,8 @@ class Visualizer:
                     self.draw_leaf(x, y, color=self.colors[v.label])
                     if not self.species_info:
                         text = str(v.label)
-                    elif hasattr(v, 'color'):
-                        text = '{} <{}>'.format(v.label, v.color)
+                    elif hasattr(v, 'reconc'):
+                        text = '{} <{}>'.format(v.label, v.reconc)
                     self.write_label(x+self.symbolsize+0.02, y, text)
                 
     

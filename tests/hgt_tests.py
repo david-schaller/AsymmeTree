@@ -56,12 +56,12 @@ class TestHGT(unittest.TestCase):
         PGT = te.prune_losses(TGT)
         
         leaves = [v for v in PGT.leaves()]
-        colors = {v.color for v in leaves}
+        reconciliations = {v.reconc for v in leaves}
         
         # print(TGT.to_newick())
         # print(PGT.to_newick())
         
-        self.assertTrue(len(colors) == N and len(leaves) == N)
+        self.assertTrue(len(reconciliations) == N and len(leaves) == N)
         
     
     def test_transfer_distance_bias(self):
@@ -82,9 +82,9 @@ class TestHGT(unittest.TestCase):
         PGT = te.prune_losses(TGT)
         
         leaves = [v for v in PGT.leaves()]
-        colors = {v.color for v in leaves}
+        reconciliations = {v.reconc for v in leaves}
         
-        self.assertTrue(len(colors) == n)
+        self.assertTrue(len(reconciliations) == n)
         
     
     def test_rs_edges(self):

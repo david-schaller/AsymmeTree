@@ -26,9 +26,8 @@ class TestTrees(unittest.TestCase):
             newick = to_newick(tree)
             tree2 = parse_newick(newick)
             
-            # colors of tree must be converted to 'str'
-            label_color = [(v.label, v.color) for v in tree.leaves()]
-            label_color2 = [(v.label, v.color) for v in tree2.leaves()]
+            label_color = [(v.label, v.reconc) for v in tree.leaves()]
+            label_color2 = [(v.label, v.reconc) for v in tree2.leaves()]
             
             self.assertListEqual(label_color, label_color2)
 

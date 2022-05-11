@@ -50,9 +50,6 @@ The package uses many classes and functions from the
 The API functions are described in the following sections and can be imported
 directly from the respective subpackage (see examples).
 
-The term `color` regularly appears in the library and refers to the reconciliation of gene trees with species trees.
-In particular, the terms `color` and species/genome in which a gene resides are used interchangeably.
-
 ### Tree data structures
 
 The class `Tree` in [tralda](https://github.com/david-schaller/tralda) implements a tree data structure which is essential for most of the modules in the package.
@@ -64,7 +61,7 @@ The class `Tree` in [tralda](https://github.com/david-schaller/tralda) implement
 | --- | ----------- |
 | `label` | node label, usually `int` |
 | `event` | the type of the event, in gene trees: 'S' for speciation, 'D' for duplication, 'H' for horizontal gene transfer, 'L' for loss, `str` |
-| `color` | only gene trees; species in which the gene resides, i.e., `label` of some vertex in a species tree, `int` for extant genes, can be of type `tuple` (of two `int`s) for inner and loss vertices |
+| `reconc` | only gene trees; species in which the gene resides, i.e., `label` of some vertex in a species tree, `int` for extant genes, can be of type `tuple` (of two `int`s) for inner and loss vertices |
 | `tstamp` | time stamp of the event (`double`) |
 | `dist` | evolutionary distance from the parent vertex (`double`); if no evolution rates (see below) were simulated yet, then this value corresponds to the divergence time between the vertex and its parent |
 | `transferred` | only gene trees; indicates whether the edge from the parent is the transfer edge from an HGT event; `1` if this is the case and `0` otherwise |
@@ -90,8 +87,8 @@ Alternatively, it can be specified as keyword argument, e.g. `mode='json'`.
 </details>
 
 Moreover, the module `asymmetree.tools.PhyloTreeTools` provides the functions `to_newick()` and `parse_newick()` for converting and parsing trees to and from Newick format, respectively.
-In case of a gene tree, the color is represented in brackets, e.g. '(3<1>:0.534,2<2>:0.762)1<0>:0.273'.
-To suppress this, use `to_newick(color=False)`. Likewise, to suppress the distances, you can use `to_newick(distance=False)`.
+In case of a gene tree, the reconciliation is represented in brackets, e.g. '(3<1>:0.534,2<2>:0.762)1<0>:0.273'.
+To suppress this, use `to_newick(reconc=False)`. Likewise, to suppress the distances, you can use `to_newick(distance=False)`.
 The function `parse_newick()` can handle this customized format as well as the standard Newick format.
 
 
@@ -714,7 +711,7 @@ The module `asymmetree.analysis.HGT` contains several functions for the analysis
 <summary>Details and examples: (Click to expand)</summary>
 
 An edge (u, v) in a gene tree is a 'true' transfer edge if an HGT event happened on the path from u to v. In the simulated trees, this is indicated by the attribute `transferred` of `TreeNode` v which is set to `1`.
-An edge (u, v) in the gene tree is an **rs-**transfer edge (named after the relaxed scenario framework, Schaller et al. 2021) if the `color`s of u and v are incomparable in the corresponding species tree `S`.
+An edge (u, v) in the gene tree is an **rs-**transfer edge (named after the relaxed scenario framework, Schaller et al. 2021) if the `reconc`s of u and v are incomparable in the corresponding species tree `S`.
 True and rs-transfer edges may not be equivalent, e.g. when a transfer from branch A to B is followed by a transfer from B to A and this gene lineage does not survive in branch B.
 
     from asymmetree.hgt import true_transfer_edges, rs_transfer_edges
@@ -790,7 +787,7 @@ In order to reduce runtime, precomputed instances of the class `LCA` (see [trald
 | `asymmetree.tools.Sampling` | includes the class `Sampler` which support drawing numbers from various distributions |
 | `asymmetree.tools.PhyloTreeTools` | contains various methods for the manipulation of phylogenetic tree including Newick parsers (`to_newick` and `parse_newick()`) |
 | `asymmetree.analysis` | --- |
-| `asymmetree.analysis.BestMatches` | computation of the true (R)BMG from a gene tree as well as the true orthology relation, construction of a least resolved tree (LRT) from a BMG via informative triples or from a leaf-colored tree |
+| `asymmetree.analysis.BestMatches` | computation of the true (R)BMG from a gene tree as well as the true orthology relation, construction of a least resolved tree (LRT) from a BMG via informative triples or from a tree |
 | `asymmetree.analysis.HGT` | extraction of transfer edges from a gene tree (together with a species tree), construction of the directed and undirected Fitch graph, comparison of the divergence time of genes with the divergence time of their respective species (LDT graphs) |
 
 </details>
