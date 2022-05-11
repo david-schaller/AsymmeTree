@@ -270,9 +270,6 @@ class GeneTreeSimulator:
         self.spec_queue = deque(self.sorted_speciations)
         self.id_counter = 0
         
-        # counter for surviving genes
-        self.total_surviving = 0
-        
         # total event rate (all branches)
         self.total_rate = 0.0
         
@@ -284,79 +281,26 @@ class GeneTreeSimulator:
         
         # maps species tree branches to existing gene branches
         self.ES_to_b = {S_edge: [] for _, S_edge in self.sorted_edges}
-
-    
-    def _get_tstamp(self, t):
-        
-        rate = self.total_rate
-        if (self._prohibit_extinction == 'per_family' and
-            len(self.surv_non_loss_lineages) == 1):
-            rate -= self.l
-        
-        if rate <= 0.0:
-            return -1
-        else:
-            return t - np.random.exponential(1/rate)
     
     
     def _get_branch_and_type(self):
         
-        if (self._prohibit_extinction == 'per_family' and
-            len(self.surv_non_loss_lineages) == 1):
+        r = np.random.uniform(high=self.total_rate)
+        current_sum = 0.0
             
-            # get the single branch that is in a non-loss species branch
-            special_branch = next(iter(self.surv_non_loss_lineages))
-            temp_rate = special_branch.rate
-            
-            r = np.random.uniform(high=self.total_rate-self.l)
-            current_sum = 0.0
-            
-            for i in range(len(self.branches)):
-                if r <= current_sum + self.branches[i].rate:
-                    break
-                current_sum += self.branches[i].rate
-            
-            branch = self.branches[i]
-            
-            loss_factor = 0 if branch is special_branch else 1
-            
-            if r <= current_sum + self.d:
-                event_type = 'D'
-            elif r <= current_sum + self.d + loss_factor * self.l:
-                event_type = 'L'
-            else:
-                event_type = 'H'
-            
-            # finally reset branch rate
-            special_branch.rate = temp_rate
+        for i in range(len(self.branches)):
+            if r <= current_sum + self.branches[i].rate:
+                break
+            current_sum += self.branches[i].rate
         
+        if r <= current_sum + self.d:
+            event_type = 'D'
+        elif r <= current_sum + self.d + self.l:
+            event_type = 'L'
         else:
-            r = np.random.uniform(high=self.total_rate)
-            current_sum = 0.0
-            
-            for i in range(len(self.branches)):
-                if r <= current_sum + self.branches[i].rate:
-                    break
-                current_sum += self.branches[i].rate
-            
-            branch = self.branches[i]
-            
-            loss_factor = 1
-            if (self._prohibit_extinction == 'per_species' and
-                len(self.ES_to_b[branch.S_edge]) <= 1):
-                loss_factor = 0
-            
-            if r <= current_sum + self.d:
-                event_type = 'D'
-            elif r <= current_sum + self.d + loss_factor * self.l:
-                event_type = 'L'
-            else:
-                event_type = 'H'
+            event_type = 'H'
         
-        # assert np.isclose(self.total_rate, sum([b.rate for b in self.branches])), \
-        #        "Sum of rates and total rate are not equal."
-        
-        return branch, event_type
+        return self.branches[i], event_type
 
 
     def _run(self):
@@ -366,7 +310,8 @@ class GeneTreeSimulator:
         
         while self.spec_queue:
             
-            event_tstamp = self._get_tstamp(t)
+            event_tstamp = t - np.random.exponential(1/self.total_rate) \
+                           if self.total_rate > 0.0 else -1
             next_spec_tstamp = self.spec_queue[0].tstamp
             
             # speciation
@@ -434,16 +379,11 @@ class GeneTreeSimulator:
         self.id_counter += 1
         self.spec_queue.popleft()
         
-        if self._prohibit_extinction == 'per_species':
-            rate = self.d + self.h
-        else:
-            rate = self.rate_sum
+        rate = self.rate_sum
                 
         for S_edge in self.S.root.children:
-            
             self._new_branch(rate, T.root, S_edge, 0)
-            self.total_rate += rate   
-            self.total_surviving = 1
+            self.total_rate += rate
             
         return T
             
@@ -480,11 +420,9 @@ class GeneTreeSimulator:
                 
                 if S_edge.label == 'L':
                     spec_node.event = 'L'
-                    self.total_surviving -= 1
                     self.surv_non_loss_lineages.discard(branch)
             
             else:
-                self.total_surviving += len(S_edge.children) - 1
                 self.total_rate += (len(S_edge.children) - 1) * branch.rate
                 self.surv_non_loss_lineages.discard(branch)
             
@@ -509,15 +447,22 @@ class GeneTreeSimulator:
             self._new_branch(self.rate_sum, dupl_node, S_edge, 0,
                              array_id=(branch.array_id if i == 0 else None))
         
-        self.total_surviving += (copy_number - 1)
         self.total_rate += (copy_number - 1) * (self.rate_sum)
-        
-        if (self._prohibit_extinction == 'per_species' and
-            len(self.ES_to_b[S_edge]) == copy_number):
-            self.total_rate += self.l
             
             
     def _loss(self, event_tstamp, branch):
+        
+        # not executing the loss event if extinction is prohibited is
+        # equivalent to temporarily setting the loss rate to zero in the
+        # respective branches
+        if (self._prohibit_extinction == 'per_family' and
+            len(self.surv_non_loss_lineages) == 1 and
+            next(iter(self.surv_non_loss_lineages)) is branch):
+            return
+        
+        if (self._prohibit_extinction == 'per_species' and
+            len(self.ES_to_b[branch.S_edge]) <= 1):
+            return
         
         S_edge = branch.S_edge
         
@@ -531,13 +476,7 @@ class GeneTreeSimulator:
         self.surv_non_loss_lineages.discard(branch)
         branch.rate = 0.0
         
-        self.total_surviving -= 1
         self.total_rate -= self.rate_sum
-        
-        if (self._prohibit_extinction == 'per_species' and
-            len(self.ES_to_b[S_edge]) == 1):
-            self.total_rate -= self.l
-            self.ES_to_b[S_edge][0].rate -= self.l
             
     
     def _coexisting_species_edges(self, tstamp, exclude_edge=None):
@@ -636,36 +575,13 @@ class GeneTreeSimulator:
             # receiving branch
             self._new_branch(self.rate_sum, hgt_node, trans_edge, 1)
             
-            self.total_surviving += 1
             self.total_rate += self.rate_sum
-            
-            if (self._prohibit_extinction == 'per_species' and
-                len(self.ES_to_b[trans_edge]) == 2):
-                self.total_rate += self.l
-                self.ES_to_b[trans_edge][0].rate += self.l
         
         # replacing HGT leads to loss in the recipient species
         if replaced_gene_branch:
             self._loss(event_tstamp, replaced_gene_branch)
             # save replaced gene information in HGT node
             hgt_node.replaced_gene = replaced_gene_branch.label
-                
-    
-    def _assert_no_extinction(self, T):
-        """Returns False if gene family is extinct in some species."""
-        
-        VS_to_VT = {l.label: [] for l in self.S.preorder() if not l.children and
-                                                                  l.event != 'L'}
-        
-        for v in T.preorder():
-            if not v.children and v.event != 'L':
-                VS_to_VT[v.reconc].append(v.label)
-                
-        for leaf_list in VS_to_VT.values():
-            if not leaf_list:
-                return False
-        
-        return True
         
 
 # --------------------------------------------------------------------------
