@@ -206,18 +206,18 @@ class GeneTreeSimulator:
             is False, in which case the recipient species is chosen at random
             among the co-existing species. The options 'inverse' and
             'exponential' mean that a species branch is sampled weighted by
-            1/(a * t) or e^(-(a * t)), resp., where t is the elapsed time between
-            the last common ancestor of the two species branches and the time of
-            the event, see [1], and a is a user-defined factor.
+            1/(a * t) or e^(-(a * t)), resp., where t is the elapsed time
+            between the last common ancestor of the two species branches and
+            the time of the event, see [1], and a is a user-defined factor.
         replacing_transfer_distance_bias : str or bool, optional
             Specifies whether closer related gene branches have a higher
             probability to be replaced in a replacing HGT event. The default
             is False, in which case the replaced gene is chosen at random
             among the co-existing gene branches. The options 'inverse' and
             'exponential' mean that a gene branch is sampled weighted by
-            1/(a * t) or e^(-(a * t)), resp., where t is the elapsed time between
-            the last common ancestor of the two gene branches and the time of the
-            event, see [1], and a is a user-defined factor.
+            1/(a * t) or e^(-(a * t)), resp., where t is the elapsed time
+            between the last common ancestor of the two gene branches and the
+            time of the event, see [1], and a is a user-defined factor.
         transfer_distance_bias : str or bool, optional
             Set a common bias mode for additive and replacing HGT, see
             description of parameters 'additive_transfer_distance_bias' and
