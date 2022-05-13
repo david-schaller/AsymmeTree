@@ -28,7 +28,7 @@ for i, var in enumerate(variances):
     
     axs[i].axvline(mean, color='r')
     
-    axs[i].text(0.05, 0.95, f'ν = {var}',
+    axs[i].text(0.05, 0.95, f'β = {var}',
                 horizontalalignment='left',
                 verticalalignment='top',
                 transform=axs[i].transAxes,
