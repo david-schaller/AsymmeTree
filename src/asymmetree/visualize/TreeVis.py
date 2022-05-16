@@ -371,9 +371,9 @@ class Visualizer:
     
     def draw_hgt(self, x, y):
         
-        coord = np.asarray([[x,y-self.symbolsize/2],
-                            [x+self.symbolsize/2,y+self.symbolsize/2],
-                            [x-self.symbolsize/2,y+self.symbolsize/2]])
+        coord = np.asarray([[x-self.symbolsize/2,y],
+                            [x+self.symbolsize/2,y-self.symbolsize/2],
+                            [x+self.symbolsize/2,y+self.symbolsize/2]])
 
         inner = mpatches.Polygon(coord, closed=True,
                                  color='white', fill=True,
@@ -391,10 +391,10 @@ class Visualizer:
         coord = []
         R = self.symbolsize/2
         for i in range(5):
-            coord.append([x + 0.5 * R * np.cos(np.radians(54+i*72)),
-                          y - 0.5 * R * np.sin(np.radians(54+i*72))])
-            coord.append([x + R * np.cos(np.radians(90+i*72)),
-                          y - R * np.sin(np.radians(90+i*72))])
+            coord.append([x + 0.5 * R * np.cos(np.radians(0+i*72)),
+                          y - 0.5 * R * np.sin(np.radians(0+i*72))])
+            coord.append([x + R * np.cos(np.radians(36+i*72)),
+                          y - R * np.sin(np.radians(36+i*72))])
 
         inner = mpatches.Polygon(coord, closed=True,
                                  color='black', fill=True,
