@@ -28,7 +28,7 @@ df.replace({'r': 'replacing', 'a': 'additive', 'False': 'no bias'}, inplace=True
 fig, axs = plt.subplots(1, 1, sharex=True, sharey=False,)
                         #gridspec_kw={'height_ratios': [2, 1]})
 axs = [axs]
-fig.set_size_inches(10,7)
+fig.set_size_inches(8,5)
 fs = 18
 
 # customized boxplot properties
@@ -53,7 +53,9 @@ sns.boxplot(x='bias_mode', y='distance', hue='type', data=df, ax=axs[0],
 axs[0].set_xlabel('transfer distance bias', fontsize=fs, labelpad=15)
 axs[0].set_ylabel('elapsed time since divergence', fontsize=fs, labelpad=15)
 axs[0].legend(title='', fontsize=fs-2, loc='upper right',
-              fancybox=True, shadow=True, )
+               fancybox=True, 
+              # shadow=True, 
+              framealpha=0.6)
 axs[0].tick_params(axis='both', which='major', labelsize=fs-2)
     
 

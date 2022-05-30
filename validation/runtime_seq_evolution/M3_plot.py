@@ -15,7 +15,7 @@ df = pd.read_csv('results/times_intel.csv')
 
 fig, axs = plt.subplots(2, 3, sharex=True, sharey=True)
 fig.set_size_inches(10,8)
-fs = 12
+fs = 14
 
 for i, j in itertools.product(range(2), range(3)):
     
@@ -49,10 +49,12 @@ for i, j in itertools.product(range(2), range(3)):
     axs[i][j].tick_params(axis='both', which='major', labelsize=fs)
     
     if i == 0:
-        axs[i][j].set_title(f'no. of leaves: {tree_sizes[j]}')
+        axs[i][j].set_title(f'no. of leaves: {tree_sizes[j]}', fontsize=fs)
     
     if not (i == 0 and j == 0):
         axs[i][j].legend().set_visible(False)
+    else:
+        axs[i][j].legend().set_title('')
 
 
 plt.tight_layout()

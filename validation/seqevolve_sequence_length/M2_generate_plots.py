@@ -11,10 +11,11 @@ distances = sorted(df['d'].unique().tolist())
 
 models = ['JC69', 'K80', 'WAG', 'JTT']
 
-fig, axs = plt.subplots(4, 1, sharex=True, sharey=True)
+fig, axs = plt.subplots(2, 2, sharex=True, sharey=True)
+axs = axs.T 
 axs = axs.flatten()
-fig.set_size_inches(10,12)
-fs = 12
+fig.set_size_inches(10,10)
+fs = 14
 
 
 
@@ -40,12 +41,18 @@ for i in range(len(models)):
                 fliersize=2, linewidth=0.7)
     
     axs[i].set_ylim(0, 7)
-    axs[i].set_ylabel('estimated distance', fontsize=fs)
+    axs[i].set_ylabel('estimated distance' if i in (0,1) else '', 
+                      fontsize=fs)
     
-    if i > 2:
+    if i in (1,3):
         axs[i].set_xlabel('true distance', fontsize=fs)
     else:
         axs[i].set_xlabel('')
+        
+    if i == 0:
+        axs[i].set_title('nucleotide models', fontsize=fs)
+    elif i == 2:
+        axs[i].set_title('amino acid models', fontsize=fs)
         
     axs[i].set_yticks([0, 1, 2, 3, 4, 5, 6])
     axs[i].tick_params(axis='both', which='major', labelsize=fs)
@@ -60,7 +67,11 @@ for i in range(len(models)):
                 verticalalignment='top',
                 transform=axs[i].transAxes,
                 fontsize=fs)
-    axs[i].legend(title='seq. length', loc='upper left')
+    if i == 0:
+        axs[i].legend(title='seq. length', loc='upper left', fontsize=fs,
+                      title_fontsize=fs)
+    else:
+        axs[i].legend().set_visible(False)
     
     sns.barplot(y='proportion_nan', x='d',
                 data=df_na,
@@ -70,7 +81,9 @@ for i in range(len(models)):
     
     ax_twin.legend().set_visible(False)
     ax_twin.set_ylim(0, 7)
-    ax_twin.set_ylabel('Proportion NaN', fontsize=fs)
+    ax_twin.set_ylabel('Proportion NaN ' \
+                       if i in (2,3) else '', 
+                       fontsize=fs, loc='bottom')
     ax_twin.set_yticks([0,1])
     ax_twin.tick_params(axis='both', which='major', labelsize=fs, colors='grey')
     ax_twin.spines['right'].set_color('grey')
@@ -78,4 +91,4 @@ for i in range(len(models)):
 
 
 plt.tight_layout()
-plt.savefig('results/distance_boxplot.pdf')
+plt.savefig("results/distance_boxplot.pdf", dpi=450)
