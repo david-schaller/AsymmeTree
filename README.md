@@ -47,7 +47,7 @@ AsymmeTree is divided into several subpackages and modules, see also the followi
 
 If you use AsymmeTree in your project or code from it, please consider citing:
 
-* **Stadler, P. F., Geiß, M., Schaller, D., López Sánchez, A., González Laffitte, M., Valdivia, D., Hellmuth, M., and Hernández Rosales, M. (2020) From pairs of most similar sequences to phylogenetic best matches. Algorithms for Molecular Biology. doi: 10.1186/s13015-020-00165-2.**
+* **David Schaller, Marc Hellmuth, and Peter F. Stadler. AsymmeTree: A Flexible Python Package for the Simulation of Complex Gene Family Histories. Software 2022, 1(3), 276-298; doi: 10.3390/software1030013**
 
 Please report any bugs and questions in the [Issues](https://github.com/david-schaller/AsymmeTree/issues) section.
 Also, feel free to make suggestions for improvement and/or new functionalities.

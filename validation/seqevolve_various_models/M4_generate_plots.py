@@ -42,7 +42,8 @@ for i in range(len(models)):
     
     lr = LinearRegression()
     lr.fit(X, Y)
-    axs[i].text(0.05, 0.94, "{}\n\nslope {:.5}\nintercept {:.5}".format(model, lr.coef_[0, 0], lr.intercept_[0]),
+    axs[i].text(0.05, 0.94, "{}\n\nslope {:.5}\nintercept {:.5}".format(model, lr.coef_[0, 0], lr.intercept_[0])\
+                                                                .replace('-', '−'),
                 horizontalalignment='left',
                 verticalalignment='top',
                 transform=axs[i].transAxes,

@@ -68,8 +68,11 @@ for i in range(len(models)):
                 transform=axs[i].transAxes,
                 fontsize=fs)
     if i == 0:
-        axs[i].legend(title='seq. length', loc='upper left', fontsize=fs,
-                      title_fontsize=fs)
+        handles, hlabels = axs[i].get_legend_handles_labels()
+        hlabels = [f'{int(s):,}' for s in hlabels]
+        axs[i].legend(handles, hlabels,
+                      title='seq. length', loc='upper left', fontsize=fs,
+                      title_fontsize=fs,)
     else:
         axs[i].legend().set_visible(False)
     
