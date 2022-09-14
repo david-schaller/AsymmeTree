@@ -8,7 +8,7 @@ __author__ = 'David Schaller'
 
 
 class Sampler:
-    """Campling from from a variety of distributions."""
+    """Sampling from a variety of distributions."""
     
     def __init__(self, params, minimum=None, maximum=None, discrete=False,
                  shift=0):
@@ -24,7 +24,7 @@ class Sampler:
             Maximum value to be sampled. The default is None.
         discrete : bool, optional
             If True, round sampled values in case of a continuous
-                distribution. The default is False.
+            distribution. The default is False.
         shift : float, optional
             Shift distribution along x-axis. The default is 0, i.e., the
             distribution is not shifted.
