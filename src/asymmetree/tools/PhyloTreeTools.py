@@ -719,93 +719,38 @@ def parse_newick(newick):
     strings and need to be converted to integers afterwards if necessary.
     """
     
-    # label<reconc>:distance
-    label_col_dist_regex = re.compile(r"'?([a-zA-Z0-9_]*)'?<(.*)>:(-?[0-9]*\.?[0-9]*[Ee]?-?[0-9]+)")
-    # label<reconc>
-    label_col_regex = re.compile(r"'?([a-zA-Z0-9_]*)'?<(.*)>")
-    # label:distance
-    label_dist_regex = re.compile(r"'?([a-zA-Z0-9_]*)'?:(-?[0-9]*\.?[0-9]*[Ee]?-?[0-9]+)")
-    
     def to_int(item):
         """Trys to convert the string into int."""
         
         return int(item) if item.isdigit() else item
     
-    def parse_subtree(subroot, subtree_string):
-        """Recursive function to parse the subtrees."""
-        
-        children = split_children(subtree_string)
-        for child in children:
-            node = TreeNode(event='')
-            subroot.add_child(node)
-            end = -1
-            if child[0] == '(':                                 # the child has subtrees
-                end = child.rfind(')')
-                if end == -1:
-                    raise ValueError('invalid Newick string')
-                parse_subtree(node, child[1:end])               # recursive call 'parse_subtree'
-            child = child[end+1:].strip()
-            label_col_dist = label_col_dist_regex.match(child)
-            if label_col_dist:                                  # CASE 1: label<reconc>:distance
-                node.label = to_int(label_col_dist.group(1))
-                node.reconc = to_int(label_col_dist.group(2))
-                node.dist = float(label_col_dist.group(3))
-            else:
-                label_col = label_col_regex.match(child)
-                label_dist = label_dist_regex.match(child)
-                if label_col:                                   # CASE 2: label<reconc>
-                    node.label = to_int(label_col.group(1))
-                    node.reconc = to_int(label_col.group(2))
-                    node.dist = 1.0
-                elif label_dist:                                # CASE 3: label:distance
-                    node.label = to_int(label_dist.group(1))
-                    node.reconc = None
-                    node.dist = float(label_dist.group(2))
-                else:                                           # CASE 4: label
-                    node.label = to_int(child)
-                    node.reconc = None
-                    node.dist = 1.0
-            # reconc is a tuple
-            if node.reconc and isinstance(node.reconc, str) and node.reconc.find('-') != -1:
-                split_reconc = node.reconc.split('-')
-                node.reconc = (to_int(split_reconc[0]),
-                              to_int(split_reconc[1]))
-                    
-    def split_children(child_string):
-        """Splits a given string by all ',' that are not enclosed by parentheses."""
-        
-        stack = 0
-        children = []
-        current = ""
-        for c in child_string:
-            if (stack == 0) and c == ',':
-                children.append(current)
-                current = ""
-            elif c == '(':
-                stack += 1
-                current += c
-            elif c == ')':
-                if stack <= 0:
-                    raise ValueError('invalid Newick string')
-                stack -= 1
-                current += c
-            else:
-                current += c
-        children.append(current.strip())
-        return children
+    tree = Tree.parse_newick(newick)
     
-    if not isinstance(newick, str):
-        raise TypeError("Newick parser needs a 'str' as input")
-    end = newick.find(";")
-    if end != -1:
-        newick = newick[:end]
-    temp_root = TreeNode(event='')
-    parse_subtree(temp_root, newick)
-    if temp_root.children:
-        root = temp_root.children[0]
-        root.dist = 0.0                 # set distance of the root to 0
-        root.detach()                   # remove the parent temp_root
-                                        # (important for non-recursive to_newick2)
-        return Tree(root)
-    else:
-        raise ValueError('invalid Newick string')
+    # regex for notation label<reconc>
+    label_col_regex = re.compile(r"'?([a-zA-Z0-9_]*)'?<(.*)>")
+    
+    for node in tree.preorder():
+        
+        node.event = ''
+        
+        if not hasattr(node, 'dist'):
+            node.dist = 1.0
+        
+        label = str(node.label)
+        
+        label_col = label_col_regex.match(label)
+        if label_col:
+            node.label = to_int(label_col.group(1))
+            node.reconc = to_int(label_col.group(2))
+        else:
+            node.reconc = None
+        
+        # reconc is a tuple
+        if (node.reconc and 
+            isinstance(node.reconc, str) and 
+            node.reconc.find('-') != -1):
+            
+            a, b = node.reconc.split('-')
+            node.reconc = (to_int(a), to_int(b))
+    
+    return tree
