@@ -430,6 +430,51 @@ def random_colored_tree(n, colors, binary=False, force_all_colors=False):
              
      return tree
  
+
+def random_ultrametric_timing(tree, inplace=False, adjust_distances=False):
+    """Generate a random ultrametric timing for the tree.
+    
+    Parameters
+    ----------
+    tree : Tree
+        The tree for which a random timing shall be generated.
+    inplace : bool, optional
+        If True, the input tree is modified, otherwise a copy is returned.
+        The default is False.
+    adjust_distances : bool, optional
+        If True, also adjust the dist attribute of the tree nodes to match the
+        differences of the tstamp values. The default is False.
+    
+    Returns
+    -------
+    Tree
+        A random tree whose nodes have tstamp attributes that represent the
+        generated random ultrametric timing.
+    """
+    
+    if not inplace:
+        tree = tree.copy()
+        
+    for v in tree.preorder():
+        if not v.children:
+            v.tstamp = 0.0
+        elif not v.parent:
+            v.tstamp = 1.0
+        else:                               # random walk to a leaf
+            pos = v                         # current position
+            length = 0                      # path length |P|
+            while pos.children:
+                length += 1
+                pos = pos.children[np.random.randint(len(pos.children))]
+            v.tstamp = (
+                v.parent.tstamp * (1 - 2 * np.random.uniform() / (length+1))
+            )
+    
+    if adjust_distances:
+        distance_from_timing(tree)
+             
+    return tree
+ 
     
 def phylo_tree_attributes(tree, inplace=True):
     """Add the attributes for a phylogentic tree if not already set.
