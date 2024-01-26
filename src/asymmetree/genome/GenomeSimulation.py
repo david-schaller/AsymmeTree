@@ -150,7 +150,7 @@ class GenomeSimulator:
             self.sequence_dicts = []
         
         if root_genome:
-            if len(root_genome) != len(self.number_of_families):
+            if len(root_genome) != self.number_of_families:
                 raise ValueError('no. of sequences in root genome does not'\
                                  'match no of gene families')
         else:
