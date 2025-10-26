@@ -2,7 +2,7 @@
 ![Logo](resources/images/logo.png)
 
 [![license: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![pypi version](https://img.shields.io/badge/pypi-v2.2.1-blue.svg)](https://pypi.org/project/asymmetree/)
+[![pypi version](https://img.shields.io/badge/pypi-v2.2.2-blue.svg)](https://pypi.org/project/asymmetree/)
 
 AsymmeTree is an open-source Python library for the simulation and analysis of phylogenetic scenarios.
 It includes a simulator for species and gene trees with heterogeneous evolution rates, nucleotide and amino acid sequences with or without indels, as well as whole genomes/proteomes.
