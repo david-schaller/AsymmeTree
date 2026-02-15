@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Evolving sequences along trees.
 
 The subpackage asymmetree.seqevolve contains modules for the simulation of
@@ -9,7 +7,7 @@ textbooks, see e.g. [1], [2], and [3]).
 
 These models typically take a substitution-rate matrix and the equilibrium
 frequencies of the states (i.e. the nucleotides or amino acids as input).
-Moreover, insertions and deletions (indels) and heterogeneity among the sites 
+Moreover, insertions and deletions (indels) and heterogeneity among the sites
 can be simulated.
 
 References
@@ -28,9 +26,9 @@ References
    ISBN 978-0-19-960261-2 978-0-19-960260-5.
 """
 
-from asymmetree.seqevolve.Evolver import Evolver
-from asymmetree.seqevolve.SubstModel import SubstModel
-from asymmetree.seqevolve.IndelModel import IndelModel
-from asymmetree.seqevolve.HetModel import HetModel
-from asymmetree.seqevolve.Alignment import AlignmentBuilder
-from asymmetree.seqevolve.EvolvingSequence import EvoSeq
+from asymmetree.seqevolve.Evolver import Evolver as Evolver
+from asymmetree.seqevolve.SubstModel import SubstModel as SubstModel
+from asymmetree.seqevolve.IndelModel import IndelModel as IndelModel
+from asymmetree.seqevolve.HetModel import HetModel as HetModel
+from asymmetree.seqevolve.Alignment import AlignmentBuilder as AlignmentBuilder
+from asymmetree.seqevolve.EvolvingSequence import EvoSeq as EvoSeq

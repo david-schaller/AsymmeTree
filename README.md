@@ -11,28 +11,24 @@ Moreover, it includes a matplotlib-based visualization of the simulated trees as
 
 The library is primarily designed to explore and validate mathematical concepts, and to test inference methods for various steps on the way to more realistically-available data, i.e., dated gene trees, additive distances of gene sets, noisy distances and finally sequences.
 
-
 ## Installation
 
-AsymmeTree requires Python 3.7 or higher.
+The package requires Python 3.10 or higher.
+The `asymmetree` package is available on [PyPI](https://pypi.org/project/asymmetree/):
 
-#### Easy installation with pip
+```bash
+pip install asymmetree
+```
 
-The `asymmetree` package is available on PyPI:
+Alternatively, you can clone the repo, go to the root folder of package and install it using the
+command:
 
-    pip install asymmetree
-
-For details about how to install Python packages see [here](https://packaging.python.org/tutorials/installing-packages/).
-
-#### Installation with the setup file
-
-Alternatively, you can download or clone the repo, go to the root folder of package and install it using the command:
-
-    python setup.py install
-
-#### Dependencies
+```bash
+pip install .
+```
 
 AsymmeTree has several dependencies (which are installed automatically when using `pip`):
+
 * [NetworkX](https://networkx.github.io/)
 * [Scipy and Numpy](http://www.scipy.org/install.html)
 * [Matplotlib](https://matplotlib.org/)
@@ -43,11 +39,33 @@ AsymmeTree has several dependencies (which are installed automatically when usin
 A user manual with example code can be found in the [Wiki](https://github.com/david-schaller/AsymmeTree/wiki/Manual).
 AsymmeTree is divided into several subpackages and modules, see also the following [documentation](https://david-schaller.github.io/docs/asymmetree/) generated from the source code.
 
+## Contributing
+
+If you want to contribute to `asymmetree`, please use the package and project manager
+[uv](https://docs.astral.sh/uv/).
+See [this page](https://docs.astral.sh/uv/getting-started/installation/) for installation
+instructions.
+
+Moreover, please use [pre-commit](https://pre-commit.com) for automated code formatting and linting.
+
+To install it and initialize it for your local `asymmetree` repository, follow these steps:
+
+- Install `uv`
+- Run the following command (after which you should be able to run `pre-commit` from anywhere)
+    - `uv tool install pre-commit --with pre-commit-uv`
+- Navigate to the root directory of your local `asymmetree` repository
+    - `cd <MY_PATH_TO>/asymmetree`
+- Install `pre-commit` as a git hook in the `asymmetree` repository
+    - `pre-commit install`
+
 ## Citation
 
 If you use AsymmeTree in your project or code from it, please consider citing:
 
-* **David Schaller, Marc Hellmuth, and Peter F. Stadler. AsymmeTree: A Flexible Python Package for the Simulation of Complex Gene Family Histories. Software 2022, 1(3), 276-298; doi: 10.3390/software1030013**
+> David Schaller, Marc Hellmuth, and Peter F. Stadler.
+> AsymmeTree: A Flexible Python Package for the Simulation of Complex Gene Family Histories.
+> Software 2022, 1(3), 276-298; doi: 10.3390/software1030013
 
-Please report any bugs and questions in the [Issues](https://github.com/david-schaller/AsymmeTree/issues) section.
+Please report any bugs and questions in the
+[Issues](https://github.com/david-schaller/AsymmeTree/issues) section.
 Also, feel free to make suggestions for improvement and/or new functionalities.

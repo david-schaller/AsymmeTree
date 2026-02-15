@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Indel models for sequence evolution.
 
 References
@@ -17,17 +15,18 @@ References
 from asymmetree.tools.Sampling import Sampler
 
 
-__author__ = 'David Schaller'
-
-
 class IndelModel:
     """Indel model"""
-    
-    def __init__(self, insertion_rate, deletion_rate,
-                 length_distr=('zipf', 1.821),        # (Chang and Benner 2004)
-                 min_length=1,
-                 max_length=None,
-                 **kwargs):
+
+    def __init__(
+        self,
+        insertion_rate,
+        deletion_rate,
+        length_distr=("zipf", 1.821),  # (Chang and Benner 2004)
+        min_length=1,
+        max_length=None,
+        **kwargs,
+    ):
         """
         Parameters
         ----------
@@ -44,47 +43,44 @@ class IndelModel:
         max_length : int, optional
             The maximal length of an indel. The default is None in which case
             the distribution is not truncated (on the upper side).
-        
+
         References
         ----------
         .. [1] M. S. Chang and S. A. Benner.
            Empirical Analysis of Protein Insertions and Deletions Determining
            Parameters for the Correct Placement of Gaps in Protein Sequence
-           Alignments. 
+           Alignments.
            In: Journal of Molecular Biology, 341(2):617-631, August 2004.
            doi:10.1016/j.jmb.2004.05.045.
         """
-        
+
         if insertion_rate < 0.0 or deletion_rate < 0.0:
             raise ValueError("insertion and deletion rates must be non-negative")
         else:
-            self._ins_rate = insertion_rate     # insertion rate per site
-            self._del_rate = deletion_rate      # deletion rate per site
-        
+            self._ins_rate = insertion_rate  # insertion rate per site
+            self._del_rate = deletion_rate  # deletion rate per site
+
         if isinstance(length_distr, Sampler):
             self.sampler = length_distr
         else:
-            self.sampler = Sampler(length_distr,
-                                   maximum=max_length,
-                                   discrete=True)
-        
-    
+            self.sampler = Sampler(length_distr, maximum=max_length, discrete=True)
+
     def get_rates(self, seq_length):
         """Return the current insertion and deletion rate.
-        
+
         Computes the current insertion and deletion rate according to the model
         and the length of the sequence.
-        
+
         Parameters
         ----------
         seq_length : int
             The length of the sequence.
-        
+
         Returns
         -------
         tuple of two floats
             The total rate for an insertation and deletion event, see [1].
-            
+
         References
         ----------
         .. [1] R. A. Cartwright.
@@ -92,21 +88,21 @@ class IndelModel:
            In: Bioinformatics, 21(Suppl 3):iii31-iii38, November 2005.
            doi:10.1093/bioinformatics/bti1200.
         """
-        
+
         # expected value may be infinite for zipf distribution, in which case
         # the minimal length is used, see 'Sampler'
-        return ( (seq_length + 1) * self._ins_rate,
-                 (seq_length + self.sampler._exp_val - 1) * self._del_rate )
-        
-    
+        return (
+            (seq_length + 1) * self._ins_rate,
+            (seq_length + self.sampler._exp_val - 1) * self._del_rate,
+        )
+
     def draw_length(self):
         """Draw the length for an indel.
-        
+
         Returns
         -------
         int
             The drawn length for the indel.
         """
-        
+
         return self.sampler()
-    

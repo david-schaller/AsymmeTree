@@ -1,17 +1,11 @@
-# -*- coding: utf-8 -*-
-
 import unittest
 
-from tree_tests import *
-from treeevolve_tests import *
-from seqevolve_tests import *
-from bmg_tests import *
-from hgt_tests import *
+from tree_tests import *  # noqa: F401, F403
+from treeevolve_tests import *  # noqa: F401, F403
+from seqevolve_tests import *  # noqa: F401, F403
+from bmg_tests import *  # noqa: F401, F403
+from hgt_tests import *  # noqa: F401, F403
 
 
-__author__ = 'David Schaller'
-
-
-if __name__ == '__main__':
-
+if __name__ == "__main__":
     unittest.main()

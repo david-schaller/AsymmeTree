@@ -1,1 +1,1 @@
-# -*- coding: utf-8 -*-"""File I/O."""
+"""File I/O."""

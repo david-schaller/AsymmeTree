@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Genome simulation.
 
 The module asymmetree.genome.GenomeSimulation provides functions that combine
@@ -9,4 +7,4 @@ order to conveniently simulate whole genomes/proteomes. The (optional) output
 directory contains serialized trees, fasta files, and the true alignments.
 """
 
-from asymmetree.genome.GenomeSimulation import GenomeSimulator
+from asymmetree.genome.GenomeSimulation import GenomeSimulator as GenomeSimulator
