@@ -24,12 +24,12 @@ from tralda.tools.GraphTools import independent_sets
 from tralda.cograph.Cograph import to_cotree, paths_of_length_2
 from tralda.supertree import Build
 
-from asymmetree.tools.PhyloTreeTools import (
+from asymmetree.utils.phylogenetic_trees import (
     add_planted_root,
     phylo_tree_attributes,
     assign_missing_labels,
 )
-from asymmetree.treeevolve.SpeciesTree import distance_from_timing
+from asymmetree.treeevolve.species import distance_from_timing
 
 
 # --------------------------------------------------------------------------

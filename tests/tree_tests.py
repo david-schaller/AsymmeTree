@@ -3,7 +3,7 @@ import os
 
 from tralda.datastructures.Tree import Tree
 
-from asymmetree.tools.PhyloTreeTools import random_colored_tree, to_newick, parse_newick
+from asymmetree.utils.phylogenetic_trees import random_colored_tree, to_newick, parse_newick
 
 
 class TestTrees(unittest.TestCase):

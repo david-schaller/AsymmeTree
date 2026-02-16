@@ -1,6 +1,6 @@
 import asymmetree.treeevolve as te
-from asymmetree.analysis.BestMatches import lrt_from_tree
-from asymmetree.tools.PhyloTreeTools import to_newick
+from asymmetree.analysis.best_matches import lrt_from_tree
+from asymmetree.utils.phylogenetic_trees import to_newick
 
 # --------------------------------------------------------------------------
 #                            SPECIES TREE

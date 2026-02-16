@@ -5,8 +5,8 @@ import time
 from tralda.datastructures.Tree import Tree, TreeNode
 
 from asymmetree.seqevolve import Evolver, SubstModel
-import asymmetree.tools.DistanceCalculation as dc
-from asymmetree.file_io.SeqFileIO import write_alignment
+import asymmetree.utils.distance_calculation as dc
+from asymmetree.io.sequences import write_alignment
 
 from validation import aux_functions
 

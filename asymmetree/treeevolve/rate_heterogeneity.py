@@ -7,9 +7,9 @@ from warnings import warn
 
 import numpy as np
 
-from asymmetree.treeevolve.GeneTree import GeneTreeSimulator
-from asymmetree.tools.Sampling import Sampler
-from asymmetree.tools.PhyloTreeTools import sorted_nodes
+from asymmetree.treeevolve.genes import GeneTreeSimulator
+from asymmetree.utils.sampling import Sampler
+from asymmetree.utils.phylogenetic_trees import sorted_nodes
 
 
 # --------------------------------------------------------------------------
@@ -212,7 +212,7 @@ def _divergent_rates(T, S, sampler, CSN_weights):
         The gene tree.
     S : Tree
         The species tree.
-    sampler : asymmetree.tools.Sampling.Sampler
+    sampler : asymmetree.utils.Sampling.Sampler
         Sampler for rate increase for divergent genes.
     CSN_weights : tuple
          Weights for choice between conservation, subfunctionalization and

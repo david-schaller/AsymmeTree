@@ -8,7 +8,7 @@ import numpy as np
 from tralda.datastructures import LCA
 
 import asymmetree.treeevolve as te
-import asymmetree.tools.PhyloTreeTools as ptt
+import asymmetree.utils.phylogenetic_trees as ptt
 
 
 # --------------------- parameters ---------------------

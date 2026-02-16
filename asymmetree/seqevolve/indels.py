@@ -12,7 +12,7 @@ References
    doi:10.1093/bioinformatics/bti1200.
 """
 
-from asymmetree.tools.Sampling import Sampler
+from asymmetree.utils.sampling import Sampler
 
 
 class IndelModel:

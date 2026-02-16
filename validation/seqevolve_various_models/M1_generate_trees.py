@@ -5,7 +5,7 @@ import glob
 from tralda.datastructures.Tree import Tree
 
 import asymmetree.treeevolve as te
-from asymmetree.tools.PhyloTreeTools import distance_matrix
+from asymmetree.utils.phylogenetic_trees import distance_matrix
 
 
 def simulate(directory, number_of_trees, species_per_tree):

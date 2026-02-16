@@ -11,8 +11,8 @@ References
 import numpy as np
 from scipy import linalg
 
-from asymmetree.seqevolve.EmpiricalModels import empirical_models
-from asymmetree.file_io.SubstModelIO import parse_paml
+from asymmetree.seqevolve.empirical_models import empirical_models
+from asymmetree.io.substitution_model import parse_paml
 
 
 class SubstModel:

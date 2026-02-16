@@ -1,5 +1,5 @@
 import asymmetree.treeevolve as te
-from asymmetree.visualize.TreeVis import visualize, assign_colors
+from asymmetree.visualization.tree_vis import visualize, assign_colors
 
 
 # --------------------------------------------------------------------------

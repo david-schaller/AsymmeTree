@@ -10,7 +10,7 @@ References
 
 import numpy as np
 
-from asymmetree.seqevolve.EvolvingSequence import State
+from asymmetree.seqevolve.evolving_sequence import State
 
 
 class HetModel:

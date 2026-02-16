@@ -18,9 +18,9 @@ from tralda.cograph.Cograph import to_cotree
 import tralda.tools.GraphTools as gt
 
 import asymmetree.treeevolve as te
-import asymmetree.analysis.BestMatches as bm
-import asymmetree.analysis.HGT as hgt
-import asymmetree.tools.PhyloTreeTools as ptt
+import asymmetree.analysis.best_matches as bm
+import asymmetree.analysis.horizontal_gene_transfer as hgt
+import asymmetree.utils.phylogenetic_trees as ptt
 
 
 # --------------------- parameters ---------------------

@@ -10,7 +10,7 @@ import numpy as np
 
 from tralda.datastructures.Tree import Tree, TreeNode, LCA
 
-from asymmetree.tools.PhyloTreeTools import (
+from asymmetree.utils.phylogenetic_trees import (
     sorted_nodes,
     sorted_edges,
     delete_losses_and_contract,

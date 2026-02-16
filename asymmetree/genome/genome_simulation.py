@@ -6,8 +6,8 @@ from tralda.datastructures.Tree import Tree
 
 import asymmetree.treeevolve as te
 import asymmetree.seqevolve as se
-from asymmetree.file_io.SeqFileIO import write_alignment, write_fasta
-from asymmetree.tools.Sampling import Sampler
+from asymmetree.io.sequences import write_alignment, write_fasta
+from asymmetree.utils.sampling import Sampler
 
 
 class GenomeSimulator:

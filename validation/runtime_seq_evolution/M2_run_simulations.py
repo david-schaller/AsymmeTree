@@ -8,7 +8,7 @@ from time import time
 
 # import asymmetree.treeevolve as te
 import asymmetree.seqevolve as se
-from asymmetree.tools.PhyloTreeTools import parse_newick
+from asymmetree.utils.phylogenetic_trees import parse_newick
 
 import pyvolve
 

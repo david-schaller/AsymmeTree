@@ -1,7 +1,7 @@
 import unittest
 
 import asymmetree.analysis as analysis
-from asymmetree.tools.PhyloTreeTools import random_colored_tree
+from asymmetree.utils.phylogenetic_trees import random_colored_tree
 
 
 class TestBMG(unittest.TestCase):

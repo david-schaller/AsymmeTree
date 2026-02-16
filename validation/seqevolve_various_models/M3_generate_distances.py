@@ -3,7 +3,7 @@ import pickle
 
 import numpy as np
 
-import asymmetree.tools.DistanceCalculation as dc
+import asymmetree.utils.distance_calculation as dc
 
 from validation import aux_functions
 

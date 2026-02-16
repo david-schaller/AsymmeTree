@@ -10,9 +10,9 @@ References
 
 import numpy as np
 
-from asymmetree.seqevolve.EvolvingSequence import EvoSeq, State
-from asymmetree.seqevolve.Alignment import AlignmentBuilder
-from asymmetree.file_io.SeqFileIO import write_alignment, write_fasta
+from asymmetree.seqevolve.evolving_sequence import EvoSeq, State
+from asymmetree.seqevolve.alignment import AlignmentBuilder
+from asymmetree.io.sequences import write_alignment, write_fasta
 
 
 class Evolver:

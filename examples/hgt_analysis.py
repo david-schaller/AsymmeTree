@@ -8,7 +8,7 @@ from asymmetree.analysis import (
     ldt_graph,
     RsScenarioConstructor,
 )
-from asymmetree.tools.PhyloTreeTools import (
+from asymmetree.utils.phylogenetic_trees import (
     to_newick,
 )
 

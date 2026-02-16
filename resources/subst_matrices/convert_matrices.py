@@ -1,6 +1,6 @@
 from glob import glob
 
-from asymmetree.file_io.SubstModelIO import parse_paml
+from asymmetree.io.substitution_model import parse_paml
 
 
 def width_max(a):
@@ -41,7 +41,7 @@ def write_python_function(f, model, exchangeability_matrix, stat_freqs):
     f.write("\n    return S, freqs")
 
 
-outfile = "../../asymmetree/seqevolve/EmpiricalModels.py"
+outfile = "../../asymmetree/seqevolve/empirical_models.py"
 
 with open(outfile, "w") as f:
     f.write("import numpy as np")

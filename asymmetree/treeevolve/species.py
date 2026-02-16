@@ -6,7 +6,7 @@ import numpy as np
 
 from tralda.datastructures.Tree import Tree, TreeNode
 
-from asymmetree.tools.PhyloTreeTools import (
+from asymmetree.utils.phylogenetic_trees import (
     delete_losses_and_contract,
     remove_planted_root,
     distance_from_timing,

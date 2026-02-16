@@ -22,13 +22,13 @@ References
 .. [3] Z. Yang.
    Molecular Evolution: A Statistical Approach.
    Oxford University Press, Oxford, United Kingdom; New York, NY, United
-   States of America,  rst edition edition, 2014.
+   States of America, First edition, 2014.
    ISBN 978-0-19-960261-2 978-0-19-960260-5.
 """
 
-from asymmetree.seqevolve.Evolver import Evolver as Evolver
-from asymmetree.seqevolve.SubstModel import SubstModel as SubstModel
-from asymmetree.seqevolve.IndelModel import IndelModel as IndelModel
-from asymmetree.seqevolve.HetModel import HetModel as HetModel
-from asymmetree.seqevolve.Alignment import AlignmentBuilder as AlignmentBuilder
-from asymmetree.seqevolve.EvolvingSequence import EvoSeq as EvoSeq
+from asymmetree.seqevolve.evolver import Evolver as Evolver
+from asymmetree.seqevolve.substitution import SubstModel as SubstModel
+from asymmetree.seqevolve.indels import IndelModel as IndelModel
+from asymmetree.seqevolve.heterogeneity import HetModel as HetModel
+from asymmetree.seqevolve.alignment import AlignmentBuilder as AlignmentBuilder
+from asymmetree.seqevolve.evolving_sequence import EvoSeq as EvoSeq

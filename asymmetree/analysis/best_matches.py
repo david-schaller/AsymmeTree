@@ -22,7 +22,7 @@ from tralda.datastructures.Tree import Tree, TreeNode
 from tralda.tools.GraphTools import sort_by_colors, is_properly_colored, graphs_equal
 from tralda.supertree import Build
 
-from asymmetree.tools.PhyloTreeTools import topology_only, reconstruct_reconc_from_graph
+from asymmetree.utils.phylogenetic_trees import topology_only, reconstruct_reconc_from_graph
 
 
 # --------------------------------------------------------------------------
