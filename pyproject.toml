@@ -44,6 +44,9 @@ include = ["asymmetree*"]
 [tool.setuptools.dynamic.version]
 attr = "asymmetree.__version__"
 
+[tool.setuptools.package-data]
+"asymmetree.seqevolve" = ["data/*.paml"]
+
 [tool.ruff]
 line-length = 100
 target-version = "py310"

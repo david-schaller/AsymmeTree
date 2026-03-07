@@ -1,18 +1,94 @@
 """Substitution models for nucleotide and amino acid evolution.
 
-References
-----------
-.. [1] Z. Yang.
-   Computational molecular evolution.
-   Oxford series in ecology and evolution. Oxford University Press, 2006.
-   ISBN 978-0-19-856699-1 978-0-19-856702-8.
+The module contain the class :class:`SubstModel` that can be used to represent a substitution model
+for nucleotide or amino acid evolution. The class provides methods to compute the transition
+probability matrix for a given time and to convert sequences between their str representation and a
+list of indices.
+
+For amino acid substitution models, some empirical models are available that can be loaded via the
+:class:`EMPIRICAL_MODELS` object. The values in the matrices and the equilibrium frequencies are
+taken from [2].
+
+References:
+    .. [1] Z. Yang. Computational molecular evolution. Oxford series in ecology and evolution.
+       Oxford University Press, 2006. ISBN 978-0-19-856699-1 978-0-19-856702-8.
+    .. [2] http://giphy.pasteur.fr/empirical-models-of-amino-acid-substitution/
 """
+
+from __future__ import annotations
+
+from pathlib import Path
 
 import numpy as np
 from scipy import linalg
 
-from asymmetree.seqevolve.empirical_models import empirical_models
 from asymmetree.io.substitution_model import parse_paml
+
+_DATA_DIR: Path = Path(__file__).parent / "data"
+
+# amino acid models available in the package data directory
+_EMPIRICAL_MODEL_NAMES: list[str] = ["WAG", "JTT", "BLOSUM62", "LG", "DAYHOFF"]
+
+
+class _EmpiricalModelLoader:
+    """Helper class to load and store empirical amino acid models from PAML files.
+
+    The models are loaded lazily, i.e., only when they are accessed for the first time.
+    """
+
+    def __init__(self):
+        """Constructor for the _EmpiricalModelLoader class."""
+        self.models: dict[str, tuple[np.ndarray, np.ndarray]] = {}
+
+    def __contains__(self, item: str) -> bool:
+        """Check if a model is available.
+
+        Args:
+            item: The name of the model (e.g. ``"WAG"``).
+
+        Returns:
+            True if the model is available, False otherwise.
+        """
+        return item in _EMPIRICAL_MODEL_NAMES
+
+    def __getitem__(self, key: str) -> tuple[np.ndarray, np.ndarray]:
+        """Get a model by name.
+
+        Args:
+            key: The name of the model (e.g. ``"WAG"``).
+
+        Returns:
+            A tuple ``(S, freqs)`` where ``S`` is the 20x20 exchangeability matrix and ``freqs`` is
+            the vector of equilibrium frequencies, both as :class:`numpy.ndarray`.
+
+        Raises:
+            KeyError: If the model is not available.
+        """
+        if key not in self:
+            raise KeyError(f"Model '{key}' is not available.")
+
+        if key not in self.models:
+            self.models[key] = self._load_model(key)
+
+        return self.models[key]
+
+    def _load_model(self, name: str) -> tuple[np.ndarray, np.ndarray]:
+        """Load an empirical amino acid substitution model from a PAML file.
+
+        Args:
+            name: The name of the model (e.g. ``"WAG"``). A corresponding ``<name>.paml`` file must
+                exist in the package data directory.
+
+        Returns:
+            A tuple ``(S, freqs)`` where ``S`` is the 20x20 exchangeability matrix and ``freqs`` is
+            the vector of equilibrium frequencies, both as :class:`numpy.ndarray`.
+        """
+        matrix, freqs = parse_paml(_DATA_DIR / f"{name}.paml", model_type="a")
+
+        return np.array(matrix), np.array(freqs)
+
+
+EMPIRICAL_MODELS = _EmpiricalModelLoader()
 
 
 class SubstModel:
@@ -61,7 +137,7 @@ class SubstModel:
             self.alphabet = SubstModel.nucleotides
 
         elif self.model_type in ("a", "aa", "amino", "aminoacid", "protein") and (
-            self.model_name in SubstModel.aa_models or self.model_name in empirical_models
+            self.model_name in SubstModel.aa_models or self.model_name in EMPIRICAL_MODELS
         ):
             self.model_type = "a"
             self.alphabet = SubstModel.amino_acids
@@ -106,9 +182,8 @@ class SubstModel:
         elif self.model_type == "a":
             if self.model_name == "JC69":
                 self.S, self.freqs = _JC69_aa()
-
-            elif self.model_name in empirical_models:
-                self.S, self.freqs = empirical_models[self.model_name]()
+            elif self.model_name in EMPIRICAL_MODELS:
+                self.S, self.freqs = EMPIRICAL_MODELS[self.model_name]
 
         # make sure stationary frequencies sum to 1
         self.freqs /= np.sum(self.freqs)
