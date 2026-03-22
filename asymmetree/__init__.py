@@ -13,4 +13,6 @@ inference methods for various steps on the way to more realistically-available d
 gene trees, additive distances of gene sets, noisy distances and finally sequences.
 """
 
+from __future__ import annotations
+
 __version__ = "2.3.0"

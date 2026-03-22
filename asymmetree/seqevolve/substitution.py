@@ -23,6 +23,8 @@ import numpy as np
 from scipy import linalg
 
 from asymmetree.io.substitution_model import parse_paml
+from asymmetree.seqevolve.evolving_sequence import EvoSeq
+
 
 _DATA_DIR: Path = Path(__file__).parent / "data"
 
@@ -100,30 +102,24 @@ class SubstModel:
     nucleotides = "ACGT"
     amino_acids = "ARNDCQEGHILKMFPSTWYV"
 
-    def __init__(self, model_type, model_name, **kwargs):
-        """
-        Parameters
-        ----------
-        model_type : str
-            Available options are 'n' for nucleotide and 'a' for amino acid
-            sequences.
-        model_name : str
-            Available are e.g. 'JC69' (nuc./a.a.), 'K80' (nuc.), 'GTR' (nuc.),
-            'WAG' (a.a.), 'JTT' (a.a.), 'BLOSUM62' (a.a.), 'LG' (a.a.), and
-            'DAYHOFF' (a.a.).
-            For the option 'CUSTOM', the keyword parameter 'filename' has to
-            be specified with a path to a custom model in paml format.
-        kwargs : optional
-            Some models require additional parameters, e.g. 'K80' requires the
-            parameter 'kappa' and 'GTR' requires 'abcdef' and 'f', see
-            documentation for details.
+    def __init__(self, model_type: str, model_name: str, **kwargs) -> None:
+        """Constructor for the SubstModel class.
 
-        Raises
-        ------
-        ValueError
-            If an invalid model was specified.
-        """
+        Some models require additional parameters, e.g. 'K80' requires the parameter 'kappa' and
+        'GTR' requires 'abcdef' and 'f', see documentation for details. For a custom model, the
+        keyword parameter 'filename' has to be specified with a path to a custom model in paml
+        format. All of these parameters are passed as keyword arguments.
 
+        Args:
+            model_type: Available options are 'n' for nucleotide and 'a' for amino acid sequences.
+            model_name: Available are e.g. 'JC69' (nuc./a.a.), 'K80' (nuc.), 'GTR' (nuc.), 'WAG'
+                (a.a.), 'JTT' (a.a.), 'BLOSUM62' (a.a.), 'LG' (a.a.), and 'DAYHOFF' (a.a.). For the
+                option 'CUSTOM', the keyword parameter 'filename' has to be specified with a path to
+                a custom model in paml format.
+
+        Raises:
+            ValueError: If an invalid model was specified.
+        """
         self.model_type = model_type.lower()
         self.model_name = model_name.upper()
 
@@ -143,7 +139,7 @@ class SubstModel:
             self.alphabet = SubstModel.amino_acids
 
         else:
-            raise ValueError("model '{}', '{}' is not available".format(model_type, model_name))
+            raise ValueError(f"model '{model_type}', '{model_name}' is not available")
 
         self.alphabet_dict = {item: index for index, item in enumerate(self.alphabet)}
 
@@ -151,8 +147,11 @@ class SubstModel:
         self._build_rate_matrix()
 
     def _load_exchangeability_and_freqs(self):
-        """Load the exchangeability matrix S and the stationary frequencies pi."""
+        """Load the exchangeability matrix S and the stationary frequencies π.
 
+        The exchangeability matrix S and the stationary frequencies π are loaded according to the
+        specified model. For custom models, they are loaded from a provided PAML file.
+        """
         # a custom model (via a paml file) was specified
         if self.model_name == "CUSTOM":
             if self._params is None or "filename" not in self._params:
@@ -192,8 +191,13 @@ class SubstModel:
         self.freqs_cumulative = np.cumsum(self.freqs)
 
     def _build_rate_matrix(self):
-        """Compute the rate matrix Q."""
+        """Compute the rate matrix Q.
 
+        The rate matrix Q is computed from the exchangeability matrix S and the stationary
+        frequencies π according to the formula Q[i, j] = S[i, j] * π[j] for i != j and
+        Q[i, i] = -sum(Q[i, :]). The matrix is then normalized so that the expected number of
+        substitutions per unit time is 1.
+        """
         # rate matrix from exchangeability matrix and stationary frequencies
         Q = self.S @ np.diag(self.freqs)
 
@@ -208,55 +212,49 @@ class SubstModel:
         self.Q = Q
 
     def eigensystem(self):
+        """Compute the eigensystem of the rate matrix Q."""
         if not hasattr(self, "eigenvals"):
             self.eigenvals, self.U, self.U_inv = diagonalize(self.Q, self.freqs)
 
         return self.eigenvals, self.U, self.U_inv
 
-    def transition_prob_matrix(self, t):
+    def transition_prob_matrix(self, t: float) -> np.ndarray:
         """Calculate the transition probability matrix P(t).
 
-        P(t) = U x e^(Lambda*t) x U^(-1).
+        The transition probability matrix P(t) is computed from the eigensystem of the rate matrix Q
+        according to the formula P(t) = U x e^(Λ * t) x U^(-1) where U is the matrix of eigenvectors
+        and Λ is the diagonal matrix of eigenvalues.
 
-        Parameters
-        ----------
-        t : float
-            The time / evolutinary distance.
+        Args:
+            t: The time / evolutionary distance for which to compute the transition probability
+                matrix.
 
-        Returns
-        -------
-        2-dimensional numpy array
+        Returns:
+            The transition probability matrix P(t) as a :class:`numpy.ndarray`.
         """
-
         # ensure that eigensystem has been computed
         self.eigensystem()
 
-        # first multiplication element-wise, since corresponding matrix
-        # only has non-zero entries on the diagonal
+        # first multiplication element-wise, since corresponding matrix only has non-zero entries on
+        # the diagonal
 
         return (self.U * np.exp(self.eigenvals * t)) @ self.U_inv
 
-    def to_indices(self, sequence):
-        """Convert a sequence into a list of indices the represent the positions
-        of the letters in the alphabet of the model.
+    def to_indices(self, sequence: str) -> list[int]:
+        """Convert a sequence into a list of indices.
 
-        Parameters
-        ----------
-        sequence : iterable
-            The sequence to be converted.
+        The letters in the sequence are converted to their corresponding indices in the alphabet of
+        the model.
 
-        Returns
-        -------
-        list
-            The list of indices.
+        Args:
+            sequence: The sequence to be converted.
 
-        Raises
-        ------
-        ValueError
-            If the sequence contains a letter that is not in the alphabet of
-            the model.
+        Returns:
+            The list of indices corresponding to the letters in the sequence.
+
+        Raises:
+            ValueError: If the sequence contains a letter that is not in the alphabet of the model.
         """
-
         try:
             result = [self.alphabet_dict[letter] for letter in sequence]
         except KeyError:
@@ -264,48 +262,39 @@ class SubstModel:
 
         return result
 
-    def to_sequence(self, evoseq):
+    def to_sequence(self, evoseq: EvoSeq) -> str:
         """Construct the str representation of a sequence.
 
-        Parameters
-        ----------
-        evoseq : asymmetree.seqevolve.EvolvingSequence.EvoSeq
-            The sequence to be converted.
+        Args:
+            evoseq: The sequence to be converted as an :class:`EvoSeq` object.
 
-        Returns
-        -------
-        str
+        Returns:
             The nucleotide or amino acid sequence depending on the model.
         """
-
         return "".join(self.alphabet[x._value] for x in evoseq)
 
 
-# --------------------------------------------------------------------------
-#                           Module functions
-# --------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
+#                                        Module functions
+# --------------------------------------------------------------------------------------------------
 
 
-def diagonalize(Q, freqs):
+def diagonalize(Q: np.ndarray, freqs: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Diagonalize a matrix.
 
-    Parameters
-    ----------
-    Q : 2-dimensional numpy array
-        Rate matrix.
-    freqs : 1-dimensional numpy array
-        stationary frequencies
+    Diagonalize the rate matrix Q using the stationary frequencies freqs. If Q is symmetric, it is
+    diagonalized directly. If Q is not symmetric but the model is time-reversible, it is first
+    transformed to a symmetric matrix using the stationary frequencies and then diagonalized.
 
-    Returns
-    -------
-    1-dimensional numpy array
-        Eigenvalues.
-    2-dimensional numpy array
-        Diagonalized matrix.
-    2-dimensional numpy array
-        Inverse of the diagonalized matrix.
+    Args:
+        Q: Rate matrix to be diagonalized.
+        freqs: The stationary frequencies π corresponding to the rate matrix Q.
+
+    Returns:
+        Tuple containing three arrays: The first array (1-dimensional) contains the eigenvalues, the
+        second array (2-dimensional) is the matrix of eigenvectors, and the third array
+        (2-dimensional) is the inverse of the matrix of eigenvectors.
     """
-
     # matrix is already symmetric
     if np.allclose(Q, Q.T):
         eigenvals, U = linalg.eigh(Q)
@@ -326,12 +315,18 @@ def diagonalize(Q, freqs):
     return eigenvals, U, U_inv
 
 
-# --------------------------------------------------------------------------
-#                           NUCLEOTIDE MODELS
-# --------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
+#                                      NUCLEOTIDE MODELS
+# --------------------------------------------------------------------------------------------------
 
 
 def _JC69_nuc():
+    """Jukes-Cantor model for nucleotide evolution.
+
+    Returns:
+       A tuple ``(S, freqs)`` where ``S`` is the 4x4 exchangeability matrix and ``freqs`` is the
+       vector of equilibrium frequencies, both as :class:`numpy.ndarray`.
+    """
     S = np.array([[0, 1, 1, 1], [1, 0, 1, 1], [1, 1, 0, 1], [1, 1, 1, 0]])
 
     freqs = np.array([0.25, 0.25, 0.25, 0.25])
@@ -339,7 +334,20 @@ def _JC69_nuc():
     return S, freqs
 
 
-def _K80_nuc(kappa):
+def _K80_nuc(kappa: float) -> tuple[np.ndarray, np.ndarray]:
+    """Kimura 2-parameter model for nucleotide evolution.
+
+    The Kimura 2-parameter model distinguishes between transitions (A <--> G and C <--> T) and
+    transversions (all other substitutions) and has a parameter kappa that specifies the
+    transition / transversion rate ratio.
+
+    Args:
+        kappa: The transition/transversion rate ratio.
+
+    Returns:
+        A tuple ``(S, freqs)`` where ``S`` is the 4x4 exchangeability matrix and ``freqs`` is the
+        vector of equilibrium frequencies, both as :class:`numpy.ndarray`.
+    """
     S = np.array([[0, 1, kappa, 1], [1, 0, 1, kappa], [kappa, 1, 0, 1], [1, kappa, 1, 0]])
 
     freqs = np.array([0.25, 0.25, 0.25, 0.25])
@@ -347,8 +355,10 @@ def _K80_nuc(kappa):
     return S, freqs
 
 
-def _GTR_nuc(abcdef, f):
-    """Generalized time-reversible model.
+def _GTR_nuc(
+    abcdef: tuple[float, float, float, float, float, float],
+) -> tuple[np.ndarray, np.ndarray]:
+    """Generalized time-reversible (GTR) model.
 
     Parameterization as in e.g. used in PAML and ALF:
     a:    C <--> T
@@ -357,8 +367,14 @@ def _GTR_nuc(abcdef, f):
     d:    A <--> C
     e:    C <--> G
     f:    A <--> G
-    """
 
+    Args:
+        abcdef: The six exchangeability parameters a, b, c, d, e, f as defined above.
+
+    Returns:
+        A tuple ``(S, freqs)`` where ``S`` is the 4x4 exchangeability matrix and ``freqs`` is the
+        vector of equilibrium frequencies, both as :class:`numpy.ndarray`.
+    """
     a, b, c, d, e, f = abcdef
 
     S = np.array([[0, d, f, b], [d, 0, e, a], [f, e, 0, c], [b, a, c, 0]])
@@ -369,12 +385,18 @@ def _GTR_nuc(abcdef, f):
     return S, freqs
 
 
-# --------------------------------------------------------------------------
-#                          AMINO ACID MODELS
-# --------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
+#                                      AMINO ACID MODELS
+# --------------------------------------------------------------------------------------------------
 
 
 def _JC69_aa():
+    """Jukes-Cantor model for amino acid evolution.
+
+    Returns:
+       A tuple ``(S, freqs)`` where ``S`` is the 20x20 exchangeability matrix and ``freqs`` is the
+       vector of equilibrium frequencies, both as :class:`numpy.ndarray`.
+    """
     S = np.ones((20, 20))
     S -= np.identity(20)
 

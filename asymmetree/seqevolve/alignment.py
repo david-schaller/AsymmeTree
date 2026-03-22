@@ -1,62 +1,67 @@
-"""Constructing the true alignment of simulated sequences."""
+"""Module for constructing the true alignment of simulated sequences.
+
+In the simulated sequences, the true history of substitutions and indels is known. This module uses
+this information to construct the true alignment of the sequences, which can for instance be used
+for evaluating the performance of alignment methods.
+"""
+
+from __future__ import annotations
 
 import numpy as np
 import networkx as nx
+from tralda.datastructures.Tree import Tree
+from tralda.datastructures.Tree import TreeNode
+
+from asymmetree.seqevolve.evolving_sequence import EvoSeq
 
 
 class AlignmentBuilder:
     """Construction of the true alignment of simulated sequences."""
 
-    def __init__(self, tree, sequence_dict, alphabet, include_inner=True):
-        """
-        Parameters
-        ----------
-        tree : Tree
-            The tree along which the sequences where simulated.
-        sequence_dict : dict
-            A dict containing the TreeNode instances in the tree as keys and
-            the simulated sequences as values (instances of type EvoSeq).
-        alphabet
-            The alphabet of the substitution model that was used.
-        include_inner : bool, optional
-            If True, the alignment also contains the sequences of the inner
-            nodes of the tree. The default is True.
-        """
+    def __init__(
+        self,
+        tree: Tree,
+        sequence_dict: dict[TreeNode, EvoSeq],
+        alphabet: str,
+        include_inner: bool = True,
+    ) -> None:
+        """Constructor for the AlignmentBuilder class.
 
+        Args:
+            tree: The tree along which the sequences where simulated.
+            sequence_dict: A dict containing the TreeNode instances in the tree as keys and the
+                simulated sequences as values.
+            alphabet: The alphabet of the substitution model that was used.
+            include_inner: If True, the alignment also contains the sequences of the inner nodes of
+                the tree.
+        """
         self.tree = tree
         self.sequence_dict = sequence_dict
         self.include_inner = include_inner
 
-        if alphabet[-1] == "-":
-            self.alphabet = alphabet
-        else:
-            self.alphabet = alphabet + "-"
+        # add gap character to the alphabet if not already present
+        self.alphabet = alphabet if alphabet[-1] == "-" else alphabet + "-"
 
-    def build(self):
+    def build(self) -> dict[TreeNode, str]:
         """Build the true alignment.
 
-        Returns
-        -------
-        dict
-            A dict containing the TreeNode instances in the tree as keys and
-            the str sequences as values that include the necessary gaps.
+        Returns:
+            A dict containing the TreeNode instances in the tree as keys and the str sequences as
+            values that include the necessary gaps.
         """
-
         self._get_preorder()
         self._sort_sites()
         self._alignment_matrix()
 
         return self._sequences()
 
-    def _get_preorder(self):
-        if self.include_inner:
-            self.nodes = [v for v in self.tree.preorder()]
-        else:
-            self.nodes = [v for v in self.tree.preorder() if not v.children]
-
+    def _get_preorder(self) -> None:
+        """Get the preorder of the tree."""
+        self.nodes = [v for v in self.tree.preorder() if self.include_inner or not v.children]
         self.node_index = {item: index for index, item in enumerate(self.nodes)}
 
-    def _sort_sites(self):
+    def _sort_sites(self) -> None:
+        """Sort the sites of the sequences in a way that they can be correctly aligned."""
         G = nx.DiGraph()
 
         for node in self.nodes:
@@ -72,7 +77,8 @@ class AlignmentBuilder:
 
         self.sites = list(nx.topological_sort(G))
 
-    def _alignment_matrix(self):
+    def _alignment_matrix(self) -> None:
+        """Construct the alignment matrix."""
         self.alignment = np.zeros((len(self.nodes), len(self.sites)), dtype=np.int8)
         positions = [self.sequence_dict[v]._first for v in self.nodes]
 
@@ -84,7 +90,13 @@ class AlignmentBuilder:
                 else:
                     self.alignment[i, j] = -1
 
-    def _sequences(self):
+    def _sequences(self) -> dict[TreeNode, str]:
+        """Convert the alignment matrix to a dictionary of sequences.
+
+        Returns:
+            A dict containing the TreeNode instances in the tree as keys and the str sequences as
+            values that include the necessary gaps.
+        """
         result = {}
 
         for i in range(len(self.nodes)):

@@ -1,22 +1,25 @@
 """Auxiliary functions for phylogentic trees.
 
-Phylogenetic trees are usually defined as trees where every inner node has
-at least two children. However, the class `Tree` does not force this property.
-Simulated trees are often 'planted' i.e. the root has only a single child,
-and this edge represents the ancestral lineage.
+Phylogenetic trees are usually defined as trees where every inner node has at least two children.
+However, the class `Tree` does not force this property. Simulated trees are often 'planted', i.e.,
+the root has only a single child, and this edge represents the ancestral lineage.
 """
+
+from __future__ import annotations
 
 import collections
 import itertools
 import random
 import re
 
+import networkx as nx
 import numpy as np
 
-from tralda.datastructures.Tree import Tree, TreeNode
+from tralda.datastructures.Tree import Tree
+from tralda.datastructures.Tree import TreeNode
 
 
-default_attributes = {
+DEFAULT_ATTRIBUTES = {
     "label": "",
     "event": None,
     "reconc": None,
@@ -26,77 +29,65 @@ default_attributes = {
 }
 
 
-def node_to_str(node):
+def node_to_str(node: TreeNode) -> str:
     """String representation of a node in a phylogenetic tree.
 
-    Returns
-    -------
-    str
-        String representation of the node including reconc (if defined)
-        and dist.
-    """
+    Args:
+        node: A TreeNode object representing a node in a phylogenetic tree. The node is expected to
+            have attributes 'label', 'reconc', and 'dist'.
 
-    if isinstance(node.reconc, (tuple, list)):
+    Returns:
+        String representation of the node including reconc (if defined) and dist.
+    """
+    if hasattr(node, "reconc") and isinstance(node.reconc, (tuple, list)):
         return "{}<{}-{}>:{}".format(node.label, *node.reconc, node.dist)
-    elif node.reconc:
+    elif hasattr(node, "reconc") and node.reconc:
         return "{}<{}>:{}".format(node.label, node.reconc, node.dist)
     else:
         return "{}:{}".format(node.label, node.dist)
 
 
-def sorted_nodes(tree, oldest_to_youngest=True):
+def sorted_nodes(tree: Tree, oldest_to_youngest: bool = True) -> list[TreeNode]:
     """List of nodes sorted by timestamp.
 
-    Return a list of all nodes in the tree sorted by time stamp beginning
-    with the oldest (highest time stamp). Optionally the order can be
-    reversed.
+    Return a list of all nodes in the tree sorted by time stamp beginning with the oldest (highest
+    time stamp). Optionally the order can be reversed by setting `oldest_to_youngest` to False.
 
-    Parameters
-    ----------
-    tree : Tree
-        A phylogenetic tree with nodes that have a `tstamp` attribute.
-    oldest_to_youngest : bool, optional
-        If True, the nodes are sorted from oldest to youngest, otherwise
-        from youngest to oldest (the default is True).
+    Args:
+        tree: A phylogenetic tree with nodes that have a `tstamp` attribute.
+        oldest_to_youngest: If True, the nodes are sorted from oldest to youngest, otherwise from
+            youngest to oldest.
 
-    Returns
-    -------
-    list of TreeNode instances
+    Returns:
         Nodes sorted by their timestamp.
     """
-
     return sorted(tree.preorder(), key=lambda node: node.tstamp, reverse=oldest_to_youngest)
 
 
-def sorted_edges(tree):
+def sorted_edges(tree: Tree) -> list[tuple[TreeNode, TreeNode]]:
     """List of edges (u,v) sorted by timestamp of u.
 
-    Return a list of all edges (u,v) sorted by timestamp of u beginning
-    with the oldest (highest time stamp).
+    Return a list of all edges (u,v) sorted by timestamp of u beginning with the oldest (highest
+    time stamp).
 
-    Parameters
-    ----------
-    tree : Tree
-        A phylogenetic tree with nodes that have a `tstamp` attribute.
+    Args:
+        tree: A phylogenetic tree with nodes that have a `tstamp` attribute.
 
-    Returns
-    -------
-    list of pairs of TreeNode instances
+    Returns:
         Edges sorted by their timestamp.
     """
-
     return sorted(tree.edges(), key=lambda e: (e[0].tstamp, e[1].tstamp), reverse=True)
 
 
-def distance_from_timing(tree):
+def distance_from_timing(tree: Tree) -> None:
     """Adjusts all distances according to the time stamp difference.
 
-    Parameters
-    ----------
-    tree : Tree
-        A phylogenetic tree with nodes that have a `tstamp` attribute.
-    """
+    The distance of an edge (u,v) is set to the absolute difference of the time stamps of u and v,
+    i.e., `dist = abs(u.tstamp - v.tstamp)`.
 
+    Args:
+        tree: A phylogenetic tree with nodes that have a `tstamp` attribute.
+    """
     if tree.root:
         tree.root.dist = 0.0
 
@@ -104,29 +95,27 @@ def distance_from_timing(tree):
         v.dist = abs(u.tstamp - v.tstamp)
 
 
-def delete_and_reconnect(tree, node, add_distances=True, keep_transferred=True):
+def delete_and_reconnect(
+    tree: Tree,
+    node: TreeNode,
+    add_distances: bool = True,
+    keep_transferred: bool = True,
+) -> TreeNode | bool:
     """Delete a node from the tree and reconnect its parent and children.
 
-    Parameters
-    ----------
-    node : TreeNode
-        The node in the tree to be deleted.
-    add_distances : bool, optional
-        When the node v is deleted and its children are reconnected to its
-        parent, add to the `dist` parameter of the children `v.dist`, i.e.
-        the distance of v from its parent (the default is True).
-    keep_transferred : bool, optional
-        When the edge of the deleted node v from its parent u was a
-        transfer edge, make all edges from u to the children of v transfer
-        edges (the default is True).
+    Args:
+        tree: A phylogenetic tree.
+        node: The node in the tree to be deleted.
+        add_distances: When the node v is deleted and its children are reconnected to its parent,
+            add to the `dist` parameter of the children `v.dist`, i.e., the distance of v from its
+            parent.
+        keep_transferred: When the edge of the deleted node v from its parent u was a transfer edge,
+            make all edges from u to the children of v transfer edges.
 
-    Returns
-    -------
-    TreeNode or bool
-        The parent of the node, if it could be deleted, or False, if the
-        node could not be deleted, i.e., it has no parent.
+    Returns:
+        The parent of the node, if it could be deleted, or False, if the node could not be deleted,
+        i.e., it has no parent.
     """
-
     if not node.parent:
         return False
 
@@ -139,23 +128,23 @@ def delete_and_reconnect(tree, node, add_distances=True, keep_transferred=True):
     return tree.delete_and_reconnect(node)
 
 
-def add_planted_root(tree):
+def add_planted_root(tree: Tree) -> TreeNode:
     """Add a new root that has the original root as its single child.
 
-    Parameters
-    ----------
-    tree : Tree
-        A phylogenetic tree.
+    A tree is called planted if the root has only a single child. This is often the case for
+    simulated trees where the edge from the planted root to its child represents the ancestral
+    lineage. This function adds a planted root to a tree that does not have one yet.
 
-    Returns
-    -------
-    TreeNode
-        The newly added root.
+    Args:
+        tree: A phylogenetic tree.
+
+    Returns:
+        The newly added planted root.
     """
-
     old_root = tree.root
     tree.root = TreeNode()
-    for k, v in default_attributes.items():
+
+    for k, v in DEFAULT_ATTRIBUTES.items():
         setattr(tree.root, k, v)
 
     if old_root:
@@ -164,27 +153,19 @@ def add_planted_root(tree):
     return tree.root
 
 
-def reconc_sorted_leaves(tree, return_list=False):
+def reconc_sorted_leaves(tree: Tree, return_list: bool = False) -> dict | tuple[dict, list]:
     """Sort leaves by their reconciliation attribute.
 
-    Parameters
-    ----------
-    tree : Tree
-        A tree with nodes that have a `reconc` attribute.
-    return_list : bool, optional
-        If True, also return a list of leaves such that leaves of the same
-        reconciliation appear as a coherent sequence (the default is False).
+    Args:
+        tree: A tree with nodes that have a `reconc` attribute.
+        return_list: If True, also return a list of leaves such that leaves of the same
+            reconciliation appear as a coherent sequence.
 
-    Returns
-    -------
-    dict
-        A dictionary with reconciliations as keys and a list of corresponding
-        nodes as values.
-    list, optional
-        List of leaves such that leaves of the same reconciliation appear as a
-        coherent sequence.
+    Returns:
+        A dictionary with reconciliations as keys and a list of corresponding nodes as values.
+        If `return_list` is True, also return a list of leaves such that leaves of the same
+        reconciliation appear as a coherent sequence.
     """
-
     reconc_dict = {}
 
     for leaf in tree.leaves():
@@ -194,42 +175,40 @@ def reconc_sorted_leaves(tree, return_list=False):
 
     if not return_list:
         return reconc_dict
-    else:
-        leaves = []
-        for reconc, leaf_list in reconc_dict.items():
-            for leaf in leaf_list:
-                leaves.append(leaf)
 
-        return reconc_dict, leaves
+    leaves = []
+    for leaf_list in reconc_dict.values():
+        for leaf in leaf_list:
+            leaves.append(leaf)
+
+    return reconc_dict, leaves
 
 
-def distance_matrix(tree, leaf_order=None):
+def distance_matrix(
+    tree: Tree,
+    leaf_order: list[TreeNode] | None = None,
+) -> tuple[list[TreeNode], np.ndarray]:
     """Distance matrix on the leaf set of the phylogenetic tree.
 
-    Computes a distance matrix on the set of leaves of the tree where each
-    distances is the sum of the distances (`dist`) on the path connecting
-    the pair of leaves.
+    Computes a distance matrix on the set of leaves of the tree where each distances is the sum of
+    the distances (`dist`) on the path connecting the pair of leaves.
 
-    Additionally a list of leaves corresponding to the indices in the
-    matrix is returned.
+    Additionally a list of leaves corresponding to the indices in the matrix is returned.
 
-    Parameters
-    ----------
-    tree : Tree
-        A tree with nodes that have a `dist` attribute.
-    leaf_order : list, optional
-        A list of all leaves in the tree defining the indices for the
-        matrix (the default is None, in which case leaves are indexed in
-        sibling order).
+    Args:
+        tree: A tree with nodes that have a `dist` attribute.
+        leaf_order: A list of all leaves in the tree defining the indices for the matrix. The
+            default is None, in which case leaves are indexed in sibling order.
 
-    Returns
-    -------
-    list of TreeNode objects
-        Represents the order for the lines/columns in the distance matrix.
-    numpy.ndarray (dtype=numpy.float)
-        The distance matrix.
+    Returns:
+        A tuple containing:
+        - A list of TreeNode objects representing the order for the lines/columns in the distance
+          matrix.
+        - A numpy.ndarray (dtype=numpy.float) representing the distance matrix.
+
+    Raises:
+        ValueError: If `leaf_order` is provided and does not match with the leaves in the tree.
     """
-
     distance_dict = distances_from_root(tree)
     leaves = tree.leaf_dict()
 
@@ -246,35 +225,32 @@ def distance_matrix(tree, leaf_order=None):
     D = np.zeros((len(L), len(L)), dtype=np.float)
 
     for v in tree.preorder():
-        if v.children:
-            for c1, c2 in itertools.combinations(v.children, 2):
-                for x in leaves[c1]:
-                    x_index = leaf_index[x]
-                    x_dist = distance_dict[x] - distance_dict[v]
-                    for y in leaves[c2]:
-                        y_index = leaf_index[y]
-                        y_dist = distance_dict[y] - distance_dict[v]
-                        D[x_index, y_index] = x_dist + y_dist
-                        D[y_index, x_index] = x_dist + y_dist
+        if not v.children:
+            continue
+
+        for c1, c2 in itertools.combinations(v.children, 2):
+            for x in leaves[c1]:
+                x_index = leaf_index[x]
+                x_dist = distance_dict[x] - distance_dict[v]
+                for y in leaves[c2]:
+                    y_index = leaf_index[y]
+                    y_dist = distance_dict[y] - distance_dict[v]
+                    D[x_index, y_index] = x_dist + y_dist
+                    D[y_index, x_index] = x_dist + y_dist
 
     return L, D
 
 
-def distances_from_root(tree):
+def distances_from_root(tree: Tree) -> dict[TreeNode, float]:
     """The distances of each node to the root of the tree.
 
-    Parameters
-    ----------
-    tree : Tree
-        A tree with nodes that have a `dist` attribute.
+    Args:
+        tree: A tree with nodes that have a `dist` attribute.
 
-    Returns
-    -------
-    dict
-        The keys are TreeNode objects and the values their distances
+    Returns:
+        A dictionary where the keys are TreeNode objects and the values are their distances
         (sum of `dist`) to the root.
     """
-
     distance_dict = {}
 
     for v in tree.preorder():
@@ -287,24 +263,17 @@ def distances_from_root(tree):
     return distance_dict
 
 
-def topology_only(tree, inplace=True):
-    """Reset reconciliations, distances, time stamps, transfer status, and
-    inner labels.
+def topology_only(tree: Tree, inplace: bool = True) -> Tree:
+    """Reset reconciliations, distances, time stamps, transfer status, and inner labels.
 
-    Parameters
-    ----------
-    tree : Tree
-        A tree.
-    inplace : bool
-        If True, reset the attributes of this tree instance, otherwise
-        make a copy first and modify the copy.
+    Args:
+        tree: A tree.
+        inplace: If True, reset the attributes of this tree instance, otherwise make a copy first
+            and modify the copy.
 
-    Returns
-    -------
-    Tree
+    Returns:
         The original or a copy of the tree instance with reset attributes.
     """
-
     if not inplace:
         T = tree.copy()
     else:
@@ -321,22 +290,16 @@ def topology_only(tree, inplace=True):
     return T
 
 
-def count_node_types(tree):
+def count_node_types(tree: Tree) -> dict[str, int]:
     """Count speciations, duplication, losses, HGTs and surviving genes.
 
-    Parameters
-    ----------
-    tree : Tree
-        A tree with nodes that have a `label` attribute.
+    Args:
+        tree: A tree with nodes that have an `event` attribute.
 
-    Returns
-    -------
-    dict
-        With the event counts as values. Key are 'S' (speciations), 'D'
-        (duplication), 'L' (losses), 'H' (HGTs) and 'extant' (surviving
-        genes).
+    Returns:
+        A dictionary with the event counts as values. Keys are 'S' (speciations), 'D' (duplication),
+        'L' (losses), 'H' (HGTs) and 'extant' (surviving genes).
     """
-
     counts = {"S": 0, "D": 0, "L": 0, "H": 0, "extant": 0}
 
     for v in tree.preorder():
@@ -356,42 +319,35 @@ def count_node_types(tree):
     return counts
 
 
-def random_colored_tree(n, colors, binary=False, force_all_colors=False):
+def random_colored_tree(
+    n: int,
+    colors: int | list,
+    binary: bool = False,
+    force_all_colors: bool = False,
+) -> Tree:
     """Create a random colored tree.
 
-    The number of leaves and the reconciliation labels are specified in the
-    parameters n and colors, respectively. Each non-leaf node in the
-    resulting tree will have at least children (property of phylogenetic
-    trees).
+    The number of leaves and the reconciliation labels are specified in the parameters n and colors,
+    respectively. Each non-leaf node in the resulting tree will have at least two children (property
+    of phylogenetic trees).
+    The colors (attribute `reconc`) are assigned to the leaves at random. If `force_all_colors` is
+    True, the resulting tree is guaranteed to have at least one leaf of each reconciliation.
 
-    Parameters
-    ----------
-    n : int
-        The desired number of leaves.
-    colors : int or list
-        The list of recociliations, or the desired number in which case the
-        reconciliations {1, ..., colors} are used.
-    binary : bool, optional
-        If True, forces the tree to be binary (the default is False).
-    force_all_colors : bool
-        If True, the resulting tree is guaranteed to have at least one leaf
-        of each reconciliation (the default is False).
+    Args:
+        n: The desired number of leaves.
+        colors: The list of recociliations, or the desired number in which case the reconciliations
+            {1, ..., colors} are used.
+        binary: If True, forces the tree to be binary (the default is False).
+        force_all_colors: If True, the resulting tree is guaranteed to have at least one leaf of
+            each reconciliation (the default is False).
 
-    Returns
-    -------
-    Tree
-        A random tree with n leaves to which the `reconc` attribute is
-        assigned at random.
+    Returns:
+        A random tree with n leaves to which the `reconc` attribute is assigned at random.
 
-    Raises
-    ------
-    TypeError
-        If n is not an integer > 0.
-    ValueError
-        If the number of colors is greater than n and `force_all_colors`
-        is true.
+    Raises:
+        TypeError: If n is not an integer > 0.
+        ValueError: If the number of colors is greater than n and `force_all_colors` is true.
     """
-
     tree = Tree.random_tree(n, binary=binary)
 
     if isinstance(colors, int):
@@ -421,27 +377,21 @@ def random_colored_tree(n, colors, binary=False, force_all_colors=False):
     return tree
 
 
-def random_ultrametric_timing(tree, inplace=False, adjust_distances=False):
+def random_ultrametric_timing(
+    tree: Tree, inplace: bool = False, adjust_distances: bool = False
+) -> Tree:
     """Generate a random ultrametric timing for the tree.
 
-    Parameters
-    ----------
-    tree : Tree
-        The tree for which a random timing shall be generated.
-    inplace : bool, optional
-        If True, the input tree is modified, otherwise a copy is returned.
-        The default is False.
-    adjust_distances : bool, optional
-        If True, also adjust the dist attribute of the tree nodes to match the
-        differences of the tstamp values. The default is False.
+    Args:
+        tree: The tree for which a random timing shall be generated.
+        inplace: If True, the input tree is modified, otherwise a copy is returned.
+        adjust_distances: If True, also adjust the dist attribute of the tree nodes to match the
+            differences of the `tstamp` values.
 
-    Returns
-    -------
-    Tree
-        A random tree whose nodes have tstamp attributes that represent the
-        generated random ultrametric timing.
+    Returns:
+        A random tree whose nodes have `tstamp` attributes that represent the generated random
+        ultrametric timing.
     """
-
     if not inplace:
         tree = tree.copy()
 
@@ -464,48 +414,40 @@ def random_ultrametric_timing(tree, inplace=False, adjust_distances=False):
     return tree
 
 
-def phylo_tree_attributes(tree, inplace=True):
+def phylo_tree_attributes(tree: Tree, inplace: bool = True) -> Tree:
     """Add the attributes for a phylogentic tree if not already set.
 
-    Parameters
-    ----------
-    tree : Tree
-    inplace : bool
-        If True, the input tree is modified, otherwise a copy is returned.
-        The default is True.
+    Args:
+        tree: The tree for which attributes shall be added.
+        inplace: If True, the input tree is modified, otherwise a copy is returned.
 
-    Returns
-    -------
-    Tree
+    Returns:
+        The tree with added attributes.
     """
-
     if not inplace:
         tree = tree.copy()
 
     for v in tree.preorder():
-        for key, value in default_attributes.items():
+        for key, value in DEFAULT_ATTRIBUTES.items():
             if not hasattr(v, key):
                 setattr(tree.root, key, value)
 
     return tree
 
 
-# --------------------------------------------------------------------------
-#                    RECONSTRUCTION OF INFORMATION
-# --------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
+#                    reconciliation, timing and labeling reconstruction
+# --------------------------------------------------------------------------------------------------
 
 
-def assign_missing_labels(tree):
+def assign_missing_labels(tree: Tree) -> None:
     """Assign integer label to nodes with no or missing label.
 
-    Also assign the `number_of_species` attribute, i.e., the number of leaves,
-    to the tree.
+    Also assign the `number_of_species` attribute (i.e., the number of leaves) to the tree.
 
-    Parameters
-    ----------
-    tree : Tree
+    Args:
+        tree: A tree with some nodes that have no or missing label.
     """
-
     tree.number_of_species = 0
     labels = set()
 
@@ -526,16 +468,13 @@ def assign_missing_labels(tree):
             labels.add(current_label)
 
 
-def reconstruct_reconc_from_graph(tree, G):
+def reconstruct_reconc_from_graph(tree: Tree, G: nx.Graph | nx.DiGraph) -> None:
     """Reconstruct the reconciliations from a NetworkX Graph.
 
-    Parameters
-    ----------
-    tree : Tree
-    G : networkx.Graph
-        The graph from which labels and reconciliations shall be reconstructed.
+    Args:
+        tree: A tree for which reconciliations shall be reconstructed.
+        G: The graph from which labels and reconciliations shall be reconstructed.
     """
-
     for v in tree.preorder():
         if hasattr(v, "label") and v.label in G:
             if "reconc" in G.nodes[v.label]:
@@ -550,55 +489,45 @@ def reconstruct_reconc_from_graph(tree, G):
                     v.reconc = G.nodes[v.label]["color"]
 
 
-def reconstruct_timestamps(tree):
+def reconstruct_timestamps(tree: Tree) -> None:
     """Reconstruct the timestamps.
 
-    Make the time stamps matching with the distance attribute. The root
-    obtains time stamp 1.0, and all other node smaller time stamps such
-    that the difference to the parent's time stamp is exactly `dist`.
+    Make the time stamps matching with the distance attribute. The root obtains time stamp 1.0, and
+    all other nodes obtain smaller time stamps such that the difference to the parent's time stamp
+    is exactly `dist`.
 
-    Parameters
-    ----------
-    tree : Tree
-        A tree with nodes that have a `dist` attribute.
+    Args:
+        tree: A tree with nodes that have a `dist` attribute.
     """
-
     tree.root.tstamp = 1.0
     for v in tree.preorder():
         if v.parent:
             v.tstamp = v.parent.tstamp - v.dist
 
 
-# --------------------------------------------------------------------------
-#                         TREE MANIPULATION
-# --------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
+#                                     tree manipulation
+# --------------------------------------------------------------------------------------------------
 
 
-def delete_losses_and_contract(tree, inplace=False):
+def delete_losses_and_contract(tree: Tree, inplace: bool = False) -> Tree:
     """Delete all branches leading to loss leaves only.
 
-    Nodes that would have only a single child afterwards are suppressed (except
-    possibly the planted root), i.e. their children are recursively reconnected
-    to the parents. Distances are cumulated in this process and the transferred
-    status is kept in the sense that an edge is a transfer edge if at least
-    one edge on the contracted path to which it corresponds was a transfer edge.
+    Nodes that would have only a single child afterwards are suppressed (except possibly the planted
+    root), i.e. their children are recursively reconnected to the parents. Distances are cumulated
+    in this process and the transferred status is kept in the sense that an edge is a transfer edge
+    if at least one edge on the contracted path to which it corresponds was a transfer edge.
 
-    Parameters
-    ----------
-    tree : Tree
-        The tree in which loss branches shall be removed.
-    inplace : bool, optional
-        If True, the tree is directly manipulated. The default is False in
-        which case a copy of the tree is created which gets manipulated while
-        the original tree remains untouched.
+    Args:
+        tree: The tree in which loss branches shall be removed.
+        inplace: If True, the tree is directly manipulated. The default is False in which case a
+            copy of the tree is created which gets manipulated while the original tree remains
+            untouched.
 
-    Returns
-    -------
-    Tree
-        The tree with all loss branches removed (original instance or a new one
-        depending on the `inplace` parameter).
+    Returns:
+        The tree with all loss branches removed (original instance or a new one depending on the
+        `inplace` parameter).
     """
-
     if not inplace:
         tree = tree.copy()
 
@@ -617,24 +546,18 @@ def delete_losses_and_contract(tree, inplace=False):
     return tree
 
 
-def remove_planted_root(tree, inplace=True):
+def remove_planted_root(tree: Tree, inplace: bool = True) -> Tree:
     """Remove the planted root of the tree (if existent).
 
-    Parameters
-    ----------
-    tree : Tree
-        The tree in which the planted root shall be removed.
-    inplace : bool, optional
-        If True, the tree is directly manipulated, otherwise a copy is created
-        and the original tree remains untouched (the default is True).
+    Args:
+        tree: The tree in which the planted root shall be removed.
+        inplace: If True, the tree is directly manipulated, otherwise a copy is created and the
+            original tree remains untouched.
 
-    Returns
-    -------
-    Tree
-        The tree with the planted root removed (original instance or a new one
-        depending on the `inplace` parameter).
+    Returns:
+        The tree with the planted root removed (original instance or a new one depending on the
+        `inplace` parameter).
     """
-
     if not inplace:
         tree = tree.copy()
 
@@ -652,41 +575,41 @@ def remove_planted_root(tree, inplace=True):
     return tree
 
 
-# --------------------------------------------------------------------------
-#                          TREE  <--->  NEWICK
-# --------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
+#                              Newick parsing and serialization
+# --------------------------------------------------------------------------------------------------
 
 
-def to_newick(tree, label=True, reconc=True, distance=True, label_inner=True, reconc_inner=False):
+def to_newick(
+    tree: Tree,
+    label: bool = True,
+    reconc: bool = True,
+    distance: bool = True,
+    label_inner: bool = True,
+    reconc_inner: bool = False,
+) -> str:
     """Return a Newick representation of the tree.
 
-    This function overrides the function of the parent class.
+    The Newick string can contain the labels, reconciliations and distances of the nodes. The labels
+    and reconciliations of the inner nodes can optionally be included as well. The reconciliations
+    are included in <...> brackets, and the distances are included in :... notation as usual.
+    By default, labels, reconciliations and distances of all nodes are included with the exception
+    of the reconciliations of the inner nodes.
 
-    Parameters
-    ----------
-    label : bool, optional
-        If True, the Newick str contains the labels of the nodes (the
-        default is True).
-    reconc : bool, optional
-        If True, the Newick str contains the reconciliations of the nodes in
-        <[...]> brackets (the default is True).
-    distance : bool, optional
-        If True, the Newick str contains the distances of the nodes in
-        standard :[...] notation (the default is True).
-    label_inner : bool, optional
-        If True, the Newick str also contains the labels of the inner
-        nodes (the default is True).
-    reconc_inner : bool, optional
-        If True, the Newick str contains the reconciliations of the inner nodes
-        (the default is False).
+    Args:
+        label: If True, the Newick str contains the labels of the nodes.
+        reconc: If True, the Newick str contains the reconciliations of the nodes in <[...]>
+            brackets.
+        distance: If True, the Newick str contains the distances of the nodes in standard :[...]
+            notation.
+        label_inner: If True, the Newick str also contains the labels of the inner nodes.
+        reconc_inner: If True, the Newick str contains the reconciliations of the inner nodes.
 
-    Returns
-    -------
-    str
+    Returns:
         A Newick representation of the tree.
     """
 
-    def _to_newick(node):
+    def _to_newick(node: TreeNode) -> str:
         if not node.children:
             token = ""
             if label and hasattr(node, "label"):
@@ -724,35 +647,31 @@ def to_newick(tree, label=True, reconc=True, distance=True, label_inner=True, re
 
 
 def parse_newick(newick):
-    """Parses trees in Newick format into object of type 'Tree'.
+    """Parses trees in Newick format into object of type `Tree`.
 
-    Parameters
-    ----------
-    newick : str
-        A tree in Newick format.
+    This function parses trees in Newick format into object of type `Tree`. The Newick string may
+    contain labels, reconciliations and distances of the nodes. The reconciliations are expected to
+    be included in <...> brackets, and the distances are expected to be included in :... notation as
+    usual. The labels and reconciliations of the inner nodes can optionally be included as well.
+    Labels and reconciliations that are integer numbers are converted to int. The reconciliations
+    (if present in <...> in the string) are parsed as strings and need to be converted to integers
+    afterwards if necessary.
 
-    Returns
-    -------
-    Tree
+    NOTE: Do not use this function for serialization and reloading `Tree` objects. Use the
+    `serialize()` function instead.
+
+    Args:
+        newick: A tree in Newick format.
+
+    Returns:
         The parsed tree.
 
-    Raises
-    ------
-    TypeError
-        If the input is not a string.
-    ValueError
-        If the input is not a valid Newick string.
-
-    Notes
-    -----
-    Do not use this function for serialization and reloading Tree
-    objects. Use the `serialize()` function instead.
-    Labels and reconciliations that are integer numbers are converted to int.
-    The reconciliations (if present in <...> in the string) are parsed as
-    strings and need to be converted to integers afterwards if necessary.
+    Raises:
+        TypeError: If the input is not a string.
+        ValueError: If the input is not a valid Newick string.
     """
 
-    def to_int(item):
+    def to_int(item: str) -> int | str:
         """Tries to convert the string into int."""
         return int(item) if item.isdigit() else item
 

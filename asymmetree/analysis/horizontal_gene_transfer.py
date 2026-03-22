@@ -1,83 +1,72 @@
-"""HGT, xenology and Fitch graphs.
+"""Horizontal gene transfer (HGT), xenology and Fitch graphs.
 
-This module contains several functions for the analysis of horizontal gene
-transfer events in the simulated scenarios. In particular, the directed and
-undirected Fitch graph can be extracted, as well as the pairs of genes that
-diverged later than the respective species in which they reside, i.e. the
-later-divergence-time (LDT) graph, see [1]. The latter situation is indicative
-of the presence of HGT events in the scenario.
+This module contains several functions for the analysis of horizontal gene transfer events in the
+simulated scenarios. In particular, the directed and undirected Fitch graph can be extracted, as
+well as the pairs of genes that diverged later than the respective species in which they reside,
+i.e., the later-divergence-time (LDT) graph, see [1]. The latter situation is indicative of the
+presence of HGT events in the scenario.
 
-References
-----------
-.. [1] D. Schaller, M. Lafond, P.F. Stadler, N. Wieseke, M. Hellmuth.
-   Indirect identification of horizontal gene transfer.
-   In: Journal of Mathematical Biology, 2021, 83(1):10.
-   doi: 10.1007/s00285-021-01631-0.
+References:
+    .. [1] D. Schaller, M. Lafond, P.F. Stadler, N. Wieseke, M. Hellmuth. Indirect identification of
+       horizontal gene transfer. In: Journal of Mathematical Biology, 2021, 83(1):10.
+       doi: 10.1007/s00285-021-01631-0.
 """
 
+from __future__ import annotations
+
 import itertools
+from typing import Iterable
 
 import networkx as nx
 
-from tralda.datastructures import Tree, TreeNode, LCA
+from tralda.datastructures import Tree
+from tralda.datastructures import TreeNode
+from tralda.datastructures import LCA
 from tralda.tools.GraphTools import independent_sets
-from tralda.cograph.Cograph import to_cotree, paths_of_length_2
+from tralda.cograph.Cograph import paths_of_length_2
+from tralda.cograph.Cograph import to_cotree
 from tralda.supertree import Build
 
-from asymmetree.utils.phylogenetic_trees import (
-    add_planted_root,
-    phylo_tree_attributes,
-    assign_missing_labels,
-)
+from asymmetree.utils.phylogenetic_trees import add_planted_root
+from asymmetree.utils.phylogenetic_trees import assign_missing_labels
+from asymmetree.utils.phylogenetic_trees import phylo_tree_attributes
 from asymmetree.treeevolve.species import distance_from_timing
 
 
-# --------------------------------------------------------------------------
-#                     Transfer edges and Fitch graphs
-# --------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
+#                              Transfer edges and Fitch graphs
+# --------------------------------------------------------------------------------------------------
 
 
-def true_transfer_edges(T):
+def true_transfer_edges(T: Tree) -> set[TreeNode]:
     """Returns a set containing v if (u, v) is labeled as a transfer edge.
 
-    Parameters
-    ----------
-    T : Tree
-        A tree whose nodes have the 'transferred' attribute.
+    Args:
+        T: A tree whose nodes have the 'transferred' attribute.
 
-    Returns
-    -------
-    set
+    Returns:
         The subset of TreeNode instances in the tree for which transferred is 1.
-    """
 
+    """
     return {v for _, v in T.edges() if v.transferred}
 
 
-def rs_transfer_edges(T, S, lca_S=None):
+def rs_transfer_edges(T: Tree, S: Tree, lca_S: LCA = None) -> set[TreeNode]:
     """Transfer edges in T according to the relaxed scenario definition.
 
-    An edge (u,v) in T is an (rs-)transfer edge if u and v are mapped to
-    incomparable nodes/edges in the species tree S.
+    An edge (u,v) in T is an (rs-)transfer edge if u and v are mapped to incomparable nodes/edges in
+    the species tree S.
 
-    Parameters
-    ----------
-    T : Tree
-        The gene tree.
-    S : Tree
-        The species tree corresponding to the gene tree.
-    lca_S : tralda.datastructures.Tree.LCA, optional
-        Instance of LCA corresponding to the species tree, default is None
-        in which case a new instance is created and used.
+    Args:
+        T: The gene tree.
+        S: The species tree corresponding to the gene tree.
+        lca_S: Instance of LCA corresponding to the species tree, default is None
+            in which case a new instance is created and used.
 
-    Returns
-    -------
-    set
-        The subset of TreeNode instances in the tree for which the 'reconc'
-        attributes of its incident edges refer to incomparable branches in the
-        species tree.
+    Returns:
+        The subset of TreeNode instances in the tree for which the 'reconc' attributes of its
+        incident edges refer to incomparable branches in the species tree.
     """
-
     if not isinstance(lca_S, LCA):
         lca_S = LCA(S)
 
@@ -90,29 +79,25 @@ def rs_transfer_edges(T, S, lca_S=None):
     return transfer_edges
 
 
-def fitch(tree, transfer_edges, supply_undirected=False, lca_T=None):
+def fitch(
+    tree: Tree,
+    transfer_edges: Iterable[TreeNode],
+    supply_undirected: bool = False,
+    lca_T: LCA | None = None,
+) -> nx.DiGraph | tuple[nx.DiGraph, nx.Graph]:
     """Returns the (directed) Fitch graph.
 
-    Parameters
-    ----------
-    tree : Tree
-        The gene tree.
-    transfer_edges : iterable
-        The subset of TreeNode instances in the tree that are transfer edges.
-    supply_undirected : bool, optional
-        If True, additionally return the undirected Fitch graph, default is
-        False.
-    lca_T : tralda.datastructures.Tree.LCA, optional
-        Instance of LCA corresponding to the tree, default is False in which
-        case a new instance is created and used.
+    Args:
+        tree: The gene tree.
+        transfer_edges: The subset of TreeNode instances in the tree that are transfer edges.
+        supply_undirected: If True, additionally return the undirected Fitch graph.
+        lca_T: Instance of LCA corresponding to the tree, default is False in which case a new
+            instance is created and used.
 
-    Returns
-    -------
-    networkx.DiGraph or tuple
-        The directed Fitch graph or a tuple containing the directed Fitch graph
-        (networkx.DiGraph) and the undirected Fitch graph (networkx.Graph).
+    Returns:
+        The directed Fitch graph or a tuple containing the directed Fitch graph (networkx.DiGraph)
+        and the undirected Fitch graph (networkx.Graph).
     """
-
     if not isinstance(lca_T, LCA):
         lca_T = LCA(tree)
 
@@ -145,74 +130,44 @@ def fitch(tree, transfer_edges, supply_undirected=False, lca_T=None):
         return fitch, fitch.to_undirected()
 
 
-def undirected_fitch(tree, transfer_edges, lca_T=None):
+def undirected_fitch(
+    tree: Tree,
+    transfer_edges: Iterable[TreeNode],
+    lca_T: LCA | None = None,
+) -> nx.Graph:
     """Returns the undirected Fitch graph.
 
-    Parameters
-    ----------
-    tree : Tree
-        The gene tree.
-    transfer_edges : iterable
-        The subset of TreeNode instances in the tree that are transfer edges.
-    lca_T : tralda.datastructures.Tree.LCA, optional
-        Instance of LCA corresponding to the tree, default is False in which
-        case a new instance is created and used.
+    Args:
+        tree: The gene tree.
+        transfer_edges: The subset of TreeNode instances in the tree that are transfer edges.
+        lca_T: Instance of LCA corresponding to the tree, default is None in which case a new
+            instance is created and used.
 
-    Returns
-    -------
-    networkx.Graph
+    Returns:
         The undirected Fitch graph (networkx.Graph).
     """
-
     return fitch(tree, transfer_edges, supply_undirected=True, lca_T=lca_T)[1]
 
 
-def _rs_fitch_aux_graph(G, color_set, ind_sets, ignore_set):
-    aux_graph = nx.Graph()
-    aux_graph.add_nodes_from(color_set)
-
-    for i, ind_set in enumerate(ind_sets):
-        # skip the independent set that shall not be included
-        if ignore_set == i:
-            continue
-
-        for x, y in itertools.combinations(ind_set, 2):
-            X = G.nodes[x]["color"]
-            Y = G.nodes[y]["color"]
-
-            if X != Y:
-                aux_graph.add_edge(X, Y)
-
-    return aux_graph
-
-
-def is_rs_fitch(G, color_set=None):
+def is_rs_fitch(G: nx.Graph, color_set: set | None = None) -> bool:
     """Checks whether a given graph is an rs-Fitch graph.
 
-    I.e. whether the graph is the Fitch graph of some relaxed scenario (rs),
-    see [1].
+    This function checks whether the graph is the Fitch graph of some relaxed scenario (rs), see
+    [1].
 
-    Parameters
-    ----------
-    G : networkx.Graph
-        A graph whose nodes have the 'color' attribute.
-    color_set : set, optional
-        The set of colors appearing in the graph. The default is None, in which
-        case such a set is created internally.
+    Args:
+        G: A graph whose nodes have the 'color' attribute.
+        color_set: The set of colors appearing in the graph. The default is None, in which case such
+            a set is created internally.
 
-    Returns
-    -------
-    bool
+    Returns:
         True if the graph is an rs-Fitch graph as defined in [1].
 
-    References
-    ----------
-    .. [1] D. Schaller, M. Lafond, P.F. Stadler, N. Wieseke, M. Hellmuth.
-       Indirect identification of horizontal gene transfer.
-       In: Journal of Mathematical Biology, 2021, 83(1):10.
-       doi: 10.1007/s00285-021-01631-0.
+    References:
+        .. [1] D. Schaller, M. Lafond, P.F. Stadler, N. Wieseke, M. Hellmuth. Indirect
+           identification of horizontal gene transfer. In: Journal of Mathematical Biology, 2021,
+           83(1):10. doi: 10.1007/s00285-021-01631-0.
     """
-
     if color_set is None:
         color_set = set()
         for v in G.nodes():
@@ -240,37 +195,69 @@ def is_rs_fitch(G, color_set=None):
     return False
 
 
-# --------------------------------------------------------------------------
-#                   Later-divergence-time (LDT) graphs
-# --------------------------------------------------------------------------
+def _rs_fitch_aux_graph(
+    G: nx.Graph,
+    color_set: set,
+    ind_sets: list[set],
+    ignore_set: int,
+) -> nx.Graph:
+    """Constructs the auxiliary graph for the rs-Fitch graph test.
+
+    Args:
+        G: A graph whose nodes have the 'color' attribute.
+        color_set: The set of colors appearing in the graph.
+        ind_sets: The independent sets of the graph.
+        ignore_set: The index of the independent set that shall not be included in the construction.
+
+    Returns:
+        The auxiliary graph for the rs-Fitch graph test.
+    """
+    aux_graph = nx.Graph()
+    aux_graph.add_nodes_from(color_set)
+
+    for i, ind_set in enumerate(ind_sets):
+        # skip the independent set that shall not be included
+        if ignore_set == i:
+            continue
+
+        for x, y in itertools.combinations(ind_set, 2):
+            X = G.nodes[x]["color"]
+            Y = G.nodes[y]["color"]
+
+            if X != Y:
+                aux_graph.add_edge(X, Y)
+
+    return aux_graph
 
 
-def below_equal_above(T, S, lca_T=None, lca_S=None):
+# --------------------------------------------------------------------------------------------------
+#                           Later-divergence-time (LDT) graphs
+# --------------------------------------------------------------------------------------------------
+
+
+def below_equal_above(
+    T: Tree,
+    S: Tree,
+    lca_T: LCA | None = None,
+    lca_S: LCA | None = None,
+) -> tuple[nx.Graph, nx.Graph, nx.Graph]:
     """Determine pairs of genes that diverged later, at the same time, or earlier as their species.
 
-    Returns three graphs with the leaves of the gene tree T as vertex set, and
-    edges ab if and only if a and b diverged later, at the same time, or later,
-    resp., than the corresponding species A and B in the species tree S.
+    Returns three graphs with the leaves of the gene tree T as vertex set, and edges ab if and only
+    if a and b diverged later, at the same time, or earlier, resp., than the corresponding species
+    A and B in the species tree S.
 
-    Parameters
-    ----------
-    T : Tree
-        The gene tree.
-    S : Tree
-        The corresponding species tree.
-    lca_T : tralda.datastructures.Tree.LCA, optional
-        Instance of LCA corresponding to the gene tree, default is False in
-        which case a new instance is created and used.
-    lca_S : tralda.datastructures.Tree.LCA, optional
-        Instance of LCA corresponding to the species tree, default is False in
-        which case a new instance is created and used.
+    Args:
+        T: The gene tree.
+        S: The corresponding species tree.
+        lca_T: Instance of LCA corresponding to the gene tree, default is None in which case a new
+            instance is created and used.
+        lca_S: Instance of LCA corresponding to the species tree, default is None in which case a
+            new instance is created and used.
 
-    Returns
-    -------
-    tuple of three networkx.Graph instances
+    Returns:
         The below, equal, and above relation as described above.
     """
-
     L_T = [leaf for leaf in T.leaves()]
     L_S = {leaf.label: leaf for leaf in S.leaves()}
 
@@ -301,42 +288,36 @@ def below_equal_above(T, S, lca_T=None, lca_S=None):
     return below, above, equal
 
 
-def ldt_graph(T, S, lca_T=None, lca_S=None):
+def ldt_graph(T: Tree, S: Tree, lca_T: LCA | None = None, lca_S: LCA | None = None) -> nx.Graph:
     """Later-divergence-time graph, see [1].
 
-    Returns a graph with the leaves of the gene tree T as vertex set, and
-    edges ab if and only if a and b diverged later than the corresponding
-    species A and B in the species tree S.
+    Returns a graph with the leaves of the gene tree T as vertex set, and edges ab if and only if a
+    and b diverged later than the corresponding species A and B in the species tree S.
 
-    Parameters
-    ----------
-    T : Tree
-        The gene tree.
-    S : Tree
-        The corresponding species tree.
-    lca_T : tralda.datastructures.Tree.LCA, optional
-        Instance of LCA corresponding to the gene tree, default is False in
-        which case a new instance is created and used.
-    lca_S : tralda.datastructures.Tree.LCA, optional
-        Instance of LCA corresponding to the species tree, default is False in
-        which case a new instance is created and used.
+    Args:
+        T: The gene tree.
+        S: The corresponding species tree.
+        lca_T: Instance of LCA corresponding to the gene tree, default is None in which case a new
+            instance is created and used.
+        lca_S: Instance of LCA corresponding to the species tree, default is None in which case a
+            new instance is created and used.
 
-    References
-    ----------
-    .. [1] D. Schaller, M. Lafond, P.F. Stadler, N. Wieseke, M. Hellmuth.
-       Indirect identification of horizontal gene transfer.
-       In: Journal of Mathematical Biology, 2021, 83(1):10.
-       doi: 10.1007/s00285-021-01631-0.
+    References:
+        .. [1] D. Schaller, M. Lafond, P.F. Stadler, N. Wieseke, M. Hellmuth. Indirect
+           identification of horizontal gene transfer. In: Journal of Mathematical Biology, 2021,
+           83(1):10. doi: 10.1007/s00285-021-01631-0.
     """
-
     return below_equal_above(T, S, lca_T=lca_T, lca_S=lca_S)[0]
 
 
-def _simulate_timing(tree):
+def _simulate_timing(tree: Tree) -> None:
     """Simulates a timing for the tree.
 
-    It is t(root) = 1 and t(x) = 0 for x in L(S)."""
+    The timing is added or modified inplace. It is t(root) = 1 and t(x) = 0 for x in L(S).
 
+    Args:
+        tree: The tree for which a timing shall be simulated.
+    """
     max_depth = {}
 
     for v in tree.postorder():
@@ -359,25 +340,20 @@ class RsScenarioConstructor:
 
     Implementation of the algorithm presented in [1].
 
-    References
-    ----------
-    .. [1] D. Schaller, M. Lafond, P.F. Stadler, N. Wieseke, M. Hellmuth.
-       Indirect identification of horizontal gene transfer.
-       In: Journal of Mathematical Biology, 2021, 83(1):10.
-       doi: 10.1007/s00285-021-01631-0.
+    References:
+        .. [1] D. Schaller, M. Lafond, P.F. Stadler, N. Wieseke, M. Hellmuth. Indirect
+           identification of horizontal gene transfer. In: Journal of Mathematical Biology, 2021,
+           83(1):10. doi: 10.1007/s00285-021-01631-0.
     """
 
-    def __init__(self, colored_cograph, color_set=None):
-        """
-        Parameters
-        ----------
-        colored_cograph : networkx.Graph
-            A cograph whose nodes have the 'color' attribute.
-        color_set : set, optional
-            The set of colors appearing in the graph. The default is None,
-            in which case such a set is created internally.
-        """
+    def __init__(self, colored_cograph: nx.Graph, color_set: set | None = None) -> None:
+        """Construct an instance of the RsScenarioConstructor class.
 
+        Args:
+            colored_cograph: A cograph whose nodes have the 'color' attribute.
+            color_set: The set of colors appearing in the graph. The default is None, in which case
+                such a set is created internally.
+        """
         self.G = colored_cograph
 
         self.L = [x for x in self.G.nodes()]
@@ -390,19 +366,15 @@ class RsScenarioConstructor:
             color_set = set(color_set)
         self.color_set = color_set
 
-    def run(self):
+    def run(self) -> tuple[Tree, Tree] | None:
         """Construct an rs-scenario consisting of a species and gene tree.
 
-        Returns
-        -------
-        tuple of two Tree instances or bool
-            The species and gene tree, or False if the supplied graph was
-            not an LDT graph.
+        Returns:
+            The species and gene tree, or None if the supplied graph was not an LDT graph.
         """
-
         self.S = self._species_tree()
         if not self.S:
-            return False
+            return
 
         self.epsilon = float("inf")
         for u, v in self.S.edges():
@@ -432,11 +404,16 @@ class RsScenarioConstructor:
 
         return self.S, self.T
 
-    def _species_tree(self):
+    def _species_tree(self) -> Tree | None:
+        """Construct the species tree from the input graph.
+
+        Returns:
+            The species tree, or None if the supplied graph was not an LDT graph.
+        """
         cotree = to_cotree(self.G)
 
         if not cotree:
-            return False
+            return
 
         triples = set()
 
@@ -456,16 +433,26 @@ class RsScenarioConstructor:
         S = build.build_tree()
 
         if not S:
-            return False
-        else:
-            phylo_tree_attributes(S, inplace=True)
-            add_planted_root(S)
-            assign_missing_labels(S)
-            _simulate_timing(S)
-            distance_from_timing(S)
-            return S
+            return
 
-    def _build_gene_tree(self, L, u_S):
+        phylo_tree_attributes(S, inplace=True)
+        add_planted_root(S)
+        assign_missing_labels(S)
+        _simulate_timing(S)
+        distance_from_timing(S)
+
+        return S
+
+    def _build_gene_tree(self, L: set, u_S: TreeNode) -> TreeNode:
+        """Build the gene tree recursively.
+
+        Args:
+            L: The set of leaf labels that shall be included in the gene tree.
+            u_S: The current vertex in the species tree that is being processed.
+
+        Returns:
+            The root of the gene tree for the current vertex u_S and leaf set L.
+        """
         u_T = TreeNode(
             label="",
             event="D",
@@ -479,90 +466,84 @@ class RsScenarioConstructor:
                 leaf = TreeNode(label=x, reconc=self.G.nodes[x]["color"], tstamp=0.0)
                 u_T.add_child(leaf)
 
-        # u_S is an inner vertex
-        else:
-            # maps color to the respective child of u_S
-            color_to_v_S = {}
-            for v_S in u_S.children:
-                for x in self.S_leaves[v_S]:
-                    color_to_v_S[x.label] = v_S
+            return u_T
 
-            # connected components C of G[L']
-            for C in nx.connected_components(self.G.subgraph(L)):
-                # choose v_S_star s.t. L(S(v_S_star)) \cap sigma(C) is non-empty
-                v_S_star = color_to_v_S[self.G.nodes[next(iter(C))]["color"]]
-                v_T = TreeNode(
-                    label="",
-                    event="H",
-                    reconc=(u_S.label, v_S_star.label),
-                    tstamp=u_S.tstamp - self.epsilon,
-                )
-                u_T.add_child(v_T)
+        # otherwise u_S is an inner vertex
 
-                # aux. graph for equivalence classes
-                aux_graph = nx.Graph()
-                aux_graph.add_nodes_from(C)
+        # maps color to the respective child of u_S
+        color_to_v_S = {}
+        for v_S in u_S.children:
+            for x in self.S_leaves[v_S]:
+                color_to_v_S[x.label] = v_S
 
-                for x, y in itertools.combinations(C, 2):
-                    if (
-                        color_to_v_S[self.G.nodes[x]["color"]]
-                        is color_to_v_S[self.G.nodes[y]["color"]]
-                    ):
-                        aux_graph.add_edge(x, y)
+        # connected components C of G[L']
+        for C in nx.connected_components(self.G.subgraph(L)):
+            # choose v_S_star s.t. L(S(v_S_star)) \cap sigma(C) is non-empty
+            v_S_star = color_to_v_S[self.G.nodes[next(iter(C))]["color"]]
+            v_T = TreeNode(
+                label="",
+                event="H",
+                reconc=(u_S.label, v_S_star.label),
+                tstamp=u_S.tstamp - self.epsilon,
+            )
+            u_T.add_child(v_T)
 
-                # for each equivalence class K that is a subset of C
-                for K in nx.connected_components(aux_graph):
-                    # choose v_S s.t. \sigma(K) \subseteq L(S(v_S))
-                    v_S = color_to_v_S[self.G.nodes[next(iter(K))]["color"]]
+            # aux. graph for equivalence classes
+            aux_graph = nx.Graph()
+            aux_graph.add_nodes_from(C)
 
-                    w_K = self._build_gene_tree(K, v_S)
-                    v_T.add_child(w_K)
+            for x, y in itertools.combinations(C, 2):
+                if color_to_v_S[self.G.nodes[x]["color"]] is color_to_v_S[self.G.nodes[y]["color"]]:
+                    aux_graph.add_edge(x, y)
 
-                    if v_S is not v_S_star:
-                        w_K.transferred = 1
+            # for each equivalence class K that is a subset of C
+            for K in nx.connected_components(aux_graph):
+                # choose v_S s.t. \sigma(K) \subseteq L(S(v_S))
+                v_S = color_to_v_S[self.G.nodes[next(iter(K))]["color"]]
+
+                w_K = self._build_gene_tree(K, v_S)
+                v_T.add_child(w_K)
+
+                if v_S is not v_S_star:
+                    w_K.transferred = 1
 
         return u_T
 
 
-# --------------------------------------------------------------------------
-#                  Compatibility of trees and partitions
-# --------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
+#                           Compatibility of trees and partitions
+# --------------------------------------------------------------------------------------------------
 
 
-def is_compatible(T, partition, lca=None):
+def is_compatible(
+    T: Tree,
+    partition: list | tuple,
+    lca: LCA | None = None,
+) -> tuple[dict, list] | None:
     """Checks whether a tree and a partition are compatible.
 
-    A tree with leaf set L and a partition of L are compatible if there is a
-    subset of tree edges such that the forest obtained by their removal induces
-    the given partition (in terms of membership to the same connected
-    component).
-    In this case, the vertices can be uniquely colored by set A of the
-    partition if they lie on a path connecting two elements from A.
+    A tree with leaf set L and a partition of L are compatible if there is a subset of tree edges
+    such that the forest obtained by their removal induces the given partition (in terms of
+    membership to the same connected component). In this case, the vertices can be uniquely colored
+    by set A of the partition if they lie on a path connecting two elements from A.
 
-    Parameters
-    ----------
-    T : Tree
-        A tree with unique leaf label.
-    partition : list or tuple
-        A partition of the labels of the trees' leaves.
-    lca : LCA, optional
-        Precomputed LCA datastructure for the tree. The default is None in
-        which case it is computed internally.
+    Args:
+        T: A tree with unique leaf labels.
+        partition: A partition of the labels of the trees' leaves.
+        lca: Precomputed LCA datastructure for the tree. The default is None in which case it is
+            computed internally.
 
-    Returns
-    -------
-    bool
-        Returns False if the tree and the partition are incompatible, and
-        otherwise a tuple of a dict and a list.
-    dict
-        A dictionary containing vertices of the tree that lie on a path
-        connecting two elements from the same set of the partition with the
-        index of this set as value.
-    list
-        A list containing the last common ancestor in the tree for each set
-        in the partition.
+    Returns:
+        Returns None if the tree and the partition are incompatible, and otherwise a tuple of a dict
+        and a list. The dict contains vertices of the tree that lie on a path connecting two
+        elements from the same set of the partition with the index of this set as value. The list
+        contains the last common ancestor in the tree for each set in the partition.
+
+    References:
+        .. [1] M. Hellmuth, D. Schaller, P.F. Stadler. Compatibility of partitions with trees,
+           hierarchies, and split systems. In: Discrete Applied Mathematics 314 (2022) 265-283.
+           doi: https://doi.org/10.1016/j.dam.2022.03.014
     """
-
     if not isinstance(T, Tree):
         raise TypeError("T must be of type 'Tree'")
 
@@ -575,8 +556,7 @@ def is_compatible(T, partition, lca=None):
     # map labels to leaves of the tree
     label_to_leaf = {v.label: v for v in T.leaves()}
 
-    # color each vertex if lies on the path connecting two vertices from the
-    # same set
+    # color each vertex if lies on the path connecting two vertices from the same set
     vertex_coloring = {}
 
     # last common ancestors of the sets in the partition
@@ -604,10 +584,10 @@ def is_compatible(T, partition, lca=None):
                         break
 
                     if current in vertex_coloring and vertex_coloring[current] != i:
-                        return False
-                    else:
-                        vertex_coloring[current] = i
-                        visited.add(current)
+                        return
+
+                    vertex_coloring[current] = i
+                    visited.add(current)
 
                     if current is new_lca:
                         break
@@ -619,40 +599,37 @@ def is_compatible(T, partition, lca=None):
     return vertex_coloring, lcas
 
 
-def is_refinement_compatible(T, partition, lca=None):
+def is_refinement_compatible(
+    T: Tree,
+    partition: list | tuple,
+    lca: LCA | None = None,
+) -> tuple[dict, list] | None:
     """Checks whether a tree and a partition are refinement-compatible.
 
-    A tree T with leaf set L and a partition of L are refinement-compatible if
-    there is a refinement T' of T for which a subset of edges of T' exists
-    such that the forest obtained by their removal induces the given partition
-    (in terms of membership to the same connected component).
-    In this case, the edges can be uniquely colored by set A of the partition
-    if they lie on a path connecting two elements from A.
+    A tree T with leaf set L and a partition of L are refinement-compatible if there is a refinement
+    T' of T for which a subset of edges of T' exists such that the forest obtained by their removal
+    induces the given partition (in terms of membership to the same connected component). In this
+    case, the edges can be uniquely colored by set A of the partition if they lie on a path
+    connecting two elements from A.
 
-    Parameters
-    ----------
-    T : Tree
-        A tree with unique leaf label.
-    partition : list or tuple
-        A partition of the labels of the trees' leaves.
-    lca : LCA, optional
-        Precomputed LCA datastructure for the tree. The default is None in
-        which case it is computed internally.
+    Args:
+        T: A tree with unique leaf labels.
+        partition: A partition of the labels of the trees' leaves.
+        lca: Precomputed LCA datastructure for the tree. The default is None in which case it is
+            computed internally.
 
-    Returns
-    -------
-    bool
-        Returns False if the tree and the partition are not refinement-
-        compatible, and otherwise a tuple of a dict and a list.
-    dict
-        A dictionary containing nodes v of the tree such that the edge
-        (parent(v), v) lies on a path connecting two elements from the same
-        set of the partition with the index of this set as value.
-    list
-        A list containing the last common ancestor in the tree for each set
-        in the partition.
+    Returns:
+        Returns None if the tree and the partition are not refinement-compatible, and otherwise a
+        tuple of a dict and a list. The dict contains nodes v of the tree such that the edge
+        (parent(v), v) lies on a path connecting two elements from the same set of the partition
+        with the index of this set as value. The list contains the last common ancestor in the tree
+        for each set in the partition.
+
+    References:
+        .. [1] M. Hellmuth, D. Schaller, P.F. Stadler. Compatibility of partitions with trees,
+           hierarchies, and split systems. In: Discrete Applied Mathematics 314 (2022) 265-283.
+           doi: https://doi.org/10.1016/j.dam.2022.03.014
     """
-
     if not isinstance(T, Tree):
         raise TypeError("T must be of type 'Tree'")
 
@@ -665,8 +642,8 @@ def is_refinement_compatible(T, partition, lca=None):
     # map labels to leaves of the tree
     label_to_leaf = {v.label: v for v in T.leaves()}
 
-    # color each vertex v if the edge (v.parent, v) lies on the path
-    # connecting two vertices from the same set
+    # color each vertex v if the edge (v.parent, v) lies on the path connecting two vertices from
+    # the same set
     edge_coloring = {}
 
     # last common ancestors of the sets in the partition
@@ -689,14 +666,13 @@ def is_refinement_compatible(T, partition, lca=None):
             for current in starts:
                 while current:
                     if current in edge_coloring and edge_coloring[current] != i:
-                        return False
-                    else:
-                        edge_coloring[current] = i
-                        visited.add(current)
+                        return
 
-                    # parent is always defined since at least the first edge
-                    # must be added and if the root is reached, it must equal
-                    # new_lca
+                    edge_coloring[current] = i
+                    visited.add(current)
+
+                    # parent is always defined since at least the first edge must be added and if
+                    # the root is reached, it must equal new_lca
                     current = current.parent
                     if current in visited or current is new_lca:
                         break
@@ -706,35 +682,36 @@ def is_refinement_compatible(T, partition, lca=None):
     return edge_coloring, lcas
 
 
-def fitch_orientation(T, partition, lca=None):
+def fitch_orientation(
+    T: Tree,
+    partition: list | tuple,
+    lca: LCA | None = None,
+) -> list[list[str]] | None:
     """(Un)ambiguously present or absent edges in the directed Fitch graph.
 
-    The ordered pair (x, y) of two leaves x and y is in the Fitch relation
-    if the path from lca(x, y) to y contains a transfer edge. An undirected
-    Fitch relation ((x, y) if (x, y) or (y, x) in the directed relation) can
-    be represented by a partition (the maximal independent sets).
-    In combination with a tree, this partition determines to some extent the
-    directed Fitch relation.
+    The ordered pair (x, y) of two leaves x and y is in the Fitch relation if the path from
+    lca(x, y) to y contains a transfer edge. An undirected Fitch relation ((x, y) if (x, y) or
+    (y, x) in the directed relation) can be represented by a partition (the maximal independent
+    sets). In combination with a tree, this partition determines to some extent the directed Fitch
+    relation.
 
-    Parameters
-    ----------
-    T : Tree
-        A tree with unique leaf label.
-    partition : list or tuple
-        A partition of the labels of the trees' leaves.
-    lca : LCA, optional
-        Precomputed LCA datastructure for the tree. The default is None in
-        which case it is computed internally.
+    Args:
+        T: A tree with unique leaf labels.
+        partition: A partition of the labels of the trees' leaves.
+        lca: Precomputed LCA datastructure for the tree. The default is None in which case it is
+            computed internally.
 
-    Returns
-    -------
-    bool
-        Returns False if the tree and the partition are incompatible.
-    2-dimensional array (list of lists)
-        Stores at indices i and j corresponding to sets A and B, resp., of the
-        partition whether (A, B) is 'essential', 'forbidden', or 'ambiguous'.
+    Returns:
+        Returns None if the tree and the partition are incompatible. Otherwise, returns a
+        2-dimensional array that stores at indices i and j corresponding to sets A and B, resp., of
+        the partition whether (A, B) is 'essential', 'forbidden', or 'ambiguous'.
+
+    References:
+        .. [1] D. Schaller, M. Hellmuth, P. F. Stadler. Orientation of Fitch Graphs and
+           Reconciliation-Free Inference of Horizontal Gene Transfer in Gene Trees. In: SIAM Journal
+           on Discrete Mathematics, 37(3): 2172-2207 (2023).
+           doi: https://doi.org/10.1137/22M150736X
     """
-
     if not isinstance(T, Tree):
         raise TypeError("T must be of type 'Tree'")
 
@@ -745,10 +722,10 @@ def fitch_orientation(T, partition, lca=None):
         lca = LCA(T)
 
     compatibility = is_compatible(T, partition, lca=lca)
-    if compatibility:
-        vertex_coloring, lcas = compatibility
-    else:
-        return False
+    if not compatibility:
+        return
+
+    vertex_coloring, lcas = compatibility
 
     # compute for each vertex its lowest colored (strict) ancestor
     lowest_colored_ancestor = {}
@@ -761,7 +738,7 @@ def fitch_orientation(T, partition, lca=None):
             lowest_colored_ancestor[v] = lowest_colored_ancestor[v.parent]
 
     n = len(partition)
-    matrix = [[None for j in range(n)] for i in range(n)]
+    matrix = [[None for _ in range(n)] for _ in range(n)]
 
     for i in range(n):
         for j in range(n):
@@ -784,48 +761,37 @@ def fitch_orientation(T, partition, lca=None):
     return matrix
 
 
-def _find_child(u, v, lca):
-    """For v < u, find the child w of u such that v <= w."""
+def fitch_orientation_for_refinements(
+    T: Tree,
+    partition: list | tuple,
+    lca: LCA | None = None,
+) -> list[list[str]] | None:
+    """(Un)ambiguously present/absent edges in the directed Fitch graph of all refinements.
 
-    for w in u.children:
-        if lca(v, w) is w:
-            return w
+    The ordered pair (x, y) of two leaves x and y is in the Fitch relation if the path from
+    lca(x, y) to y contains a transfer edge. An undirected Fitch relation ((x, y) if (x, y) or
+    (y, x) in the directed relation) can be represented by a partition (the maximal independent
+    sets). In combination with a tree, this partition determines to some extent the directed Fitch
+    relation w.r.t. the possible refinements of the tree.
 
-    raise RuntimeError("could not find corresponding child of u (u not an ancestor of v?)")
+    Args:
+        T: A tree with unique leaf labels.
+        partition: A partition of the labels of the trees' leaves.
+        lca: Precomputed LCA datastructure for the tree. The default is None in which case it is
+            computed internally.
 
+    Returns:
+        Returns None if the tree and the partition are not refinement-compatible. Otherwise, returns
+        a 2-dimensional array that stores at indices i and j corresponding to sets A and B, resp.,
+        of the partition whether (A, B) is 'essential', 'forbidden', or 'ambiguous' for all
+        refinements of the tree that are compatible with the partition.
 
-def fitch_orientation_for_refinements(T, partition, lca=None):
-    """(Un)ambiguously present or absent edges in the directed Fitch graph of
-    all compatible refinements.
-
-    The ordered pair (x, y) of two leaves x and y is in the Fitch relation
-    if the path from lca(x, y) to y contains a transfer edge. An undirected
-    Fitch relation ((x, y) if (x, y) or (y, x) in the directed relation) can
-    be represented by a partition (the maximal independent sets).
-    In combination with a tree, this partition determines to some extent the
-    directed Fitch relation w.r.t. the possible refinements of the tree.
-
-    Parameters
-    ----------
-    T : Tree
-        A tree with unique leaf label.
-    partition : list or tuple
-        A partition of the labels of the trees' leaves.
-    lca : LCA, optional
-        Precomputed LCA datastructure for the tree. The default is None in
-        which case it is computed internally.
-
-    Returns
-    -------
-    bool
-        Returns False if the tree and the partition are not refinement-
-        compatible.
-    2-dimensional array (list of lists)
-        Stores at indices i and j corresponding to sets A and B, resp., of the
-        partition whether (A, B) is 'essential', 'forbidden', or 'ambiguous'
-        for all refinements of the tree that ae compatible with the partition.
+    References:
+        .. [1] D. Schaller, M. Hellmuth, P. F. Stadler. Orientation of Fitch Graphs and
+           Reconciliation-Free Inference of Horizontal Gene Transfer in Gene Trees. In: SIAM Journal
+           on Discrete Mathematics, 37(3): 2172-2207 (2023).
+           doi: https://doi.org/10.1137/22M150736X
     """
-
     if not isinstance(T, Tree):
         raise TypeError("T must be of type 'Tree'")
 
@@ -836,10 +802,10 @@ def fitch_orientation_for_refinements(T, partition, lca=None):
         lca = LCA(T)
 
     r_compatibility = is_refinement_compatible(T, partition, lca=lca)
-    if r_compatibility:
-        edge_coloring, lcas = r_compatibility
-    else:
-        return False
+    if not r_compatibility:
+        return
+
+    edge_coloring, lcas = r_compatibility
 
     # compute for each vertex its lowest colored (strict) ancestor
     lowest_colored_edge = {}
@@ -852,7 +818,7 @@ def fitch_orientation_for_refinements(T, partition, lca=None):
             lowest_colored_edge[v] = lowest_colored_edge[v.parent]
 
     n = len(partition)
-    matrix = [[None for j in range(n)] for i in range(n)]
+    matrix = [[None for _ in range(n)] for _ in range(n)]
 
     for i in range(n):
         for j in range(n):
@@ -883,3 +849,24 @@ def fitch_orientation_for_refinements(T, partition, lca=None):
                 matrix[i][j] = "ambiguous"
 
     return matrix
+
+
+def _find_child(u: TreeNode, v: TreeNode, lca: LCA) -> TreeNode:
+    """For v < u, find the child w of u such that v <= w.
+
+    Args:
+        u: The ancestor vertex.
+        v: The descendant vertex.
+        lca: Precomputed LCA datastructure for the tree.
+
+    Returns:
+        The child w of u such that v <= w.
+
+    Raises:
+        RuntimeError: If no such child can be found, i.e., if u is not an ancestor of v.
+    """
+    for w in u.children:
+        if lca(v, w) is w:
+            return w
+
+    raise RuntimeError("could not find corresponding child of u (u not an ancestor of v?)")

@@ -1,4 +1,12 @@
-"""Module for sampling from various distributions."""
+"""Module for sampling from various distributions.
+
+The `Sampler` class allows sampling from a variety of distributions, including constant, uniform,
+discrete uniform, gamma, exponential, zipf, and negative binomial distributions. The class also
+supports specifying minimum and maximum values for the samples, as well as shifting the distribution
+along the x-axis.
+"""
+
+from __future__ import annotations
 
 import numpy as np
 from scipy.special import zeta
@@ -7,46 +15,47 @@ from scipy.special import zeta
 class Sampler:
     """Sampling from a variety of distributions."""
 
-    def __init__(self, params, minimum=None, maximum=None, discrete=False, shift=0):
-        """
-        Parameters
-        ----------
-        params : float or tuple
-            The distribution and its parameters, see documentation for
-            available options.
-        minimum : float, optional
-            Minimum value to be sampled. The default is None.
-        maximum : float, optional
-            Maximum value to be sampled. The default is None.
-        discrete : bool, optional
-            If True, round sampled values in case of a continuous
-            distribution. The default is False.
-        shift : float, optional
-            Shift distribution along x-axis. The default is 0, i.e., the
-            distribution is not shifted.
-        """
+    def __init__(
+        self,
+        params: int | float | tuple | list,
+        minimum: int | float | None = None,
+        maximum: int | float | None = None,
+        discrete: bool = False,
+        shift: int | float = 0,
+    ) -> None:
+        """Construct a `Sampler` object.
 
+        Args:
+            params: The distribution and its parameters, see documentation for available options.
+            minimum: Minimum value to be sampled.
+            maximum: Maximum value to be sampled.
+            discrete: If True, round sampled values in case of a continuous distribution.
+            shift: Shift distribution along x-axis. The default is 0, i.e., the distribution is not
+                shifted.
+        """
         self._params = params
         self._discrete = discrete
         self._min = minimum
         self._max = maximum
         self._shift = shift
 
-        # function to be defined in _check_distribution
+        # function to be defined in _check_and_initialize_distribution
         self.draw = None
 
-        self._check_distribution()
+        self._check_and_initialize_distribution()
 
     def __call__(self):
         """Draw a value from the specified distribution."""
-
         return self.draw()
 
-    def _check_distribution(self):
+    def _check_and_initialize_distribution(self):
+        """Check if the specified distribution is valid and set the draw function."""
         if self._min is not None and not isinstance(self._min, (int, float)):
             raise ValueError("minimum must be a number")
+
         if self._max is not None and not isinstance(self._max, (int, float)):
             raise ValueError("maximum must be a number")
+
         if not isinstance(self._shift, (int, float)):
             raise ValueError("shift value must be a number")
 
@@ -182,9 +191,7 @@ class Sampler:
                 self._q = q
 
             else:
-                raise ValueError(
-                    "length distribution '{}' is not supported".format(self._params[0])
-                )
+                raise ValueError(f"length distribution '{self._params[0]}' is not supported")
 
         else:
             raise ValueError("could not parse distribution")
@@ -198,36 +205,41 @@ class Sampler:
             raise ValueError("expected value must be >= minimum and<= maximum")
 
     def _draw_constant(self):
+        """Draw a value from a constant distribution."""
         return self._exp_val
 
     def _draw_uniform(self):
+        """Draw a value from a uniform distribution."""
         while True:
             x = np.random.uniform(low=self._a, high=self._b) + self._shift
 
             if self._discrete:
                 x = round(x)
 
-            if (not self._min or x >= self.min) and (not self._max or x <= self._max):
+            if (not self._min or x >= self._min) and (not self._max or x <= self._max):
                 return x
 
     def _draw_discrete_uniform(self):
+        """Draw a value from a discrete uniform distribution."""
         while True:
             x = np.random.randint(self._a, high=self._b) + self._shift
 
-            if (not self._min or x >= self.min) and (not self._max or x <= self._max):
+            if (not self._min or x >= self._min) and (not self._max or x <= self._max):
                 return x
 
     def _draw_gamma(self):
+        """Draw a value from a gamma distribution."""
         while True:
             x = np.random.gamma(self._shape, scale=self._scale) + self._shift
 
             if self._discrete:
                 x = round(x)
 
-            if (not self._min or x >= self.min) and (not self._max or x <= self._max):
+            if (not self._min or x >= self._min) and (not self._max or x <= self._max):
                 return x
 
     def _draw_exponential(self):
+        """Draw a value from an exponential distribution."""
         while True:
             if self._rate == 0.0:
                 x = float("inf")
@@ -237,19 +249,21 @@ class Sampler:
             if self._discrete:
                 x = round(x)
 
-            if (not self._min or x >= self.min) and (not self._max or x <= self._max):
+            if (not self._min or x >= self._min) and (not self._max or x <= self._max):
                 return x
 
     def _draw_zipf(self):
+        """Draw a value from a Zipf distribution."""
         while True:
             x = np.random.zipf(self._a) + self._shift
 
-            if (not self._min or x >= self.min) and (not self._max or x <= self._max):
+            if (not self._min or x >= self._min) and (not self._max or x <= self._max):
                 return x
 
     def _draw_neg_bin(self):
+        """Draw a value from a negative binomial distribution."""
         while True:
             x = np.random.negative_binomial(self._r, 1 - self._q) + self._shift
 
-            if (not self._min or x >= self.min) and (not self._max or x <= self._max):
+            if (not self._min or x >= self._min) and (not self._max or x <= self._max):
                 return x
