@@ -10,7 +10,9 @@ from __future__ import annotations
 import random
 import numpy as np
 
-from tralda.datastructures.Tree import Tree, TreeNode
+from tralda.datastructures import Tree
+from tralda.datastructures import TreeNode
+
 from asymmetree.utils.phylogenetic_trees import distance_matrix
 
 

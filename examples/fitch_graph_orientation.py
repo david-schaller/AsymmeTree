@@ -13,9 +13,10 @@ from concurrent import futures
 
 import numpy as np
 
-from tralda.datastructures import Tree, LCA
-from tralda.cograph.Cograph import to_cotree
-import tralda.tools.GraphTools as gt
+from tralda.cograph import to_cotree
+from tralda.datastructures import LCA
+from tralda.datastructures import Tree
+from tralda.utils.graph_tools import independent_sets
 
 import asymmetree.treeevolve as te
 import asymmetree.analysis.best_matches as bm
@@ -212,7 +213,7 @@ def simulation(arg):
     counts_OGT = ptt.count_node_types(OGT)  # use dupl./HGT counts in OGT
 
     dfitch, ufitch = hgt.fitch(OGT, hgt.true_transfer_edges(OGT), supply_undirected=True)
-    P = gt.independent_sets(ufitch)
+    P = independent_sets(ufitch)
 
     cotree = to_cotree(bm.orthology_from_tree(OGT))
     lrt = bm.lrt_from_tree(OGT)

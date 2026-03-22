@@ -26,7 +26,7 @@ requires-dist = [
     { name = "networkx", specifier = ">=3.4.2" },
     { name = "numpy", specifier = ">=2.2.6" },
     { name = "scipy", specifier = ">=1.15.3" },
-    { name = "tralda", specifier = "==1.1.1" },
+    { name = "tralda", specifier = ">=2.0.0,<2.1.0" },
 ]
 
 [[package]]
@@ -876,7 +876,7 @@ wheels = [
 
 [[package]]
 name = "tralda"
-version = "1.1.1"
+version = "2.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "networkx", version = "3.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
@@ -884,7 +884,7 @@ dependencies = [
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "numpy", version = "2.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9b/ea/bed9eda25b4e01ae4eb09716aad519fd998931b8f661805d1cc772f3bf2e/tralda-1.1.1.tar.gz", hash = "sha256:a2d79573fc71d7f94edf07a1b686f8bb0b39bb2f10fdefeda2ce2b44e2ee329d", size = 55564, upload-time = "2025-10-26T13:45:50.562Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1f/97/b1dae55e3b7ca96bc61539561f2b16793c6ced054c5d3a52b74492b04242/tralda-2.0.0.tar.gz", hash = "sha256:1bef109bcda23f3d4044203e207e156ba2845317da4c33bbddd78295744c7f2b", size = 70357, upload-time = "2026-02-15T15:48:49.523Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c0/12/ea32bc583800b178fb07dc17c34c29f7ec24e7bd3c76ce673eb25b6a822a/tralda-1.1.1-py3-none-any.whl", hash = "sha256:e4a5bbe3fa3f9aebe9eb15c30e5178ffea31e19e51751166a1ba386f84005ab2", size = 61888, upload-time = "2025-10-26T13:45:49.095Z" },
+    { url = "https://files.pythonhosted.org/packages/a5/59/676bc3e4e1fe0a8e5877d06bdd38fb42c99a45d9a636789099a3c9af1f81/tralda-2.0.0-py3-none-any.whl", hash = "sha256:6e9171063446308967cf83c1f1bec2045c035ec15e6ec56801eb37d63426e831", size = 79356, upload-time = "2026-02-15T15:48:48.059Z" },
 ]

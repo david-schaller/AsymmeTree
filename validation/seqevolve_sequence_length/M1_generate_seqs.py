@@ -2,7 +2,9 @@ import os
 import glob
 import time
 
-from tralda.datastructures.Tree import Tree, TreeNode
+from tralda.datastructures import Tree
+from tralda.datastructures import TreeNode
+
 
 from asymmetree.seqevolve import Evolver, SubstModel
 import asymmetree.utils.distance_calculation as dc

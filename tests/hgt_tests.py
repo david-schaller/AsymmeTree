@@ -2,8 +2,8 @@ import unittest
 
 import networkx as nx
 
-from tralda.tools.GraphTools import is_subgraph
 from tralda.cograph import to_cotree
+from tralda.utils.graph_tools import is_subgraph
 
 import asymmetree.treeevolve as te
 import asymmetree.analysis as analysis

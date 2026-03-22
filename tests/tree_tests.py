@@ -1,7 +1,7 @@
 import unittest
 import os
 
-from tralda.datastructures.Tree import Tree
+from tralda.datastructures import Tree
 
 from asymmetree.utils.phylogenetic_trees import random_colored_tree, to_newick, parse_newick
 

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from tralda.datastructures.Tree import Tree
-from tralda.datastructures.Tree import TreeNode
+from tralda.datastructures import Tree
+from tralda.datastructures import TreeNode
 
 from asymmetree.io.sequences import write_alignment
 from asymmetree.io.sequences import write_fasta

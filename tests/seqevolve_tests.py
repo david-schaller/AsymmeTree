@@ -1,7 +1,7 @@
 from pathlib import Path
 import unittest
 
-from tralda.datastructures.Tree import TreeNode
+from tralda.datastructures import TreeNode
 
 import asymmetree.seqevolve as se
 import asymmetree.treeevolve as te

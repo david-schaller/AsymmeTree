@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
-from tralda.datastructures.Tree import Tree
+from tralda.datastructures import Tree
 
 
 def assign_species_colors(tree: Tree) -> dict:

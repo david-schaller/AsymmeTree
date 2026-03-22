@@ -5,8 +5,8 @@ from __future__ import annotations
 import random
 import numpy as np
 
-from tralda.datastructures.Tree import Tree
-from tralda.datastructures.Tree import TreeNode
+from tralda.datastructures import Tree
+from tralda.datastructures import TreeNode
 
 
 from asymmetree.utils.phylogenetic_trees import delete_losses_and_contract

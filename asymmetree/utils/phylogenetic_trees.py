@@ -15,8 +15,8 @@ import re
 import networkx as nx
 import numpy as np
 
-from tralda.datastructures.Tree import Tree
-from tralda.datastructures.Tree import TreeNode
+from tralda.datastructures import Tree
+from tralda.datastructures import TreeNode
 
 
 DEFAULT_ATTRIBUTES = {

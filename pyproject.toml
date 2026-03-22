@@ -12,7 +12,7 @@ dependencies = [
     "networkx>=3.4.2",
     "numpy>=2.2.6",
     "scipy>=1.15.3",
-    "tralda==1.1.1",
+    "tralda>=2.0.0,<2.1.0",
 ]
 dynamic = ["version"]
 keywords = [

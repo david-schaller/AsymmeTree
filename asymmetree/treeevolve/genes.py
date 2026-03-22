@@ -17,9 +17,9 @@ from warnings import warn
 
 import numpy as np
 
-from tralda.datastructures.Tree import Tree
-from tralda.datastructures.Tree import TreeNode
-from tralda.datastructures.Tree import LCA
+from tralda.datastructures import Tree
+from tralda.datastructures import TreeNode
+from tralda.datastructures import LCA
 
 from asymmetree.utils.phylogenetic_trees import delete_losses_and_contract
 from asymmetree.utils.phylogenetic_trees import distance_from_timing

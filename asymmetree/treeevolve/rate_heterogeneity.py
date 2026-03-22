@@ -12,8 +12,8 @@ from __future__ import annotations
 from warnings import warn
 
 import numpy as np
-from tralda.datastructures.Tree import Tree
-from tralda.datastructures.Tree import TreeNode
+from tralda.datastructures import Tree
+from tralda.datastructures import TreeNode
 
 from asymmetree.treeevolve.genes import GeneTreeSimulator
 from asymmetree.utils.sampling import Sampler

@@ -2,7 +2,7 @@ import os
 import pickle
 import glob
 
-from tralda.datastructures.Tree import Tree
+from tralda.datastructures import Tree
 
 import asymmetree.treeevolve as te
 from asymmetree.utils.phylogenetic_trees import distance_matrix

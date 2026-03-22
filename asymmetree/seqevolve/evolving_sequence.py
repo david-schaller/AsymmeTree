@@ -13,9 +13,9 @@ from enum import auto
 from enum import Enum
 from typing import Iterator
 
-from tralda.datastructures.DoublyLinkedList import DLList
-from tralda.datastructures.DoublyLinkedList import DLListIterator
-from tralda.datastructures.DoublyLinkedList import DLListNode
+from tralda.datastructures.doubly_linked import DLList
+from tralda.datastructures.doubly_linked import DLListIterator
+from tralda.datastructures.doubly_linked import DLListNode
 
 
 class State(Enum):

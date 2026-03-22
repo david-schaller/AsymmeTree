@@ -1,4 +1,7 @@
-import tralda.tools.GraphTools as gt
+from __future__ import annotations
+
+from tralda.utils.graph_tools import contingency_table
+from tralda.utils.graph_tools import graphs_equal
 
 import asymmetree.treeevolve as te
 from asymmetree.analysis import (
@@ -34,12 +37,12 @@ if result:
     print("--- S2 ---\n", to_newick(S2, distance=False))
     print("--- T2 ---\n", to_newick(T2, distance=False))
     ldt2 = ldt_graph(T2, S2)
-    print(ldt2.order(), ldt2.size(), gt.graphs_equal(ldt, ldt2))
+    print(ldt2.order(), ldt2.size(), graphs_equal(ldt, ldt2))
 
     print("--- fitch ---")
     fitch2 = undirected_fitch(T2, rs_transfer_edges(T2, S2))
     print("Order: {} vs {}".format(fitch.order(), fitch2.order()))
     print("Size: {} vs {}".format(fitch.size(), fitch2.size()))
-    print(gt.contingency_table(fitch, fitch2))
+    print(contingency_table(fitch, fitch2))
 else:
     print(False)

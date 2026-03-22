@@ -19,11 +19,11 @@ import itertools
 import networkx as nx
 import numpy as np
 
-from tralda.datastructures.Tree import Tree
-from tralda.datastructures.Tree import TreeNode
-from tralda.tools.GraphTools import graphs_equal
-from tralda.tools.GraphTools import is_properly_colored
-from tralda.tools.GraphTools import sort_by_colors
+from tralda.datastructures import Tree
+from tralda.datastructures import TreeNode
+from tralda.utils.graph_tools import graphs_equal
+from tralda.utils.graph_tools import is_properly_colored
+from tralda.utils.graph_tools import sort_by_colors
 from tralda.supertree import Build
 
 from asymmetree.utils.phylogenetic_trees import reconstruct_reconc_from_graph

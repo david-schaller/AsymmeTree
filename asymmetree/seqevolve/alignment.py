@@ -9,8 +9,8 @@ from __future__ import annotations
 
 import numpy as np
 import networkx as nx
-from tralda.datastructures.Tree import Tree
-from tralda.datastructures.Tree import TreeNode
+from tralda.datastructures import Tree
+from tralda.datastructures import TreeNode
 
 from asymmetree.seqevolve.evolving_sequence import EvoSeq
 

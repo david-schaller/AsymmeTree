@@ -22,9 +22,9 @@ import networkx as nx
 from tralda.datastructures import Tree
 from tralda.datastructures import TreeNode
 from tralda.datastructures import LCA
-from tralda.tools.GraphTools import independent_sets
-from tralda.cograph.Cograph import paths_of_length_2
-from tralda.cograph.Cograph import to_cotree
+from tralda.utils.graph_tools import independent_sets
+from tralda.cograph import to_cotree
+from tralda.cograph.functions import paths_of_length_2
 from tralda.supertree import Build
 
 from asymmetree.utils.phylogenetic_trees import add_planted_root
