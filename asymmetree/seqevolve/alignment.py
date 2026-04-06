@@ -46,8 +46,8 @@ class AlignmentBuilder:
         """Build the true alignment.
 
         Returns:
-            A dict containing the TreeNode instances in the tree as keys and the str sequences as
-            values that include the necessary gaps.
+            A `dict` containing the `TreeNode` instances in the tree as keys and the str sequences
+                as values that include the necessary gaps.
         """
         self._get_preorder()
         self._sort_sites()
@@ -94,8 +94,8 @@ class AlignmentBuilder:
         """Convert the alignment matrix to a dictionary of sequences.
 
         Returns:
-            A dict containing the TreeNode instances in the tree as keys and the str sequences as
-            values that include the necessary gaps.
+            A `dict` containing the `TreeNode` instances in the tree as keys and the str sequences
+                as values that include the necessary gaps.
         """
         result = {}
 

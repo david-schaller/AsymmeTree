@@ -46,7 +46,7 @@ def orthology_from_tree(tree: Tree) -> nx.Graph:
 
     Returns:
         The orthology graph explained by the tree, i.e., a graph on the set of leaf labels and edges
-        between two of them if and only if their last common ancestor was a speciation event.
+            between two of them if and only if their last common ancestor was a speciation event.
     """
     if not isinstance(tree, Tree):
         raise TypeError("not of type 'Tree'")
@@ -189,7 +189,7 @@ def informative_triples(
 
     Returns:
         A list where each item is a tuple (a, b1, b2) of three nodes such that a b1 | b2 is an
-        informative triple in the graph, see [1].
+            informative triple in the graph, see [1].
 
     References:
         1. M. Geiß, E. Chávez, M. González Laffitte, A. López Sánchez, B. M. R. Stadler, D. I.
@@ -224,7 +224,7 @@ def forbidden_triples(graph: nx.DiGraph, color_dict: dict | None = None) -> list
 
     Returns:
         A list where each item is a tuple (a, b1, b2) of three nodes such that a b1 | b2 is a
-        forbidden triple in the graph, see [1].
+            forbidden triple in the graph, see [1].
 
     References:
         1. D. Schaller, P. F. Stadler, and M. Hellmuth. Complexity of modification problems for
@@ -261,9 +261,10 @@ def informative_forbidden_triples(
             internally.
 
     Returns:
-        Tuple of two lists. Each item in the first (resp. second) list is a tuple (a, b1, b2) of
-        three nodes such that a b1 | b2 is a informative (resp. forbidden) triple in the graph, see
-        [1].
+        A list where each item is a tuple (a, b1, b2) of three nodes such that a b1 | b2 is an
+            informative triple in the graph, see [1].
+        A list where each item is a tuple (a, b1, b2) of three nodes such that a b1 | b2 is a
+            forbidden triple in the graph, see [1].
 
     References:
         1. D. Schaller, P. F. Stadler, and M. Hellmuth. Complexity of modification problems for
@@ -306,7 +307,7 @@ def binary_explainable_triples(
 
     Returns:
         List of tuples where each item is a tuple (a, b, c) of three nodes such that ab|c is a
-        triple displayed by every binary tree that explains the graph (if existent), see [1].
+            triple displayed by every binary tree that explains the graph (if existent), see [1].
 
     References:
         1. D. Schaller, M. Geiß, M. Hellmuth, and P. F. Stadler. Best match graphs with binary
@@ -432,7 +433,7 @@ def _arc_colors(
 
     Returns:
         A dict mapping each inner vertex to the set of colors s such that there is an arc (x,y) in
-        the BMG with lca(x,y) = v and y has color s.
+            the BMG with lca(x,y) = v and y has color s.
     """
     all_colors = subtree_reconcs[T.root]
 
@@ -568,7 +569,7 @@ def lrt_from_colored_graph(
     """Compute the least resolved tree from a colored digraph.
 
     If the graph is a BMG, then the unique least resolved tree is returned. If not, then a heuristic
-    least resolved tree is returned if 'mincut' is True, and None otherwise.
+    least resolved tree is returned if `mincut` is True, and None otherwise.
 
     Args:
         G: A digraph whose nodes have the 'color' attribute.
@@ -576,8 +577,8 @@ def lrt_from_colored_graph(
         weighted_mincut: If True, apply a weighted mincut heuristic.
 
     Returns:
-        The least resolved tree if the graph was a BMG, a heuristic least resolved tree if 'mincut'
-        is True, and None otherwise.
+        The least resolved tree if the graph was a BMG, a heuristic least resolved tree if `mincut`
+            is True, and None otherwise.
     """
     L = {v for v in G.nodes()}
     R = informative_triples(G)
@@ -696,7 +697,7 @@ class TwoColoredLRT:
 
         Returns:
             A TreeNode representing the least-resolved tree of G if G is a 2-colored BMG, and None
-            otherwise.
+                otherwise.
         """
         color_count = {c: 0 for c in self.color_dict.keys()}
         for v in G.nodes():
@@ -766,14 +767,14 @@ def binary_refinable_tree(
     BMG. In particular, all binary explanations are refinements of the BRT.
 
     Args:
-        G: A digraph whose nodes have the 'color' attribute.
+        G: A digraph whose nodes have the `color` attribute.
         mincut: If True, handle inconsistencies that occur if the supplied graph is not a
             binary-explainable BMG.
         weighted_mincut: If True, apply a weighted mincut heuristic.
 
     Returns:
         The unique binary-resolvable tree if the graph is a binary-explainable BMG, see [1], or a
-        heuristic tree if it is not but 'mincut' is True, or None if neither is the case.
+            heuristic tree if it is not but `mincut` is True, or None if neither is the case.
 
     References:
         1. D. Schaller, M. Geiß, M. Hellmuth, and P. F. Stadler. Best match graphs with binary
@@ -858,7 +859,7 @@ def _color_intersection_components(
 
     Returns:
         A list of lists of TreeNodes, where each inner list corresponds to a color intersection
-        component.
+            component.
     """
     aux_graph = nx.Graph()
 
@@ -895,8 +896,8 @@ def classify_good_ugly(bmg: nx.DiGraph, rbmg: nx.Graph, fp: nx.Graph) -> nx.Grap
         fp: The false-positives graph.
 
     Returns:
-        The updated false-positives graph with edges classified as middle_in_good, first_in_ugly,
-        and first_in_bad.
+        The updated false-positives graph with edges classified as `middle_in_good`,
+            `first_in_ugly`, and `first_in_bad`.
 
     References:
         1. D. Schaller, M. Geiß, P. F. Stadler, and M. Hellmuth. Complete characterization of
@@ -965,7 +966,7 @@ def count_good_ugly(bmg: nx.DiGraph, rbmg: nx.Graph, fp: nx.Graph) -> tuple[int,
 
     Returns:
         A tuple containing the number of edges in the false-positives graph that are middle edges of
-        good quartets, first edges of ugly quartets, and both.
+            good quartets, first edges of ugly quartets, and both.
     """
     classify_good_ugly(bmg, rbmg, fp)
 
@@ -998,8 +999,8 @@ def count_good_ugly_bad(
 
     Returns:
         A tuple containing the number of edges in the false-positives graph that are middle edges of
-        good quartets, first edges of ugly quartets, first edges of bad quartets, and all
-        combinations thereof in in order: (gub, gu, gb, ub, g, u, b).
+            good quartets, first edges of ugly quartets, first edges of bad quartets, and all
+            combinations thereof in in order: (gub, gu, gb, ub, g, u, b).
     """
     classify_good_ugly(bmg, rbmg, fp)
 
@@ -1209,8 +1210,9 @@ def graph_type(G: nx.Graph) -> tuple[str, list[tuple], list[tuple]]:
         G: A graph in which to classify the structure.
 
     Returns:
-        A tuple containing the type of the graph ("A", "B", or "C"), a list of all induced P4 in the
-        graph, and a list of all induced C6 in the graph.
+        The type of the graph ("A", "B", or "C").
+        A list of all induced P4 in the graph.
+        A list of all induced C6 in the graph.
     """
     P4_list = find_all_P4(G)
     C6_list = find_all_C6(G, P4_list=P4_list)

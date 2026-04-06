@@ -135,7 +135,7 @@ def rate_heterogeneity(
 
     Returns:
         The original instance of the gene tree (`inplace=True`) or a copy of the gene tree
-        (`inplace=False`) with modified 'dist' attributes of the nodes.
+            (`inplace=False`) with modified `dist` attributes of the nodes.
 
     References:
         1. H. Kishino, J. L. Thorne, and W. J. Bruno. Performance of a Divergence Time
@@ -181,7 +181,7 @@ def assign_rates(T: Tree, S: Tree, **kwargs: object) -> Tree:
             descriptions.
 
     Returns:
-        The original instance of the gene tree with modified 'dist' attributes of the nodes.
+        The original instance of the gene tree with modified `dist` attributes of the nodes.
     """
     warn(
         "This method is deprecated. Use rate_heterogeneity() instead.",
@@ -223,7 +223,7 @@ def _divergent_rates(T: Tree, S: Tree, sampler: Sampler, CSN_weights: tuple) -> 
             at each duplication event.
 
     Returns:
-        The original gene tree instance with manipulated 'dist' attributes of its nodes.
+        The original gene tree instance with manipulated `dist` attributes of its nodes.
     """
     T_nodes = sorted_nodes(T)
 
@@ -346,9 +346,8 @@ def autocorrelation_factors(
             drawn at each node.
 
     Returns:
-        A tuple of two dicts: The first dict maps the labels of the nodes to their assigned rates,
-        and the second dict maps the labels of the edges (v.parent, v) to the assigned rates of the
-        edges.
+        A `dict` mapping the labels of the nodes to their assigned rates.
+        A `dict` mapping the labels of the edges `(v.parent, v)` to the assigned rates of the edges.
 
     References:
         1. H. Kishino, J. L. Thorne, and W. J. Bruno. Performance of a Divergence Time

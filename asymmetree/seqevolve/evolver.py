@@ -69,19 +69,19 @@ class Evolver:
     ) -> dict[TreeNode, EvoSeq]:
         """Evolve sequence along a tree.
 
-        If 'start_seq' is not supplied, then the sequence at the root is constructed randomly using
+        If `start_seq` is not supplied, then the sequence at the root is constructed randomly using
         the stationary probabilities of the specified substitution model.
 
         Args:
             tree: The tree along which sequences are simulated.
             start_length: The length of the sequence at the root. The default is 200. This parameter
-                is ignored when 'start_seq' is provided.
+                is ignored if `start_seq` is provided.
             start_seq: The start sequence for the root of the tree. The default is None, in which
                 case a sequence is constructed at random.
 
         Returns:
             A dictionary containing the TreeNode instances in the tree as keys and the simulated
-            sequences as values (instances of type EvoSeq).
+                sequences as values (instances of type `EvoSeq`).
         """
         self.tree = tree
         self.site_counter = 0
@@ -150,7 +150,7 @@ class Evolver:
 
         Returns:
             A dictionary containing the TreeNode instances in the tree as keys and the str sequences
-            as values that include the necessary gaps.
+                as values that include the necessary gaps.
         """
         alg_builder = AlignmentBuilder(
             self.tree, self.sequences, self.subst_model.alphabet, include_inner=include_inner
@@ -171,7 +171,7 @@ class Evolver:
 
         Returns:
             An array of length n containing the drawn positions as indices corresponding to the
-            characters in the alphabet of the substitution model.
+                characters in the alphabet of the substitution model.
         """
         return np.random.choice(len(self.subst_model.alphabet), n, p=self.subst_model.freqs)
 
@@ -182,7 +182,7 @@ class Evolver:
             n: The length of the random sequence to generate.
 
         Returns:
-            An instance of type EvoSeq containing the generated sequence.
+            An instance of type `EvoSeq` containing the generated sequence.
         """
         seq = EvoSeq()
 
@@ -200,7 +200,7 @@ class Evolver:
                 characters from the alphabet of the substitution model.
 
         Returns:
-            An instance of type EvoSeq containing the initialized sequence.
+            An instance of type `EvoSeq` containing the initialized sequence.
         """
         seq = EvoSeq()
 
@@ -219,7 +219,7 @@ class Evolver:
             distance: The evolutionary distance along the branch.
 
         Returns:
-            An instance of type EvoSeq containing the evolved sequence.
+            An instance of type `EvoSeq` containing the evolved sequence.
         """
         child_seq = parent_seq.clone()
 

@@ -1,12 +1,12 @@
 """Substitution models for nucleotide and amino acid evolution.
 
-The module contain the class :class:`SubstModel` that can be used to represent a substitution model
+The module contain the class `SubstModel` that can be used to represent a substitution model
 for nucleotide or amino acid evolution. The class provides methods to compute the transition
 probability matrix for a given time and to convert sequences between their str representation and a
 list of indices.
 
 For amino acid substitution models, some empirical models are available that can be loaded via the
-:class:`EMPIRICAL_MODELS` object. The values in the matrices and the equilibrium frequencies are
+`EMPIRICAL_MODELS` object. The values in the matrices and the equilibrium frequencies are
 taken from [2].
 
 References:
@@ -60,8 +60,8 @@ class _EmpiricalModelLoader:
             key: The name of the model (e.g. ``"WAG"``).
 
         Returns:
-            A tuple ``(S, freqs)`` where ``S`` is the 20x20 exchangeability matrix and ``freqs`` is
-            the vector of equilibrium frequencies, both as :class:`numpy.ndarray`.
+            The 20x20 exchangeability matrix.
+            The vector of equilibrium frequencies.
 
         Raises:
             KeyError: If the model is not available.
@@ -82,8 +82,8 @@ class _EmpiricalModelLoader:
                 exist in the package data directory.
 
         Returns:
-            A tuple ``(S, freqs)`` where ``S`` is the 20x20 exchangeability matrix and ``freqs`` is
-            the vector of equilibrium frequencies, both as :class:`numpy.ndarray`.
+            The 20x20 exchangeability matrix.
+            The vector of equilibrium frequencies.
         """
         matrix, freqs = parse_paml(_DATA_DIR / f"{name}.paml", model_type="a")
 
@@ -230,7 +230,7 @@ class SubstModel:
                 matrix.
 
         Returns:
-            The transition probability matrix P(t) as a :class:`numpy.ndarray`.
+            The transition probability matrix P(t) as a `numpy.ndarray`.
         """
         # ensure that eigensystem has been computed
         self.eigensystem()
@@ -266,7 +266,7 @@ class SubstModel:
         """Construct the str representation of a sequence.
 
         Args:
-            evoseq: The sequence to be converted as an :class:`EvoSeq` object.
+            evoseq: The sequence to be converted as an `EvoSeq` object.
 
         Returns:
             The nucleotide or amino acid sequence depending on the model.
@@ -291,9 +291,10 @@ def diagonalize(Q: np.ndarray, freqs: np.ndarray) -> tuple[np.ndarray, np.ndarra
         freqs: The stationary frequencies π corresponding to the rate matrix Q.
 
     Returns:
-        Tuple containing three arrays: The first array (1-dimensional) contains the eigenvalues, the
-        second array (2-dimensional) is the matrix of eigenvectors, and the third array
-        (2-dimensional) is the inverse of the matrix of eigenvectors.
+        A 1-dimensional array containing the eigenvalues.
+        A 2-dimensional array containing the eigenvectors as columns. The i-th column corresponds to
+            the i-th eigenvalue.
+        A 2-dimensional array containing the inverse of the eigenvector matrix.
     """
     # matrix is already symmetric
     if np.allclose(Q, Q.T):
@@ -320,12 +321,12 @@ def diagonalize(Q: np.ndarray, freqs: np.ndarray) -> tuple[np.ndarray, np.ndarra
 # --------------------------------------------------------------------------------------------------
 
 
-def _JC69_nuc():
+def _JC69_nuc() -> tuple[np.ndarray, np.ndarray]:
     """Jukes-Cantor model for nucleotide evolution.
 
     Returns:
-       A tuple ``(S, freqs)`` where ``S`` is the 4x4 exchangeability matrix and ``freqs`` is the
-       vector of equilibrium frequencies, both as :class:`numpy.ndarray`.
+        The 4x4 exchangeability matrix.
+        The vector of equilibrium frequencies.
     """
     S = np.array([[0, 1, 1, 1], [1, 0, 1, 1], [1, 1, 0, 1], [1, 1, 1, 0]])
 
@@ -345,8 +346,8 @@ def _K80_nuc(kappa: float) -> tuple[np.ndarray, np.ndarray]:
         kappa: The transition/transversion rate ratio.
 
     Returns:
-        A tuple ``(S, freqs)`` where ``S`` is the 4x4 exchangeability matrix and ``freqs`` is the
-        vector of equilibrium frequencies, both as :class:`numpy.ndarray`.
+        The 4x4 exchangeability matrix.
+        The vector of equilibrium frequencies.
     """
     S = np.array([[0, 1, kappa, 1], [1, 0, 1, kappa], [kappa, 1, 0, 1], [1, kappa, 1, 0]])
 
@@ -372,8 +373,8 @@ def _GTR_nuc(
         abcdef: The six exchangeability parameters a, b, c, d, e, f as defined above.
 
     Returns:
-        A tuple ``(S, freqs)`` where ``S`` is the 4x4 exchangeability matrix and ``freqs`` is the
-        vector of equilibrium frequencies, both as :class:`numpy.ndarray`.
+        The 4x4 exchangeability matrix.
+        The vector of equilibrium frequencies.
     """
     a, b, c, d, e, f = abcdef
 
@@ -390,12 +391,12 @@ def _GTR_nuc(
 # --------------------------------------------------------------------------------------------------
 
 
-def _JC69_aa():
+def _JC69_aa() -> tuple[np.ndarray, np.ndarray]:
     """Jukes-Cantor model for amino acid evolution.
 
     Returns:
-       A tuple ``(S, freqs)`` where ``S`` is the 20x20 exchangeability matrix and ``freqs`` is the
-       vector of equilibrium frequencies, both as :class:`numpy.ndarray`.
+        The 20x20 exchangeability matrix.
+        The vector of equilibrium frequencies.
     """
     S = np.ones((20, 20))
     S -= np.identity(20)

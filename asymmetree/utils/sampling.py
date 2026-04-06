@@ -44,8 +44,13 @@ class Sampler:
 
         self._check_and_initialize_distribution()
 
-    def __call__(self):
-        """Draw a value from the specified distribution."""
+    def __call__(self) -> int | float:
+        """Draw a value from the specified distribution.
+
+        Returns:
+            A value drawn from the specified distribution, which is an `int` if `discrete` is True
+                and a `float` otherwise.
+        """
         return self.draw()
 
     def _check_and_initialize_distribution(self):

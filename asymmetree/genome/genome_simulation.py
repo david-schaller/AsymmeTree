@@ -236,6 +236,6 @@ class GenomeSimulator:
             family_id: The id of the gene family to which the node belongs.
 
         Returns:
-            str: The composed label for the given node and gene family id.
+            The composed label for the given node and gene family id.
         """
         return f"fam{family_id}gene{node.label}spec{node.reconc}"
