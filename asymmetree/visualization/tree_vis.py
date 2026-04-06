@@ -52,8 +52,10 @@ def assign_colors(species_tree: Tree, gene_tree: Tree) -> tuple[dict, dict]:
             (non-loss) leaves in the species tree.
 
     Returns:
-    A `dict` containing the labels of the extant species as keys and the assigned colors as values.
-    A `dict` containing the labels of the extant genes as keys and the assigned colors as values.
+        A `dict` containing the labels of the extant species as keys and the assigned colors as
+            values.
+        A `dict` containing the labels of the extant genes as keys and the assigned colors as
+            values.
     """
     species_colors = assign_species_colors(species_tree)
 
