@@ -7,9 +7,6 @@ asymmetree.egg-info/
 build/
 dist/
 
-# GitHub
-.github/
-
 # Prerequisites
 *.d
 
