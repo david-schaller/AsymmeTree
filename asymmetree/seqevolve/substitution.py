@@ -1,6 +1,6 @@
 """Substitution models for nucleotide and amino acid evolution.
 
-The module contain the class `SubstModel` that can be used to represent a substitution model
+The module contains the class `SubstModel` that can be used to represent a substitution model
 for nucleotide or amino acid evolution. The class provides methods to compute the transition
 probability matrix for a given time and to convert sequences between their str representation and a
 list of indices.
