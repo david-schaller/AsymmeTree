@@ -37,7 +37,7 @@ from asymmetree.utils.phylogenetic_trees import topology_only
 # --------------------------------------------------------------------------------------------------
 
 
-def orthology_from_tree(tree) -> nx.Graph:
+def orthology_from_tree(tree: Tree) -> nx.Graph:
     """Constructs the true orthology graph from an event-labeled tree.
 
     Args:
@@ -83,7 +83,7 @@ def bmg_from_tree(
         The constructed BMG and optionally its symmetric part.
 
     References:
-        .. [1] M. Geiß, E. Chávez, M. González Laffitte, A. López Sánchez, B. M. R. Stadler, D. I.
+        1. M. Geiß, E. Chávez, M. González Laffitte, A. López Sánchez, B. M. R. Stadler, D. I.
            Valdivia, M. Hellmuth, M. Hernández Rosales, and P. F.Stadler. Best match graphs.
            In: Journal of Mathematical Biology, 78:2015-2057, 2019. doi:10.1007/s00285-019-01332-9.
     """
@@ -140,7 +140,7 @@ def extended_best_hits(
         The constructed BMG and optionally its symmetric part.
 
     References:
-        .. [1] P. F. Stadler, M. Geiß, D. Schaller, A. López Sánchez, M. Gonzalez Laffitte, D. I.
+        1. P. F. Stadler, M. Geiß, D. Schaller, A. López Sánchez, M. Gonzalez Laffitte, D. I.
            Valdivia, M. Hellmuth, and M. Hernández Rosales. From pairs of most similar sequences to
            phylogenetic best matches. In: Algorithms for Molecular Biology, 15:5, 2020.
            doi: 10.1186/s13015-020-00165-2.
@@ -192,7 +192,7 @@ def informative_triples(
         informative triple in the graph, see [1].
 
     References:
-        .. [1] M. Geiß, E. Chávez, M. González Laffitte, A. López Sánchez, B. M. R. Stadler, D. I.
+        1. M. Geiß, E. Chávez, M. González Laffitte, A. López Sánchez, B. M. R. Stadler, D. I.
            Valdivia, M. Hellmuth, M. Hernández Rosales, and P. F. Stadler. Best match graphs.
            In: Journal of Mathematical Biology, 78:2015-2057, 2019. doi:10.1007/s00285-019-01332-9.
     """
@@ -227,7 +227,7 @@ def forbidden_triples(graph: nx.DiGraph, color_dict: dict | None = None) -> list
         forbidden triple in the graph, see [1].
 
     References:
-        .. [1] D. Schaller, P. F. Stadler, and M. Hellmuth. Complexity of modification problems for
+        1. D. Schaller, P. F. Stadler, and M. Hellmuth. Complexity of modification problems for
            best match graphs. In: Theoretical Computer Science, 865:63-84, 2021.
            doi:10.1016/j.tcs.2021.02.037.
     """
@@ -266,7 +266,7 @@ def informative_forbidden_triples(
         [1].
 
     References:
-        .. [1] D. Schaller, P. F. Stadler, and M. Hellmuth. Complexity of modification problems for
+        1. D. Schaller, P. F. Stadler, and M. Hellmuth. Complexity of modification problems for
            best match graphs. In: Theoretical Computer Science, 865:63-84, 2021.
            doi:10.1016/j.tcs.2021.02.037.
     """
@@ -309,7 +309,7 @@ def binary_explainable_triples(
         triple displayed by every binary tree that explains the graph (if existent), see [1].
 
     References:
-        .. [1] D. Schaller, M. Geiß, M. Hellmuth, and P. F. Stadler. Best match graphs with binary
+        1. D. Schaller, M. Geiß, M. Hellmuth, and P. F. Stadler. Best match graphs with binary
            trees. In: C. Martín-Vide, M. A. Vega-Rodríguez, and T. Wheeler, editors, Algorithms for
            Computational Biology, 8th AlCoB, volume 12715 of Lecture Notes in Computer Science,
            pages 82-93, 2021. doi: 10.1007/978-3-030-74432-8_6.
@@ -384,7 +384,7 @@ def lrt_from_tree(T: Tree) -> Tree:
         The unique least resolved tree (w.r.t. best matches), see [1].
 
     References:
-        .. [1] D. Schaller, M. Geiß, P. F. Stadler, and M. Hellmuth. Complete characterization of
+        1. D. Schaller, M. Geiß, P. F. Stadler, and M. Hellmuth. Complete characterization of
            incorrect orthology assignments in best match graphs. In: Journal of Mathematical
            Biology, 82:20, 2021. doi: 10.1007/s00285-021-01564-8.
     """
@@ -513,7 +513,7 @@ def is_bmg(G: nx.DiGraph) -> Tree | None:
         The least-resolved tree if the graph was a BMG, and None otherwise.
 
     References:
-        .. [1] D. Schaller, M. Geiß, E. Chávez, M. González Laffitte, A. López Sánchez, B. M. R.
+        1. D. Schaller, M. Geiß, E. Chávez, M. González Laffitte, A. López Sánchez, B. M. R.
            Stadler, D. I. Valdivia, M. Hellmuth, M. Hernández Rosales, and P. F. Stadler.
            Corrigendum to 'Best match graphs'. In: Journal of Mathematical Biology, 82:47, 2021.
            doi: 10.1007/s00285-021-01601-6.
@@ -632,7 +632,7 @@ class TwoColoredLRT:
     Implementation of the efficient algorithm in [1].
 
     References:
-        .. [1] D. Schaller, M. Geiß, M. Hellmuth, and P. F. Stadler. Least resolved trees for
+        1. D. Schaller, M. Geiß, M. Hellmuth, and P. F. Stadler. Least resolved trees for
            two-colored best match graphs. In: Journal of Graph Algorithms and Applications,
            25(1):397-416, 2021. doi: 10.7155/jgaa.00564.
     """
@@ -741,7 +741,7 @@ def lrt_from_2bmg(G: nx.DiGraph) -> Tree | None:
         The least-resolved tree if the graph was a 2-colored BMG, and None otherwise.
 
     References:
-        .. [1] D. Schaller, M. Geiß, M. Hellmuth, and P. F. Stadler. Least resolved trees for
+        1. D. Schaller, M. Geiß, M. Hellmuth, and P. F. Stadler. Least resolved trees for
            two-colored best match graphs. In: Journal of Graph Algorithms and Applications,
            25(1):397-416, 2021. doi: 10.7155/jgaa.00564.
     """
@@ -776,7 +776,7 @@ def binary_refinable_tree(
         heuristic tree if it is not but 'mincut' is True, or None if neither is the case.
 
     References:
-        .. [1] D. Schaller, M. Geiß, M. Hellmuth, and P. F. Stadler. Best match graphs with binary
+        1. D. Schaller, M. Geiß, M. Hellmuth, and P. F. Stadler. Best match graphs with binary
            trees. In: C. Martín-Vide, M. A. Vega-Rodríguez, and T. Wheeler, editors, Algorithms for
            Computational Biology, 8th AlCoB, volume 12715 of Lecture Notes in Computer Science,
            pages 82-93, 2021. doi: 10.1007/978-3-030-74432-8_6.
@@ -800,14 +800,14 @@ def augment_and_label(tree: Tree, inplace: bool = False) -> Tree:
 
     Args:
         tree: A tree whose nodes have the 'reconc' attribute.
-        inplace : If True, the supplied tree instance is directly manipulated, otherwise the tree
+        inplace: If True, the supplied tree instance is directly manipulated, otherwise the tree
             is copied first.
 
     Returns:
         The unique augmented and duplication/loss-labeled tree as defined in [1].
 
     References:
-        .. [1] D. Schaller, M. Geiß, P. F. Stadler, and M. Hellmuth. Complete characterization of
+        1. D. Schaller, M. Geiß, P. F. Stadler, and M. Hellmuth. Complete characterization of
            incorrect orthology assignments in best match graphs. In: Journal of Mathematical
            Biology, 82:20, 2021. doi: 10.1007/s00285-021-01564-8.
     """
@@ -899,7 +899,7 @@ def classify_good_ugly(bmg: nx.DiGraph, rbmg: nx.Graph, fp: nx.Graph) -> nx.Grap
         and first_in_bad.
 
     References:
-        .. [1] D. Schaller, M. Geiß, P. F. Stadler, and M. Hellmuth. Complete characterization of
+        1. D. Schaller, M. Geiß, P. F. Stadler, and M. Hellmuth. Complete characterization of
            incorrect orthology assignments in best match graphs. In: Journal of Mathematical
            Biology, 82:20, 2021. doi: 10.1007/s00285-021-01564-8.
     """

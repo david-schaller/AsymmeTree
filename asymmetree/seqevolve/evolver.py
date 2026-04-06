@@ -1,7 +1,7 @@
 """Evolve sequences along a tree using models for substitutions, indels, and rate heterogeneity.
 
 References:
-    .. [1] Z. Yang. Computational molecular evolution. Oxford series in ecology and evolution.
+    1. Z. Yang. Computational molecular evolution. Oxford series in ecology and evolution.
        Oxford University Press, 2006. ISBN 978-0-19-856699-1 978-0-19-856702-8.
 """
 

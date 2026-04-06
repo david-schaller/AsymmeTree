@@ -7,7 +7,7 @@ i.e., the later-divergence-time (LDT) graph, see [1]. The latter situation is in
 presence of HGT events in the scenario.
 
 References:
-    .. [1] D. Schaller, M. Lafond, P.F. Stadler, N. Wieseke, M. Hellmuth. Indirect identification of
+    1. D. Schaller, M. Lafond, P.F. Stadler, N. Wieseke, M. Hellmuth. Indirect identification of
        horizontal gene transfer. In: Journal of Mathematical Biology, 2021, 83(1):10.
        doi: 10.1007/s00285-021-01631-0.
 """
@@ -164,7 +164,7 @@ def is_rs_fitch(G: nx.Graph, color_set: set | None = None) -> bool:
         True if the graph is an rs-Fitch graph as defined in [1].
 
     References:
-        .. [1] D. Schaller, M. Lafond, P.F. Stadler, N. Wieseke, M. Hellmuth. Indirect
+        1. D. Schaller, M. Lafond, P.F. Stadler, N. Wieseke, M. Hellmuth. Indirect
            identification of horizontal gene transfer. In: Journal of Mathematical Biology, 2021,
            83(1):10. doi: 10.1007/s00285-021-01631-0.
     """
@@ -303,7 +303,7 @@ def ldt_graph(T: Tree, S: Tree, lca_T: LCA | None = None, lca_S: LCA | None = No
             new instance is created and used.
 
     References:
-        .. [1] D. Schaller, M. Lafond, P.F. Stadler, N. Wieseke, M. Hellmuth. Indirect
+        1. D. Schaller, M. Lafond, P.F. Stadler, N. Wieseke, M. Hellmuth. Indirect
            identification of horizontal gene transfer. In: Journal of Mathematical Biology, 2021,
            83(1):10. doi: 10.1007/s00285-021-01631-0.
     """
@@ -341,7 +341,7 @@ class RsScenarioConstructor:
     Implementation of the algorithm presented in [1].
 
     References:
-        .. [1] D. Schaller, M. Lafond, P.F. Stadler, N. Wieseke, M. Hellmuth. Indirect
+        1. D. Schaller, M. Lafond, P.F. Stadler, N. Wieseke, M. Hellmuth. Indirect
            identification of horizontal gene transfer. In: Journal of Mathematical Biology, 2021,
            83(1):10. doi: 10.1007/s00285-021-01631-0.
     """
@@ -540,7 +540,7 @@ def is_compatible(
         contains the last common ancestor in the tree for each set in the partition.
 
     References:
-        .. [1] M. Hellmuth, D. Schaller, P.F. Stadler. Compatibility of partitions with trees,
+        1. M. Hellmuth, D. Schaller, P.F. Stadler. Compatibility of partitions with trees,
            hierarchies, and split systems. In: Discrete Applied Mathematics 314 (2022) 265-283.
            doi: https://doi.org/10.1016/j.dam.2022.03.014
     """
@@ -626,7 +626,7 @@ def is_refinement_compatible(
         for each set in the partition.
 
     References:
-        .. [1] M. Hellmuth, D. Schaller, P.F. Stadler. Compatibility of partitions with trees,
+        1. M. Hellmuth, D. Schaller, P.F. Stadler. Compatibility of partitions with trees,
            hierarchies, and split systems. In: Discrete Applied Mathematics 314 (2022) 265-283.
            doi: https://doi.org/10.1016/j.dam.2022.03.014
     """
@@ -707,7 +707,7 @@ def fitch_orientation(
         the partition whether (A, B) is 'essential', 'forbidden', or 'ambiguous'.
 
     References:
-        .. [1] D. Schaller, M. Hellmuth, P. F. Stadler. Orientation of Fitch Graphs and
+        1. D. Schaller, M. Hellmuth, P. F. Stadler. Orientation of Fitch Graphs and
            Reconciliation-Free Inference of Horizontal Gene Transfer in Gene Trees. In: SIAM Journal
            on Discrete Mathematics, 37(3): 2172-2207 (2023).
            doi: https://doi.org/10.1137/22M150736X
@@ -787,7 +787,7 @@ def fitch_orientation_for_refinements(
         refinements of the tree that are compatible with the partition.
 
     References:
-        .. [1] D. Schaller, M. Hellmuth, P. F. Stadler. Orientation of Fitch Graphs and
+        1. D. Schaller, M. Hellmuth, P. F. Stadler. Orientation of Fitch Graphs and
            Reconciliation-Free Inference of Horizontal Gene Transfer in Gene Trees. In: SIAM Journal
            on Discrete Mathematics, 37(3): 2172-2207 (2023).
            doi: https://doi.org/10.1137/22M150736X

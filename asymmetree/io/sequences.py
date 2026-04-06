@@ -76,7 +76,7 @@ def write_fasta(file_path: Path | str, sequences: dict | list[tuple]) -> None:
 def write_alignment(
     file_path: Path | str,
     alignment: dict | list[tuple],
-    alignment_format="phylip",
+    alignment_format: str = "phylip",
 ) -> None:
     """Write a multiple sequence alignment to a file.
 

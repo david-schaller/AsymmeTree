@@ -39,11 +39,11 @@ def noisy_matrix(orig_matrix: np.ndarray, sd: float, metric_repair: str = "rejec
         ValueError: If the argument 'metric_repair' is not one of 'reject', 'general', or 'DOMR'.
 
     References:
-        .. [1] P. F. Stadler, M. Geiß, D. Schaller, A. López Sánchez, M. González Laffitte, D.
+        1. P. F. Stadler, M. Geiß, D. Schaller, A. López Sánchez, M. González Laffitte, D.
            Valdivia, M. Hellmuth, M. Hernández Rosales. From pairs of most similar sequences to
            phylogenetic best matches. In: Alg. Mol. Biol., 2020, 15, 5.
            doi: 10.1186/s13015-020-00165-2.
-        .. [2] A. C. Gilbert, L. Jain. If it ain't broke, don't fix it: Sparse metric repair.
+        2. A. C. Gilbert, L. Jain. If it ain't broke, don't fix it: Sparse metric repair.
            In: 2017 55th Annual Allerton Conference on Communication, Control, and Computing
            (Allerton), pages 612-619, Monticello, IL, USA, October 2017. IEEE.
            ISBN 978-1-5386-3266-6. doi: 10.1109/ALLERTON.2017.8262793.
@@ -206,7 +206,7 @@ def convex_linear_comb(
         The disturbed distance matrix or matrices.
 
     References:
-        .. [1] P. F. Stadler, M. Geiß, D. Schaller, A. López Sánchez, M. González Laffitte, D.
+        1. P. F. Stadler, M. Geiß, D. Schaller, A. López Sánchez, M. González Laffitte, D.
            Valdivia, M. Hellmuth, M. Hernández Rosales. From pairs of most similar sequences to
            phylogenetic best matches. In: Alg. Mol. Biol., 2020, 15, 5.
            doi: 10.1186/s13015-020-00165-2.
