@@ -14,13 +14,23 @@ from asymmetree.utils.phylogenetic_trees import distance_from_timing
 from asymmetree.utils.phylogenetic_trees import remove_planted_root
 
 
+EpisodeType = tuple[float, float, float, float]
+
+
 def species_tree_n(
     n: int,
     model: str = "yule",
     innovation: bool = False,
     planted: bool = True,
     remove_extinct: bool = False,
-    **kwargs,
+    birth_rate: float | None = None,
+    death_rate: float | None = None,
+    episodes: list[EpisodeType] | None = None,
+    contraction_probability: float = 0.0,
+    contraction_proportion: float = 0.0,
+    contraction_bias: bool = False,
+    bias_strength: float = 1.0,
+    **kwargs: object,
 ) -> Tree:
     """Simulates a species tree S with n leaves.
 
@@ -35,10 +45,13 @@ def species_tree_n(
         innovation: If True, use the innovation model, see [4], to sample a lineage for the next
             speciation event. Only available for the Yule model. The default is False, in which case
             the lineage is chosen uniformly at random among the currently existing lineages.
+            The innovation model is not available for the BDP and EBDP models.
         planted: Add a planted root that has the canonical root as its single neighbor.
         remove_extinct: Remove all branches that lead to extinctions, only relevant for some models.
-        birth_rate: The birth rate for models such as 'yule' and 'BDP'.
-        death_rate: The death rate for models such as 'BDP'.
+        birth_rate: The birth rate for models such as 'yule' and 'BDP'. The default is None, in
+            which case the birth rate is set to 1.0 unless episodes are specified.
+        death_rate: The death rate for models such as 'BDP'. The default is None, in which case the
+            death rate is set to 0.0 unless episodes are specified.
         episodes: The episodes for the model 'EBDP'.
         contraction_probability: Probability that an inner edge is contracted. The default is 0.0,
             in which case the tree is binary. Only one of this parameter and
@@ -56,20 +69,20 @@ def species_tree_n(
 
     Raises:
         ValueError: If unknown or invalid parameter values are passed.
+        ValueError: If the innovation model is selected for a model that does not support it.
 
     Returns:
         The simulated species tree.
 
     References:
-    ----------
-        .. [1] G. U. Yule. A mathematical theory of evolution, based on the conclusions of Dr. J.
+        1. G. U. Yule. A mathematical theory of evolution, based on the conclusions of Dr. J.
            C. Willis, F. R. S. In: Phil. Trans. R. Soc. Lond. B, 1924, 213, 21-87.
            doi:10.1098/rstb.1925.0002.
-        .. [2] D. G. Kendall. On the Generalized "Birth-and-Death" Process. In: Ann. Math. Statist.
+        2. D. G. Kendall. On the Generalized "Birth-and-Death" Process. In: Ann. Math. Statist.
            1948, 19, 1-15. doi:10.1214/aoms/1177730285.
-        .. [3] T. Stadler. Simulating trees with a fixed number of extant species. In: Syst. Biol.
+        3. T. Stadler. Simulating trees with a fixed number of extant species. In: Syst. Biol.
            2011, 60, 676-684. doi:10.1093/sysbio/syr029.
-        .. [4] S. Keller-Schmidt, K. Klemm. A model of macroevolution as a branching process based
+        4. S. Keller-Schmidt, K. Klemm. A model of macroevolution as a branching process based
            on innovations. In: Adv. Complex Syst.,2012, 15, 1250043. doi:10.1142/S0219525912500439.
     """
     # parameter checking
@@ -83,11 +96,17 @@ def species_tree_n(
 
     # choice of the main simulation algorithm
     if model.lower() == "yule":
-        tree = _yule_n(n, kwargs.get("birth_rate"), innovation)
+        tree = _yule_n(n, birth_rate, innovation)
     elif model.upper() == "BDP":
-        tree = _BDP_n(n, **kwargs)
+        if innovation:
+            raise ValueError("innovation model is not available for BDP")
+
+        tree = _BDP_n(n, birth_rate, death_rate)
     elif model.upper() == "EBDP":
-        tree = _EBDP_n(n, **kwargs)
+        if innovation:
+            raise ValueError("innovation model is not available for EBDP")
+
+        tree = _EBDP_n(n, birth_rate, death_rate, episodes)
     else:
         raise ValueError(f"model '{model}' is not available")
 
@@ -100,7 +119,14 @@ def species_tree_n(
         remove_planted_root(tree, inplace=True)
 
     # make tree non_binary by random contraction of edges
-    nonbinary(tree, inplace=True, **kwargs)
+    nonbinary(
+        tree,
+        contraction_probability=contraction_probability,
+        contraction_proportion=contraction_proportion,
+        contraction_bias=contraction_bias,
+        bias_strength=bias_strength,
+        inplace=True,
+    )
 
     # assign the distance attribute to all vertices
     distance_from_timing(tree)
@@ -108,7 +134,19 @@ def species_tree_n(
     return tree
 
 
-def species_tree_age(age: float, model: str = "yule", innovation: bool = False, **kwargs) -> Tree:
+def species_tree_age(
+    age: float,
+    model: str = "yule",
+    innovation: bool = False,
+    birth_rate: float | None = None,
+    death_rate: float | None = None,
+    episodes: list[EpisodeType] | None = None,
+    contraction_probability: float = 0.0,
+    contraction_proportion: float = 0.0,
+    contraction_bias: bool = False,
+    bias_strength: float = 1.0,
+    **kwargs: object,
+) -> Tree:
     """Simulates a (planted) species tree S of the specified age.
 
     Args:
@@ -120,8 +158,10 @@ def species_tree_age(age: float, model: str = "yule", innovation: bool = False, 
         innovation: If True, use the innovation model, see [4], to sample a lineage for the next
             speciation event. The default is False, in which case the lineage is chosen uniformly at
             random among the currently existing lineages.
-        birth_rate: The birth rate for models such as 'yule' and 'BDP'.
-        death_rate: The death rate for models such as 'BDP'.
+        birth_rate: The birth rate for models such as 'yule' and 'BDP'. The default is None, in
+            which case the birth rate is set to 1.0 unless episodes are specified.
+        death_rate: The death rate for models such as 'BDP'. The default is None, in which case the
+            death rate is set to 0.0 unless episodes are specified.
         episodes: The episodes for the model 'EBDP'.
         contraction_probability: Probability that an inner edge is contracted. The default is 0.0,
             in which case the tree is binary. Only one of this parameter and
@@ -145,15 +185,14 @@ def species_tree_age(age: float, model: str = "yule", innovation: bool = False, 
         The simulated species tree.
 
     References:
-    ----------
-        .. [1] G. U. Yule. A mathematical theory of evolution, based on the conclusions of Dr. J.
+        1. G. U. Yule. A mathematical theory of evolution, based on the conclusions of Dr. J.
            C. Willis, F. R. S. In: Phil. Trans. R. Soc. Lond. B, 1924, 213, 21-87.
            doi:10.1098/rstb.1925.0002.
-        .. [2] D. G. Kendall. On the Generalized "Birth-and-Death" Process. In: Ann. Math. Statist.
+        2. D. G. Kendall. On the Generalized "Birth-and-Death" Process. In: Ann. Math. Statist.
            1948, 19, 1-15. doi:10.1214/aoms/1177730285.
-        .. [3] T. Stadler. Simulating trees with a fixed number of extant species. In: Syst. Biol.
+        3. T. Stadler. Simulating trees with a fixed number of extant species. In: Syst. Biol.
            2011, 60, 676-684. doi:10.1093/sysbio/syr029.
-        .. [4] S. Keller-Schmidt, K. Klemm. A model of macroevolution as a branching process based
+        4. S. Keller-Schmidt, K. Klemm. A model of macroevolution as a branching process based
            on innovations. In: Adv. Complex Syst.,2012, 15, 1250043. doi:10.1142/S0219525912500439.
     """
     # parameter checking
@@ -167,16 +206,23 @@ def species_tree_age(age: float, model: str = "yule", innovation: bool = False, 
 
     # main simulation algorithm
     if model.lower() == "yule":
-        tree = _yule_age(age, kwargs.get("birth_rate"), innovation)
+        tree = _yule_age(age, birth_rate, innovation)
     elif model.upper() == "BDP":
-        tree = _BDP_age(age, innovation, **kwargs)
+        tree = _BDP_age(age, innovation, birth_rate, death_rate)
     elif model.upper() == "EBDP":
-        tree = _EBDP_age(age, innovation, **kwargs)
+        tree = _EBDP_age(age, innovation, birth_rate, death_rate, episodes)
     else:
         raise ValueError(f"model '{model}' is not available")
 
     # make tree non_binary by random contraction of edges
-    nonbinary(tree, inplace=True, **kwargs)
+    nonbinary(
+        tree,
+        contraction_probability=contraction_probability,
+        contraction_proportion=contraction_proportion,
+        contraction_bias=contraction_bias,
+        bias_strength=bias_strength,
+        inplace=True,
+    )
 
     # assign the distance attribute to all vertices
     distance_from_timing(tree)
@@ -189,9 +235,13 @@ def species_tree_n_age(
     age: float,
     model: str = "yule",
     innovation: bool = False,
-    birth_rate: float = 1.0,
-    death_rate: float = 0.0,
-    **kwargs,
+    birth_rate: float | None = None,
+    death_rate: float | None = None,
+    contraction_probability: float = 0.0,
+    contraction_proportion: float = 0.0,
+    contraction_bias: bool = False,
+    bias_strength: float = 1.0,
+    **kwargs: object,
 ) -> Tree:
     """Simulate a (planted) species tree S with n leaves and of the specified age.
 
@@ -208,9 +258,10 @@ def species_tree_n_age(
         innovation: If True, use the innovation model, see [4], to sample a lineage for the next
             speciation event. The default is False, in which case the lineage is chosen uniformly at
             random among the currently existing lineages.
-        birth_rate: The birth rate for models such as 'yule' and 'BDP'.
-        death_rate: The death rate for models such as 'BDP'.
-        episodes: The episodes for the model 'EBDP'.
+        birth_rate: The birth rate for models such as 'yule' and 'BDP'. The default is None, in
+            which case the birth rate is set to 1.0 unless episodes are specified.
+        death_rate: The death rate for models such as 'BDP'. The default is None, in which case the
+            death rate is set to 0.0 unless episodes are specified.
         contraction_probability: Probability that an inner edge is contracted. The default is 0.0,
             in which case the tree is binary. Only one of this parameter and
             'contraction_proportion' may be non-zero.
@@ -233,15 +284,14 @@ def species_tree_n_age(
         The simulated species tree.
 
     References:
-    ----------
-        .. [1] G. U. Yule. A mathematical theory of evolution, based on the conclusions of Dr. J.
+        1. G. U. Yule. A mathematical theory of evolution, based on the conclusions of Dr. J.
            C. Willis, F. R. S. In: Phil. Trans. R. Soc. Lond. B, 1924, 213, 21-87.
            doi:10.1098/rstb.1925.0002.
-        .. [2] D. G. Kendall. On the Generalized "Birth-and-Death" Process. In: Ann. Math. Statist.
+        2. D. G. Kendall. On the Generalized "Birth-and-Death" Process. In: Ann. Math. Statist.
            1948, 19, 1-15. doi:10.1214/aoms/1177730285.
-        .. [3] T. Stadler. Simulating trees with a fixed number of extant species. In: Syst. Biol.
+        3. T. Stadler. Simulating trees with a fixed number of extant species. In: Syst. Biol.
            2011, 60, 676-684. doi:10.1093/sysbio/syr029.
-        .. [4] S. Keller-Schmidt, K. Klemm. A model of macroevolution as a branching process based
+        4. S. Keller-Schmidt, K. Klemm. A model of macroevolution as a branching process based
            on innovations. In: Adv. Complex Syst.,2012, 15, 1250043. doi:10.1142/S0219525912500439.
     """
     # parameter checking
@@ -267,7 +317,14 @@ def species_tree_n_age(
         raise ValueError(f"model '{model}' is not available")
 
     # make tree non_binary by random contraction of edges
-    nonbinary(tree, inplace=True, **kwargs)
+    nonbinary(
+        tree,
+        contraction_probability=contraction_probability,
+        contraction_proportion=contraction_proportion,
+        contraction_bias=contraction_bias,
+        bias_strength=bias_strength,
+        inplace=True,
+    )
 
     # assign the distance attribute to all vertices
     distance_from_timing(tree)
@@ -282,7 +339,6 @@ def nonbinary(
     contraction_bias: bool | str = False,
     bias_strength: float = 1.0,
     inplace: bool = False,
-    **kwargs,
 ) -> Tree:
     """Introduce multifurcation into a tree by contraction of inner edges.
 
@@ -444,7 +500,7 @@ def _select_edges_by_proportion(
     k = round(p * len(edges))
 
     if not weighting:
-        return random.choices(edges, k=k)
+        return random.sample(edges, k=k)
     else:
         distances = [abs(u.tstamp - v.tstamp) for u, v in edges]
         if weighting == "inverse":
@@ -454,7 +510,9 @@ def _select_edges_by_proportion(
         else:
             raise ValueError(f"unknown mode for weighted sampling: {weighting}")
 
-        return random.choices(edges, weights=weights, k=k)
+        p = weights / weights.sum()
+        indices = np.random.choice(len(edges), size=k, replace=False, p=p)
+        return [edges[i] for i in indices]
 
 
 def assign_losses(tree: Tree, proportion: float) -> None:
@@ -480,7 +538,7 @@ class _ForwardLineageSampler:
     occurs.
 
     References:
-        .. [1] S. Keller-Schmidt, K. Klemm. A model of macroevolution as a branching process based
+        1. S. Keller-Schmidt, K. Klemm. A model of macroevolution as a branching process based
            on innovations. In: Adv. Complex Syst.,2012, 15, 1250043. doi:10.1142/S0219525912500439.
     """
 
@@ -637,7 +695,7 @@ class _ForwardLineageSampler:
         return self.tree
 
 
-def _yule_n(n: int, birth_rate: float, innovation: bool) -> Tree:
+def _yule_n(n: int, birth_rate: float | None, innovation: bool) -> Tree:
     """Simulate a Yule tree with n leaves.
 
     Args:
@@ -669,7 +727,7 @@ def _yule_n(n: int, birth_rate: float, innovation: bool) -> Tree:
     return fls.finalize(t)
 
 
-def _yule_age(age: float, birth_rate: float, innovation: bool) -> Tree:
+def _yule_age(age: float, birth_rate: float | None, innovation: bool) -> Tree:
     """Simulate a Yule tree up to a given age.
 
     Args:
@@ -700,7 +758,7 @@ def _yule_age(age: float, birth_rate: float, innovation: bool) -> Tree:
     return fls.finalize(age)
 
 
-def _yule_n_age(n: int, age: float, birth_rate: float, innovation: bool) -> Tree:
+def _yule_n_age(n: int, age: float, birth_rate: float | None, innovation: bool) -> Tree:
     """Simulate a Yule tree with n leaves and of the specified age.
 
     Args:
@@ -720,9 +778,8 @@ def _yule_n_age(n: int, age: float, birth_rate: float, innovation: bool) -> Tree
 def _BDP_age(
     age: float,
     innovation: bool,
-    birth_rate: float = None,
-    death_rate: float = None,
-    **kwargs,
+    birth_rate: float | None,
+    death_rate: float | None,
 ) -> Tree:
     """Simulate a birth-death tree up to a given age.
 
@@ -737,8 +794,7 @@ def _BDP_age(
     Returns:
         The simulated tree up to the given age.
     """
-    # ignore potentially supplied 'episodes' argument in kwargs
-    episodes = _EBDP_age_check_episodes(birth_rate=birth_rate, death_rate=death_rate)
+    episodes = _EBDP_age_check_episodes(birth_rate=birth_rate, death_rate=death_rate, episodes=None)
 
     return _EBDP_age_forward(age, episodes, innovation)
 
@@ -746,8 +802,8 @@ def _BDP_age(
 def _BDP_n_age(
     n: int,
     age: float,
-    birth_rate: float,
-    death_rate: float,
+    birth_rate: float | None,
+    death_rate: float | None,
     innovation: bool,
 ) -> Tree:
     """Simulate a birth-death tree with n leaves and of the specified age.
@@ -772,7 +828,7 @@ def _BDP_n_age(
         ValueError: If birth_rate is not > 0 or if death_rate is not >= 0.
 
     References:
-        .. [1] T. Stadler. Simulating trees with a fixed number of extant species. In: Syst. Biol.
+        1. T. Stadler. Simulating trees with a fixed number of extant species. In: Syst. Biol.
            2011, 60, 676-684. doi:10.1093/sysbio/syr029.
     """
     if birth_rate is None:
@@ -837,10 +893,9 @@ def _BDP_n_age(
 def _EBDP_age(
     age: float,
     innovation: bool,
-    birth_rate: float | None = None,
-    death_rate: float | None = None,
-    episodes: list[tuple[float, float, float, float]] | None = None,
-    **kwargs,
+    birth_rate: float | None,
+    death_rate: float | None,
+    episodes: list[EpisodeType] | None,
 ) -> Tree:
     """Simulate an episodic birth-death tree up to a given age.
 
@@ -864,11 +919,10 @@ def _EBDP_age(
 
 
 def _EBDP_age_check_episodes(
-    birth_rate: float | None = None,
-    death_rate: float | None = None,
-    episodes: list[tuple[float, float, float, float]] | None = None,
-    **kwargs,
-) -> list[tuple[float, float, float, float]]:
+    birth_rate: float | None,
+    death_rate: float | None,
+    episodes: list[EpisodeType] | None,
+) -> list[EpisodeType]:
     """Check the validity of the episodes for the episodic birth-death process.
 
     The episodes parameter is preferred over birth_rate and death_rate parameters. If episodes is
@@ -923,19 +977,14 @@ def _EBDP_age_check_episodes(
         else:
             return [(birth_rate, death_rate, 1.0, 0.0)]
 
-    else:
-        if death_rate:
-            raise ValueError("birth rate (>=0) must be specified if death rate is supplied")
+    elif death_rate is not None:
+        raise ValueError("birth rate (>=0) must be specified if death rate is supplied")
 
-        # default birth rate = 1.0 and death rate = 0.0
-        return [(1.0, 0.0, 1.0, 0.0)]
+    # default birth rate = 1.0 and death rate = 0.0
+    return [(1.0, 0.0, 1.0, 0.0)]
 
 
-def _EBDP_age_forward(
-    age: float,
-    episodes: list[tuple[float, float, float, float]],
-    innovation: float,
-) -> Tree:
+def _EBDP_age_forward(age: float, episodes: list[EpisodeType], innovation: float) -> Tree:
     """Episodic birth-death process (EBDP), forward algorithm with maximum age.
 
     Simulate a tree under the episodic birth-death process up to a given age.
@@ -987,12 +1036,7 @@ def _EBDP_age_forward(
 # --------------------------------------------------------------------------------------------------
 
 
-def _BDP_n(
-    n: int,
-    birth_rate: float | None = None,
-    death_rate: float | None = None,
-    **kwargs,
-) -> Tree:
+def _BDP_n(n: int, birth_rate: float | None, death_rate: float | None) -> Tree:
     """Simulate a birth-death tree with n leaves under the backward algorithm.
 
     Args:
@@ -1004,17 +1048,16 @@ def _BDP_n(
         The simulated tree with n leaves.
     """
     # ignore potentially supplied 'episodes' argument
-    episodes = _EBDP_check_episodes(birth_rate=birth_rate, death_rate=death_rate)
+    episodes = _EBDP_check_episodes(birth_rate=birth_rate, death_rate=death_rate, episodes=None)
 
     return _EBDP_backward(n, episodes)
 
 
 def _EBDP_n(
     n: int,
-    birth_rate: float | None = None,
-    death_rate: float | None = None,
-    episodes: list[tuple[float, float, float, float]] | None = None,
-    **kwargs,
+    birth_rate: float | None,
+    death_rate: float | None,
+    episodes: list[EpisodeType] | None,
 ) -> Tree:
     """Simulate an episodic birth-death tree with n leaves under the backward algorithm.
 
@@ -1033,11 +1076,10 @@ def _EBDP_n(
 
 
 def _EBDP_check_episodes(
-    birth_rate: float | None = None,
-    death_rate: float | None = None,
-    episodes: list[tuple[float, float, float, float]] | None = None,
-    **kwargs,
-) -> list[tuple[float, float, float, float]]:
+    birth_rate: float | None,
+    death_rate: float | None,
+    episodes: list[EpisodeType] | None,
+) -> list[EpisodeType]:
     """Check the validity of the episodes for the episodic birth-death process.
 
     The episodes parameter is preferred over birth_rate and death_rate parameters. If episodes is
@@ -1102,11 +1144,7 @@ def _EBDP_check_episodes(
         return [(1.0, 0.0, 1.0, 0.0)]
 
 
-def _EBDP_backward(
-    n: int,
-    episodes: list[tuple[float, float, float, float]],
-    max_tries: int = 500,
-) -> Tree:
+def _EBDP_backward(n: int, episodes: list[EpisodeType], max_tries: int = 500) -> Tree:
     """Episodic birth-death process (EBDP).
 
     Simulate a tree under the episodic birth-death process conditioned on the number n of surviving
@@ -1131,7 +1169,7 @@ def _EBDP_backward(
         RuntimeError: If a tree with n leaves could not be returned after max_tries simulations.
 
     References:
-        .. [1] T. Stadler. Simulating trees with a fixed number of extant species. In: Syst. Biol.
+        1. T. Stadler. Simulating trees with a fixed number of extant species. In: Syst. Biol.
            2011, 60, 676-684. doi:10.1093/sysbio/syr029.
     """
     birth_inv_sum = sum([1 / episodes[i][0] for i in range(len(episodes))])
