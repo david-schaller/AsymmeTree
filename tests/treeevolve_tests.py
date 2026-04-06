@@ -10,7 +10,7 @@ class TestTreeEvolvePackage(unittest.TestCase):
             species_tree = te.species_tree_n(
                 n,
                 model=model,
-                innovation=True,  # only rel. for yule
+                innovation=True if model == "yule" else False,
                 contraction_proportion=0.2,
                 contraction_bias="inverse",
                 bias_strength=1.5,

@@ -1,0 +1,54 @@
+name: Deploy docs
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Determine site URL
+        id: target
+        run: |
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+            echo "site_url=https://david-schaller.github.io/AsymmeTree/" >> "$GITHUB_OUTPUT"
+          else
+            echo "site_url=https://david-schaller.github.io/AsymmeTree/dev/" >> "$GITHUB_OUTPUT"
+          fi
+      - run: uv sync --group docs
+      - run: uv run mkdocs build
+        env:
+          MKDOCS_SITE_URL: ${{ steps.target.outputs.site_url }}
+      - name: Push to gh-pages branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if git ls-remote --heads origin gh-pages | grep -q gh-pages; then
+            git clone --depth=1 --branch gh-pages https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git pages-branch
+          else
+            git clone --depth=1 https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git pages-branch
+            cd pages-branch
+            git checkout --orphan gh-pages
+            git rm -rf .
+            cd ..
+          fi
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+            rsync -av --delete --exclude=dev site/ pages-branch/
+          else
+            rm -rf pages-branch/dev
+            cp -r site/ pages-branch/dev
+          fi
+          cd pages-branch
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git diff --cached --quiet || git commit -m "Deploy AsymmeTree docs (${{ github.ref_name }})"
+          git push origin gh-pages
