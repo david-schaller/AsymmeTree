@@ -72,8 +72,8 @@ class IndelModel:
             seq_length: The length of the sequence.
 
         Returns:
-            A tuple containing the total insertion and deletion rate for the given sequence length
-            (see [1]).
+            The total insertion rate for the given sequence length, see 1.
+            The total deletion rate for the given sequence length, see 1.
 
         References:
             1. R. A. Cartwright. DNA assembly with gaps (Dawg): Simulating sequence evolution.

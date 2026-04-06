@@ -101,7 +101,7 @@ class EvoSeq(DLList):
             rate_factor: The rate factor of the site.
 
         Returns:
-            The newly appended EvoSeqNode.
+            The newly appended `EvoSeqNode`.
         """
         new_end = EvoSeqNode(
             value,
@@ -142,7 +142,7 @@ class EvoSeq(DLList):
             rate_factor: The rate factor of the site.
 
         Returns:
-            The newly appended EvoSeqNode (at the beginning of the sequence).
+            The newly appended `EvoSeqNode` (at the beginning of the sequence).
         """
         new_start = EvoSeqNode(
             value,
@@ -185,7 +185,7 @@ class EvoSeq(DLList):
             rate_factor: The rate factor of the site.
 
         Returns:
-            The newly inserted EvoSeqNode.
+            The newly inserted `EvoSeqNode`.
         """
         if element is self._last:
             new_element = self.append(
@@ -221,7 +221,7 @@ class EvoSeq(DLList):
         corresponding sites in the parent sequence.
 
         Returns:
-            A new EvoSeq that is a clone of the current sequence.
+            A new `EvoSeq` that is a clone of the current sequence.
         """
         child_seq = EvoSeq()
 
@@ -291,7 +291,7 @@ class EvoSeqIterator(DLListIterator):
         Overrides the super class methods and returns the element instead of the value only.
 
         Returns:
-            The next EvoSeqNode in the evolving sequence.
+            The next `EvoSeqNode` in the evolving sequence.
         """
         if self._current:
             x = self._current

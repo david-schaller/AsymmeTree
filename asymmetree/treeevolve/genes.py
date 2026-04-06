@@ -457,7 +457,7 @@ class GeneTreeSimulator:
 
         Returns:
             A list of species tree edges that are coexisting at the given time stamp and do not
-            match the exclude_edge.
+                match the exclude_edge.
         """
         valid_species = []
 

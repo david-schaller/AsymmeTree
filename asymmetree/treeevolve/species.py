@@ -685,7 +685,7 @@ class _ForwardLineageSampler:
 
         Returns:
             The finalized tree with speciation events added for all remaining lineages and time
-            stamps adjusted.
+                stamps adjusted.
         """
         for lin_id, parent, _ in self.lineages:
             parent.add_child(TreeNode(label=lin_id, event="S", tstamp=time))
@@ -707,7 +707,7 @@ def _yule_n(n: int, birth_rate: float | None, innovation: bool) -> Tree:
             currently existing lineages.
 
     Returns:
-        The simulated tree with n leaves.
+        The simulated tree with `n` leaves.
     """
     if birth_rate is None:
         birth_rate = 1.0
@@ -771,7 +771,7 @@ def _yule_n_age(n: int, age: float, birth_rate: float | None, innovation: bool) 
             currently existing lineages.
 
     Returns:
-        The simulated tree with n leaves and of the specified age.
+        The simulated tree with `n` leaves and of the specified age.
     """
     return _BDP_n_age(n, age, birth_rate, 0.0, innovation)
 
@@ -809,7 +809,7 @@ def _BDP_n_age(
 ) -> Tree:
     """Simulate a birth-death tree with n leaves and of the specified age.
 
-    The tree is sampled under the birth-death process conditioned on the number n of surviving
+    The tree is sampled under the birth-death process conditioned on the number `n` of surviving
     species and with a given age [1]. The resulting tree does not contain loss leaves even if
     the specified death rate is > 0 as a consequence of the tree sampling method.
 
@@ -823,7 +823,7 @@ def _BDP_n_age(
             currently existing lineages.
 
     Returns:
-        The simulated tree with n leaves and of the specified age.
+        The simulated tree with `n` leaves and of the specified age.
 
     Raises:
         ValueError: If birth_rate is not > 0 or if death_rate is not >= 0.
@@ -1069,7 +1069,7 @@ def _EBDP_n(
         episodes: The episodes for the episodic birth-death process.
 
     Returns:
-        The simulated tree with n leaves.
+        The simulated tree with `n` leaves.
     """
     episodes = _EBDP_check_episodes(birth_rate=birth_rate, death_rate=death_rate, episodes=episodes)
 
@@ -1163,11 +1163,11 @@ def _EBDP_backward(n: int, episodes: list[EpisodeType], max_tries: int = 500) ->
             that satisfies the conditioning on n extant species; default is 500.
 
     Returns:
-        The simulated tree with n leaves.
+        The simulated tree with `n` leaves.
 
     Raises:
         ValueError: If the episodes are not valid.
-        RuntimeError: If a tree with n leaves could not be returned after max_tries simulations.
+        RuntimeError: If a tree with `n` leaves could not be returned after `max_tries` simulations.
 
     References:
         1. T. Stadler. Simulating trees with a fixed number of extant species. In: Syst. Biol.

@@ -18,7 +18,7 @@ def assign_species_colors(tree: Tree) -> dict:
 
     Returns:
         A dictionary containing the labels of the extant species as keys and the assigned colors as
-        values.
+            values.
     """
     return _assign_cmap({v.label for v in tree.leaves() if v.event != "L"})
 
@@ -34,7 +34,7 @@ def assign_gene_colors(tree: Tree, species_colors: dict | None = None) -> dict:
 
     Returns:
         A dictionary containing the labels of the extant genes as keys and the assigned colors as
-        values.
+            values.
     """
     if species_colors is None:
         species_colors = _assign_cmap({v.reconc for v in tree.leaves() if v.event != "L"})
@@ -52,8 +52,8 @@ def assign_colors(species_tree: Tree, gene_tree: Tree) -> tuple[dict, dict]:
             (non-loss) leaves in the species tree.
 
     Returns:
-        Two dictionaries, one for the species tree and one for the gene tree, containing as keys the
-        labels of the extant species/genes and as values the assigned colors.
+    A `dict` containing the labels of the extant species as keys and the assigned colors as values.
+    A `dict` containing the labels of the extant genes as keys and the assigned colors as values.
     """
     species_colors = assign_species_colors(species_tree)
 

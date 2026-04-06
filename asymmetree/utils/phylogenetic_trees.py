@@ -100,7 +100,7 @@ def delete_and_reconnect(
     node: TreeNode,
     add_distances: bool = True,
     keep_transferred: bool = True,
-) -> TreeNode | bool:
+) -> TreeNode | None:
     """Delete a node from the tree and reconnect its parent and children.
 
     Args:
@@ -113,11 +113,11 @@ def delete_and_reconnect(
             make all edges from u to the children of v transfer edges.
 
     Returns:
-        The parent of the node, if it could be deleted, or False, if the node could not be deleted,
-        i.e., it has no parent.
+        The parent of the node, if it could be deleted, or None, if the node could not be deleted,
+            i.e., it has no parent.
     """
     if not node.parent:
-        return False
+        return None
 
     for child in node.children:
         if add_distances and hasattr(node, "dist") and hasattr(child, "dist"):
@@ -162,9 +162,9 @@ def reconc_sorted_leaves(tree: Tree, return_list: bool = False) -> dict | tuple[
             reconciliation appear as a coherent sequence.
 
     Returns:
-        A dictionary with reconciliations as keys and a list of corresponding nodes as values.
-        If `return_list` is True, also return a list of leaves such that leaves of the same
-        reconciliation appear as a coherent sequence.
+        A dictionary with reconciliations as keys and a list of corresponding nodes as values. If
+            `return_list` is True, also return a list of leaves such that leaves of the same
+            reconciliation appear as a coherent sequence.
     """
     reconc_dict = {}
 
@@ -201,10 +201,9 @@ def distance_matrix(
             default is None, in which case leaves are indexed in sibling order.
 
     Returns:
-        A tuple containing:
-        - A list of TreeNode objects representing the order for the lines/columns in the distance
+        A list of TreeNode objects representing the order for the lines/columns in the distance
             matrix.
-        - A numpy.ndarray (dtype=numpy.float) representing the distance matrix.
+        An array representing the distance matrix.
 
     Raises:
         ValueError: If `leaf_order` is provided and does not match with the leaves in the tree.
@@ -248,8 +247,8 @@ def distances_from_root(tree: Tree) -> dict[TreeNode, float]:
         tree: A tree with nodes that have a `dist` attribute.
 
     Returns:
-        A dictionary where the keys are TreeNode objects and the values are their distances
-        (sum of `dist`) to the root.
+        A dictionary where the keys are TreeNode objects and the values are their distances (sum of
+            `dist`) to the root.
     """
     distance_dict = {}
 
@@ -298,7 +297,7 @@ def count_node_types(tree: Tree) -> dict[str, int]:
 
     Returns:
         A dictionary with the event counts as values. Keys are 'S' (speciations), 'D' (duplication),
-        'L' (losses), 'H' (HGTs) and 'extant' (surviving genes).
+            'L' (losses), 'H' (HGTs) and 'extant' (surviving genes).
     """
     counts = {"S": 0, "D": 0, "L": 0, "H": 0, "extant": 0}
 
@@ -390,7 +389,7 @@ def random_ultrametric_timing(
 
     Returns:
         A random tree whose nodes have `tstamp` attributes that represent the generated random
-        ultrametric timing.
+            ultrametric timing.
     """
     if not inplace:
         tree = tree.copy()
@@ -526,7 +525,7 @@ def delete_losses_and_contract(tree: Tree, inplace: bool = False) -> Tree:
 
     Returns:
         The tree with all loss branches removed (original instance or a new one depending on the
-        `inplace` parameter).
+            `inplace` parameter).
     """
     if not inplace:
         tree = tree.copy()
@@ -556,7 +555,7 @@ def remove_planted_root(tree: Tree, inplace: bool = True) -> Tree:
 
     Returns:
         The tree with the planted root removed (original instance or a new one depending on the
-        `inplace` parameter).
+            `inplace` parameter).
     """
     if not inplace:
         tree = tree.copy()

@@ -42,11 +42,10 @@ def true_transfer_edges(T: Tree) -> set[TreeNode]:
     """Returns a set containing v if (u, v) is labeled as a transfer edge.
 
     Args:
-        T: A tree whose nodes have the 'transferred' attribute.
+        T: A tree whose nodes have the `transferred` attribute.
 
     Returns:
-        The subset of TreeNode instances in the tree for which transferred is 1.
-
+        The subset of `TreeNode` instances in the tree for which `transferred` is 1.
     """
     return {v for _, v in T.edges() if v.transferred}
 
@@ -64,8 +63,8 @@ def rs_transfer_edges(T: Tree, S: Tree, lca_S: LCA = None) -> set[TreeNode]:
             in which case a new instance is created and used.
 
     Returns:
-        The subset of TreeNode instances in the tree for which the 'reconc' attributes of its
-        incident edges refer to incomparable branches in the species tree.
+        The subset of `TreeNode` instances in the tree for which the `reconc` attributes of its
+            incident edges refer to incomparable branches in the species tree.
     """
     if not isinstance(lca_S, LCA):
         lca_S = LCA(S)
@@ -95,8 +94,8 @@ def fitch(
             instance is created and used.
 
     Returns:
-        The directed Fitch graph or a tuple containing the directed Fitch graph (networkx.DiGraph)
-        and the undirected Fitch graph (networkx.Graph).
+        The directed Fitch graph or a tuple containing the directed Fitch graph (`networkx.DiGraph`)
+            and the undirected Fitch graph (`networkx.Graph`).
     """
     if not isinstance(lca_T, LCA):
         lca_T = LCA(tree)
@@ -144,7 +143,7 @@ def undirected_fitch(
             instance is created and used.
 
     Returns:
-        The undirected Fitch graph (networkx.Graph).
+        The undirected Fitch graph (`networkx.Graph`).
     """
     return fitch(tree, transfer_edges, supply_undirected=True, lca_T=lca_T)[1]
 
@@ -156,7 +155,7 @@ def is_rs_fitch(G: nx.Graph, color_set: set | None = None) -> bool:
     [1].
 
     Args:
-        G: A graph whose nodes have the 'color' attribute.
+        G: A graph whose nodes have the `color` attribute.
         color_set: The set of colors appearing in the graph. The default is None, in which case such
             a set is created internally.
 
@@ -535,9 +534,9 @@ def is_compatible(
 
     Returns:
         Returns None if the tree and the partition are incompatible, and otherwise a tuple of a dict
-        and a list. The dict contains vertices of the tree that lie on a path connecting two
-        elements from the same set of the partition with the index of this set as value. The list
-        contains the last common ancestor in the tree for each set in the partition.
+            and a list. The dict contains vertices of the tree that lie on a path connecting two
+            elements from the same set of the partition with the index of this set as value. The
+            list contains the last common ancestor in the tree for each set in the partition.
 
     References:
         1. M. Hellmuth, D. Schaller, P.F. Stadler. Compatibility of partitions with trees,
@@ -620,10 +619,10 @@ def is_refinement_compatible(
 
     Returns:
         Returns None if the tree and the partition are not refinement-compatible, and otherwise a
-        tuple of a dict and a list. The dict contains nodes v of the tree such that the edge
-        (parent(v), v) lies on a path connecting two elements from the same set of the partition
-        with the index of this set as value. The list contains the last common ancestor in the tree
-        for each set in the partition.
+            tuple of a dict and a list. The dict contains nodes v of the tree such that the edge
+            (parent(v), v) lies on a path connecting two elements from the same set of the partition
+            with the index of this set as value. The list contains the last common ancestor in the
+            tree for each set in the partition.
 
     References:
         1. M. Hellmuth, D. Schaller, P.F. Stadler. Compatibility of partitions with trees,
@@ -703,8 +702,8 @@ def fitch_orientation(
 
     Returns:
         Returns None if the tree and the partition are incompatible. Otherwise, returns a
-        2-dimensional array that stores at indices i and j corresponding to sets A and B, resp., of
-        the partition whether (A, B) is 'essential', 'forbidden', or 'ambiguous'.
+            2-dimensional array that stores at indices i and j corresponding to sets A and B, resp.,
+            of the partition whether (A, B) is 'essential', 'forbidden', or 'ambiguous'.
 
     References:
         1. D. Schaller, M. Hellmuth, P. F. Stadler. Orientation of Fitch Graphs and
@@ -782,9 +781,9 @@ def fitch_orientation_for_refinements(
 
     Returns:
         Returns None if the tree and the partition are not refinement-compatible. Otherwise, returns
-        a 2-dimensional array that stores at indices i and j corresponding to sets A and B, resp.,
-        of the partition whether (A, B) is 'essential', 'forbidden', or 'ambiguous' for all
-        refinements of the tree that are compatible with the partition.
+            a 2-dimensional array that stores at indices i and j corresponding to sets A and B,
+            resp., of the partition whether (A, B) is 'essential', 'forbidden', or 'ambiguous' for
+            all refinements of the tree that are compatible with the partition.
 
     References:
         1. D. Schaller, M. Hellmuth, P. F. Stadler. Orientation of Fitch Graphs and

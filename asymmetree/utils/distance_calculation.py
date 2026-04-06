@@ -38,7 +38,8 @@ def maximum_likelihood_distance(
             model_name must be provided to construct a SubstModel instance.
         model_type: Type of substitution model (e.g., "n" for nucleotide, "a" for amino acid).
             Required if subst_model is None.
-        model_name: Name of substitution model (e.g., "JC69", "K80"). Required if subst_model is None.
+        model_name: Name of substitution model (e.g., "JC69", "K80"). Required if subst_model is
+            None.
 
     Returns:
         Estimated distance between the two sequences under the specified substitution model.
@@ -126,7 +127,7 @@ def _to_indices(seq1: str, seq2: str, subst_model: SubstModel) -> np.ndarray:
 
     Returns:
         A 2xN array of integer indices corresponding to the aligned sequences, excluding positions
-        with gaps in either sequence.
+            with gaps in either sequence.
 
     Raises:
         ValueError: If the input sequences have different lengths.
@@ -158,7 +159,8 @@ def p_distance(seq1: str, seq2: str, exclude_gaps: bool = True) -> tuple[float, 
             both sequences are always ignored.
 
     Returns:
-        A tuple containing the p-distance and the number of valid columns used in the calculation.
+        The p-distance.
+        The number of valid columns used in the calculation.
 
     Raises:
         ValueError: If the input sequences have different lengths.
@@ -206,7 +208,7 @@ def JC69_distance(
 
     Returns:
         If `variance` is False, returns the Jukes-Cantor distance. If `variance` is True, returns a
-        tuple containing the distance and its variance.
+            tuple containing the distance and its variance.
     """
     p, valid_columns = p_distance(seq1, seq2, exclude_gaps=exclude_gaps)
 
@@ -280,9 +282,9 @@ def K80_distance(
         variance: If True, also calculate the variance of the distance estimate.
 
     Returns:
-        If `variance` is False, returns a tuple containing the Kimura distance and the
-        transition/transversion ratio. If `variance` is True, returns a tuple containing the
-        distance, the transition/transversion ratio, and the variance of the distance.
+        If `variance` is False, returns a tuple containing the Kimura distance and the transition /
+            transversion ratio. If `variance` is True, returns a tuple containing the distance, the
+            transition / transversion ratio, and the variance of the distance.
     """
     S, V, valid_columns = _IV_proportions(seq1, seq2)
 
@@ -295,7 +297,7 @@ def K80_distance(
         return d, kappa, var_d
 
 
-def _IV_proportions(seq1, seq2):
+def _IV_proportions(seq1: str, seq2: str) -> tuple[float, float, int]:
     """Computes the proportions of transitions and transversions.
 
     Args:
@@ -303,8 +305,9 @@ def _IV_proportions(seq1, seq2):
         seq2: Second aligned sequence.
 
     Returns:
-        A tuple containing the proportion of transitions, the proportion of transversions,
-        and the number of valid columns.
+        The proportion of transitions.
+        The proportion of transversions.
+        The number of valid columns.
 
     Raises:
         ValueError: If the input sequences have different lengths.
@@ -341,14 +344,15 @@ def _IV_proportions(seq1, seq2):
 
 
 def _K80_transform(S: float, V: float) -> tuple[float, float]:
-    """Kimura 1980 distance and transition/transversion ratio.
+    """Kimura 1980 distance and transition / transversion ratio.
 
     Args:
         S: Proportion of transitions.
         V: Proportion of transversions.
 
     Returns:
-        A tuple containing the Kimura distance and the transition/transversion ratio.
+        The Kimura distance.
+        The transition / transversion ratio.
     """
     a1 = 1.0 - 2.0 * S - V
     a2 = 1.0 - 2.0 * V

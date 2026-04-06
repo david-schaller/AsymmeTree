@@ -109,7 +109,8 @@ class HetModel:
             n: The number of sites for which to draw the rate classes and rate factors.
 
         Returns:
-            A tuple containing a list of rate classes and an array of rate factors for the n sites.
+            A list of rate classes.
+            An array of rate factors for the `n` sites.
         """
         # mode 1: sitewise heterogeneity
         if self.sitewise:
