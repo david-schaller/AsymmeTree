@@ -141,7 +141,7 @@ class GeneTreeSimulator:
             The simulated gene tree.
 
         References:
-            .. [1] S. Kundu, M. S. Bansal. SaGePhy: an improved phylogenetic simulation framework
+            1. S. Kundu, M. S. Bansal. SaGePhy: an improved phylogenetic simulation framework
                for gene and subgene evolution. In: Bioinformatics, 35(18), 2019, 3496-3498.
                doi:10.1093/bioinformatics/btz081.
         """
@@ -639,7 +639,7 @@ class GeneTreeSimulator:
             gc_node.replaced_gene = replaced_gene_branch.label
 
 
-def dated_gene_tree(S: Tree, **kwargs) -> Tree:
+def dated_gene_tree(S: Tree, **kwargs: object) -> Tree:
     """Simulate a gene tree along the specified species tree.
 
     Args:
@@ -673,7 +673,7 @@ def prune_losses(tree: Tree) -> Tree:
     'planted edge' is also removed.
 
     Args:
-        The tree to be pruned.
+        tree: The tree to be pruned.
 
     Returns:
         A pruned version of the tree.

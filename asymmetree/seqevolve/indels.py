@@ -5,9 +5,9 @@ provides a class for modeling indel events, which can be used to simulate sequen
 tree. The class supports different distributions for the length of the indels.
 
 References:
-    .. [1] Z. Yang. Computational molecular evolution. Oxford series in ecology and evolution.
+    1. Z. Yang. Computational molecular evolution. Oxford series in ecology and evolution.
        Oxford University Press, 2006. ISBN 978-0-19-856699-1 978-0-19-856702-8.
-    .. [2] R. A. Cartwright. DNA assembly with gaps (Dawg): Simulating sequence evolution.
+    2. R. A. Cartwright. DNA assembly with gaps (Dawg): Simulating sequence evolution.
        In: Bioinformatics, 21(Suppl 3):iii31-iii38, November 2005.
        doi:10.1093/bioinformatics/bti1200.
 """
@@ -44,7 +44,7 @@ class IndelModel:
             ValueError: If insertion_rate or deletion_rate is negative.
 
         References:
-            .. [1] M. S. Chang and S. A. Benner. Empirical Analysis of Protein Insertions and
+            1. M. S. Chang and S. A. Benner. Empirical Analysis of Protein Insertions and
                Deletions Determining Parameters for the Correct Placement of Gaps in Protein
                Sequence Alignments. In: Journal of Molecular Biology, 341(2):617-631, August 2004.
                doi:10.1016/j.jmb.2004.05.045.
@@ -76,7 +76,7 @@ class IndelModel:
             (see [1]).
 
         References:
-            .. [1] R. A. Cartwright. DNA assembly with gaps (Dawg): Simulating sequence evolution.
+            1. R. A. Cartwright. DNA assembly with gaps (Dawg): Simulating sequence evolution.
                In: Bioinformatics, 21(Suppl 3):iii31-iii38, November 2005.
                doi:10.1093/bioinformatics/bti1200.
         """

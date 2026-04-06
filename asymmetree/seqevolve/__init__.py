@@ -9,11 +9,11 @@ These models typically take a substitution-rate matrix and the equilibrium frequ
 heterogeneity among the sites can be simulated.
 
 References:
-   .. [1] J. Felsenstein. Inferring Phylogenies. Sinauer Associates, Sunderland, Mass, 2004.
+   1. J. Felsenstein. Inferring Phylogenies. Sinauer Associates, Sunderland, Mass, 2004.
       ISBN 978-0-87893-177-4.
-   .. [2] Z. Yang. Computational molecular evolution. Oxford series in ecology and evolution.
+   2. Z. Yang. Computational molecular evolution. Oxford series in ecology and evolution.
       Oxford University Press, 2006. ISBN 978-0-19-856699-1 978-0-19-856702-8.
-   .. [3] Z. Yang. Molecular Evolution: A Statistical Approach. Oxford University Press, Oxford,
+   3. Z. Yang. Molecular Evolution: A Statistical Approach. Oxford University Press, Oxford,
       United Kingdom; New York, NY, United States of America, First edition, 2014.
       ISBN 978-0-19-960261-2 978-0-19-960260-5.
 """

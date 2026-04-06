@@ -203,7 +203,7 @@ def distance_matrix(
     Returns:
         A tuple containing:
         - A list of TreeNode objects representing the order for the lines/columns in the distance
-          matrix.
+            matrix.
         - A numpy.ndarray (dtype=numpy.float) representing the distance matrix.
 
     Raises:
@@ -646,7 +646,7 @@ def to_newick(
         return ";"
 
 
-def parse_newick(newick):
+def parse_newick(newick: str) -> Tree:
     """Parses trees in Newick format into object of type `Tree`.
 
     This function parses trees in Newick format into object of type `Tree`. The Newick string may

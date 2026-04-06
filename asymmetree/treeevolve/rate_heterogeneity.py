@@ -32,7 +32,7 @@ def gene_trees(
     loss_rate: float | tuple = 0.0,
     hgt_rate: float | tuple = 0.0,
     base_rate: float | tuple = 1.0,
-    **kwargs,
+    **kwargs: object,
 ) -> list[Tree]:
     """Simulates dated gene trees with non-ultrametric edge lengths along a species tree.
 
@@ -138,10 +138,10 @@ def rate_heterogeneity(
         (`inplace=False`) with modified 'dist' attributes of the nodes.
 
     References:
-        .. [1] H. Kishino, J. L. Thorne, and W. J. Bruno. Performance of a Divergence Time
+        1. H. Kishino, J. L. Thorne, and W. J. Bruno. Performance of a Divergence Time
            Estimation Method under a Probabilistic Model of Rate Evolution. In: Molecular Biology
            and Evolution, 18(3):352-361, March 2001. doi: 10.1093/oxfordjournals.molbev.a003811.
-        .. [2] K. P. Byrne and K. H. Wolfe. Consistent Patterns of Rate Asymmetry and Gene Loss
+        2. K. P. Byrne and K. H. Wolfe. Consistent Patterns of Rate Asymmetry and Gene Loss
            Indicate Widespread Neofunctionalization of Yeast Genes After Whole-Genome Duplication.
            In: Genetics, 175(3):1341-1350, March 2007. doi: 10.1534/genetics.106.066951.
     """
@@ -169,7 +169,7 @@ def rate_heterogeneity(
     return T
 
 
-def assign_rates(T: Tree, S: Tree, **kwargs) -> Tree:
+def assign_rates(T: Tree, S: Tree, **kwargs: object) -> Tree:
     """Deprecated alias for rate_heterogeneity().
 
     Args:
@@ -351,7 +351,7 @@ def autocorrelation_factors(
         edges.
 
     References:
-        .. [1] H. Kishino, J. L. Thorne, and W. J. Bruno. Performance of a Divergence Time
+        1. H. Kishino, J. L. Thorne, and W. J. Bruno. Performance of a Divergence Time
            Estimation Method under a Probabilistic Model of Rate Evolution. In: Molecular Biology
            and Evolution, 18(3):352-361, March 2001. doi: 10.1093/oxfordjournals.molbev.a003811.
     """
