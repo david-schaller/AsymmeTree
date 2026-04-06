@@ -28,7 +28,7 @@ def species_tree_n(
     episodes: list[EpisodeType] | None = None,
     contraction_probability: float = 0.0,
     contraction_proportion: float = 0.0,
-    contraction_bias: bool = False,
+    contraction_bias: str | None = None,
     bias_strength: float = 1.0,
     **kwargs: object,
 ) -> Tree:
@@ -61,7 +61,7 @@ def species_tree_n(
             'contraction_probability' may be non-zero.
         contraction_bias: Specifies whether shorter edges, i.e., with a smaller difference t of the
             time stamps, have a higher probability to be contracted. Only relevant if
-            'contraction_proportion' > 0.0. The default is False, in which case all edges have the
+            'contraction_proportion' > 0.0. The default is None, in which case all edges have the
             same probability to be contracted. The options 'inverse' and 'exponential' mean that an
             edge is sampled weighted by 1/t or e^(-t), respectively.
         bias_strength: Intensity factor for preferring shorter edges to be contracted. The default
@@ -143,7 +143,7 @@ def species_tree_age(
     episodes: list[EpisodeType] | None = None,
     contraction_probability: float = 0.0,
     contraction_proportion: float = 0.0,
-    contraction_bias: bool = False,
+    contraction_bias: str | None = None,
     bias_strength: float = 1.0,
     **kwargs: object,
 ) -> Tree:
@@ -171,7 +171,7 @@ def species_tree_age(
             'contraction_probability' may be non-zero.
         contraction_bias: Specifies whether shorter edges, i.e., with a smaller difference t of the
             time stamps, have a higher probability to be contracted. Only relevant if
-            'contraction_proportion' > 0.0. The default is False, in which case all edges have the
+            'contraction_proportion' > 0.0. The default is None, in which case all edges have the
             same probability to be contracted. The options 'inverse' and 'exponential' mean that an
             edge is sampled weighted by 1/(a * t) or e^(-a * t), respectively, where a is a
             user-defined factor.
@@ -239,7 +239,7 @@ def species_tree_n_age(
     death_rate: float | None = None,
     contraction_probability: float = 0.0,
     contraction_proportion: float = 0.0,
-    contraction_bias: bool = False,
+    contraction_bias: str | None = None,
     bias_strength: float = 1.0,
     **kwargs: object,
 ) -> Tree:
@@ -270,7 +270,7 @@ def species_tree_n_age(
             'contraction_probability' may be non-zero.
         contraction_bias: Specifies whether shorter edges, i.e., with a smaller difference t of the
             time stamps, have a higher probability to be contracted. Only relevant if
-            'contraction_proportion' > 0.0. The default is False, in which case all edges have the
+            'contraction_proportion' > 0.0. The default is None, in which case all edges have the
             same probability to be contracted. The options 'inverse' and 'exponential' mean that an
             edge is sampled weighted by 1/(a * t) or e^(-a * t), respectively, where a is a
             user-defined factor.
@@ -336,7 +336,7 @@ def nonbinary(
     tree: Tree,
     contraction_probability: float = 0.0,
     contraction_proportion: float = 0.0,
-    contraction_bias: bool | str = False,
+    contraction_bias: str | None = None,
     bias_strength: float = 1.0,
     inplace: bool = False,
 ) -> Tree:
@@ -352,7 +352,7 @@ def nonbinary(
             'contraction_probability' may be non-zero.
         contraction_bias: Specifies whether shorter edges, i.e., with a smaller difference t of the
             time stamps, have a higher probability to be contracted. Only relevant if
-            'contraction_proportion' > 0.0. The default is False, in which case all edges have the
+            'contraction_proportion' > 0.0. The default is None, in which case all edges have the
             same probability to be contracted. The options 'inverse' and 'exponential' mean that an
             edge is sampled weighted by 1/(a * t) or e^(-a * t), respectively, where a is a
             user-defined factor.
@@ -471,7 +471,7 @@ def _select_edges_by_probability(
 def _select_edges_by_proportion(
     tree: Tree,
     p: float,
-    weighting: str,
+    weighting: str | None,
     weighting_factor: float,
     exclude_planted_edge: bool = True,
 ) -> list[tuple[TreeNode, TreeNode]]:
@@ -499,20 +499,21 @@ def _select_edges_by_proportion(
     # number of edges to be sampled
     k = round(p * len(edges))
 
-    if not weighting:
+    if weighting is None:
         return random.sample(edges, k=k)
-    else:
-        distances = [abs(u.tstamp - v.tstamp) for u, v in edges]
-        if weighting == "inverse":
-            weights = 1 / (weighting_factor * np.asarray(distances))
-        elif weighting == "exponential":
-            weights = np.exp(-weighting_factor * np.asarray(distances))
-        else:
-            raise ValueError(f"unknown mode for weighted sampling: {weighting}")
 
-        p = weights / weights.sum()
-        indices = np.random.choice(len(edges), size=k, replace=False, p=p)
-        return [edges[i] for i in indices]
+    distances = [abs(u.tstamp - v.tstamp) for u, v in edges]
+    if weighting == "inverse":
+        weights = 1 / (weighting_factor * np.asarray(distances))
+    elif weighting == "exponential":
+        weights = np.exp(-weighting_factor * np.asarray(distances))
+    else:
+        raise ValueError(f"unknown mode for weighted sampling: {weighting}")
+
+    p = weights / weights.sum()
+    indices = np.random.choice(len(edges), size=k, replace=False, p=p)
+
+    return [edges[i] for i in indices]
 
 
 def assign_losses(tree: Tree, proportion: float) -> None:
