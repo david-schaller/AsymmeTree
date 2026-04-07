@@ -3,7 +3,7 @@ import asymmetree.treeevolve as te
 
 
 # specify models
-subst_model = se.SubstModel("a", "CUSTOM", filename="../resources/subst_matrices/WAG.paml")
+subst_model = se.SubstModel("a", "WAG")
 indel_model = se.IndelModel(0.01, 0.01, length_distr=("zipf", 1.821))
 # indel_model = se.IndelModel(0.01, 0.01, length_distr=('negative_binomial', 1, 0.5))
 
