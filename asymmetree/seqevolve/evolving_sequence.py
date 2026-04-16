@@ -45,7 +45,8 @@ class EvoSeqNode(DLListNode):
         """Constructor for the EvoSeqNode class.
 
         Args:
-            value: The character at the site represented as an integer (index in the alphabet).
+            value: The character at the site represented as an integer (index in the alphabet) or
+                None for gaps.
             status: The state of the site (whether it is inherited from the parent sequence,
                 inserted, or part of the root sequence).
             site_id: The site ID, which is a unique identifier for the site across the entire tree.
@@ -78,11 +79,12 @@ class EvoSeq(DLList):
         return EvoSeqIterator(self)
 
     def __next__(self):
-        pass
+        """Raise an error if next is called on the EvoSeq object itself."""
+        raise TypeError("EvoSeq object is not an iterator. Use iter(EvoSeq) to get an iterator.")
 
     def append(
         self,
-        value: int,
+        value: int | None,
         status: State,
         site_id: int,
         parent_el: EvoSeqNode | None = None,
@@ -92,7 +94,8 @@ class EvoSeq(DLList):
         """Append a new site to the end of the evolving sequence.
 
         Args:
-            value: The character at the site represented as an integer (index in the alphabet).
+            value: The character at the site represented as an integer (index in the alphabet) or
+                None for gaps.
             status: The state of the site (whether it is inherited from the parent sequence,
                 inserted, or part of the root sequence).
             site_id: The site ID, which is a unique identifier for the site across the entire tree.
@@ -123,7 +126,7 @@ class EvoSeq(DLList):
 
     def append_left(
         self,
-        value: int,
+        value: int | None,
         status: State,
         site_id: int,
         parent_el: EvoSeqNode | None = None,
@@ -133,7 +136,8 @@ class EvoSeq(DLList):
         """Append a new site to the beginning of the evolving sequence.
 
         Args:
-            value: The character at the site represented as an integer (index in the alphabet).
+            value: The character at the site represented as an integer (index in the alphabet) or
+                None for gaps.
             status: The state of the site (whether it is inherited from the parent sequence,
                 inserted, or part of the root sequence).
             site_id: The site ID, which is a unique identifier for the site across the entire tree.
@@ -165,7 +169,7 @@ class EvoSeq(DLList):
     def insert_right_of(
         self,
         element: EvoSeqNode,
-        value: int,
+        value: int | None,
         status: State,
         site_id: int,
         parent_el: EvoSeqNode | None = None,
@@ -176,7 +180,8 @@ class EvoSeq(DLList):
 
         Args:
             element: The element to the left of the new site.
-            value: The character at the site represented as an integer (index in the alphabet).
+            value: The character at the site represented as an integer (index in the alphabet) or
+                None for gaps.
             status: The state of the site (whether it is inherited from the parent sequence,
                 inserted, or part of the root sequence).
             site_id: The site ID, which is a unique identifier for the site across the entire tree.
