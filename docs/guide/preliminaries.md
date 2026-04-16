@@ -54,7 +54,7 @@ The following distributions are available for sampling:
 | --- | --- | --- |
 | constant | `x` or `("constant", x)` | `x` must be a number |
 | uniform (continuous) | `("uniform", a, b)` | `a`<=`b` must be numbers |
-| uniform (discrete) | `("uniform_discrete", a, b)` | `a`<=`b` must be `int`s |
+| uniform (discrete) | `("discrete_uniform", a, b)` | `a`<=`b` must be `int`s |
 | gamma | `("gamma", shape, scale)` | `shape` and `scale` must be `floats`>0 |
 | gamma (mean) | `("gamma_mean", mean)` | `mean` must be a number>0, shape=1 and scale=`mean`/shape |
 | exponential | `("exponential", rate)` | `rate` must be a `float`>=0 |
