@@ -20,6 +20,8 @@ All notable changes to this project will be documented in this file.
 
 - Edges for edge contraction to generate multifurcations are now correctly sampled without
   replacement.
+- Fixed undefined variable `mean` and bounds checks falsely treating 0/0.0 as unset in
+  `sampling.py`.
 
 ### 📚 Documentation
 

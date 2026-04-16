@@ -120,14 +120,17 @@ class Sampler:
                 scale = self._params[2]
 
                 if (
-                    not isinstance(shape, float)
+                    not isinstance(shape, (int, float))
                     or shape <= 0.0
-                    or not isinstance(scale, float)
+                    or not isinstance(scale, (int, float))
                     or scale <= 0.0
                 ):
                     raise ValueError(
-                        "scale and shape parameters for gamma distribution must be floats >0.0"
+                        "scale and shape parameters for gamma distribution must be numbers >0.0"
                     )
+
+                shape = float(shape)
+                scale = float(scale)
 
                 self._distr = "gamma"
                 self.draw = self._draw_gamma
@@ -141,6 +144,7 @@ class Sampler:
                 if not isinstance(mean, (int, float)) or mean <= 0.0:
                     raise ValueError("mean of gamma distribution must be a number >0.0")
 
+                mean = float(mean)
                 self._distr = "gamma"
                 self.draw = self._draw_gamma
                 self._exp_val = mean
@@ -150,9 +154,10 @@ class Sampler:
             elif self._params[0] == "exponential":
                 rate = self._params[1]
 
-                if not isinstance(mean, float) or rate < 0.0:
-                    raise ValueError("rate must be a float >=0.0")
+                if not isinstance(rate, (int, float)) or rate < 0.0:
+                    raise ValueError("rate must be a number >=0.0")
 
+                rate = float(rate)
                 self._distr = "exponential"
                 self.draw = self._draw_exponential
                 self._exp_val = float("inf") if rate == 0.0 else 1 / rate
@@ -161,9 +166,10 @@ class Sampler:
             elif self._params[0] == "zipf":
                 a = self._params[1]
 
-                if not isinstance(a, float) or a <= 1.0:
-                    raise ValueError("parameter a for zipf distr. must be a float >1")
+                if not isinstance(a, (int, float)) or a <= 1.0:
+                    raise ValueError("parameter a for zipf distr. must be a number >1")
 
+                a = float(a)
                 # expected value is infinite for a <= 2
                 if a > 2.0:
                     self._exp_val = zeta(a - 1.0) / zeta(a)
@@ -186,9 +192,10 @@ class Sampler:
 
                 if not isinstance(r, int) or r < 1:
                     raise ValueError("parameter r must be an int and >0")
-                if not isinstance(q, float) or q <= 0 or q >= 1.0:
-                    raise ValueError("parameter q must be a float >0 and <1")
+                if not isinstance(q, (int, float)) or q <= 0 or q >= 1.0:
+                    raise ValueError("parameter q must be a number >0 and <1")
 
+                q = float(q)
                 self._distr = "negative_binomial"
                 self.draw = self._draw_neg_bin
                 self._exp_val = r * q / (1 - q)
@@ -221,7 +228,7 @@ class Sampler:
             if self._discrete:
                 x = round(x)
 
-            if (not self._min or x >= self._min) and (not self._max or x <= self._max):
+            if (self._min is None or x >= self._min) and (self._max is None or x <= self._max):
                 return x
 
     def _draw_discrete_uniform(self):
@@ -229,7 +236,7 @@ class Sampler:
         while True:
             x = np.random.randint(self._a, high=self._b) + self._shift
 
-            if (not self._min or x >= self._min) and (not self._max or x <= self._max):
+            if (self._min is None or x >= self._min) and (self._max is None or x <= self._max):
                 return x
 
     def _draw_gamma(self):
@@ -240,7 +247,7 @@ class Sampler:
             if self._discrete:
                 x = round(x)
 
-            if (not self._min or x >= self._min) and (not self._max or x <= self._max):
+            if (self._min is None or x >= self._min) and (self._max is None or x <= self._max):
                 return x
 
     def _draw_exponential(self):
@@ -254,7 +261,7 @@ class Sampler:
             if self._discrete:
                 x = round(x)
 
-            if (not self._min or x >= self._min) and (not self._max or x <= self._max):
+            if (self._min is None or x >= self._min) and (self._max is None or x <= self._max):
                 return x
 
     def _draw_zipf(self):
@@ -262,7 +269,7 @@ class Sampler:
         while True:
             x = np.random.zipf(self._a) + self._shift
 
-            if (not self._min or x >= self._min) and (not self._max or x <= self._max):
+            if (self._min is None or x >= self._min) and (self._max is None or x <= self._max):
                 return x
 
     def _draw_neg_bin(self):
@@ -270,5 +277,5 @@ class Sampler:
         while True:
             x = np.random.negative_binomial(self._r, 1 - self._q) + self._shift
 
-            if (not self._min or x >= self._min) and (not self._max or x <= self._max):
+            if (self._min is None or x >= self._min) and (self._max is None or x <= self._max):
                 return x
