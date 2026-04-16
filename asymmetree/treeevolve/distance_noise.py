@@ -186,7 +186,7 @@ def convex_linear_comb(
     D2: np.ndarray,
     alpha: float = 0.05,
     first_only: bool = False,
-) -> np.ndarray:
+) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
     """Convex linear combination of distance matrices.
 
     Returns the convex linear combinations of two distance matrices
@@ -203,7 +203,9 @@ def convex_linear_comb(
         first_only: If True, only return the disturbed first matrix.
 
     Returns:
-        The disturbed distance matrix or matrices.
+        The disturbed distance matrix or matrices as a convex linear combination of the input
+            matrices. If `first_only` is False, a tuple of the two disturbed matrices is returned.
+            If `first_only` is True, only the disturbed first matrix is returned.
 
     References:
         1. P. F. Stadler, M. Geiß, D. Schaller, A. López Sánchez, M. González Laffitte, D.
@@ -299,7 +301,7 @@ def wrong_topology_matrix(PGT: Tree) -> np.ndarray:
         v.add_child(new_child1)
         v.add_child(new_child2)
         current_leaves.extend(v.children)
-        id_counter += 1
+        id_counter += 2
 
     # implicit random bijection to original tree by random leaf order
     random_leaves = [leaf for leaf in random_tree.leaves()]
