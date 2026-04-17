@@ -6,49 +6,7 @@ We will stick to the reconciliation simulation approach, but we add the host-sym
 
 As starting point, we will simulate simple case: an epibiont evolving throughout genome reduction. We will consider only gene-to-gene interaction between homologs. and two types of interactions: redundancy and synergy.
 
-# Current structure of AsymmeTree
 
-This report is inside of the repository of Asymmetree, in a development branch. The main directory is `../`, there we can find the [main readme](../README.md) which includes links for [wiki](https://github.com/david-schaller/AsymmeTree/wiki/Manual) and [documentation](https://david-schaller.github.io/docs/asymmetree/). The following explanation is taken from the wiki.
-
-The module `asymmetree.genome.GenomeSimulation` provides functions that combine the simulation of phylogenetic trees and sequences. In particular, the class `GenomeSimulator` combines multiple steps in order to conveniently simulate whole genomes/proteomes. The (optional) output directory contains serialized trees, fasta files, and the true alignments. The gene trees and the sequences are simulated in subsequent steps using the classes' functions (i) `simulate_gene_trees(n, **kwargs)` and (ii) `simulate_sequences(subst_model, **kwargs)`.
-
-The first step (i) takes the same keyword parameters as input as the function `gene_trees()` where `n` is the number of gene families to be simulated. Thus, rates for the three event types (`dupl_rate`, `loss_rate`, `hgt_rate`), autocorrelation (`autocorr_variance`), the distribution of base rates (`base_rate_distr`) etc. can be specified.
-
-The second step (ii) simulates the sequences along the pruned part (without loss branches) of the simulated gene trees.
-
-After step (i), the `list`s of full and pruned gene trees are accessible via the attributes `true_gene_trees` and `pruned_gene_trees`, respectively. Moreover, the full gene trees are serialized into the directory 'true_gene_trees' if an output directory was specified. After step (ii), the `list`s of sequence `dict`s are accessible via the attribute `sequence_dicts`.
-
-Example usage:
-
-```python
-from asymmetree.treeevolve import species_tree_n_age
-from asymmetree.genome import GenomeSimulator
-from asymmetree.seqevolve import SubstModel, IndelModel
-
-# simulate the common species tree
-S = species_tree_n_age(10, 1.0, model='yule')
-
-# specify models for sequence evolution
-subst_model = SubstModel('a', 'JTT')
-indel_model = IndelModel(0.01, 0.01, length_distr=('zipf', 1.821))
-
-# initialy GenomeSimulator instance
-gs = GenomeSimulator(S, outdir='simulation_directory')
-
-# simulate 50 gene trees along the species tree S (and write them to file)
-gs.simulate_gene_trees(50, dupl_rate=1.0, loss_rate=0.5,
-                       base_rate=('gamma', 1.0, 1.0),
-                       prohibit_extinction='per_species')
-
-# simulate sequences along the gene trees
-gs.simulate_sequences(subst_model,
-                      indel_model=indel_model,
-                      het_model=None,
-                      length_distr=('constant', 200))
-
-# results have been written to directories 'true_gene_trees',
-# 'fasta_files' and 'alignments' in 'path/to/genome_directory'
-```
 
 # Graphs and phylogenies preliminaries
 
@@ -132,233 +90,92 @@ In a first step, we simulate an holobiont scenario $(T_H, T_S, t', \sigma',\mu',
 
 $\tau_A$ is constructed by coping $\tau_S$ and $\tau_H$ and adding $\tau_A(0_A)=1+\epsilon$. Note that $\tau_S(0_S) = \tau_H(0_H) = 1 = \tau_A(\rho_S)$. In a similar way, we construct a map $\mu_A$, with $\mu_A(\rho_A)= \rho_A$ and $\mu_A(0_A)= 0_A$.
 
-Now we can use step (2) of AsymmeTree to generate again...
+Now we will generate a gene tree $T_G$ evolving along $T_A$ considering two interactions: (I) metabolic redundancy when both guest and host carry the same gene, and (II) co-symbiosis, which is required to have horizontal gene transfer. To perform this simulation, we will generate a modification of step (2) of asymmetree:
 
+> Gene trees are simulated along a species tree using a constant-rate birth-death process [[27](https://www.mdpi.com/2674-113X/1/3/13#B27-software-01-00013)] where rates for the four types of events duplication, loss, HGT, and  gene conversion are user-defined. To this end, the user must specify  rates for the four event types which serve as parameters for exponential distributions from which waiting times until the next events are drawn. By setting the respective rate to zero, an event type is disabled  completely. The simulation starts with a single gene in the root of the species tree and proceeds stepwise in time towards the leaves by drawing waiting  times until the next event and lineages in which these events take place. At each point in the simulation, the total rate is given by the  sum of the four event types over the currently existing lineages in the  gene tree under construction. Hence, the simulation of all gene lineages progresses synchronously. This avoids difficulties arising by the fact  that some processes, such as replacing HGT as introduced below,  introduce dependencies between the gene lineages. In particular, with  this method, it is not necessary that simulated branches have to be  invalidated as a consequence of an event in a lineage that is processed  later in the simulation as it, e.g., occurs in [[26](https://www.mdpi.com/2674-113X/1/3/13#B26-software-01-00013)].
+>
+> In addition to the randomly-occurring events, speciations and species  extinctions (which are determined by the species tree and therefore  fixed) are included as branching and loss events, respectively, and  affect all currently existing lineages in the respective species  lineage. In case of a speciation, each offspring species receives one  copy of each original gene lineage. On the other hand, the extinction of a species leads to loss of all of its gene lineages. If a waiting time  for a duplication, loss, or HGT event is drawn such that the next event  in the species tree occurs earlier, then this waiting time is discarded, the time is updated to the next species tree event, and the latter is  executed.
 
+So the simulation first Initializes $T_G$ as a single node $0_G$ with $\mu(0_G)=0_A$, and add it to the list of 'growing branches', then the the branches grow in time and number by sampling 'waiting times' and evolutionary events from a distribution defined by user-provided rates and the number of existing growing branches.
 
-1. Phylogenetic Reconciliation Approach
+The improvement we purpose is to update the rates of the events considering intersections: in a given iteration of the simulation we have an incomplete $T_G$ where the non-loss leaves $L^0=\{x\in L(T_G) \text{ such that } t(x)\not=\times\}$ are the collection of growing branches.
 
-In this model, "coexistence" is often represented by the mapping of  multiple gene trees into a single symbiont or species tree to infer  shared history. 
+1. We will increase loss probability for genes residing in the same host; given two genes $x_0,x_1\in L^0$, we increase loss probability whenever
 
-- **TALE Framework**: TALE uses a Monte Carlo algorithm to sample evolutionary scenarios  across three nested levels (Host, Symbiont, and Gene). It accounts for **horizontal gene transfer (HGT)** and **host switches**, which are the biological precursors to coexistence.
-- **DTL Model**: The core mathematical engine is the **Duplication-Transfer-Loss (DTL)** model. Coexistence is implicitly modeled when two gene lineages map to  the same species branch without a speciation event, indicating they  occupied that "genomic niche" simultaneously.
-- **Simulation vs. Inference**: TALE is primarily an *inference* tool. To *simulate* based on coexistence, you might look into [ALE (Amalgamated Likelihood Estimation)](https://pubmed.ncbi.nlm.nih.gov/24033262/) or Zombi, which can simulate gene trees within species trees with specific transfer and loss rates. 
+   - **(A0)** $\mu(x_0)=\mu(x_1)$      # Both genes are in the same species
+   - **(A1)** $\mu'(x_0)=\mu'(x_1)$    # Genes are in different species, same host
+   - **(A2)** $\mu(x_0)= \mu'(x_1)$     # One gene in in host, the other is in a symbiont of such a host.
 
-- 
-- Game Theory for Gene Interactions
+   We should weight differentially those interactions.
 
-Game theory provides the mathematical structure to explain why certain genes "coexist" (cooperate) or why some are lost (conflict).
+   For the case (A2) we can introduce an asymmetry by setting a category for gene trees: (S-keeps) where $x_0$ is lost with higher probability, or (H-keeps)  where $x_1$ is lost with higher probability
 
-- **Replicator Dynamics**: Used to track the frequency of genes or microbes within the holobiont  population. If two genes provide a synergistic benefit (e.g.,  cross-feeding in a metabolic pathway), their interaction is a **Cooperative Game**.
-- **Nash Equilibrium**: In a holobiont, a stable state of gene coexistence can be viewed as a  Nash Equilibrium where neither the host nor the microbe can improve  their fitness by unilaterally losing or acquiring a gene.
-- **Conflict and Cooperation**: Interactions between host and symbiont genes can be modeled as a **Prisoner's Dilemma**. For instance, a symbiont may "cheat" by losing a gene that benefits the host but is costly to maintain. Game theory models predict the  conditions (like vertical transmission) under which cooperation (gene  retention) is the stable strategy. 
+2. We will decrease transfer probability between species residing in different hots
 
-Comparison of Models
+   Given a gene $x_0\in L^0$ together with the corresponding map $y_0=\mu(x_0)$, and a coexisting branch $y_1\in E(T_A)$, which is a possible recipient, we decrease transfer probability whenever:
 
-Component 
+   - **(A3)** $\mu'(y_0)\not=\mu'(y_1)$
 
-|                        | Reconciliation (e.g., TALE)          | Game Theory (EGT)                   |
-| ---------------------- | ------------------------------------ | ----------------------------------- |
-| **Primary Goal**       | Reconstruct history (DTL events)     | Predict stable strategies (ESS)     |
-| **Mathematical Basis** | Maximum Parsimony / Likelihood       | Payoff Matrices / Replicator Eqs    |
-| **Coexistence View**   | Physical presence in the same branch | Functional stability and synergy    |
-| **Key Limitation**     | Doesn't model "why" a gene is kept   | Hard to map to specific phylogenies |
+# AI evaluation of the proposal
 
-----
+The proposal is conceptually compatible with AsymmeTree, but it is not a small extension of the current API. The present implementation is centered on a single host tree for the gene simulation, with event sampling handled in `asymmetree/treeevolve/genes.py` by `GeneTreeSimulator`. Because of that, a true three-level model will need an explicit representation of the host-symbiont structure and additional state on each active gene branch, not only new rate parameters.
 
-**Deeper description**
+The strongest part of the proposal is that it reuses the existing birth-death simulation logic and modifies two natural control points: loss sampling and HGT recipient selection. The main technical risk is model clarity: cases (A0)-(A3) are meaningful, but they should be translated into precise per-branch or per-pair weighting rules before coding, otherwise the simulator will become hard to validate and test. A staged implementation is advisable: first support a combined host-symbiont tree/state mapping, then add interaction-weighted loss, and only afterwards add host-aware transfer penalties.
 
-This is a sophisticated setup. You are essentially modeling 
-
-**reconstructive evolution** where the payoff matrix dictates the "transition probabilities" for your reconciliation model.
-
-In an epibiont (a guest living on the surface of a host), the proximity is high, but the guest usually maintains a degree of metabolic autonomy.  To simulate this using game theory, we can define the payoffs based on 
-
-Metabolic Cost (
-
-![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)
-
-**)** and 
-
-Fitness Benefit (
-
-![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)
-
-**)**.
-
-1. The Payoff Matrix (Gene Coexistence Game)
-
-We can model the interaction between a host gene (
-
-![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)
-
-) and a guest homolog (
-
-![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)
-
-) as a symmetric or asymmetric game.
-
-|      | Guest Keeps (![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==) |
-| ---- | ------------------------------------------------------------ |
-|      |                                                              |
-
-| )    | Guest Loses (![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==) |
-| ---- | ------------------------------------------------------------ |
-|      |                                                              |
-
-| )                                                            |
-| ------------------------------------------------------------ |
-| **Host Keeps (![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)** |
-
-| **)** | **Scenario A (Redundancy):** ![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==) |
-| ----- | ------------------------------------------------------------ |
-|       |                                                              |
-
-![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)
-**Scenario B (Synergy):**
-
-![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)
-
-![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)
-
-|      | **Host Solo:** ![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==) |
-| ---- | ------------------------------------------------------------ |
-|      |                                                              |
-
-![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)
-
-|                                                              |
-| ------------------------------------------------------------ |
-| **Host Loses (![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)** |
-
-| **)** | **Guest Solo:** ![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==) |
-| ----- | ------------------------------------------------------------ |
-|       |                                                              |
-
-![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)
-
-|      | **Null:** ![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==) |
-| ---- | ------------------------------------------------------------ |
-|      |                                                              |
-
-![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)
-
-- **Scenario A (Redundancy):** If the benefit 
-
-  ![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)
-
- is fixed, keeping both genes is inefficient because of the double cost (
-
-![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)
-
-![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)
-
-). This drives the system toward a **Nash Equilibrium** at 
-
-![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)
-
-![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)
-
- or 
-
-![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)
-
-![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)
-
-, leading to genome reduction.
-
-**Scenario B (Synergy):** A synergy term (
-
-![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)
-
-) is added. If 
-
-![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)
-
-![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)
-
-, the equilibrium shifts to 
-
-![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)
-
-![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)
-
-- , and both genes are conserved.
-- Implementation in the Simulation
-
-To integrate this into a reconciliation framework (like a TALE-like simulation), you can use the payoffs to calculate the **Transfer/Loss probabilities** at each node of your tree:
-
-(i) Gene lost in Host / (ii) Gene lost in Guest
-
-Instead of a fixed rate 
-
-![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)
-
-, your loss probability 
-
-![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)
-
-![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==) becomes a function of the payoff:
-
-![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)
-
-In Scenario A, the payoff for "Keep" is low relative to the cost, making 
-
-![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)
-
-![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==) high. Genome reduction in the epibiont is usually faster because the guest has a smaller effective population size (
-
-![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)
-
-), making it more susceptible to **Muller's Ratchet** (stochastic gene loss).
-
-(iii) Gene Transfer (HGT)
-
-Transfer can be modeled as a move to reach a higher payoff state. If the Host loses a vital gene (
-
-![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)
-
-), the pressure for a Guest-to-Host transfer increases to restore the 
-
-![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)
-
- benefit to the holobiont unit.
-
-3. Suggested Workflow for Your Simulation
-
-Since TALE is an inference tool, you might need a custom script to *generate* the data.
-
-1. **Initialize:** Create a Host tree and a Guest (epibiont) tree with an initial set of homolog genes.
-
-2. **Iterate:** At each internal branch, calculate the "Holobiont Fitness" based on your matrix.
-
-3. **Decide:**
-
-   - If **Scenario A**: Randomly trigger a Loss event in either tree (weighted by 
-
-     ![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)
-
-).
-
-If **Scenario B**: Apply a "Conservation Bonus" that lowers the Loss probability to near zero.
-
-If **Transfer**: Use a **Poisson process** where the rate 
-
-![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)
-
-1. -  is scaled by the fitness deficit of the receiving partner.
-
-**A quick tip for the "Naive" Matrix:**
-Epibionts often lose genes related to **biosynthesis** (amino acids) but keep genes for **attachment and defense**. You might want to assign different 
-
-![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)
-
- and 
-
-![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)
-
- values based on the *category* of the gene to see if your simulation produces realistic genome reduction patterns.
 
 # Implementation
 
-## Standards to follow
+## Current structure of AsymmeTree
+
+This report is inside of the repository of Asymmetree, in a development branch. The main directory is `../`, there we can find the [main readme](../README.md) which includes links for [wiki](https://github.com/david-schaller/AsymmeTree/wiki/Manual) and [documentation](https://david-schaller.github.io/docs/asymmetree/). The following explanation is taken from the wiki.
+
+The module `asymmetree.genome.GenomeSimulation` provides functions that combine the simulation of phylogenetic trees and sequences. In particular, the class `GenomeSimulator` combines multiple steps in order to conveniently simulate whole genomes/proteomes. The (optional) output directory contains serialized trees, fasta files, and the true alignments. The gene trees and the sequences are simulated in subsequent steps using the classes' functions (i) `simulate_gene_trees(n, **kwargs)` and (ii) `simulate_sequences(subst_model, **kwargs)`.
+
+The first step (i) takes the same keyword parameters as input as the function `gene_trees()` where `n` is the number of gene families to be simulated. Thus, rates for the three event types (`dupl_rate`, `loss_rate`, `hgt_rate`), autocorrelation (`autocorr_variance`), the distribution of base rates (`base_rate_distr`) etc. can be specified.
+
+The second step (ii) simulates the sequences along the pruned part (without loss branches) of the simulated gene trees.
+
+After step (i), the `list`s of full and pruned gene trees are accessible via the attributes `true_gene_trees` and `pruned_gene_trees`, respectively. Moreover, the full gene trees are serialized into the directory 'true_gene_trees' if an output directory was specified. After step (ii), the `list`s of sequence `dict`s are accessible via the attribute `sequence_dicts`.
+
+Example usage:
+
+```python
+from asymmetree.treeevolve import species_tree_n_age
+from asymmetree.genome import GenomeSimulator
+from asymmetree.seqevolve import SubstModel, IndelModel
+
+# simulate the common species tree
+S = species_tree_n_age(10, 1.0, model='yule')
+
+# specify models for sequence evolution
+subst_model = SubstModel('a', 'JTT')
+indel_model = IndelModel(0.01, 0.01, length_distr=('zipf', 1.821))
+
+# initialy GenomeSimulator instance
+gs = GenomeSimulator(S, outdir='simulation_directory')
+
+# simulate 50 gene trees along the species tree S (and write them to file)
+gs.simulate_gene_trees(50, dupl_rate=1.0, loss_rate=0.5,
+                       base_rate=('gamma', 1.0, 1.0),
+                       prohibit_extinction='per_species')
+
+# simulate sequences along the gene trees
+gs.simulate_sequences(subst_model,
+                      indel_model=indel_model,
+                      het_model=None,
+                      length_distr=('constant', 200))
+
+# results have been written to directories 'true_gene_trees',
+# 'fasta_files' and 'alignments' in 'path/to/genome_directory'
+```
+
+## Plan for modification of the code
+
+1. Define how host and symbiont information will be represented during simulation, and add the needed data structures for a three-level scenario.
+2. Extend `GeneTreeSimulator` in `asymmetree/treeevolve/genes.py` so active gene branches carry both species and host-context information.
+3. Add configurable interaction parameters for cases (A0), (A1), (A2), and (A3).
+4. Modify loss-event sampling so loss probabilities can be increased for interacting coexisting genes in the same host context.
+5. Modify HGT recipient sampling so transfers across different hosts are down-weighted.
+6. Expose the new options through the public simulation entry points and document them.
+7. Add tests for the new mappings, weighted loss behavior, and host-aware HGT behavior.
+
