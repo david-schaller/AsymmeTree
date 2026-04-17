@@ -125,20 +125,20 @@ D_h_trees
 #############################
 # Formatting recnciliations #
 #############################
-def improve_host_labels(T, preffix):
+def improve_host_labels(T, prefix):
     T.old2new_label= dict()
-    for X in T:
+    for idx, X in enumerate(T):
         oldlabel= T.nodes[X]['label']
-        newlabel= f'{preffix}{oldlabel}'
+        newlabel= f'{prefix}_{idx}_{oldlabel}'
         T.nodes[X]['label']= newlabel
 
         T.old2new_label[oldlabel]= newlabel
 
     return None
 
-def improve_guest_labels(T_g, T_h, g_preffix):
+def improve_guest_labels(T_g, T_h, g_prefix):
     T_g.old2new_label= dict()
-    for X_g in T_g:
+    for idx, X_g in enumerate(T_g):
         g_oldlabel= T_g.nodes[X_g]['label']
         g_map= T_g.nodes[X_g]['reconc']
 
@@ -147,11 +147,11 @@ def improve_guest_labels(T_g, T_h, g_preffix):
             if g_map.startswith('('):
                 g_map= g_map.split(', ')[1][:-1]
             h_label= T_h.old2new_label[g_map]
-            g_newlabel= f'{g_preffix}{g_oldlabel}_{h_label}'
+            g_newlabel= f'{g_prefix}_{idx}_{g_oldlabel}_{h_label}'
 
             T_g.nodes[X_g]['label']= g_newlabel
             T_g.nodes[X_g]['reconc']= h_label
-            T_g.old2new_label[g_oldlabel]= g_newlabel
+            T_g.old2new_label[(idx, g_oldlabel)]= g_newlabel
 
     return None
 
@@ -177,8 +177,8 @@ def improve_row_labels(row, D_aux):
     hostTree_id= row.name.split('_')[0]
     T_host= D_aux[hostTree_id]
 
-    improve_guest_labels(row.T_symbiont_unprunned, T_host, 'G')
-    improve_guest_labels(row.T_symbiont_prunned, T_host, 'G')
+    improve_guest_labels(row.T_symbiont_unprunned, T_host, f'G_{hostTree_id}')
+    improve_guest_labels(row.T_symbiont_prunned, T_host, f'G_{hostTree_id}')
 
     nhx_g_u= get_nhx(row.T_symbiont_unprunned, row.T_symbiont_unprunned.root, name_attr='label')
     nhx_g_p= get_nhx(row.T_symbiont_prunned, row.T_symbiont_unprunned.root, name_attr='label')
@@ -219,7 +219,8 @@ D_aux= D_h_trees.map(read_nhx)
 df_aux= df_scenarios.map(read_nhx)
 
 # Change gene and species names and simplify reconciliation format
-D_aux.map(lambda T: improve_host_labels(T, 'H'))
+for hostTree_id, T in D_aux.items():
+    improve_host_labels(T, f'H_{hostTree_id}')
 df_aux= df_aux.apply(lambda row: improve_row_labels(row, D_aux), axis= 1)
 df_aux
 
@@ -235,4 +236,3 @@ df_aux[['T_symbiont_unprunned_simple', 'T_symbiont_prunned_simple']]
 
 # simplified, non dated format
 df_aux[['T_symbiont_unprunned_simple_dated', 'T_symbiont_prunned_simple_dated']]
-
