@@ -1,0 +1,1682 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Simulation of phylogenetic trees, sequences and genomes">
+      
+      
+      
+        <link rel="canonical" href="https://david-schaller.github.io/AsymmeTree/dev/guide/sequence_simulation/">
+      
+      
+        <link rel="prev" href="../gene_trees/">
+      
+      
+        <link rel="next" href="../genome_simulation/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Sequence Simulation - AsymmeTree</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#sequence-simulation" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="AsymmeTree" class="md-header__button md-logo" aria-label="AsymmeTree" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            AsymmeTree
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Sequence Simulation
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/david-schaller/AsymmeTree" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    david-schaller/AsymmeTree
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../installation/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Installation
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+  
+  User Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/treeevolve/" class="md-tabs__link">
+          
+  
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../citation/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Citation
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="AsymmeTree" class="md-nav__button md-logo" aria-label="AsymmeTree" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    AsymmeTree
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/david-schaller/AsymmeTree" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    david-schaller/AsymmeTree
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../preliminaries/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Preliminaries
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phylogenetic Tree Simulation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Phylogenetic Tree Simulation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phylogenetic_trees/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../species_trees/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Species Tree Simulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../gene_trees/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gene Tree Simulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sequence Simulation
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sequence Simulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#substitution-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Substitution model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#indel-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Indel model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#heterogeneity-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Heterogeneity model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-class-evolver" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The class Evolver
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../genome_simulation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Genome Simulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../additional_features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Additional features
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../visualization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Visualization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/treeevolve/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    treeevolve
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/seqevolve/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    seqevolve
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/genome/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    genome
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/analysis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/utils/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    utils
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/io/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    io
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/visualization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    visualization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../citation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Citation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#substitution-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Substitution model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#indel-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Indel model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#heterogeneity-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Heterogeneity model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-class-evolver" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The class Evolver
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="sequence-simulation">Sequence simulation<a class="headerlink" href="#sequence-simulation" title="Permanent link">&para;</a></h1>
+<p>The subpackage <code>asymmetree.seqevolve</code> contains modules for the simulation of nucleotide or amino
+acid sequences along a phylogenetic tree using time-continuous Markov chains, as usually applied
+for this purpose (for textbooks, see e.g. Felsenstein 2004, Yang 2006, Yang 2014).</p>
+<p>These models typically take a substitution-rate matrix and the equilibrium frequencies of the
+states (i.e. the nucleotides or amino acids as input).
+Moreover, insertions and deletions (indels) and heterogeneity among the sites can be simulated.</p>
+<p>A typical simulation therefore is run with the following components:</p>
+<ul>
+<li>substitution model (mandatory; model for nucleotides e.g. "JC69", "K80", "GTR"; for amino acids
+  "DAYHOFF", "BLOSUM62", "JTT", "WAG", "LG")</li>
+<li>indel model (based on the tool <em>Dawg</em> by Cartwright 2005)</li>
+<li>heterogeneity model (constant / sitewise / number of classes; proportion of invariant sites)</li>
+</ul>
+<p>Accordingly, the class <code>Evolver</code> in <code>asymmetree.seqevolve.evolver</code> requires the parameter
+<code>subst_model</code> for its initialization, and has optional parameter <code>indel_model</code> and <code>het_model</code>.</p>
+<p>Functions for outputting the true alignment are provided for several formats including phylip and
+clustal.</p>
+<p>Example usage:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tralda.datastructures</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tree</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asymmetree.seqevolve</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">se</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">T</span> <span class="o">=</span> <span class="n">Tree</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;path/to/file.json&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="c1"># specify models</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">subst_model</span> <span class="o">=</span> <span class="n">se</span><span class="o">.</span><span class="n">SubstModel</span><span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;JTT&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="n">indel_model</span> <span class="o">=</span> <span class="n">se</span><span class="o">.</span><span class="n">IndelModel</span><span class="p">(</span><span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">,</span> <span class="n">length_distr</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;zipf&quot;</span><span class="p">,</span> <span class="mf">1.821</span><span class="p">))</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="c1"># initialize Evolver instance</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="n">evolver</span> <span class="o">=</span> <span class="n">se</span><span class="o">.</span><span class="n">Evolver</span><span class="p">(</span><span class="n">subst_model</span><span class="p">,</span> <span class="n">indel_model</span><span class="o">=</span><span class="n">indel_model</span><span class="p">)</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="c1"># simulate sequences along the tree</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="n">evolver</span><span class="o">.</span><span class="n">evolve_along_tree</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">start_length</span><span class="o">=</span><span class="mi">150</span><span class="p">)</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="c1"># print the node labels and the corresponding sequences</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="k">for</span> <span class="n">node</span><span class="p">,</span> <span class="n">sequence</span> <span class="ow">in</span> <span class="n">evolver</span><span class="o">.</span><span class="n">sequences</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">subst_model</span><span class="o">.</span><span class="n">to_sequence</span><span class="p">(</span><span class="n">sequence</span><span class="p">))</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="c1"># construct the true alignment (sequences with gaps) and write it to file</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="n">evolver</span><span class="o">.</span><span class="n">true_alignment</span><span class="p">(</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>    <span class="n">write_to</span><span class="o">=</span><span class="s2">&quot;path/to/alignment.phylip&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>    <span class="n">alignment_format</span><span class="o">=</span><span class="s2">&quot;phylip&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="p">)</span>
+</code></pre></div>
+<h2 id="substitution-model">Substitution model<a class="headerlink" href="#substitution-model" title="Permanent link">&para;</a></h2>
+<p>A substitution model usually comprises an exchangeability matrix S and a vector π containing the
+equilibrium frequencies of the alphabet A of nucleobases, amino acids et cetera.
+From this, the rate matrix Q can be computed as SΠ where Π=diag(π<sub>1</sub>,...,π<sub>|A|</sub>)
+(Yang 2006).
+The substitution probability matrix, in turn, is given by P=e<sup>Qt</sup> which is computed
+efficiently by AsymmeTree using matrix diagonalization.</p>
+<p>The following models are available:</p>
+<p>Nucleotide models: <code>"n"</code>, amino acid models: <code>"a"</code>, codon models are not supported at the moment</p>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Type</th>
+<th>Reference</th>
+<th>required parameters (<code>kwargs</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>"JC69"</code></td>
+<td><code>"n"</code>/<code>"a"</code></td>
+<td>Jukes &amp; Cantor 1969</td>
+<td></td>
+</tr>
+<tr>
+<td><code>"K80"</code></td>
+<td><code>"n"</code></td>
+<td>Kimura 1980</td>
+<td><code>kappa</code> (transition/transversion rate ratio)</td>
+</tr>
+<tr>
+<td><code>"GTR"</code></td>
+<td><code>"n"</code></td>
+<td>General time-reversable model (GTR), Tavare 1986</td>
+<td><code>abcdef</code> (list of rates (a) C&#8596;T, (b) A&#8596;T, (c) G&#8596;T, (d) A&#8596;C, (e) C&#8596;G, (f) A&#8596;G); <code>f</code> (list of equilibrium frequencies A/C/G/T)</td>
+</tr>
+<tr>
+<td><code>"DAYHOFF"</code></td>
+<td><code>"a"</code></td>
+<td>Dayhoff 1978</td>
+<td></td>
+</tr>
+<tr>
+<td><code>"BLOSUM62"</code></td>
+<td><code>"a"</code></td>
+<td>BLOSUM62, Henikoff 1992</td>
+<td></td>
+</tr>
+<tr>
+<td><code>"JTT"</code></td>
+<td><code>"a"</code></td>
+<td>Jones, Taylor &amp; Thornton 1992</td>
+<td></td>
+</tr>
+<tr>
+<td><code>"WAG"</code></td>
+<td><code>"a"</code></td>
+<td>Whelan &amp; Goldman 2001</td>
+<td></td>
+</tr>
+<tr>
+<td><code>"LG"</code></td>
+<td><code>"a"</code></td>
+<td>Le &amp; Gascuel 2008</td>
+<td></td>
+</tr>
+<tr>
+<td><code>"CUSTOM"</code></td>
+<td><code>"n"</code>/<code>"a"</code></td>
+<td></td>
+<td><code>filename</code> (path to a file with a model in PAML format)</td>
+</tr>
+</tbody>
+</table>
+<p>Note that a custom substitution model can be specified via <code>model_name="CUSTOM"</code>.
+In this case, the path to the model in PAML format (Yang 1997) must be supplied.
+Moreover, the model type (<code>"n"</code>/<code>"a"</code>) must fit this model.</p>
+<p>Example usage:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">asymmetree.seqevolve</span><span class="w"> </span><span class="kn">import</span> <span class="n">SubstModel</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1"># non-empirical model</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="n">subst_model_jc69</span> <span class="o">=</span> <span class="n">SubstModel</span><span class="p">(</span><span class="s2">&quot;n&quot;</span><span class="p">,</span> <span class="s2">&quot;K80&quot;</span><span class="p">,</span> <span class="n">kappa</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="c1"># empirical model</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="n">subst_model_jtt</span> <span class="o">=</span> <span class="n">SubstModel</span><span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;JTT&quot;</span><span class="p">)</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="c1"># custom model</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="n">subst_model_custom</span> <span class="o">=</span> <span class="n">SubstModel</span><span class="p">(</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>    <span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;CUSTOM&quot;</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s2">&quot;path/to/custom.paml&quot;</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="p">)</span>
+</code></pre></div>
+<h2 id="indel-model">Indel model<a class="headerlink" href="#indel-model" title="Permanent link">&para;</a></h2>
+<p>Insertions and deletions are modeled as in <em>Dawg</em> (Cartwright 2005).
+An indel model requires sitewise rates for insertion <code>insertion_rate</code> and deletion <code>deletion_rate</code>.</p>
+<p>The following keyword parameters are available:</p>
+<table>
+<thead>
+<tr>
+<th>Parameter (with default value)</th>
+<th>Description and type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>length_distr=("zipf", 1.821)</code></td>
+<td>Distribution of indel length, the default value is a Zipf distribution with empirically observed parameters (Chang 2004).</td>
+</tr>
+<tr>
+<td><code>min_length=1</code></td>
+<td>Minimal value (<code>int</code>) at which the specified distribution is truncated, must be less than the expected value of the distribution, <code>None</code> means no limit.</td>
+</tr>
+<tr>
+<td><code>max_length=None</code></td>
+<td>Maximal value (<code>int</code>) at which the specified distribution is truncated, must be greater than the expected value of the distribution, <code>None</code> means no limit.</td>
+</tr>
+</tbody>
+</table>
+<p>For available length distributions and their syntax see below.
+A zipf or negative binomial distribution are typically used for this purpose
+(Cartwright 2005, Dalquen 2012).</p>
+<p>Example usage:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">asymmetree.seqevolve</span><span class="w"> </span><span class="kn">import</span> <span class="n">IndelModel</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="c1"># sitewise insertion rate 0.01 and deletion rate 0.008</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">indel_model</span> <span class="o">=</span> <span class="n">IndelModel</span><span class="p">(</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.008</span><span class="p">,</span> <span class="n">length_distr</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;zipf&quot;</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">)</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="p">)</span>
+</code></pre></div>
+<h2 id="heterogeneity-model">Heterogeneity model<a class="headerlink" href="#heterogeneity-model" title="Permanent link">&para;</a></h2>
+<p>Selective pressure usually varies among the sites of a sequence under evolution.
+To model this, rate factors r for single sites or groups of sites are commonly drawn from a Gamma
+distribution (+Γ) with mean 1 and parameter α (Cartwright 2005, Fletcher 2009, Dalquen 2012).
+The rate matrix rQ is then used instead of Q.
+Note that smaller values for α correspond to higher heterogeneity.</p>
+<p>AsymmeTree supports two modes of the +Γ-model.
+You can specify a number of classes to which the sites are assigned randomly and uniformly
+distributed.
+Sites of the same class share a common factor r.
+The other possibility is a sitewise heterogeneity, i.e., every site has its own rate.
+In both cases, the rate or class membership is inherited from the parent sites during the evolution
+along a tree.
+Note that the sitewise mode is expected to have a longer running time.</p>
+<p>An other aspect of among site heterogeneity is the modeling of invariant sites (+I), i.e., sites
+that never mutate at all as a result of very strong selective pressure.
+The (expected) proportion p of invariant sites can be specified by the user,
+and sites are assigned as <code>"invariant"</code> with probability p.
+Note that p&gt;0 affects the overall substitution rate.
+In other words, the rates of the non-invariant sites are <strong>not</strong> adjusted to compensate the
+decreased number of expected substitution over all sites.</p>
+<p>The following keyword parameters are available:</p>
+<table>
+<thead>
+<tr>
+<th>Parameter (with default value)</th>
+<th>Description and type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>alpha</code></td>
+<td>Parameter α of the Gamma distribution (<code>float</code>).</td>
+</tr>
+<tr>
+<td><code>classes=5</code></td>
+<td>Number of classes; sites in the same class share the same rate factor (<code>int</code>).</td>
+</tr>
+<tr>
+<td><code>sitewise=False</code></td>
+<td>If <code>True</code>, factors are drawn sitewise; the number of classes is ignored in this case (<code>bool</code>).</td>
+</tr>
+<tr>
+<td><code>invariant=0.0</code></td>
+<td>(Expected) proportion of invariant sites (<code>float</code>).</td>
+</tr>
+</tbody>
+</table>
+<p>Note that the +I-model can be used without the +Γ-model by setting <code>classes=1</code> (the single class
+will have a factor of 1) and <code>"invariant"</code> to some proportion greater than 0.</p>
+<p>Example usage:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">asymmetree.seqevolve</span><span class="w"> </span><span class="kn">import</span> <span class="n">HetModel</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="c1"># +G</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">het_model_g</span>  <span class="o">=</span> <span class="n">HetModel</span><span class="p">(</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="c1"># +G +I</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="n">het_model_gi</span> <span class="o">=</span> <span class="n">HetModel</span><span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">sitewise</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">invariant</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="c1"># +I (value of alpha is irrelevant)</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="n">het_model_i</span>  <span class="o">=</span> <span class="n">HetModel</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">invariant</span><span class="o">=</span><span class="mf">0.25</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="the-class-evolver">The class Evolver<a class="headerlink" href="#the-class-evolver" title="Permanent link">&para;</a></h2>
+<p>The class <code>Evolver</code> in the module <code>asymmetree.seqevolve.evolver</code> evolves a sequence according to
+the specified models (see previous sections) along a phylogenetic tree.
+In AsymmeTree, the <code>dist</code> attribute of the vertex v in an edge uv of the tree (u is closer to the
+root) is always used as the <strong>expected number of substitutions</strong> along this edge.
+Thus, PAM distances as e.g. used optionally in <em>ALF</em> (Dalquen 2012) are not supported.
+The <code>dist</code> attribute is also used as the duration of the Markov process in which insertions and
+deletions are drawn.</p>
+<p>The following parameters are available for initialization:</p>
+<table>
+<thead>
+<tr>
+<th>Parameter (with default value)</th>
+<th>Description and type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>subst_model</code></td>
+<td>Substitution model (<code>SubstModel</code>)</td>
+</tr>
+<tr>
+<td><code>indel_model=None</code></td>
+<td>Model for insertions and deletions (<code>IndelModel</code>).</td>
+</tr>
+<tr>
+<td><code>het_model=None</code></td>
+<td>Model for among site heterogeneity and invariant sites (<code>HetModel</code>).</td>
+</tr>
+<tr>
+<td><code>gillespie="auto"</code></td>
+<td>If <code>True</code>, the Gillespie algorithm is used for the substitution process instead of the computation of P=e<sup>Qt</sup> (<code>bool</code>); the default is "auto", in which case the exchange probability matrix is used except if rate heterogeneity is enabled.</td>
+</tr>
+</tbody>
+</table>
+<p>Once the <code>Evolver</code> is initialized, its function <code>evolve_along_tree(tree)</code> can be called to evolve a sequence along a tree.</p>
+<p>The following parameters are available for this function:</p>
+<table>
+<thead>
+<tr>
+<th>Parameter (with default value)</th>
+<th>Description and type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tree</code></td>
+<td>Phylogenetic tree with <code>dist</code> attributes set (<code>Tree</code>).</td>
+</tr>
+<tr>
+<td><code>start_length=200</code></td>
+<td>Length of the root sequence which is randomly drawn from the equilibrium frequencies in the specified substitution model (<code>int</code>).</td>
+</tr>
+<tr>
+<td><code>start_seq=None</code></td>
+<td>Root sequence; must be compatible with the specified substitution model (<code>model_type="n"</code>/<code>"a"</code>); if supplied, the <code>start_length</code> attribute is ignored (<code>str</code>).</td>
+</tr>
+</tbody>
+</table>
+<p>The sequences of a simulation run are returned by this function (and also available via the
+attribute <code>sequences</code> as long as the function has not been called again), which is a <code>dict</code>
+containing the nodes (inner and leaf nodes) as keys and instances of type <code>EvoSeq</code> as values.
+The latter can be converted into <code>str</code> using <code>subst_model.to_sequence(evo_seq)</code>.
+In addition, the <code>str</code> representations of the simulated sequences can be obtained and written to
+file (in fasta format) using the functions <code>get_sequences()</code> and <code>write_sequences()</code>, resp., of
+an <code>Evolver</code> instance.</p>
+<p>The function <code>true_alignment()</code> can be used to compute (and optionally write into a file) the
+"true" alignment of a simulation run.</p>
+<p>The following parameters are available for this function:</p>
+<table>
+<thead>
+<tr>
+<th>Parameter (with default value)</th>
+<th>Description and type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>include_inner=True</code></td>
+<td>If <code>True</code>, include also inner nodes in the alignment; otherwise only sequences of leaf nodes are aligned (<code>bool</code>).</td>
+</tr>
+<tr>
+<td><code>write_to=None</code></td>
+<td>Path and filename for the output (<code>str</code>).</td>
+</tr>
+<tr>
+<td><code>alignment_format="phylip"</code></td>
+<td>Format of the alignment file; available are <code>"phylip"</code>, <code>"clustal"</code>, and <code>"pretty"</code> (<code>str</code>).</td>
+</tr>
+</tbody>
+</table>
+<p>Example usage:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">asymmetree.seqevolve</span><span class="w"> </span><span class="kn">import</span> <span class="n">Evolver</span><span class="p">,</span> <span class="n">SubstModel</span><span class="p">,</span> <span class="n">IndelModel</span><span class="p">,</span> <span class="n">HetModel</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="c1"># specify models (only SubstModel is mandatory)</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">subst_model</span> <span class="o">=</span> <span class="n">SubstModel</span><span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;WAG&quot;</span><span class="p">)</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="n">indel_model</span> <span class="o">=</span> <span class="n">IndelModel</span><span class="p">(</span><span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">,</span> <span class="n">length_distr</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;zipf&quot;</span><span class="p">,</span> <span class="mf">1.821</span><span class="p">))</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="n">het_model</span>  <span class="o">=</span> <span class="n">HetModel</span><span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span> <span class="n">invariant</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="c1"># evolve sequences along a phylogenetic tree</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="n">evolver</span> <span class="o">=</span> <span class="n">Evolver</span><span class="p">(</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>    <span class="n">subst_model</span><span class="p">,</span> <span class="n">indel_model</span><span class="o">=</span><span class="n">indel_model</span><span class="p">,</span> <span class="n">het_model</span><span class="o">=</span><span class="n">het_model</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="p">)</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="n">evolver</span><span class="o">.</span><span class="n">evolve_along_tree</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">start_length</span><span class="o">=</span><span class="mi">150</span><span class="p">)</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="c1"># print resulting sequences</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="k">for</span> <span class="n">node</span><span class="p">,</span> <span class="n">evo_seq</span> <span class="ow">in</span> <span class="n">evolver</span><span class="o">.</span><span class="n">sequences</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">subst_model</span><span class="o">.</span><span class="n">to_sequence</span><span class="p">(</span><span class="n">evo_seq</span><span class="p">))</span>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="c1"># output true alignment</span>
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a><span class="n">evolver</span><span class="o">.</span><span class="n">true_alignment</span><span class="p">(</span>
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>    <span class="n">write_to</span><span class="o">=</span><span class="s2">&quot;path/to/alignment.phylip&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>    <span class="n">alignment_format</span><span class="o">=</span><span class="s2">&quot;phylip&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a><span class="p">)</span>
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
