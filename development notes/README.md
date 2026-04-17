@@ -118,9 +118,9 @@ The improvement we purpose is to update the rates of the events considering inte
 
 # AI evaluation of the proposal
 
-The proposal is conceptually compatible with AsymmeTree, but it is not a small extension of the current API. The present implementation is centered on a single host tree for the gene simulation, with event sampling handled in `asymmetree/treeevolve/genes.py` by `GeneTreeSimulator`. Because of that, a true three-level model will need an explicit representation of the host-symbiont structure and additional state on each active gene branch, not only new rate parameters.
+The proposal is compatible with the current architecture of AsymmeTree, and the prototype in `development notes/Example code/simulate_HS_level.py` already shows that a first host-symbiont layer can be built by reusing the existing tree simulation code, the `reconc` attribute for reconciliation maps, and the dated-event information stored in `event` and `tstamp`. This makes the proposal more than a purely conceptual extension: the main simulation ingredients already exist.
 
-The strongest part of the proposal is that it reuses the existing birth-death simulation logic and modifies two natural control points: loss sampling and HGT recipient selection. The main technical risk is model clarity: cases (A0)-(A3) are meaningful, but they should be translated into precise per-branch or per-pair weighting rules before coding, otherwise the simulator will become hard to validate and test. A staged implementation is advisable: first support a combined host-symbiont tree/state mapping, then add interaction-weighted loss, and only afterwards add host-aware transfer penalties.
+At the same time, the prototype also shows the main challenge. A research script can assemble host and symbiont scenarios and post-process labels afterwards, but a library-quality implementation will need explicit collision-safe identifiers, helper functions for coexistence queries, and a clean API in a new `asymmetree.holobiont` module. The strongest part of the proposal is still the reuse of the current birth-death machinery, especially by modifying loss sampling and HGT recipient selection. The main technical risk is no longer basic feasibility, but precise model specification: cases (A0)-(A3) should be translated into explicit weighting rules and tested carefully, otherwise the behavior of the simulator will be difficult to validate.
 
 
 # Implementation
@@ -171,11 +171,45 @@ gs.simulate_sequences(subst_model,
 
 ## Plan for modification of the code
 
-1. Define how host and symbiont information will be represented during simulation, and add the needed data structures for a three-level scenario.
-2. Extend `GeneTreeSimulator` in `asymmetree/treeevolve/genes.py` so active gene branches carry both species and host-context information.
-3. Add configurable interaction parameters for cases (A0), (A1), (A2), and (A3).
-4. Modify loss-event sampling so loss probabilities can be increased for interacting coexisting genes in the same host context.
-5. Modify HGT recipient sampling so transfers across different hosts are down-weighted.
-6. Expose the new options through the public simulation entry points and document them.
-7. Add tests for the new mappings, weighted loss behavior, and host-aware HGT behavior.
+1. Use the prototype in `development notes/Example code/simulate_HS_level.py` as the starting point for the host-symbiont level, since it already reuses `species_tree_n`, `dated_gene_tree`, `prune_losses`, and the `reconc` metadata.
+2. Move that logic into a new public module `asymmetree.holobiont`, following the same high-level structure as `asymmetree.genome`.
+3. Replace script-level relabeling with package-level helper functions for collision-safe node identifiers and reconciliation formatting.
+4. Add helper functions that detect coexisting host, symbiont, and gene lineages from the dated trees using `reconc`, `event`, and `tstamp`.
+5. Add a gene-tree simulation step on the auxiliary tree $T_A$, reusing the current logic of `asymmetree.treeevolve.genes.GeneTreeSimulator` as much as possible.
+6. Add configurable interaction parameters for cases (A0), (A1), (A2), and (A3), including the host-keeps or symbiont-keeps asymmetry.
+7. Modify event sampling so loss rates can be increased for interacting coexisting genes, and HGT recipient choice can be decreased across different hosts.
+8. Add documentation and tests for the new module, reconciliation maps, coexistence queries, collision-safe labels, and the new rate modifiers.
 
+## AsymmeTree vs SaGePhy
+
+SaGePhy is attractive because it already supports nested simulations beyond the usual species-gene setting. In particular, it can simulate gene trees inside species trees and domain or subgene trees inside one or more gene trees, including additive and replacing transfers and distance-biased transfers. This means that, if the goal were mainly to simulate another generic nested reconciliation process, SaGePhy already provides ideas and machinery that are close in spirit to the present project.
+
+However, the match is not exact. SaGePhy is designed around species-gene-domain evolution, while the present proposal is about host-symbiont-gene evolution with host-dependent coexistence effects on losses and transfers. Those biological rules are not just another copy of domain evolution, so using SaGePhy directly would still require adapting its model assumptions. In addition, our current work is already inside the AsymmeTree repository, where tree simulation, reconciliation information, pruning, rate heterogeneity, and sequence simulation are available in one Python package.
+
+Advantages of modifying AsymmeTree:
+
+1. It preserves the current workflow and codebase, including `treeevolve`, `genome`, pruning, and sequence simulation.
+2. The existing node attributes `reconc`, `event`, and `tstamp` already provide much of the information needed for a three-level extension.
+3. The prototype in `development notes/Example code` shows that a first host-symbiont layer can already be assembled with the current tools.
+4. It is easier to introduce a custom host-symbiont-gene interpretation than to retrofit that meaning into a domain-evolution framework.
+
+Pitfalls of modifying AsymmeTree:
+
+1. The current simulator is built around a single guiding tree for gene evolution, so a clean three-level implementation will require non-trivial refactoring.
+2. Coexistence-aware rate updates are new behavior and will need careful specification and testing.
+3. More development effort is needed before the new functionality reaches the same level of polish as the existing genome workflow.
+
+Advantages of using SaGePhy:
+
+1. It already supports nested phylogenetic simulation beyond two levels.
+2. It already includes additive and replacing transfers, distance-biased transfer models, and birth away from the root.
+3. Its structure may provide useful design inspiration for how to organize a multi-level simulator.
+
+Pitfalls of using SaGePhy:
+
+1. Its native model is species-gene-domain rather than host-symbiont-gene, so the biological interpretation is different from the target problem.
+2. It would introduce an external toolchain based on Java plus supplementary Python scripts, instead of extending the current Python package directly.
+3. It is less naturally integrated with AsymmeTree's current sequence simulation and package structure.
+4. Moving to SaGePhy would likely reduce immediate reuse of the code already prototyped in this repository.
+
+Overall, modifying AsymmeTree appears to be the better path if the main objective is to add a native host-symbiont-gene simulator to this package. SaGePhy is still valuable as a conceptual reference, especially for nested simulation design and transfer modeling, but it is not a drop-in replacement for the proposed feature.
