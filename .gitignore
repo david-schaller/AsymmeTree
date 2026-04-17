@@ -58,3 +58,5 @@ examples/results/*
 validation/*/results/*
 testfile*
 *.DS_Store
+
+**/.codex
