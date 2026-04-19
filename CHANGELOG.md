@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### 📚 Documentation
+
+- Added a section on contributing to the documentation, including guidelines for code style,
+  testing, and pull requests.
+
+### 📦 Build
+
+- Added the `classifiers` field to `pyproject.toml` for better visibility on PyPI.
+
 ## [2.3.0] - 2026-04-16
 
 ### 🚨 Breaking changes

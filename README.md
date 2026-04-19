@@ -35,6 +35,9 @@ The [AsymmeTree documentation](https://david-schaller.github.io/AsymmeTree/) con
 with example code as well as the
 [API reference](https://david-schaller.github.io/AsymmeTree/api/treeevolve/).
 
+If you want to contribute to the project, please see the
+[contributing guidelines](https://david-schaller.github.io/AsymmeTree/contributing/).
+
 ## Citation
 
 If you use AsymmeTree in your project or code from it, please consider citing:
