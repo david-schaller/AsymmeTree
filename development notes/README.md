@@ -213,3 +213,33 @@ Pitfalls of using SaGePhy:
 4. Moving to SaGePhy would likely reduce immediate reuse of the code already prototyped in this repository.
 
 Overall, modifying AsymmeTree appears to be the better path if the main objective is to add a native host-symbiont-gene simulator to this package. SaGePhy is still valuable as a conceptual reference, especially for nested simulation design and transfer modeling, but it is not a drop-in replacement for the proposed feature.
+
+# Rates
+
+In SaGePhy, the duplication rate is the event-rate parameter for duplications during guest/gene-tree simulation inside the guide species tree. In the manual, GuestTreeGen takes dup rate, loss rate, and trans rate, and says that a higher duplication rate gives more frequent duplications. The SaGePhy paper also treats these as rates per unit branch length / time in the birth-death simulation sense.
+
+So for your practical question: yes, it is essentially the same kind of quantity as dupl_rate in AsymmeTree.
+
+In AsymmeTree, dupl_rate is also an event-rate parameter in the dated gene-tree birth-death process. It contributes to the total event rate together with loss, HGT, and gene conversion, and higher dupl_rate means duplications are sampled more often during simulation.
+
+The important caveat is this:
+
+- Conceptually equivalent: yes
+- Guaranteed numerically identical across tools: no
+
+They are not necessarily interchangeable one-to-one because the simulators differ in surrounding mechanics, for example:
+
+- AsymmeTree also includes gc_rate for gene conversion.
+- AsymmeTree handles some extra behaviors like prohibit_extinction and replace_prob.
+- SaGePhy has its own options such as gene birth away from the root and its own transfer/replacement handling.
+
+So if you see [0.133, 0.266, 0.266] in your script, the first number is meaningfully the same kind of “duplication intensity” as AsymmeTree’s dupl_rate, but matching outputs between the two tools would still require aligning the whole model, not just that one parameter.
+
+Sources:
+
+- SaGePhy manual PDF: https://compbio.engr.uconn.edu/wp-content/uploads/sites/2447/2018/10/sagephy-manual.pdf
+- SaGePhy paper: https://academic.oup.com/bioinformatics/article/35/18/3496/5305633
+- AsymmeTree gene-tree docs: docs/guide/gene_trees.md
+- AsymmeTree implementation: asymmetree/treeevolve/genes.py
+
+If you want, I can also map SaGePhy’s dup/loss/trans parameters to the closest AsymmeTree settings for your current script.
