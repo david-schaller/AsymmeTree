@@ -131,6 +131,7 @@ def improve_host_labels(T, preffix):
         oldlabel= T.nodes[X]['label']
         newlabel= f'{preffix}{oldlabel}'
         T.nodes[X]['label']= newlabel
+        T.nodes[X]['reconc']= newlabel
 
         T.old2new_label[oldlabel]= newlabel
 
