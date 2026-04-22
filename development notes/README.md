@@ -162,17 +162,31 @@ The improvement we purpose is to update the rates of the events considering inte
 
 # Implementation
 
+The code should follow all AsymmeTree standards, in particular, have a look to `AsymmeTree/development notes/contributing.md`.
+
 ## Initialize `hologenome` module
 
-- [ ] Create a module `asymmetree.hologenome` inside of the directory `development notes/Example code/`
-- [ ] It should have the same structure as `asymmetree.genome`
-- [ ] It should be initialized with the code in `development notes/Example code/simulate_HS_level.py`. Until now, it simulates only the 'holobiont'.
-- [ ] Create the auxiliary tree $T_A$​ (One per each host-symbiont pair of trees).
-- [ ] Create an example script `development notes/Example code/example_simulations`. The result should be:
-  - [ ] One pandas series with Host trees trees (in general nhx format)
-  - [ ] One pandas dataframe with with symbiont trees  (in general nhx format)
+- [x] Create a module `asymmetree.hologenome` inside of the directory `development notes/Example code/`
+- [x] It should have the same structure as `asymmetree.genome`
+- [x] It should be initialized with the code in `development notes/Example code/simulate_HS_level.py`. Until now, it simulates only the 'holobiont'.
+- [x] Create the auxiliary tree $T_A$​ (One per each host-symbiont pair of trees).
+- [x] Create an example script `development notes/Example code/example_simulations`. The result should be:
+  - [x] One pandas series with Host trees trees (in general nhx format)
+  - [x] One pandas dataframe with with symbiont trees  (in general nhx format)
 
 ### AI implementation notes
+
+- The prototype now lives in `development notes/Example code/hologenome` with the same package
+  pattern as `asymmetree.genome`: a thin `__init__.py` and a single simulation module.
+- `HologenomeSimulator` currently covers the holobiont layer only and keeps the prototype logic
+  close to `simulate_HS_level.py`, but removes the dependency on `revolutionhtl` by exporting
+  trees with a local NHX serializer.
+- The auxiliary tree uses collision-safe `H*`, `S*`, and `A*` labels and stores the host-side map
+  in `reconc`, which gives us a clean hand-off for the later gene-level extension.
+- `T_A` is built from the full symbiont tree rather than the pruned one so that later
+  gene-level work still has access to extinct symbiont branches.
+- The example script returns a host-tree `Series` and a symbiont-scenario `DataFrame`; the
+  dataframe also includes the serialized auxiliary tree for each simulated host-symbiont pair.
 
 
 
@@ -191,4 +205,3 @@ The improvement we purpose is to update the rates of the events considering inte
 We have to edit the `_get_branch_and_type` function. Right now it assumes that all the branches of the gene tree have exactly the same set of rates, which are the user-provided. The plan is to set a specific set of rates per branch. I'll deal with that later.
 
 ### AI implementation notes
-

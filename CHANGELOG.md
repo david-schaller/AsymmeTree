@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### 🌟 Features
+
+- Added a prototype `hologenome` example package under `development notes/Example code` with
+  holobiont simulation, auxiliary-tree construction, and a pandas-based example runner.
+
 ## [2.3.0] - 2026-04-16
 
 ### 🚨 Breaking changes
