@@ -205,3 +205,11 @@ The code should follow all AsymmeTree standards, in particular, have a look to `
 We have to edit the `_get_branch_and_type` function. Right now it assumes that all the branches of the gene tree have exactly the same set of rates, which are the user-provided. The plan is to set a specific set of rates per branch. I'll deal with that later.
 
 ### AI implementation notes
+
+-----
+
+# Aux
+
+prompt for raki:
+
+> In the file `development notes/README.md`, I have a implementation plan at line 163. Implement the first set of tasks (`## Initialize hologenome module`) , I left  space for relevant and punctual implementation notes (`### AI implementation notes`). Make sure to follow asymmetree standards
