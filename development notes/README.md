@@ -6,8 +6,6 @@ We will stick to the reconciliation simulation approach, but we add the host-sym
 
 As starting point, we will simulate simple case: an epibiont evolving throughout genome reduction. We will consider only gene-to-gene interaction between homologs. and two types of interactions: redundancy and synergy.
 
-
-
 # Graphs and phylogenies preliminaries
 
 In this section, we introduce all the graph concepts that we will need to describe both current AsymmeTree workflow and the extension we will purpose.
@@ -68,64 +66,13 @@ AssymmeTree is a powerful tool for simularion of two-level evolutionary scenario
 
 Like many other tools for phylogenetic simulation [[25](https://www.mdpi.com/2674-113X/1/3/13#B25-software-01-00013),[26](https://www.mdpi.com/2674-113X/1/3/13#B26-software-01-00013),[40](https://www.mdpi.com/2674-113X/1/3/13#B40-software-01-00013),[48](https://www.mdpi.com/2674-113X/1/3/13#B48-software-01-00013)], `AsymmeTree` generates complex gene family histories in a multilevel process that consists of the following five steps. **(1)** A dated species tree S is simulated whose leaves correspond to extant species (thus having  time stamp 0) and possibly (depending on simulation models and  parameters) extinction events. **(2)** Along this species tree, one or  multiple gene trees T are simulated using a variant of a constant-rate birth-death process [[27](https://www.mdpi.com/2674-113X/1/3/13#B27-software-01-00013)] that considers speciations, gene duplications, and (additive) HGTs as  “birth events” and gene losses as “death events”. In addition, replacing HGT and gene conversion lead to a bifurcation in one gene lineage  while, at the same time, another lineage gets lost. **(3)** In a next step,  evolution rate heterogeneity between the branches is introduced in a  manner that accounts for both species effects as well as asymmetric  evolution of paralogs after gene duplication. **(4)** The pruned gene tree  is then obtained by removing all branches that lead to loss events only  and suppressing all vertices that only have a single child left. In a final step **(5)**, nucleotide or amino acid  sequences can be evolved along the gene tree using a continuous-time  Markov chain, which is the standard model for this purpose [[31](https://www.mdpi.com/2674-113X/1/3/13#B31-software-01-00013),[32](https://www.mdpi.com/2674-113X/1/3/13#B32-software-01-00013)]. `AsymmeTree` supports a variety of models for substitution, indels, and among-site  heterogeneity.
 
-# Three-level scenarios
+[...]
 
-Similarly to an evolutionary scenario, we define an *holobiont scenario* as the tuple $(T_H, T_S, t', \sigma',\mu',\tau_H,\tau_S)$​ describing the evolution of symbiont species across host species and time. In this case
+Gene trees are simulated along a species tree using a constant-rate birth-death process [[27](https://www.mdpi.com/2674-113X/1/3/13#B27-software-01-00013)] where rates for the four types of events duplication, loss, HGT, and  gene conversion are user-defined. To this end, the user must specify  rates for the four event types which serve as parameters for exponential distributions from which waiting times until the next events are drawn. By setting the respective rate to zero, an event type is disabled  completely. The simulation starts with a single gene in the root of the species tree and proceeds stepwise in time towards the leaves by drawing waiting  times until the next event and lineages in which these events take place. At each point in the simulation, the total rate is given by the  sum of the four event types over the currently existing lineages in the  gene tree under construction. Hence, the simulation of all gene lineages progresses synchronously. This avoids difficulties arising by the fact  that some processes, such as replacing HGT as introduced below,  introduce dependencies between the gene lineages. In particular, with  this method, it is not necessary that simulated branches have to be  invalidated as a consequence of an event in a lineage that is processed  later in the simulation as it, e.g., occurs in [[26](https://www.mdpi.com/2674-113X/1/3/13#B26-software-01-00013)].
 
-- $\sigma':L(T_S)\cup L(T_H)\rightarrow L(T_H)$​,
-- $\mu':V(T_S)\cup V(T_H)\rightarrow V(T_H)\cup E(T_H)$,
-- $t'\colon V(T_S)\cup V(T_H) \to \{\bullet, \square, \times, \star, \odot \}$.
+In addition to the randomly-occurring events, speciations and species  extinctions (which are determined by the species tree and therefore  fixed) are included as branching and loss events, respectively, and  affect all currently existing lineages in the respective species  lineage. In case of a speciation, each offspring species receives one  copy of each original gene lineage. On the other hand, the extinction of a species leads to loss of all of its gene lineages. If a waiting time  for a duplication, loss, or HGT event is drawn such that the next event  in the species tree occurs earlier, then this waiting time is discarded, the time is updated to the next species tree event, and the latter is  executed.
 
-with the restriction that for $z\in V(T_H)$ we have $\mu'(z)=z$​ and $t'(z)\in\{\bullet,\times,\odot\}$.
-
-If we merge an evolutionary scenario and an holobiont scenario, we get a *hologenome scenario* $(T_H, T_S,T_G,t,\sigma,\mu, t', \sigma',\mu', \tau_H, \tau_S, \tau_G)$​, note that this is a three-level scenario; genes evolving inside species, inside other species.
-
-To keep a simple notation, let expand the domain of $\mu'$ to also consider vertices of $T_G$ as follows: given $x\in V(T_G)$ then $\mu'(x)=\mu'(\mu(x))$. Note that this is well defined only when $\mu(x)\in V(T_S)$.
-
-# Simulation of hologenomes with interactions
-
-To model gene coexistence and interactions effectively, we would need to combine reconciliation with Evolutionary Game Theory (EGT). A good part of the reconciliation approach is already implemented in AsymmeTree, and we will build on the top of that.
-
-In a first step, we simulate an holobiont scenario $(T_H, T_S, t', \sigma',\mu',\tau_H,\tau_S)$ using steps (1) and (2) of assymmetree, then we create an auxiliar tree $T_A$  by taking a copy of the trees $T_H, T_S$ and merging the planted roots $0_H, 0_S$ into a new root $\rho_A$ and adding a new planted root $0_A$ with the corresponding planted edge $0_A\rho_A$.
-
-$\tau_A$ is constructed by coping $\tau_S$ and $\tau_H$ and adding $\tau_A(0_A)=1+\epsilon$. Note that $\tau_S(0_S) = \tau_H(0_H) = 1 = \tau_A(\rho_S)$. In a similar way, we construct a map $\mu_A$, with $\mu_A(\rho_A)= \rho_A$ and $\mu_A(0_A)= 0_A$.
-
-Now we will generate a gene tree $T_G$ evolving along $T_A$ considering two interactions: (I) metabolic redundancy when both guest and host carry the same gene, and (II) co-symbiosis, which is required to have horizontal gene transfer. To perform this simulation, we will generate a modification of step (2) of asymmetree:
-
-> Gene trees are simulated along a species tree using a constant-rate birth-death process [[27](https://www.mdpi.com/2674-113X/1/3/13#B27-software-01-00013)] where rates for the four types of events duplication, loss, HGT, and  gene conversion are user-defined. To this end, the user must specify  rates for the four event types which serve as parameters for exponential distributions from which waiting times until the next events are drawn. By setting the respective rate to zero, an event type is disabled  completely. The simulation starts with a single gene in the root of the species tree and proceeds stepwise in time towards the leaves by drawing waiting  times until the next event and lineages in which these events take place. At each point in the simulation, the total rate is given by the  sum of the four event types over the currently existing lineages in the  gene tree under construction. Hence, the simulation of all gene lineages progresses synchronously. This avoids difficulties arising by the fact  that some processes, such as replacing HGT as introduced below,  introduce dependencies between the gene lineages. In particular, with  this method, it is not necessary that simulated branches have to be  invalidated as a consequence of an event in a lineage that is processed  later in the simulation as it, e.g., occurs in [[26](https://www.mdpi.com/2674-113X/1/3/13#B26-software-01-00013)].
->
-> In addition to the randomly-occurring events, speciations and species  extinctions (which are determined by the species tree and therefore  fixed) are included as branching and loss events, respectively, and  affect all currently existing lineages in the respective species  lineage. In case of a speciation, each offspring species receives one  copy of each original gene lineage. On the other hand, the extinction of a species leads to loss of all of its gene lineages. If a waiting time  for a duplication, loss, or HGT event is drawn such that the next event  in the species tree occurs earlier, then this waiting time is discarded, the time is updated to the next species tree event, and the latter is  executed.
-
-So the simulation first Initializes $T_G$ as a single node $0_G$ with $\mu(0_G)=0_A$, and add it to the list of 'growing branches', then the the branches grow in time and number by sampling 'waiting times' and evolutionary events from a distribution defined by user-provided rates and the number of existing growing branches.
-
-The improvement we purpose is to update the rates of the events considering intersections: in a given iteration of the simulation we have an incomplete $T_G$ where the non-loss leaves $L^0=\{x\in L(T_G) \text{ such that } t(x)\not=\times\}$ are the collection of growing branches.
-
-1. We will increase loss probability for genes residing in the same host; given two genes $x_0,x_1\in L^0$, we increase loss probability whenever
-
-   - **(A0)** $\mu(x_0)=\mu(x_1)$      # Both genes are in the same species
-   - **(A1)** $\mu'(x_0)=\mu'(x_1)$    # Genes are in different species, same host
-   - **(A2)** $\mu(x_0)= \mu'(x_1)$     # One gene in in host, the other is in a symbiont of such a host.
-
-   We should weight differentially those interactions.
-
-   For the case (A2) we can introduce an asymmetry by setting a category for gene trees: (S-keeps) where $x_0$ is lost with higher probability, or (H-keeps)  where $x_1$ is lost with higher probability
-
-2. We will decrease transfer probability between species residing in different hots
-
-   Given a gene $x_0\in L^0$ together with the corresponding map $y_0=\mu(x_0)$, and a coexisting branch $y_1\in E(T_A)$, which is a possible recipient, we decrease transfer probability whenever:
-
-   - **(A3)** $\mu'(y_0)\not=\mu'(y_1)$
-
-# AI evaluation of the proposal
-
-The proposal is compatible with the current architecture of AsymmeTree, and the prototype in `development notes/Example code/simulate_HS_level.py` already shows that a first host-symbiont layer can be built by reusing the existing tree simulation code, the `reconc` attribute for reconciliation maps, and the dated-event information stored in `event` and `tstamp`. This makes the proposal more than a purely conceptual extension: the main simulation ingredients already exist.
-
-At the same time, the prototype also shows the main challenge. A research script can assemble host and symbiont scenarios and post-process labels afterwards, but a library-quality implementation will need explicit collision-safe identifiers, helper functions for coexistence queries, and a clean API in a new `asymmetree.holobiont` module. The strongest part of the proposal is still the reuse of the current birth-death machinery, especially by modifying loss sampling and HGT recipient selection. The main technical risk is no longer basic feasibility, but precise model specification: cases (A0)-(A3) should be translated into explicit weighting rules and tested carefully, otherwise the behavior of the simulator will be difficult to validate.
-
-
-# Implementation
-
-## Current structure of AsymmeTree
+## Current structure of AsymmeTree code
 
 This report is inside of the repository of Asymmetree, in a development branch. The main directory is `../`, there we can find the [main readme](../README.md) which includes links for [wiki](https://github.com/david-schaller/AsymmeTree/wiki/Manual) and [documentation](https://david-schaller.github.io/docs/asymmetree/). The following explanation is taken from the wiki.
 
@@ -169,77 +116,79 @@ gs.simulate_sequences(subst_model,
 # 'fasta_files' and 'alignments' in 'path/to/genome_directory'
 ```
 
-## Plan for modification of the code
+# Three-level scenarios
 
-1. Use the prototype in `development notes/Example code/simulate_HS_level.py` as the starting point for the host-symbiont level, since it already reuses `species_tree_n`, `dated_gene_tree`, `prune_losses`, and the `reconc` metadata.
-2. Move that logic into a new public module `asymmetree.holobiont`, following the same high-level structure as `asymmetree.genome`.
-3. Replace script-level relabeling with package-level helper functions for collision-safe node identifiers and reconciliation formatting.
-4. Add helper functions that detect coexisting host, symbiont, and gene lineages from the dated trees using `reconc`, `event`, and `tstamp`.
-5. Add a gene-tree simulation step on the auxiliary tree $T_A$, reusing the current logic of `asymmetree.treeevolve.genes.GeneTreeSimulator` as much as possible.
-6. Add configurable interaction parameters for cases (A0), (A1), (A2), and (A3), including the host-keeps or symbiont-keeps asymmetry.
-7. Modify event sampling so loss rates can be increased for interacting coexisting genes, and HGT recipient choice can be decreased across different hosts.
-8. Add documentation and tests for the new module, reconciliation maps, coexistence queries, collision-safe labels, and the new rate modifiers.
+Similarly to an evolutionary scenario, we define an *holobiont scenario* as the tuple $(T_H, T_S, t', \sigma',\mu',\tau_H,\tau_S)$​ describing the evolution of symbiont species across host species and time. In this case
 
-## AsymmeTree vs SaGePhy
+- $\sigma':L(T_S)\cup L(T_H)\rightarrow L(T_H)$​,
+- $\mu':V(T_S)\cup V(T_H)\rightarrow V(T_H)\cup E(T_H)$,
+- $t'\colon V(T_S)\cup V(T_H) \to \{\bullet, \square, \times, \star, \odot \}$.
 
-SaGePhy is attractive because it already supports nested simulations beyond the usual species-gene setting. In particular, it can simulate gene trees inside species trees and domain or subgene trees inside one or more gene trees, including additive and replacing transfers and distance-biased transfers. This means that, if the goal were mainly to simulate another generic nested reconciliation process, SaGePhy already provides ideas and machinery that are close in spirit to the present project.
+with the restriction that for $z\in V(T_H)$ we have $\mu'(z)=z$​ and $t'(z)\in\{\bullet,\times,\odot\}$.
 
-However, the match is not exact. SaGePhy is designed around species-gene-domain evolution, while the present proposal is about host-symbiont-gene evolution with host-dependent coexistence effects on losses and transfers. Those biological rules are not just another copy of domain evolution, so using SaGePhy directly would still require adapting its model assumptions. In addition, our current work is already inside the AsymmeTree repository, where tree simulation, reconciliation information, pruning, rate heterogeneity, and sequence simulation are available in one Python package.
+If we merge an evolutionary scenario and an holobiont scenario, we get a *hologenome scenario* $(T_H, T_S,T_G,t,\sigma,\mu, t', \sigma',\mu', \tau_H, \tau_S, \tau_G)$​, note that this is a three-level scenario; genes evolving inside species, inside other species.
 
-Advantages of modifying AsymmeTree:
+To keep a simple notation, let expand the domain of $\mu'$ to also consider vertices of $T_G$ as follows: given $x\in V(T_G)$ then $\mu'(x)=\mu'(\mu(x))$. Note that this is well defined only when $\mu(x)\in V(T_S)$.
 
-1. It preserves the current workflow and codebase, including `treeevolve`, `genome`, pruning, and sequence simulation.
-2. The existing node attributes `reconc`, `event`, and `tstamp` already provide much of the information needed for a three-level extension.
-3. The prototype in `development notes/Example code` shows that a first host-symbiont layer can already be assembled with the current tools.
-4. It is easier to introduce a custom host-symbiont-gene interpretation than to retrofit that meaning into a domain-evolution framework.
+# Simulation of hologenomes with interactions
 
-Pitfalls of modifying AsymmeTree:
+To model gene coexistence and interactions effectively, we would need to combine reconciliation with Evolutionary Game Theory (EGT). A good part of the reconciliation approach is already implemented in AsymmeTree, and we will build on the top of that.
 
-1. The current simulator is built around a single guiding tree for gene evolution, so a clean three-level implementation will require non-trivial refactoring.
-2. Coexistence-aware rate updates are new behavior and will need careful specification and testing.
-3. More development effort is needed before the new functionality reaches the same level of polish as the existing genome workflow.
+In a first step, we simulate an holobiont scenario $(T_H, T_S, t', \sigma',\mu',\tau_H,\tau_S)$ using steps (1) and (2) of assymmetree, then we create an auxiliar tree $T_A$  by taking a copy of the trees $T_H, T_S$ and merging the planted roots $0_H, 0_S$ into a new root $\rho_A$ and adding a new planted root $0_A$ with the corresponding planted edge $0_A\rho_A$.
 
-Advantages of using SaGePhy:
+$\tau_A$ is constructed by coping $\tau_S$ and $\tau_H$ and adding $\tau_A(0_A)=1+\epsilon$. Note that $\tau_S(0_S) = \tau_H(0_H) = 1 = \tau_A(\rho_S)$. In a similar way, we construct a map $\mu_A$, with $\mu_A(\rho_A)= \rho_A$ and $\mu_A(0_A)= 0_A$.
 
-1. It already supports nested phylogenetic simulation beyond two levels.
-2. It already includes additive and replacing transfers, distance-biased transfer models, and birth away from the root.
-3. Its structure may provide useful design inspiration for how to organize a multi-level simulator.
+Now we will generate a gene tree $T_G$ evolving along $T_A$ considering two interactions: (I) metabolic redundancy when both guest and host carry the same gene, and (II) co-symbiosis, which is required to have horizontal gene transfer. To perform this simulation, we will generate a modification of step (2) of asymmetree.
 
-Pitfalls of using SaGePhy:
+So the simulation first Initializes $T_G$ as a single node $0_G$ with $\mu(0_G)=0_A$, and add it to the list of 'growing branches', then the the branches grow in time and number by sampling 'waiting times' and evolutionary events from a distribution defined by user-provided rates and the number of existing growing branches.
 
-1. Its native model is species-gene-domain rather than host-symbiont-gene, so the biological interpretation is different from the target problem.
-2. It would introduce an external toolchain based on Java plus supplementary Python scripts, instead of extending the current Python package directly.
-3. It is less naturally integrated with AsymmeTree's current sequence simulation and package structure.
-4. Moving to SaGePhy would likely reduce immediate reuse of the code already prototyped in this repository.
+The improvement we purpose is to update the rates of the events considering intersections: in a given iteration of the simulation we have an incomplete $T_G$ where the non-loss leaves $L^0=\{x\in L(T_G) \text{ such that } t(x)\not=\times\}$ are the collection of growing branches.
 
-Overall, modifying AsymmeTree appears to be the better path if the main objective is to add a native host-symbiont-gene simulator to this package. SaGePhy is still valuable as a conceptual reference, especially for nested simulation design and transfer modeling, but it is not a drop-in replacement for the proposed feature.
+1. We will increase loss probability for genes residing in the same host; given two genes $x_0,x_1\in L^0$, we increase loss probability whenever
 
-# Rates
+   - **(A0)** $\mu(x_0)=\mu(x_1)$      # Both genes are in the same species
+   - **(A1)** $\mu'(x_0)=\mu'(x_1)$    # Genes are in different species, same host
+   - **(A2)** $\mu(x_0)= \mu'(x_1)$     # One gene in in host, the other is in a symbiont of such a host.
 
-In SaGePhy, the duplication rate is the event-rate parameter for duplications during guest/gene-tree simulation inside the guide species tree. In the manual, GuestTreeGen takes dup rate, loss rate, and trans rate, and says that a higher duplication rate gives more frequent duplications. The SaGePhy paper also treats these as rates per unit branch length / time in the birth-death simulation sense.
+   We should weight differentially those interactions.
 
-So for your practical question: yes, it is essentially the same kind of quantity as dupl_rate in AsymmeTree.
+   For the case (A2) we can introduce an asymmetry by setting a category for gene trees: (S-keeps) where $x_0$ is lost with higher probability, or (H-keeps)  where $x_1$ is lost with higher probability
 
-In AsymmeTree, dupl_rate is also an event-rate parameter in the dated gene-tree birth-death process. It contributes to the total event rate together with loss, HGT, and gene conversion, and higher dupl_rate means duplications are sampled more often during simulation.
+2. We will decrease transfer probability between species residing in different hots
 
-The important caveat is this:
+   Given a gene $x_0\in L^0$ together with the corresponding map $y_0=\mu(x_0)$, and a coexisting branch $y_1\in E(T_A)$, which is a possible recipient, we decrease transfer probability whenever:
 
-- Conceptually equivalent: yes
-- Guaranteed numerically identical across tools: no
+   - **(A3)** $\mu'(y_0)\not=\mu'(y_1)$
 
-They are not necessarily interchangeable one-to-one because the simulators differ in surrounding mechanics, for example:
+# Implementation
 
-- AsymmeTree also includes gc_rate for gene conversion.
-- AsymmeTree handles some extra behaviors like prohibit_extinction and replace_prob.
-- SaGePhy has its own options such as gene birth away from the root and its own transfer/replacement handling.
+## Initialize `hologenome` module
 
-So if you see [0.133, 0.266, 0.266] in your script, the first number is meaningfully the same kind of “duplication intensity” as AsymmeTree’s dupl_rate, but matching outputs between the two tools would still require aligning the whole model, not just that one parameter.
+- [ ] Create a module `asymmetree.hologenome` inside of the directory `development notes/Example code/`
+- [ ] It should have the same structure as `asymmetree.genome`
+- [ ] It should be initialized with the code in `development notes/Example code/simulate_HS_level.py`. Until now, it simulates only the 'holobiont'.
+- [ ] Create the auxiliary tree $T_A$​ (One per each host-symbiont pair of trees).
+- [ ] Create an example script `development notes/Example code/example_simulations`. The result should be:
+  - [ ] One pandas series with Host trees trees (in general nhx format)
+  - [ ] One pandas dataframe with with symbiont trees  (in general nhx format)
 
-Sources:
+### AI implementation notes
 
-- SaGePhy manual PDF: https://compbio.engr.uconn.edu/wp-content/uploads/sites/2447/2018/10/sagephy-manual.pdf
-- SaGePhy paper: https://academic.oup.com/bioinformatics/article/35/18/3496/5305633
-- AsymmeTree gene-tree docs: docs/guide/gene_trees.md
-- AsymmeTree implementation: asymmetree/treeevolve/genes.py
 
-If you want, I can also map SaGePhy’s dup/loss/trans parameters to the closest AsymmeTree settings for your current script.
+
+## Add `treeevolve` module
+
+- [x] Create a copy of `asymmetree.treeevolve` inside of the directory `development notes/Example code/`
+- [ ] Add code to the `hologenome` module: simulate a single gene tree inside of the auxiliary tree $T_A$​.
+- [ ] Create an example script `development notes/Example code/example_simulations`. The result should be again a pandas dataframe.
+
+### AI implementation notes
+
+
+
+## Add homolog-homolog interactions
+
+We have to edit the `_get_branch_and_type` function. Right now it assumes that all the branches of the gene tree have exactly the same set of rates, which are the user-provided. The plan is to set a specific set of rates per branch. I'll deal with that later.
+
+### AI implementation notes
+
