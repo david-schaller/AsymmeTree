@@ -709,6 +709,9 @@ class GeneTreeSimulator:
 
             # receiving branch
             receiving_branch = self._new_branch(hgt_node, trans_edge, 1, template_branch=branch)
+            # TODO: loss-rate increases should be triggered after symbiont-level transfers, not
+            # after gene-level HGT events. Keep the new branch assignment above, but leave the
+            # pairwise rate update to the auxiliary-tree inheritance/update step in _run().
             self._increase_loss_rates_after_transfer(receiving_branch)
 
         # replacing HGT leads to loss in the recipient species

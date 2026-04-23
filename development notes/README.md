@@ -218,8 +218,12 @@ Right now asymmetree assumes that all the branches of the gene tree have exactly
 
 - [x] Edit the module `holoevolve` in such a way that now each gene-branch in `self.branches` has their own set of DTLG rates. At the beginning of the simulation the rates are those provided by the user.
 - [x] Update `_get_branch_and_type` to choose branch and event considering that not all of the branches have the same rate.
-- [x] If there is a transfer event to a auxiliary-branch (i.e. a branch in the auxiliary tree), then all those gene-branches (directly or indirectly) residing on that branch should have an updated loss rates defined by rules (A0) to (A2), the new rate is $l'=\delta_l l$ for $\delta_l$ being an user-provided value, by default it's value is two. If there are consecutive transfers to the same branch, the rate can increase multiple times
-- [x] If there is a gene loss for a branch with rate bigger than the user provided, other gene-branches following conditions (A0) to (A2) should decrease the rate as $l'=l/\delta_l$. If there are consecutive losses the rate should be updated each time. The minimum value for loss rate is the user provided.
+- [x] If there is a transfer event to a auxiliary-branch (i.e. a branch in the auxiliary tree), then all those gene-branches (directly or indirectly) residing on that branch should have an updated loss rates defined by rules (A0) to (A2), the new rate is $l'=\delta_l l$ for $\delta_l$​ being an user-provided value, by default it's value is two. If there are consecutive transfers to the same branch, the rate can increase multiple times
+  - [ ] Correction: the loss rate should increase after a symbiont-transfer event instead of gene transfer.
+    - [x] Comment the increase of rate after gene transfer
+    - [ ] In the `_run` function, at line 490, the rates should be updated for each branch by checking con conditions (A0) to (A2), or after detecting that a gene were inherited to a new branch of the auxiliary tree who was caused by transfer event, this have to be checked at line 469.
+
+- [x] If there is a gene loss for a branch with rate bigger than the user provided, other gene-branches following conditions (A0) to (A2) should decrease the rate as $l'=l/\delta_l$​. If there are consecutive losses the rate should be updated each time. The minimum value for loss rate is the user provided.
 
 ### AI implementation notes
 
@@ -229,8 +233,9 @@ Right now asymmetree assumes that all the branches of the gene tree have exactly
   samples the event type from that branch-specific rate vector.
 - Homolog interactions are enabled only on auxiliary-tree branches annotated as `host` or
   `symbiont`; ordinary `holoevolve` runs on unannotated trees keep the old behavior.
-- HGT into an auxiliary branch multiplies loss rates pairwise by `delta_l` (default `2.0`) for
-  active branches matching A0-A2, and a later loss divides surviving partners by the same factor
-  without going below the user-provided base loss rate.
+- The previous gene-HGT rate-increase hook is now commented out because loss-rate increases should
+  be triggered by symbiont-level transfer inheritance in `_run()` instead.
+- A loss still divides surviving partners by `delta_l` without going below the user-provided base
+  loss rate.
 - The current A2 handling is symmetric: host and symbiont branches are treated equally for the
   multiplier update. The optional `S-keeps` / `H-keeps` asymmetry is still open for a later step.
