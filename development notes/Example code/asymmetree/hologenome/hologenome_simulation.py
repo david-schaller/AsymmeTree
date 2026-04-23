@@ -7,9 +7,11 @@ from pathlib import Path
 from tralda.datastructures import Tree
 from tralda.datastructures import TreeNode
 
+from asymmetree.holoevolve import dated_gene_tree as dated_gene_tree_auxiliary
+from asymmetree.holoevolve import prune_losses as prune_auxiliary_losses
+from asymmetree.treeevolve import dated_gene_tree as dated_gene_tree_holobiont
+from asymmetree.treeevolve import prune_losses as prune_holobiont_losses
 from asymmetree.utils.phylogenetic_trees import distance_from_timing
-from asymmetree.holoevolve import dated_gene_tree
-from asymmetree.holoevolve import prune_losses
 
 
 def create_auxiliary_tree(
@@ -152,6 +154,8 @@ class HologenomeSimulator:
         self.true_symbiont_trees: list[Tree] = []
         self.pruned_symbiont_trees: list[Tree] = []
         self.auxiliary_trees: list[Tree] = []
+        self.true_gene_trees: list[Tree] = []
+        self.pruned_gene_trees: list[Tree] = []
 
     def simulate_symbiont_trees(
         self,
@@ -178,11 +182,17 @@ class HologenomeSimulator:
         if not isinstance(n, int) or n < 0:
             raise ValueError("n must be an int >= 0")
 
-        self.true_symbiont_trees = [dated_gene_tree(self.host_tree, **kwargs) for _ in range(n)]
-        self.pruned_symbiont_trees = [prune_losses(tree) for tree in self.true_symbiont_trees]
+        self.true_symbiont_trees = [
+            dated_gene_tree_holobiont(self.host_tree, **kwargs) for _ in range(n)
+        ]
+        self.pruned_symbiont_trees = [
+            prune_holobiont_losses(tree) for tree in self.true_symbiont_trees
+        ]
         self.auxiliary_trees = [
             create_auxiliary_tree(self.host_tree, tree) for tree in self.true_symbiont_trees
         ]
+        self.true_gene_trees = []
+        self.pruned_gene_trees = []
 
         if self.outdir:
             for i, tree in enumerate(self.true_symbiont_trees):
@@ -198,6 +208,39 @@ class HologenomeSimulator:
 
         return self.true_symbiont_trees, self.pruned_symbiont_trees, self.auxiliary_trees
 
+    def simulate_gene_trees(self, **kwargs: object) -> tuple[list[Tree], list[Tree]]:
+        """Simulate one gene tree inside each previously generated auxiliary tree.
+
+        The arguments in ``kwargs`` are forwarded to :func:`holoevolve.dated_gene_tree`.
+
+        Args:
+            **kwargs: Parameters forwarded to :func:`holoevolve.dated_gene_tree`.
+
+        Returns:
+            The simulated unpruned gene trees and their pruned versions.
+
+        Raises:
+            RuntimeError: If no auxiliary trees are available yet.
+        """
+        if not self.auxiliary_trees:
+            raise RuntimeError(
+                "simulate_symbiont_trees() must be called before simulate_gene_trees()"
+            )
+
+        self.true_gene_trees = [
+            dated_gene_tree_auxiliary(tree, **kwargs) for tree in self.auxiliary_trees
+        ]
+        self.pruned_gene_trees = [prune_auxiliary_losses(tree) for tree in self.true_gene_trees]
+
+        if self.outdir:
+            for i, tree in enumerate(self.true_gene_trees):
+                tree.serialize(self.outdir / "true_gene_trees" / f"gene_tree{i}.json")
+
+            for i, tree in enumerate(self.pruned_gene_trees):
+                tree.serialize(self.outdir / "pruned_gene_trees" / f"gene_tree{i}.json")
+
+        return self.true_gene_trees, self.pruned_gene_trees
+
     def _check_outdir(self) -> None:
         """Check the output directory and create the required subdirectories.
 
@@ -209,7 +252,13 @@ class HologenomeSimulator:
         elif not self.outdir.is_dir():
             raise FileExistsError(f"'{self.outdir}' is not a directory")
 
-        for directory in ("true_symbiont_trees", "pruned_symbiont_trees", "auxiliary_trees"):
+        for directory in (
+            "true_symbiont_trees",
+            "pruned_symbiont_trees",
+            "auxiliary_trees",
+            "true_gene_trees",
+            "pruned_gene_trees",
+        ):
             path = self.outdir / directory
             if not path.exists():
                 path.mkdir(parents=True, exist_ok=True)

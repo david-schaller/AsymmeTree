@@ -15,7 +15,7 @@ import numpy as np
 from tralda.datastructures import Tree
 from tralda.datastructures import TreeNode
 
-from asymmetree.treeevolve.genes import GeneTreeSimulator
+from asymmetree.holoevolve.genes import GeneTreeSimulator
 from asymmetree.utils.sampling import Sampler
 from asymmetree.utils.phylogenetic_trees import sorted_nodes
 

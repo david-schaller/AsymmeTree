@@ -173,6 +173,7 @@ The code should follow all AsymmeTree standards, in particular, have a look to `
 - [x] Create an example script `development notes/Example code/example_simulations`. The result should be:
   - [x] One pandas series with Host trees trees (in general nhx format)
   - [x] One pandas dataframe with with symbiont trees  (in general nhx format)
+- [x] Create a new copy of the whole package inside `development notes/Example code/` and add the new code.
 
 ### AI implementation notes
 
@@ -190,13 +191,24 @@ The code should follow all AsymmeTree standards, in particular, have a look to `
 
 
 
-## Add `treeevolve` module
+## Add `holoevolve` module
 
-- [x] Create a copy of `asymmetree.treeevolve` inside of the directory `development notes/Example code/`
-- [ ] Add code to the `hologenome` module: simulate a single gene tree inside of the auxiliary tree $T_A$​.
-- [ ] Create an example script `development notes/Example code/example_simulations`. The result should be again a pandas dataframe.
+- [x] Create a copy of `asymmetree.treeevolve` inside of the directory `development notes/Example code/asymmetree/`. Name this new module `holoevolve`
+- [x] Add code to the `hologenome` module: simulate a single gene tree inside of the auxiliary tree $T_A$​, use the functions from `holoevolve` instead of `treeevolve`.
+- [x] Make sure this new code is affectively called at the example script `development notes/Example code/example_simulations`. The result should be again a pandas dataframe.
 
 ### AI implementation notes
+
+- The holobiont stage still uses `treeevolve`: host trees come from `treeevolve.species_tree_n()`
+  and `HologenomeSimulator.simulate_symbiont_trees()` keeps using
+  `treeevolve.dated_gene_tree()` / `treeevolve.prune_losses()`.
+- `HologenomeSimulator.simulate_gene_trees()` simulates one gene tree per stored auxiliary tree and
+  keeps both the unpruned and pruned versions alongside the host-symbiont results, using
+  `holoevolve.dated_gene_tree()` / `holoevolve.prune_losses()`.
+- `example_simulations.py` now runs the auxiliary-tree gene simulation for every scenario and adds
+  `T_gene_unpruned` and `T_gene_pruned` to the returned scenario dataframe.
+- The example currently reuses each scenario's DTL, replacement, and transfer-bias settings for
+  the auxiliary-tree gene simulation so that every row remains self-contained.
 
 
 
@@ -205,11 +217,3 @@ The code should follow all AsymmeTree standards, in particular, have a look to `
 We have to edit the `_get_branch_and_type` function. Right now it assumes that all the branches of the gene tree have exactly the same set of rates, which are the user-provided. The plan is to set a specific set of rates per branch. I'll deal with that later.
 
 ### AI implementation notes
-
------
-
-# Aux
-
-prompt for raki:
-
-> In the file `development notes/README.md`, I have a implementation plan at line 163. Implement the first set of tasks (`## Initialize hologenome module`) , I left  space for relevant and punctual implementation notes (`### AI implementation notes`). Make sure to follow asymmetree standards

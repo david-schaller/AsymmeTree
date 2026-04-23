@@ -12,7 +12,7 @@ import numpy.random as np_random
 
 from asymmetree.hologenome import HologenomeSimulator
 from asymmetree.hologenome import to_nhx
-from asymmetree.holoevolve import species_tree_n
+from asymmetree.treeevolve import species_tree_n
 
 
 SimulationRates = tuple[float, float, float]
@@ -44,7 +44,7 @@ def run_example_simulations(
 
     Returns:
         A pandas series containing the serialized host trees and a pandas dataframe containing the
-            serialized symbiont and auxiliary trees.
+            serialized symbiont, auxiliary, and gene trees for each scenario.
     """
     py_random.seed(seed)
     np_random.seed(seed)
@@ -77,6 +77,14 @@ def run_example_simulations(
                 replace_prob=replace_probability,
                 transfer_distance_bias=transfer_distance_bias,
             )
+            true_gene_trees, pruned_gene_trees = simulator.simulate_gene_trees(
+                dupl_rate=rates[0],
+                hgt_rate=rates[1],
+                loss_rate=rates[2],
+                prohibit_extinction="per_family",
+                replace_prob=replace_probability,
+                transfer_distance_bias=transfer_distance_bias,
+            )
 
             scenario_id = _scenario_id(
                 host_tree_id,
@@ -99,6 +107,8 @@ def run_example_simulations(
                     "T_symbiont_unpruned": to_nhx(true_trees[0]),
                     "T_symbiont_pruned": to_nhx(pruned_trees[0]),
                     "T_auxiliary": to_nhx(auxiliary_trees[0]),
+                    "T_gene_unpruned": to_nhx(true_gene_trees[0]),
+                    "T_gene_pruned": to_nhx(pruned_gene_trees[0]),
                 }
             )
 
