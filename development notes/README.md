@@ -257,3 +257,16 @@ Right now asymmetree assumes that all the branches of the gene tree have exactly
   gene trees.
 - The example dataframe now includes the full `T_auxiliary` / `T_gene_*` columns as well as
   `T_auxiliary_host`, `T_auxiliary_symbiont`, and host/symbiont gene-subtree columns.
+
+## Save trees in three different formats
+
+- [x] In the example simulations script, save the trees in three different formats, like in the script `simulate_HS_level.py`. Use revolutionhtl if necesary.
+- [x] Also save species trees as a csv table
+
+### AI implementation notes
+
+- Added a local `to_simple_newick()` serializer for compact `event|label->reconc` Newick output,
+  with an optional dated variant that emits `dist` as branch lengths.
+- `run_example_simulations(..., output_dir=...)` now writes NHX, simple, and simple-dated CSVs
+  for host trees, scenario trees, and a separate species-tree table. The function return value
+  remains the original NHX host series and scenario dataframe.

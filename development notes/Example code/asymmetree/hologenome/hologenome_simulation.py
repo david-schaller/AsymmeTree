@@ -182,6 +182,55 @@ def to_nhx(
     return _serialize(tree.root) + ";"
 
 
+def to_simple_newick(tree: Tree, include_distances: bool = False) -> str:
+    """Serialize a tree with compact reconciliation labels.
+
+    Labels follow the ``event|label->reconc`` style used by the old simulation scripts. When
+    ``include_distances`` is True, node distances are emitted as Newick branch lengths.
+
+    Args:
+        tree: The tree to serialize.
+        include_distances: If True, include ``dist`` as Newick branch lengths.
+
+    Returns:
+        The serialized tree in simplified Newick format.
+    """
+    _validate_tree(tree, "tree")
+
+    def _format_value(value: object) -> str:
+        if isinstance(value, (tuple, list)):
+            value = "-".join(_format_value(item) for item in value)
+
+        return _sanitize_newick_token(value)
+
+    def _label(node: TreeNode) -> str:
+        event_value = getattr(node, "event", None)
+        reconc_value = getattr(node, "reconc", None)
+
+        if event_value is None and reconc_value is None:
+            return _format_value(getattr(node, "label", ""))
+
+        event = _format_value(event_value)
+        label = _format_value(getattr(node, "label", ""))
+        reconc = _format_value(reconc_value)
+
+        return f"{event}|{label}->{reconc}"
+
+    def _serialize(node: TreeNode) -> str:
+        if node.children:
+            children = ",".join(_serialize(child) for child in node.children)
+            token = f"({children}){_label(node)}"
+        else:
+            token = _label(node)
+
+        if include_distances and hasattr(node, "dist"):
+            token += f":{node.dist}"
+
+        return token
+
+    return _serialize(tree.root) + ";"
+
+
 class HologenomeSimulator:
     """Class for the simulation of host-symbiont scenarios."""
 
@@ -383,6 +432,16 @@ class HologenomeSimulator:
             path = self.outdir / directory
             if not path.exists():
                 path.mkdir(parents=True, exist_ok=True)
+
+
+def _sanitize_newick_token(value: object) -> str:
+    """Return a compact token that is safe to use as an unquoted Newick label."""
+    token = str(value).replace(" ", "_")
+
+    for char in ("(", ")", ",", ":", ";", "[", "]"):
+        token = token.replace(char, "-")
+
+    return token
 
 
 def _validate_tree(tree: Tree, tree_name: str) -> None:

@@ -16,3 +16,4 @@ from .hologenome_simulation import (
     split_gene_tree_by_auxiliary_level as split_gene_tree_by_auxiliary_level,
 )
 from .hologenome_simulation import to_nhx as to_nhx
+from .hologenome_simulation import to_simple_newick as to_simple_newick
