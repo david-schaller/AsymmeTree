@@ -41,11 +41,20 @@ class _Branch:
     list_id: int  # index in list of branches
     parent: TreeNode  # parent node
     S_edge: TreeNode  # v of species tree edge (u, v) into which the branch is embedded
-    transferred: TreeNode  # 1 if HGT edge, 0 otherwise
+    transferred: int  # 1 if HGT edge, 0 otherwise
+    dupl_rate: float
+    loss_rate: float
+    hgt_rate: float
+    gc_rate: float
 
     def __hash__(self) -> int:
         """Hash based on the unique branch label."""
         return hash(self.label)
+
+    @property
+    def total_rate(self) -> float:
+        """Sum of the branch-specific event rates."""
+        return self.dupl_rate + self.loss_rate + self.hgt_rate + self.gc_rate
 
 
 class GeneTreeSimulator:
@@ -89,6 +98,7 @@ class GeneTreeSimulator:
         transfer_distance_bias_strength: float = 1.0,
         gc_distance_bias: str | None = None,
         gc_distance_bias_strength: float = 1.0,
+        delta_l: float = 2.0,
         **kwargs,
     ) -> Tree:
         """Simulate a gene tree along the specified species tree.
@@ -136,6 +146,10 @@ class GeneTreeSimulator:
                 see [1], and a is a user-defined factor.
             gc_distance_bias_strength: Intensity of the distance bias (factor a) for gene
                 conversion, default is 1.0.
+            delta_l: Multiplicative factor used for homolog-homolog loss interactions in auxiliary
+                trees. A transfer into an auxiliary branch multiplies loss rates according to rules
+                A0-A2, while a later loss of an interacting branch divides surviving partners'
+                loss rates by the same factor. The default is 2.0.
 
         Returns:
             The simulated gene tree.
@@ -199,6 +213,10 @@ class GeneTreeSimulator:
             raise ValueError("factor for g.c. distance bias must be > 0")
         self._gc_distance_bias_strength = gc_distance_bias_strength
 
+        if not isinstance(delta_l, (int, float)) or delta_l < 1.0:
+            raise ValueError("delta_l must be >= 1")
+        self._delta_l = float(delta_l)
+
         return self._run()
 
     def _analyze_species_tree(self) -> None:
@@ -217,7 +235,13 @@ class GeneTreeSimulator:
         if not self.S_subtree_survivors[self.S.root]:
             warnings.warn("species tree has no non-loss leaves", category=warnings.UserWarning)
 
-    def _new_branch(self, parent: TreeNode, S_edge: TreeNode, transferred: int) -> _Branch:
+    def _new_branch(
+        self,
+        parent: TreeNode,
+        S_edge: TreeNode,
+        transferred: int,
+        template_branch: _Branch | None = None,
+    ) -> _Branch:
         """Create a new gene branch as child of the given parent node.
 
         Args:
@@ -225,11 +249,33 @@ class GeneTreeSimulator:
             S_edge: The species tree edge into which the new branch is embedded (represented by its
                 lower node).
             transferred: 1 if the new branch is a transferred branch in an HGT event, 0 otherwise.
+            template_branch: Optional source branch whose current rates shall be inherited.
 
         Returns:
             The newly created gene branch.
         """
-        new_branch = _Branch(self.id_counter, len(self.branches), parent, S_edge, transferred)
+        if template_branch is None:
+            dupl_rate = self.d
+            loss_rate = self.l
+            hgt_rate = self.h
+            gc_rate = self.gc
+        else:
+            dupl_rate = template_branch.dupl_rate
+            loss_rate = template_branch.loss_rate
+            hgt_rate = template_branch.hgt_rate
+            gc_rate = template_branch.gc_rate
+
+        new_branch = _Branch(
+            self.id_counter,
+            len(self.branches),
+            parent,
+            S_edge,
+            transferred,
+            dupl_rate,
+            loss_rate,
+            hgt_rate,
+            gc_rate,
+        )
         self.branches.append(new_branch)
 
         self.ES_to_b[S_edge].append(new_branch)
@@ -280,21 +326,110 @@ class GeneTreeSimulator:
         Returns:
             A tuple containing the sampled branch and the event type ('D', 'L', 'H', or 'GC').
         """
-        total_rate = len(self.branches) * self.rate_sum
-        r = np.random.uniform(high=total_rate)
-        i = int(len(self.branches) * r / total_rate)
-        r2 = r - i * self.rate_sum
+        weights = [branch.total_rate for branch in self.branches]
+        total_rate = sum(weights)
 
-        if r2 <= self.d:
+        if total_rate <= 0.0:
+            raise ValueError("cannot sample an event when all branch-specific rates are zero")
+
+        branch = random.choices(self.branches, weights=weights)[0]
+        r = np.random.uniform(high=branch.total_rate)
+
+        if r <= branch.dupl_rate:
             event_type = "D"
-        elif r2 <= self.d + self.l:
+        elif r <= branch.dupl_rate + branch.loss_rate:
             event_type = "L"
-        elif r2 <= self.d + self.l + self.h:
+        elif r <= branch.dupl_rate + branch.loss_rate + branch.hgt_rate:
             event_type = "H"
         else:
             event_type = "GC"
 
-        return self.branches[i], event_type
+        return branch, event_type
+
+    def _branch_level(self, branch: _Branch) -> str | None:
+        """Return the auxiliary-tree level of the branch, if present."""
+        return getattr(branch.S_edge, "level", None)
+
+    def _location_key(self, value: object) -> object:
+        """Normalize a location value to the lower node label that represents the edge."""
+        if isinstance(value, (tuple, list)):
+            if not value:
+                return None
+            return self._location_key(value[-1])
+        return value
+
+    def _branch_auxiliary_key(self, branch: _Branch) -> object:
+        """Return the auxiliary-tree key of the branch."""
+        return self._location_key(getattr(branch.S_edge, "label", None))
+
+    def _branch_host_key(self, branch: _Branch) -> object:
+        """Return the host-side key of the branch."""
+        level = self._branch_level(branch)
+        if level == "host":
+            return self._branch_auxiliary_key(branch)
+        if level == "symbiont":
+            return self._location_key(getattr(branch.S_edge, "reconc", None))
+        return None
+
+    def _supports_hologenome_interactions(self, branch: _Branch) -> bool:
+        """Check whether the branch lives in the annotated part of an auxiliary tree."""
+        return self._delta_l > 1.0 and self._branch_level(branch) in ("host", "symbiont")
+
+    def _branches_interact(self, branch1: _Branch, branch2: _Branch) -> bool:
+        """Check whether a pair of active branches matches rules A0-A2."""
+        if branch1 is branch2:
+            return False
+
+        if not (
+            self._supports_hologenome_interactions(branch1)
+            and self._supports_hologenome_interactions(branch2)
+        ):
+            return False
+
+        # A0: both genes reside in the same auxiliary-tree branch.
+        if branch1.S_edge is branch2.S_edge:
+            return True
+
+        level1 = self._branch_level(branch1)
+        level2 = self._branch_level(branch2)
+        host_key1 = self._branch_host_key(branch1)
+        host_key2 = self._branch_host_key(branch2)
+
+        # A1: different symbiont species in the same host.
+        if (
+            level1 == "symbiont"
+            and level2 == "symbiont"
+            and branch1.S_edge is not branch2.S_edge
+            and host_key1 is not None
+            and host_key1 == host_key2
+        ):
+            return True
+
+        # A2: one gene is in the host, the other in one of its symbionts.
+        if level1 == "host" and level2 == "symbiont":
+            return self._branch_auxiliary_key(branch1) == host_key2
+        if level1 == "symbiont" and level2 == "host":
+            return self._branch_auxiliary_key(branch2) == host_key1
+
+        return False
+
+    def _interaction_partners(self, branch: _Branch) -> list[_Branch]:
+        """Return the active branches that currently interact with the given branch."""
+        return [other for other in self.branches if self._branches_interact(branch, other)]
+
+    def _increase_loss_rates_after_transfer(self, branch: _Branch) -> None:
+        """Increase pairwise loss rates after a transfer created a new overlap."""
+        for other in self._interaction_partners(branch):
+            branch.loss_rate *= self._delta_l
+            other.loss_rate *= self._delta_l
+
+    def _decrease_loss_rates_after_loss(self, branch: _Branch, partners: list[_Branch]) -> None:
+        """Relax loss rates of surviving interaction partners after a loss event."""
+        if branch.loss_rate <= self.l:
+            return
+
+        for other in partners:
+            other.loss_rate = max(self.l, other.loss_rate / self._delta_l)
 
     def _run(self) -> Tree:
         """Run the gene tree simulation.
@@ -323,7 +458,7 @@ class GeneTreeSimulator:
         t = self.T.root.tstamp
 
         while self.spec_queue:
-            total_rate = len(self.branches) * self.rate_sum
+            total_rate = sum(branch.total_rate for branch in self.branches)
             event_tstamp = t - np.random.exponential(1 / total_rate) if total_rate > 0.0 else -1
             next_spec_tstamp = self.spec_queue[0].tstamp
 
@@ -368,6 +503,11 @@ class GeneTreeSimulator:
 
         # copy since we modify this list
         for branch in self.ES_to_b[S_edge].copy():
+            partners = []
+            is_species_loss = (not S_edge.children) and S_edge.label == "L"
+            if is_species_loss:
+                partners = self._interaction_partners(branch)
+
             spec_node = TreeNode(
                 label=branch.label,
                 event="S",
@@ -379,11 +519,12 @@ class GeneTreeSimulator:
             self._remove_branch(branch)
 
             for S_w in S_edge.children:
-                self._new_branch(spec_node, S_w, 0)
+                self._new_branch(spec_node, S_w, 0, template_branch=branch)
 
             # loss leaves if it was a species extinction event
-            if (not S_edge.children) and S_edge.label == "L":
+            if is_species_loss:
                 spec_node.event = "L"
+                self._decrease_loss_rates_after_loss(branch, partners)
 
     def _duplication(self, event_tstamp: float, branch: _Branch) -> None:
         """Execute a duplication event on the given branch at the given time stamp.
@@ -412,7 +553,7 @@ class GeneTreeSimulator:
         )
 
         for i in range(copy_number):
-            self._new_branch(dupl_node, S_edge, 0)
+            self._new_branch(dupl_node, S_edge, 0, template_branch=branch)
 
     def _loss(self, event_tstamp: float, branch: _Branch) -> None:
         """Execute a loss event on the given branch at the given time stamp.
@@ -436,6 +577,7 @@ class GeneTreeSimulator:
             return
 
         S_edge = branch.S_edge
+        partners = self._interaction_partners(branch)
 
         loss_node = TreeNode(
             label=branch.label,
@@ -446,6 +588,7 @@ class GeneTreeSimulator:
         )
         branch.parent.add_child(loss_node)
         self._remove_branch(branch)
+        self._decrease_loss_rates_after_loss(branch, partners)
 
     def _coexisting_species_edges(self, tstamp: float, exclude_edge: _Branch = None) -> list:
         """Return list of edges for the given timestamp.
@@ -562,10 +705,11 @@ class GeneTreeSimulator:
             self._remove_branch(branch)
 
             # original branch
-            self._new_branch(hgt_node, S_edge, 0)
+            self._new_branch(hgt_node, S_edge, 0, template_branch=branch)
 
             # receiving branch
-            self._new_branch(hgt_node, trans_edge, 1)
+            receiving_branch = self._new_branch(hgt_node, trans_edge, 1, template_branch=branch)
+            self._increase_loss_rates_after_transfer(receiving_branch)
 
         # replacing HGT leads to loss in the recipient species
         if replaced_gene_branch:
@@ -630,8 +774,8 @@ class GeneTreeSimulator:
             branch.parent.add_child(gc_node)
             self._remove_branch(branch)
 
-            self._new_branch(gc_node, S_edge, 0)
-            self._new_branch(gc_node, S_edge, 0)
+            self._new_branch(gc_node, S_edge, 0, template_branch=branch)
+            self._new_branch(gc_node, S_edge, 0, template_branch=branch)
 
             # gene conversion leads to loss of a homologous gene
             self._loss(event_tstamp, replaced_gene_branch)
@@ -649,7 +793,7 @@ def dated_gene_tree(S: Tree, **kwargs: object) -> Tree:
             ``dupl_polytomy``, ``prohibit_extinction``, ``replace_prob``,
             ``additive_transfer_distance_bias``, ``replacing_transfer_distance_bias``,
             ``transfer_distance_bias``, ``transfer_distance_bias_strength``,
-            ``gc_distance_bias``, and ``gc_distance_bias_strength``. See
+            ``gc_distance_bias``, ``gc_distance_bias_strength``, and ``delta_l``. See
             :meth:`GeneTreeSimulator.simulate` for the full parameter descriptions.
 
     Returns:

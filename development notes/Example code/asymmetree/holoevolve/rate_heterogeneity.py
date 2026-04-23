@@ -52,10 +52,10 @@ def gene_trees(
             :func:`rate_heterogeneity`. Accepted parameters are ``dupl_rate``, ``loss_rate``,
             ``hgt_rate``, ``gc_rate``, ``dupl_polytomy``, ``prohibit_extinction``, ``replace_prob``,
             ``additive_transfer_distance_bias``, ``replacing_transfer_distance_bias``,
-            ``transfer_distance_bias``, ``transfer_distance_bias_strength``,
-            ``gc_distance_bias``, ``gc_distance_bias_strength``, ``autocorr_variance``,
+            ``transfer_distance_bias``, ``transfer_distance_bias_strength``, ``gc_distance_bias``,
+            ``gc_distance_bias_strength``, ``delta_l``, ``autocorr_variance``,
             ``rate_increase``, and ``CSN_weights``. See :meth:`GeneTreeSimulator.simulate` and
-             :func:`rate_heterogeneity` documentations for the full parameter descriptions.
+            :func:`rate_heterogeneity` documentations for the full parameter descriptions.
 
     Returns:
         A list of simulated gene tree.
