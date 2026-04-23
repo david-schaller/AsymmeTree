@@ -8,8 +8,8 @@ from tralda.datastructures import Tree
 from tralda.datastructures import TreeNode
 
 from asymmetree.utils.phylogenetic_trees import distance_from_timing
-from treeevolve import dated_gene_tree
-from treeevolve import prune_losses
+from asymmetree.holoevolve import dated_gene_tree
+from asymmetree.holoevolve import prune_losses
 
 
 def create_auxiliary_tree(
