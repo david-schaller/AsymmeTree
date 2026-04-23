@@ -1,0 +1,281 @@
+"""Module for sampling from various distributions.
+
+The `Sampler` class allows sampling from a variety of distributions, including constant, uniform,
+discrete uniform, gamma, exponential, zipf, and negative binomial distributions. The class also
+supports specifying minimum and maximum values for the samples, as well as shifting the distribution
+along the x-axis.
+"""
+
+from __future__ import annotations
+
+import numpy as np
+from scipy.special import zeta
+
+
+class Sampler:
+    """Sampling from a variety of distributions."""
+
+    def __init__(
+        self,
+        params: int | float | tuple | list,
+        minimum: int | float | None = None,
+        maximum: int | float | None = None,
+        discrete: bool = False,
+        shift: int | float = 0,
+    ) -> None:
+        """Construct a `Sampler` object.
+
+        Args:
+            params: The distribution and its parameters, see documentation for available options.
+            minimum: Minimum value to be sampled.
+            maximum: Maximum value to be sampled.
+            discrete: If True, round sampled values in case of a continuous distribution.
+            shift: Shift distribution along x-axis. The default is 0, i.e., the distribution is not
+                shifted.
+        """
+        self._params = params
+        self._discrete = discrete
+        self._min = minimum
+        self._max = maximum
+        self._shift = shift
+
+        # function to be defined in _check_and_initialize_distribution
+        self.draw = None
+
+        self._check_and_initialize_distribution()
+
+    def __call__(self) -> int | float:
+        """Draw a value from the specified distribution.
+
+        Returns:
+            A value drawn from the specified distribution, which is an `int` if `discrete` is True
+                and a `float` otherwise.
+        """
+        return self.draw()
+
+    def _check_and_initialize_distribution(self):
+        """Check if the specified distribution is valid and set the draw function."""
+        if self._min is not None and not isinstance(self._min, (int, float)):
+            raise ValueError("minimum must be a number")
+
+        if self._max is not None and not isinstance(self._max, (int, float)):
+            raise ValueError("maximum must be a number")
+
+        if not isinstance(self._shift, (int, float)):
+            raise ValueError("shift value must be a number")
+
+        if isinstance(self._params, (int, float)):
+            self._distr = "constant"
+            self.draw = self._draw_constant
+            self._exp_val = round(self._params) if self._discrete else self._params
+
+        elif isinstance(self._params, (tuple, list)) and len(self._params) >= 2:
+            if self._params[0] == "constant":
+                val = self._params[1]
+                if not isinstance(val, (int, float)):
+                    raise ValueError("constant value must be a number")
+
+                self._distr = "constant"
+                self.draw = self._draw_constant
+                self._exp_val = round(val) if self._discrete else val
+
+            elif self._params[0] == "uniform":
+                a = self._params[1]
+                if not len(self._params) >= 3:
+                    raise ValueError("uniform distr. requires 2 parameters")
+                b = self._params[2]
+
+                if not isinstance(a, (int, float)) or not isinstance(b, (int, float)) or b < a:
+                    raise ValueError(
+                        "parameters a and b for uniform distr.must be numbers and a <= b"
+                    )
+
+                self._distr = "uniform"
+                self.draw = self._draw_uniform
+                self._exp_val = (a + b) / 2
+                self._a = a
+                self._b = b
+
+            elif self._params[0] == "discrete_uniform":
+                a = self._params[1]
+                if not len(self._params) >= 3:
+                    raise ValueError("discrete uniform distr. requires 2 parameters")
+                b = self._params[2]
+
+                if not isinstance(a, int) or not isinstance(b, int) or b < a:
+                    raise ValueError(
+                        "parameters a and b for discrete uniform distr. must be ints and a <= b"
+                    )
+
+                self._distr = "discrete_uniform"
+                self.draw = self._draw_discrete_uniform
+                self._exp_val = (a + b) / 2
+                self._a = a
+                self._b = b
+
+            elif self._params[0] == "gamma":
+                shape = self._params[1]
+                if not len(self._params) >= 3:
+                    raise ValueError("gamma distr. requires 2 parameters")
+                scale = self._params[2]
+
+                if (
+                    not isinstance(shape, (int, float))
+                    or shape <= 0.0
+                    or not isinstance(scale, (int, float))
+                    or scale <= 0.0
+                ):
+                    raise ValueError(
+                        "scale and shape parameters for gamma distribution must be numbers >0.0"
+                    )
+
+                shape = float(shape)
+                scale = float(scale)
+
+                self._distr = "gamma"
+                self.draw = self._draw_gamma
+                self._exp_val = shape * scale
+                self._shape = shape
+                self._scale = scale
+
+            elif self._params[0] == "gamma_mean":
+                mean = self._params[1]
+
+                if not isinstance(mean, (int, float)) or mean <= 0.0:
+                    raise ValueError("mean of gamma distribution must be a number >0.0")
+
+                mean = float(mean)
+                self._distr = "gamma"
+                self.draw = self._draw_gamma
+                self._exp_val = mean
+                self._shape = 1.0
+                self._scale = mean / self._shape
+
+            elif self._params[0] == "exponential":
+                rate = self._params[1]
+
+                if not isinstance(rate, (int, float)) or rate < 0.0:
+                    raise ValueError("rate must be a number >=0.0")
+
+                rate = float(rate)
+                self._distr = "exponential"
+                self.draw = self._draw_exponential
+                self._exp_val = float("inf") if rate == 0.0 else 1 / rate
+                self._rate = rate
+
+            elif self._params[0] == "zipf":
+                a = self._params[1]
+
+                if not isinstance(a, (int, float)) or a <= 1.0:
+                    raise ValueError("parameter a for zipf distr. must be a number >1")
+
+                a = float(a)
+                # expected value is infinite for a <= 2
+                if a > 2.0:
+                    self._exp_val = zeta(a - 1.0) / zeta(a)
+
+                # use some valid value when exp. value is infinite
+                elif self._min is not None:
+                    self._exp_val = self._min
+                else:
+                    self._exp_val = 0.0
+
+                self._distr = "zipf"
+                self.draw = self._draw_zipf
+                self._a = a
+
+            elif self._params[0] == "negative_binomial":
+                r = self._params[1]
+                if not len(self._params) >= 3:
+                    raise ValueError("negative binomial distr. requires 2 parameters")
+                q = self._params[2]
+
+                if not isinstance(r, int) or r < 1:
+                    raise ValueError("parameter r must be an int and >0")
+                if not isinstance(q, (int, float)) or q <= 0 or q >= 1.0:
+                    raise ValueError("parameter q must be a number >0 and <1")
+
+                q = float(q)
+                self._distr = "negative_binomial"
+                self.draw = self._draw_neg_bin
+                self._exp_val = r * q / (1 - q)
+                self._r = r
+                self._q = q
+
+            else:
+                raise ValueError(f"length distribution '{self._params[0]}' is not supported")
+
+        else:
+            raise ValueError("could not parse distribution")
+
+        self._exp_val += self._shift
+
+        # expected value must be between min. and max.
+        if (self._min is not None and self._exp_val < self._min) or (
+            self._max is not None and self._exp_val > self._max
+        ):
+            raise ValueError("expected value must be >= minimum and<= maximum")
+
+    def _draw_constant(self):
+        """Draw a value from a constant distribution."""
+        return self._exp_val
+
+    def _draw_uniform(self):
+        """Draw a value from a uniform distribution."""
+        while True:
+            x = np.random.uniform(low=self._a, high=self._b) + self._shift
+
+            if self._discrete:
+                x = round(x)
+
+            if (self._min is None or x >= self._min) and (self._max is None or x <= self._max):
+                return x
+
+    def _draw_discrete_uniform(self):
+        """Draw a value from a discrete uniform distribution."""
+        while True:
+            x = np.random.randint(self._a, high=self._b) + self._shift
+
+            if (self._min is None or x >= self._min) and (self._max is None or x <= self._max):
+                return x
+
+    def _draw_gamma(self):
+        """Draw a value from a gamma distribution."""
+        while True:
+            x = np.random.gamma(self._shape, scale=self._scale) + self._shift
+
+            if self._discrete:
+                x = round(x)
+
+            if (self._min is None or x >= self._min) and (self._max is None or x <= self._max):
+                return x
+
+    def _draw_exponential(self):
+        """Draw a value from an exponential distribution."""
+        while True:
+            if self._rate == 0.0:
+                x = float("inf")
+            else:
+                x = np.random.exponential(scale=1 / self._rate) + self._shift
+
+            if self._discrete:
+                x = round(x)
+
+            if (self._min is None or x >= self._min) and (self._max is None or x <= self._max):
+                return x
+
+    def _draw_zipf(self):
+        """Draw a value from a Zipf distribution."""
+        while True:
+            x = np.random.zipf(self._a) + self._shift
+
+            if (self._min is None or x >= self._min) and (self._max is None or x <= self._max):
+                return x
+
+    def _draw_neg_bin(self):
+        """Draw a value from a negative binomial distribution."""
+        while True:
+            x = np.random.negative_binomial(self._r, 1 - self._q) + self._shift
+
+            if (self._min is None or x >= self._min) and (self._max is None or x <= self._max):
+                return x

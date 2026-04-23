@@ -10,9 +10,9 @@ from pandas import DataFrame
 from pandas import Series
 import numpy.random as np_random
 
-from hologenome import HologenomeSimulator
-from hologenome import to_nhx
-from treeevolve import species_tree_n
+from asymmetree.hologenome import HologenomeSimulator
+from asymmetree.hologenome import to_nhx
+from asymmetree.holoevolve import species_tree_n
 
 
 SimulationRates = tuple[float, float, float]
