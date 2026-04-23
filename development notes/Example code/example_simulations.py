@@ -109,6 +109,16 @@ def run_example_simulations(
                     "T_auxiliary": to_nhx(auxiliary_trees[0]),
                     "T_gene_unpruned": to_nhx(true_gene_trees[0]),
                     "T_gene_pruned": to_nhx(pruned_gene_trees[0]),
+                    "T_auxiliary_host": to_nhx(simulator.host_component_trees[0]),
+                    "T_auxiliary_symbiont": to_nhx(simulator.symbiont_component_trees[0]),
+                    "T_gene_host_unpruned": to_nhx(simulator.true_host_gene_trees[0]),
+                    "T_gene_symbiont_unpruned": to_nhx(
+                        simulator.true_symbiont_gene_trees[0]
+                    ),
+                    "T_gene_host_pruned": to_nhx(simulator.pruned_host_gene_trees[0]),
+                    "T_gene_symbiont_pruned": to_nhx(
+                        simulator.pruned_symbiont_gene_trees[0]
+                    ),
                 }
             )
 

@@ -239,3 +239,21 @@ Right now asymmetree assumes that all the branches of the gene tree have exactly
   loss rate.
 - The current A2 handling is symmetric: host and symbiont branches are treated equally for the
   multiplier update. The optional `S-keeps` / `H-keeps` asymmetry is still open for a later step.
+
+## Separate auxiliary tree
+
+- [x] After the simulation of genes inside of the holobiont, separate the auxiliary tree into host and symbiont again (maybe is better to just recall the original trees),
+- [x] additionally separate the gene tree into two subtrees, one whose root is mapped to the symbiont side , and the other whose root is mapped to the host side of the auxiliary tree.
+- [x] Keep the auxiliary tree and corresponding gene tree
+
+### AI implementation notes
+
+- `split_auxiliary_tree()` returns copied host and symbiont components from the already annotated
+  auxiliary tree, so the original auxiliary tree remains available unchanged.
+- `split_gene_tree_by_auxiliary_level()` projects a gene tree onto host-side and symbiont-side
+  reconciliations using the auxiliary-tree `level` annotations.
+- `HologenomeSimulator.simulate_gene_trees()` keeps the full auxiliary tree and full gene tree, and
+  additionally stores host/symbiont auxiliary components plus unpruned and pruned side-specific
+  gene trees.
+- The example dataframe now includes the full `T_auxiliary` / `T_gene_*` columns as well as
+  `T_auxiliary_host`, `T_auxiliary_symbiont`, and host/symbiont gene-subtree columns.

@@ -11,4 +11,8 @@ from .hologenome_simulation import (
     HologenomeSimulator as HologenomeSimulator,
 )
 from .hologenome_simulation import create_auxiliary_tree as create_auxiliary_tree
+from .hologenome_simulation import split_auxiliary_tree as split_auxiliary_tree
+from .hologenome_simulation import (
+    split_gene_tree_by_auxiliary_level as split_gene_tree_by_auxiliary_level,
+)
 from .hologenome_simulation import to_nhx as to_nhx

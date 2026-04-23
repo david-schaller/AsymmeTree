@@ -80,6 +80,59 @@ def create_auxiliary_tree(
     return auxiliary_tree
 
 
+def split_auxiliary_tree(auxiliary_tree: Tree) -> tuple[Tree, Tree]:
+    """Split an auxiliary tree into its host and symbiont components.
+
+    Args:
+        auxiliary_tree: An auxiliary tree created by :func:`create_auxiliary_tree`.
+
+    Returns:
+        The host-side component and the symbiont-side component.
+
+    Raises:
+        TypeError: If ``auxiliary_tree`` is not a non-empty tree.
+        ValueError: If one of the components cannot be found.
+    """
+    _validate_tree(auxiliary_tree, "auxiliary tree")
+
+    return (
+        _copy_component_tree(auxiliary_tree, "host"),
+        _copy_component_tree(auxiliary_tree, "symbiont"),
+    )
+
+
+def split_gene_tree_by_auxiliary_level(
+    gene_tree: Tree,
+    auxiliary_tree: Tree,
+) -> tuple[Tree, Tree]:
+    """Split a gene tree into host-side and symbiont-side subtrees.
+
+    The split is driven by the ``level`` annotations of the auxiliary tree. Gene-tree nodes whose
+    reconciliation maps to a host branch are retained in the host subtree, while nodes mapped to a
+    symbiont branch are retained in the symbiont subtree. Auxiliary connector nodes are suppressed
+    where possible so that each returned root is mapped to the corresponding component.
+
+    Args:
+        gene_tree: A gene tree simulated inside ``auxiliary_tree``.
+        auxiliary_tree: The auxiliary tree used for the simulation.
+
+    Returns:
+        The host-side gene subtree and the symbiont-side gene subtree.
+
+    Raises:
+        TypeError: If one of the inputs is not a non-empty tree.
+    """
+    _validate_tree(gene_tree, "gene tree")
+    _validate_tree(auxiliary_tree, "auxiliary tree")
+
+    auxiliary_levels = _auxiliary_level_map(auxiliary_tree)
+
+    return (
+        _copy_gene_subtree(gene_tree, auxiliary_levels, "host"),
+        _copy_gene_subtree(gene_tree, auxiliary_levels, "symbiont"),
+    )
+
+
 def to_nhx(
     tree: Tree,
     annotation_attributes: tuple[str, ...] = ("event", "reconc", "tstamp", "transferred", "level"),
@@ -156,6 +209,12 @@ class HologenomeSimulator:
         self.auxiliary_trees: list[Tree] = []
         self.true_gene_trees: list[Tree] = []
         self.pruned_gene_trees: list[Tree] = []
+        self.host_component_trees: list[Tree] = []
+        self.symbiont_component_trees: list[Tree] = []
+        self.true_host_gene_trees: list[Tree] = []
+        self.true_symbiont_gene_trees: list[Tree] = []
+        self.pruned_host_gene_trees: list[Tree] = []
+        self.pruned_symbiont_gene_trees: list[Tree] = []
 
     def simulate_symbiont_trees(
         self,
@@ -193,6 +252,12 @@ class HologenomeSimulator:
         ]
         self.true_gene_trees = []
         self.pruned_gene_trees = []
+        self.host_component_trees = []
+        self.symbiont_component_trees = []
+        self.true_host_gene_trees = []
+        self.true_symbiont_gene_trees = []
+        self.pruned_host_gene_trees = []
+        self.pruned_symbiont_gene_trees = []
 
         if self.outdir:
             for i, tree in enumerate(self.true_symbiont_trees):
@@ -231,6 +296,34 @@ class HologenomeSimulator:
             dated_gene_tree_auxiliary(tree, **kwargs) for tree in self.auxiliary_trees
         ]
         self.pruned_gene_trees = [prune_auxiliary_losses(tree) for tree in self.true_gene_trees]
+        self.host_component_trees = []
+        self.symbiont_component_trees = []
+        self.true_host_gene_trees = []
+        self.true_symbiont_gene_trees = []
+        self.pruned_host_gene_trees = []
+        self.pruned_symbiont_gene_trees = []
+
+        for auxiliary_tree, true_gene_tree, pruned_gene_tree in zip(
+            self.auxiliary_trees,
+            self.true_gene_trees,
+            self.pruned_gene_trees,
+        ):
+            host_component, symbiont_component = split_auxiliary_tree(auxiliary_tree)
+            true_host_gene, true_symbiont_gene = split_gene_tree_by_auxiliary_level(
+                true_gene_tree,
+                auxiliary_tree,
+            )
+            pruned_host_gene, pruned_symbiont_gene = split_gene_tree_by_auxiliary_level(
+                pruned_gene_tree,
+                auxiliary_tree,
+            )
+
+            self.host_component_trees.append(host_component)
+            self.symbiont_component_trees.append(symbiont_component)
+            self.true_host_gene_trees.append(true_host_gene)
+            self.true_symbiont_gene_trees.append(true_symbiont_gene)
+            self.pruned_host_gene_trees.append(pruned_host_gene)
+            self.pruned_symbiont_gene_trees.append(pruned_symbiont_gene)
 
         if self.outdir:
             for i, tree in enumerate(self.true_gene_trees):
@@ -238,6 +331,28 @@ class HologenomeSimulator:
 
             for i, tree in enumerate(self.pruned_gene_trees):
                 tree.serialize(self.outdir / "pruned_gene_trees" / f"gene_tree{i}.json")
+
+            for i, tree in enumerate(self.host_component_trees):
+                tree.serialize(self.outdir / "host_component_trees" / f"host_tree{i}.json")
+
+            for i, tree in enumerate(self.symbiont_component_trees):
+                tree.serialize(
+                    self.outdir / "symbiont_component_trees" / f"symbiont_tree{i}.json"
+                )
+
+            for i, tree in enumerate(self.true_host_gene_trees):
+                tree.serialize(self.outdir / "true_host_gene_trees" / f"gene_tree{i}.json")
+
+            for i, tree in enumerate(self.true_symbiont_gene_trees):
+                tree.serialize(self.outdir / "true_symbiont_gene_trees" / f"gene_tree{i}.json")
+
+            for i, tree in enumerate(self.pruned_host_gene_trees):
+                tree.serialize(self.outdir / "pruned_host_gene_trees" / f"gene_tree{i}.json")
+
+            for i, tree in enumerate(self.pruned_symbiont_gene_trees):
+                tree.serialize(
+                    self.outdir / "pruned_symbiont_gene_trees" / f"gene_tree{i}.json"
+                )
 
         return self.true_gene_trees, self.pruned_gene_trees
 
@@ -258,6 +373,12 @@ class HologenomeSimulator:
             "auxiliary_trees",
             "true_gene_trees",
             "pruned_gene_trees",
+            "host_component_trees",
+            "symbiont_component_trees",
+            "true_host_gene_trees",
+            "true_symbiont_gene_trees",
+            "pruned_host_gene_trees",
+            "pruned_symbiont_gene_trees",
         ):
             path = self.outdir / directory
             if not path.exists():
@@ -268,6 +389,134 @@ def _validate_tree(tree: Tree, tree_name: str) -> None:
     """Validate that the object is a non-empty tree."""
     if not isinstance(tree, Tree) or not tree.root:
         raise TypeError(f"{tree_name} must be a non-empty tree of type 'Tree'")
+
+
+def _copy_component_tree(auxiliary_tree: Tree, level: str) -> Tree:
+    """Copy the component subtree for the requested auxiliary level."""
+    component_root = _component_root(auxiliary_tree, level)
+    _, node_map = auxiliary_tree.copy(mapping=True)
+    copied_root = node_map[component_root]
+    copied_root.detach()
+    copied_root.dist = 0.0
+
+    return Tree(copied_root)
+
+
+def _component_root(auxiliary_tree: Tree, level: str) -> TreeNode:
+    """Return the root of an auxiliary-tree component."""
+    for node in auxiliary_tree.preorder():
+        if getattr(node, "level", None) != level:
+            continue
+        if not node.parent or getattr(node.parent, "level", None) != level:
+            return node
+
+    raise ValueError(f"auxiliary tree has no {level} component")
+
+
+def _auxiliary_level_map(auxiliary_tree: Tree) -> dict[object, str]:
+    """Map auxiliary-node labels to their component level."""
+    return {
+        getattr(node, "label", None): getattr(node, "level", None)
+        for node in auxiliary_tree.preorder()
+    }
+
+
+def _copy_gene_subtree(
+    gene_tree: Tree,
+    auxiliary_levels: dict[object, str],
+    level: str,
+) -> Tree:
+    """Copy the part of the gene tree reconciled to the requested auxiliary level."""
+    root = _copy_gene_subtree_node(gene_tree.root, auxiliary_levels, level)
+    if root is None:
+        root = _empty_gene_component(gene_tree, level)
+
+    root.dist = 0.0
+
+    return Tree(root)
+
+
+def _copy_gene_subtree_node(
+    node: TreeNode,
+    auxiliary_levels: dict[object, str],
+    level: str,
+) -> TreeNode | None:
+    """Copy a gene subtree while suppressing connector nodes outside the requested level."""
+    child_copies = []
+
+    for child in node.children:
+        child_copy = _copy_gene_subtree_node(child, auxiliary_levels, level)
+        if child_copy is not None:
+            child_copies.append(child_copy)
+
+    if _gene_node_level(node, auxiliary_levels) == level:
+        node_copy = _copy_node_attributes(node)
+        for child_copy in child_copies:
+            node_copy.add_child(child_copy)
+
+        return node_copy
+
+    if not child_copies:
+        return None
+
+    if len(child_copies) == 1:
+        return child_copies[0]
+
+    synthetic_root = TreeNode(
+        label=f"{level}_gene_root",
+        event="S",
+        reconc=level,
+        tstamp=max(getattr(child, "tstamp", 0.0) for child in child_copies),
+        dist=0.0,
+        level=level,
+    )
+
+    for child_copy in child_copies:
+        synthetic_root.add_child(child_copy)
+
+    return synthetic_root
+
+
+def _copy_node_attributes(node: TreeNode) -> TreeNode:
+    """Copy all non-structural attributes from a tree node."""
+    node_copy = TreeNode()
+
+    for key, value in node.attributes():
+        setattr(node_copy, key, value)
+
+    return node_copy
+
+
+def _empty_gene_component(gene_tree: Tree, level: str) -> TreeNode:
+    """Create a serializable placeholder for an absent side-specific pruned subtree."""
+    return TreeNode(
+        label=f"{level}_gene_empty",
+        event="L",
+        reconc=level,
+        tstamp=getattr(gene_tree.root, "tstamp", 0.0),
+        dist=0.0,
+        level=level,
+    )
+
+
+def _gene_node_level(
+    node: TreeNode,
+    auxiliary_levels: dict[object, str],
+) -> str | None:
+    """Return the auxiliary-tree level to which a gene-tree node is reconciled."""
+    key = _reconciliation_key(getattr(node, "reconc", None))
+
+    return auxiliary_levels.get(key)
+
+
+def _reconciliation_key(reconciliation: object) -> object:
+    """Normalize a reconciliation value to an auxiliary-node label."""
+    if isinstance(reconciliation, (tuple, list)):
+        if not reconciliation:
+            return None
+        return _reconciliation_key(reconciliation[-1])
+
+    return reconciliation
 
 
 def _annotate_host_tree(tree: Tree) -> dict[object, str]:

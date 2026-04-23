@@ -519,7 +519,11 @@ class GeneTreeSimulator:
             self._remove_branch(branch)
 
             for S_w in S_edge.children:
-                self._new_branch(spec_node, S_w, 0, template_branch=branch)
+                new_branch = self._new_branch(spec_node, S_w, 0, template_branch=branch)
+                if self._branch_level(new_branch) == "symbiont" and getattr(
+                    S_w, "transferred", 0
+                ):
+                    self._increase_loss_rates_after_transfer(new_branch)
 
             # loss leaves if it was a species extinction event
             if is_species_loss:
@@ -708,11 +712,7 @@ class GeneTreeSimulator:
             self._new_branch(hgt_node, S_edge, 0, template_branch=branch)
 
             # receiving branch
-            receiving_branch = self._new_branch(hgt_node, trans_edge, 1, template_branch=branch)
-            # TODO: loss-rate increases should be triggered after symbiont-level transfers, not
-            # after gene-level HGT events. Keep the new branch assignment above, but leave the
-            # pairwise rate update to the auxiliary-tree inheritance/update step in _run().
-            self._increase_loss_rates_after_transfer(receiving_branch)
+            self._new_branch(hgt_node, trans_edge, 1, template_branch=branch)
 
         # replacing HGT leads to loss in the recipient species
         if replaced_gene_branch:
