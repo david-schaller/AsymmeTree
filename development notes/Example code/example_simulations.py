@@ -313,21 +313,20 @@ def _write_outputs(
 ) -> None:
     """Write the example outputs to CSV files in all supported tree formats."""
     output_dir.mkdir(parents=True, exist_ok=True)
-    host_trees.to_csv(output_dir / "host_trees.csv", header=True)
-    host_trees_simple.to_csv(output_dir / "host_trees_simple.csv", header=True)
+    host_trees.to_csv(output_dir / "host_trees.tsv", header=True, sep= '\t')
+    host_trees_simple.to_csv(output_dir / "host_trees_simple.tsv", header=True, sep= '\t')
     host_trees_simple_dated.to_csv(
-        output_dir / "host_trees_simple_dated.csv",
-        header=True,
-    )
-    symbiont_trees.to_csv(output_dir / "symbiont_scenarios.csv")
-    symbiont_trees_simple.to_csv(output_dir / "symbiont_scenarios_simple.csv")
-    symbiont_trees_simple_dated.to_csv(output_dir / "symbiont_scenarios_simple_dated.csv")
-    species_trees.to_csv(output_dir / "species_trees.csv")
-    species_trees_simple.to_csv(output_dir / "species_trees_simple.csv")
-    species_trees_simple_dated.to_csv(output_dir / "species_trees_simple_dated.csv")
+        output_dir / "host_trees_simple_dated.tsv",
+        header=True, sep= '\t')
+    symbiont_trees.to_csv(output_dir / "symbiont_scenarios.tsv", sep= '\t')
+    symbiont_trees_simple.to_csv(output_dir / "symbiont_scenarios_simple.tsv", sep= '\t')
+    symbiont_trees_simple_dated.to_csv(output_dir / "symbiont_scenarios_simple_dated.tsv", sep= '\t')
+    species_trees.to_csv(output_dir / "species_trees.tsv", sep= '\t')
+    species_trees_simple.to_csv(output_dir / "species_trees_simple.tsv", sep= '\t')
+    species_trees_simple_dated.to_csv(output_dir / "species_trees_simple_dated.tsv", sep= '\t')
 
 
-if __name__ == "__main__":
-    host_series, symbiont_dataframe = run_example_simulations()
-    print(host_series.head())
-    print(symbiont_dataframe.head())
+
+host_series, symbiont_dataframe = run_example_simulations(output_dir= 'simulations/')
+print(host_series.head())
+print(symbiont_dataframe.head())
