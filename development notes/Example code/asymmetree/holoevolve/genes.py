@@ -267,7 +267,7 @@ class GeneTreeSimulator:
 
         new_branch = _Branch(
             self.id_counter,
-            len(self.branches),
+            len(self.gene_branches),
             parent,
             S_edge,
             transferred,
@@ -276,9 +276,9 @@ class GeneTreeSimulator:
             hgt_rate,
             gc_rate,
         )
-        self.branches.append(new_branch)
+        self.gene_branches.append(new_branch)
 
-        self.ES_to_b[S_edge].append(new_branch)
+        self.species2genes[S_edge].append(new_branch)
         self.id_counter += 1
 
         if self.S_subtree_survivors[S_edge]:
@@ -293,13 +293,13 @@ class GeneTreeSimulator:
             branch: The gene branch to be removed.
         """
         # efficient removal from list
-        if branch.list_id != len(self.branches) - 1:
-            branch2 = self.branches[-1]
-            self.branches[branch.list_id] = branch2
+        if branch.list_id != len(self.gene_branches) - 1:
+            branch2 = self.gene_branches[-1]
+            self.gene_branches[branch.list_id] = branch2
             branch2.list_id = branch.list_id
-        self.branches.pop()
+        self.gene_branches.pop()
 
-        self.ES_to_b[branch.S_edge].remove(branch)
+        self.species2genes[branch.S_edge].remove(branch)
         self.surv_non_loss_lineages.discard(branch)
 
     def _initiatialize_tree(self) -> Tree:
@@ -326,13 +326,13 @@ class GeneTreeSimulator:
         Returns:
             A tuple containing the sampled branch and the event type ('D', 'L', 'H', or 'GC').
         """
-        weights = [branch.total_rate for branch in self.branches]
+        weights = [branch.total_rate for branch in self.gene_branches]
         total_rate = sum(weights)
 
         if total_rate <= 0.0:
             raise ValueError("cannot sample an event when all branch-specific rates are zero")
 
-        branch = random.choices(self.branches, weights=weights)[0]
+        branch = random.choices(self.gene_branches, weights=weights)[0]
         r = np.random.uniform(high=branch.total_rate)
 
         if r <= branch.dupl_rate:
@@ -415,7 +415,7 @@ class GeneTreeSimulator:
 
     def _interaction_partners(self, branch: _Branch) -> list[_Branch]:
         """Return the active branches that currently interact with the given branch."""
-        return [other for other in self.branches if self._branches_interact(branch, other)]
+        return [other for other in self.gene_branches if self._branches_interact(branch, other)]
 
     def _increase_loss_rates_after_transfer(self, branch: _Branch) -> None:
         """Increase pairwise loss rates after a transfer created a new overlap."""
@@ -449,16 +449,16 @@ class GeneTreeSimulator:
         # species leaf
         self.surv_non_loss_lineages = set()
 
-        self.branches = []
+        self.gene_branches = []
 
         # maps species tree branches to existing gene branches
-        self.ES_to_b = {S_edge: [] for _, S_edge in self.sorted_edges}
+        self.species2genes = {S_edge: [] for _, S_edge in self.sorted_edges}
 
         self.T = self._initiatialize_tree()
         t = self.T.root.tstamp
 
         while self.spec_queue:
-            total_rate = sum(branch.total_rate for branch in self.branches)
+            total_rate = sum(branch.total_rate for branch in self.gene_branches)
             event_tstamp = t - np.random.exponential(1 / total_rate) if total_rate > 0.0 else -1
             next_spec_tstamp = self.spec_queue[0].tstamp
 
@@ -502,11 +502,11 @@ class GeneTreeSimulator:
         S_edge = self.spec_queue.popleft()
 
         # copy since we modify this list
-        for branch in self.ES_to_b[S_edge].copy():
-            partners = []
+        for branch in self.species2genes[S_edge].copy():
+            partners = [] # <------------------------- spurious
             is_species_loss = (not S_edge.children) and S_edge.label == "L"
             if is_species_loss:
-                partners = self._interaction_partners(branch)
+                partners = self._interaction_partners(branch) # <------------------------- spurious
 
             spec_node = TreeNode(
                 label=branch.label,
@@ -520,15 +520,13 @@ class GeneTreeSimulator:
 
             for S_w in S_edge.children:
                 new_branch = self._new_branch(spec_node, S_w, 0, template_branch=branch)
-                if self._branch_level(new_branch) == "symbiont" and getattr(
-                    S_w, "transferred", 0
-                ):
-                    self._increase_loss_rates_after_transfer(new_branch)
+                if self._branch_level(new_branch) == "symbiont" and getattr(S_w, "transferred", 0):
+                    self._increase_loss_rates_after_transfer(new_branch) # <------------------------- spurious
 
             # loss leaves if it was a species extinction event
             if is_species_loss:
                 spec_node.event = "L"
-                self._decrease_loss_rates_after_loss(branch, partners)
+                self._decrease_loss_rates_after_loss(branch, partners) # <------------------------- spurious
 
     def _duplication(self, event_tstamp: float, branch: _Branch) -> None:
         """Execute a duplication event on the given branch at the given time stamp.
@@ -577,11 +575,11 @@ class GeneTreeSimulator:
         ):
             return
 
-        if self._prohibit_extinction == "per_species" and len(self.ES_to_b[branch.S_edge]) <= 1:
+        if self._prohibit_extinction == "per_species" and len(self.species2genes[branch.S_edge]) <= 1:
             return
 
         S_edge = branch.S_edge
-        partners = self._interaction_partners(branch)
+        partners = self._interaction_partners(branch) # <------------------------- spurious ?
 
         loss_node = TreeNode(
             label=branch.label,
@@ -592,7 +590,7 @@ class GeneTreeSimulator:
         )
         branch.parent.add_child(loss_node)
         self._remove_branch(branch)
-        self._decrease_loss_rates_after_loss(branch, partners)
+        self._decrease_loss_rates_after_loss(branch, partners) # <------------------------- spurious ?
 
     def _coexisting_species_edges(self, tstamp: float, exclude_edge: _Branch = None) -> list:
         """Return list of edges for the given timestamp.
@@ -660,7 +658,7 @@ class GeneTreeSimulator:
 
         # ---- REPLACING HGT EVENT ----
         else:
-            valid_genes = [b for e in valid_species for b in self.ES_to_b[e]]
+            valid_genes = [b for e in valid_species for b in self.species2genes[e]]
 
             if not valid_genes:
                 return None, None
@@ -730,7 +728,7 @@ class GeneTreeSimulator:
         Returns:
             The gene branch to be replaced, or None if no replacement is possible.
         """
-        candidates = [b for b in self.ES_to_b[branch.S_edge] if b is not branch]
+        candidates = [b for b in self.species2genes[branch.S_edge] if b is not branch]
 
         # no gene conversion possible if there is currently no other branch in the species lineage
         if not candidates:

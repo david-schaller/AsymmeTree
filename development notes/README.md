@@ -240,6 +240,10 @@ Right now asymmetree assumes that all the branches of the gene tree have exactly
 - The current A2 handling is symmetric: host and symbiont branches are treated equally for the
   multiplier update. The optional `S-keeps` / `H-keeps` asymmetry is still open for a later step.
 
+## Prioritize intra-transfers
+
+- [ ] 
+
 ## Separate auxiliary tree
 
 - [x] After the simulation of genes inside of the holobiont, separate the auxiliary tree into host and symbiont again (maybe is better to just recall the original trees),
