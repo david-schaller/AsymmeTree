@@ -614,7 +614,7 @@ class GeneTreeSimulator:
 
         return valid_species
 
-    def _sample_recipient(
+    def _sample_recipient( # <------------------------- edit here for HGT inter
         self,
         event_tstamp: float,
         branch: _Branch,
