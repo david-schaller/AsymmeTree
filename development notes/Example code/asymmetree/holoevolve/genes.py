@@ -380,12 +380,6 @@ class GeneTreeSimulator:
         if branch1 is branch2:
             return False
 
-        if not (
-            self._supports_hologenome_interactions(branch1)
-            and self._supports_hologenome_interactions(branch2)
-        ):
-            return False
-
         # A0: both genes reside in the same auxiliary-tree branch.
         if branch1.S_edge is branch2.S_edge:
             return True
@@ -500,33 +494,44 @@ class GeneTreeSimulator:
         speciation events with one or zero children, respectively, in the species tree.
         """
         S_edge = self.spec_queue.popleft()
+        g_event= "L" if (S_edge.label == "L") else "S"
+
+        new_branches= {S_w: list() for S_w in S_edge.children}
 
         # copy since we modify this list
-        for branch in self.species2genes[S_edge].copy():
-            partners = [] # <------------------------- spurious
-            is_species_loss = (not S_edge.children) and S_edge.label == "L"
-            if is_species_loss:
-                partners = self._interaction_partners(branch) # <------------------------- spurious
+        gene_branches_before_speciation= self.species2genes[S_edge].copy()
+        for g_branch in gene_branches_before_speciation:
 
             spec_node = TreeNode(
-                label=branch.label,
-                event="S",
+                label=g_branch.label,
+                event=g_event,
                 reconc=S_edge.label,
                 tstamp=S_edge.tstamp,
-                transferred=branch.transferred,
+                transferred=g_branch.transferred,
             )
-            branch.parent.add_child(spec_node)
-            self._remove_branch(branch)
+            g_branch.parent.add_child(spec_node)
+            self._remove_branch(g_branch)
 
             for S_w in S_edge.children:
-                new_branch = self._new_branch(spec_node, S_w, 0, template_branch=branch)
-                if self._branch_level(new_branch) == "symbiont" and getattr(S_w, "transferred", 0):
-                    self._increase_loss_rates_after_transfer(new_branch) # <------------------------- spurious
+                new_branches[S_w]+= [self._new_branch(spec_node, S_w, 0, template_branch=g_branch)]
 
-            # loss leaves if it was a species extinction event
-            if is_species_loss:
-                spec_node.event = "L"
-                self._decrease_loss_rates_after_loss(branch, partners) # <------------------------- spurious
+                #if getattr(S_w, "transferred", 0):
+                #    self._increase_loss_rates_after_transfer(new_branch) # <------------------------- spurious
+
+            #if is_species_loss: # <------------------- should we un-indent this?
+            #    # Loss of this branch involve interaction classes (A1) and (A2)
+            #    partners = self._interaction_partners(branch)
+            #    self._decrease_loss_rates_after_loss(branch, partners)
+
+        # Branch loss involve interaction classes (A1) and (A2)
+        if S_edge.label == "L":
+            #partners = self._interaction_partners(gene_branches_before_speciation[0])
+            
+
+        # Branch transfer involves...
+
+        # Branch dupluication involves...
+
 
     def _duplication(self, event_tstamp: float, branch: _Branch) -> None:
         """Execute a duplication event on the given branch at the given time stamp.
