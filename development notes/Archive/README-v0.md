@@ -134,18 +134,9 @@ To keep a simple notation, let expand the domain of $\mu'$ to also consider vert
 
 To model gene coexistence and interactions effectively, we would need to combine reconciliation with Evolutionary Game Theory (EGT). A good part of the reconciliation approach is already implemented in AsymmeTree, and we will build on the top of that.
 
-In a first step, we simulate an holobiont scenario $(T_H, T_S, t', \sigma',\mu',\tau_H,\tau_S)$ using steps (1) and (2) of assymmetree, then we create an auxiliar tree $T_A$  as follows:
+In a first step, we simulate an holobiont scenario $(T_H, T_S, t', \sigma',\mu',\tau_H,\tau_S)$ using steps (1) and (2) of assymmetree, then we create an auxiliar tree $T_A$  by taking a copy of the trees $T_H, T_S$ and merging the planted roots $0_H, 0_S$ into a new root $\rho_A$ and adding a new planted root $0_A$ with the corresponding planted edge $0_A\rho_A$.
 
-1. Take a copy of the subtree of $T_H$ rooted at $\rho_H$ and the tree $T_S$ (rooted at $0_S$).
-2. Add the roots $0_A$ and $\rho_A$ with the corresponding edges $0_A\rho_A$, $\rho_A\rho_H$, and $\rho_A0_S$.
-3. Construct the time map $\tau_A$ by coping $\tau_S$ and $\tau_H$ and setting
-   - $\tau_A(\rho_A)=\tau_A(0_S)+\epsilon_0$, and
-   - $\tau_A(0_A)=\tau_A(0_S)+\epsilon_0+\epsilon_1$ .
-4. In a similar way, construct a map $\mu_A$, with $\mu_A(\rho_A)= \rho_A$, $\mu_A(0_A)= 0_A$, and $\mu_A(0_S)= \rho_A\rho_H$.
-5. For the evolutionary events:
-   - $0_S$ becomes a transfer event with a transfer edge as the only descendant.
-   - $\rho_A$ is an speciation
-   - $0_A$  is the planted root.
+$\tau_A$ is constructed by coping $\tau_S$ and $\tau_H$ and adding $\tau_A(0_A)=1+\epsilon$. Note that $\tau_S(0_S) = \tau_H(0_H) = 1 = \tau_A(\rho_S)$. In a similar way, we construct a map $\mu_A$, with $\mu_A(\rho_A)= \rho_A$ and $\mu_A(0_A)= 0_A$.
 
 Now we will generate a gene tree $T_G$ evolving along $T_A$ considering two interactions: (I) metabolic redundancy when both guest and host carry the same gene, and (II) co-symbiosis, which is required to have horizontal gene transfer. To perform this simulation, we will generate a modification of step (2) of asymmetree.
 
@@ -153,55 +144,21 @@ So the simulation first Initializes $T_G$ as a single node $0_G$ with $\mu(0_G)=
 
 The improvement we purpose is to update the rates of the events considering intersections: in a given iteration of the simulation we have an incomplete $T_G$ where the non-loss leaves $L^0=\{x\in L(T_G) \text{ such that } t(x)\not=\times\}$ are the collection of growing branches.
 
-First, given a growing gene branch $g$, let's define the interactors, divided in several classes:
+1. We will increase loss probability for genes residing in the same host; given two genes $x_0,x_1\in L^0$, we increase loss probability whenever
 
-| Class    | Definition                                                   | Description       |
-| -------- | ------------------------------------------------------------ | ----------------- |
-| **(A0)** | $\{g_0\in L^0 \text{ such that } \mu(g)=\mu(g_0) \and \mu(g)\preceq \rho_H \and g\not=g_0 \}$ | intra-host        |
-| **(A1)** | $\{g_0\in L^0 \text{ such that } \mu(g)=\mu(g_0) \and \mu(g)\preceq \rho_S \and g\not=g_0 \}$ | intra-symbiont    |
-| **(A2)** | $\{g_0\in L^0 \text{ such that } \mu(g)=\mu(g_0) \and \mu(g)\not\preceq \rho_H \and \mu(g)\not\preceq \rho_S \and g\not=g_0 \}$ | intra-independent |
-| **(B0)** | $\{g_0\in L^0 \text{ such that } \mu(g)\not=\mu(g_0) \and \mu'(g_0) = \mu(g) \}$ | host-to-symbiont  |
-| **(B1)** | $\{g_0\in L^0 \text{ such that } \mu(g)\not=\mu(g_0) \and \mu(g_0) = \mu'(g) \}$ | symbiont-to-host  |
-| **(B2)** | $\{g_0\in L^0 \text{ such that } \mu(g)\not=\mu(g_0) \and \mu'(g_0) = \mu'(g) \}$ | inter-symbiont    |
+   - **(A0)** $\mu(x_0)=\mu(x_1)$      # Both genes are in the same species
+   - **(A1)** $\mu'(x_0)=\mu'(x_1)$    # Genes are in different species, same host
+   - **(A2)** $\mu(x_0)= \mu'(x_1)$     # One gene in in host, the other is in a symbiont of such a host.
 
-Let $\mu^{(-1)}$ and $\mu'^{(-1)}$ be the inverse maps of $\mu$ and $\mu'$, then we can obtain the interactors as follows:
+   We should weight differentially those interactions.
 
-1. Given a branch $g\in L^0$, initialize the empty sets $A_0,A_1,A_2,B_0,B_1,B_2$.
-2. Set $s\leftarrow \mu(g)$ and $h\leftarrow \mu'(s)$.
-3. If $s\preceq \rho_H$
-   1. $A_0\leftarrow\mu^{(-1)}(s)$
-   2. $B\leftarrow \mu'^{(-1)}(s) $
-   3. $B_0\leftarrow \bigcup_{x\in B} \mu^{(-1)}(x)$
-4. elif $s\preceq 0_S$
-   1. $A_1\leftarrow\mu^{(-1)}(s)$
-   2. $B\leftarrow \mu'^{(-1)}(h) \setminus \{s\} $
-   3. $B_1\leftarrow \mu^{(-1)}(h)$
-   4. $B_2\leftarrow \bigcup_{x\in B} \mu^{(-1)}(x)$
+   For the case (A2) we can introduce an asymmetry by setting a category for gene trees: (S-keeps) where $x_0$ is lost with higher probability, or (H-keeps)  where $x_1$ is lost with higher probability
 
-5. else
-   1. $A_2\leftarrow\mu^{(-1)}(s)$
+2. We will decrease transfer probability between species residing in different hots
 
-6. Return $A_0,A_1,A_2,B_0,B_1,B_2$,
+   Given a gene $x_0\in L^0$ together with the corresponding map $y_0=\mu(x_0)$, and a coexisting branch $y_1\in E(T_A)$, which is a possible recipient, we decrease transfer probability whenever:
 
----
-
-
-
-We will increase loss probability for genes residing in the same host; given two genes $x_0,x_1\in L^0$, we increase loss probability whenever
-
-- **(A0)** $\mu(x_0)=\mu(x_1)$      # Both genes are in the same species
-- **(A1)** $\mu'(x_0)=\mu'(x_1)$    # Genes are in different species, same host
-- **(A2)** $\mu(x_0)= \mu'(x_1)$     # One gene in in host, the other is in a symbiont of such a host.
-
-We should weight differentially those interactions.
-
-For the case (A2) we can introduce an asymmetry by setting a category for gene trees: (S-keeps) where $x_0$ is lost with higher probability, or (H-keeps)  where $x_1$ is lost with higher probability
-
-We will decrease transfer probability between species residing in different hots
-
-Given a gene $x_0\in L^0$ together with the corresponding map $y_0=\mu(x_0)$, and a coexisting branch $y_1\in E(T_A)$, which is a possible recipient, we decrease transfer probability whenever:
-
-- **(A3)** $\mu'(y_0)\not=\mu'(y_1)$
+   - **(A3)** $\mu'(y_0)\not=\mu'(y_1)$
 
 # Implementation
 
