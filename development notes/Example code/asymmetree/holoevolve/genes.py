@@ -526,6 +526,7 @@ class GeneTreeSimulator:
         # Branch loss involve interaction classes (A1) and (A2)
         if S_edge.label == "L":
             #partners = self._interaction_partners(gene_branches_before_speciation[0])
+            pass
             
 
         # Branch transfer involves...
