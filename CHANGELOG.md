@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [2.3.1] - 2026-05-28
 
 ### 📚 Documentation
 
@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 ### 📦 Build
 
 - Added the `classifiers` field to `pyproject.toml` for better visibility on PyPI.
+- Bumped indirect dependencies: `urllib3` to 2.7.0, `pymdown-extensions` to 10.21.3, `idna` to 3.15.
 
 ## [2.3.0] - 2026-04-16
 
