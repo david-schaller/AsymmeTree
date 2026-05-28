@@ -316,6 +316,25 @@
   
 
       
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../contributing/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Contributing
+
+      </a>
+    </li>
+  
+
+      
     </ul>
   </div>
 </nav>
@@ -490,45 +509,6 @@
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Contributors">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#uv" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        uv
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pre-commit" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pre-commit
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mkdocs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        MkDocs
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -1199,6 +1179,33 @@
   
 
     
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -1256,45 +1263,6 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Contributors">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#uv" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        uv
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pre-commit" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pre-commit
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mkdocs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        MkDocs
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
       
     </ul>
@@ -1328,70 +1296,8 @@
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>pip<span class="w"> </span>install<span class="w"> </span>.
 </code></pre></div>
 <h2 id="contributors">Contributors<a class="headerlink" href="#contributors" title="Permanent link">&para;</a></h2>
-<h3 id="uv">uv<a class="headerlink" href="#uv" title="Permanent link">&para;</a></h3>
-<p>If you want to contribute to <code>AsymmeTree</code>, please use the package and project manager
-<a href="https://docs.astral.sh/uv/">uv</a>.
-See <a href="https://docs.astral.sh/uv/getting-started/installation/">this page</a> for installation
-instructions.</p>
-<p>To set up <code>uv</code> for your local <code>AsymmeTree</code> repository, navigate to the root directory of your
-local <code>AsymmeTree</code> repository and create a new virtual environment that is managed by <code>uv</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">cd</span><span class="w"> </span>&lt;MY_PATH_TO&gt;/AsymmeTree
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>uv<span class="w"> </span>sync
-</code></pre></div>
-<p>A new virtual environment will be created in the <code>.venv</code> directory of your local <code>AsymmeTree</code>
-repository, and all dependencies of <code>AsymmeTree</code> will be installed in this virtual environment.
-To activate this virtual environment, run the following command:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nb">source</span><span class="w"> </span>.venv/bin/activate
-</code></pre></div>
-<h3 id="pre-commit">pre-commit<a class="headerlink" href="#pre-commit" title="Permanent link">&para;</a></h3>
-<p>Please use <a href="https://pre-commit.com">pre-commit</a> for automated code formatting and linting.
-To install it and initialize it for your local <code>AsymmeTree</code> repository, follow these steps:</p>
-<p>Install <code>uv</code> as described in the previous section.
-Run the following command (after which you should be able to run <code>pre-commit</code> from anywhere):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span>pre-commit<span class="w"> </span>--with<span class="w"> </span>pre-commit-uv
-</code></pre></div>
-<p>Navigate to the root directory of your local <code>AsymmeTree</code> repository and install <code>pre-commit</code>
-as a git hook in the <code>AsymmeTree</code> repository:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nb">cd</span><span class="w"> </span>&lt;MY_PATH_TO&gt;/AsymmeTree
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>pre-commit<span class="w"> </span>install
-</code></pre></div>
-<p>After this, <code>pre-commit</code> will automatically run the configured hooks (e.g., code formatting and
-linting) before each commit, ensuring that your code adheres to the project's coding standards.</p>
-<h3 id="mkdocs">MkDocs<a class="headerlink" href="#mkdocs" title="Permanent link">&para;</a></h3>
-<p>The documentation of <code>AsymmeTree</code> is built using <a href="https://www.mkdocs.org/">MkDocs</a>.
-To install it, run the following command:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nb">cd</span><span class="w"> </span>&lt;MY_PATH_TO&gt;/AsymmeTree
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>uv<span class="w"> </span>sync<span class="w"> </span>--group<span class="w"> </span>docs
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># or if you want to install all dependency groups, including the `docs` group:</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>uv<span class="w"> </span>sync<span class="w"> </span>--all-groups
-</code></pre></div>
-<p>After installing the dependencies, you can serve the documentation locally by running the following
-command in the root directory of your local <code>AsymmeTree</code> repository:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>uv<span class="w"> </span>run<span class="w"> </span>mkdocs<span class="w"> </span>serve
-</code></pre></div>
-<p>This will start a local development server, and you can access the documentation by navigating to
-URL displayed in the terminal.</p>
-<p>The documentation will automatically be deployed to GitHub Pages when pushing or merging to the
-<code>main</code> or <code>dev</code> branch:</p>
-<table>
-<thead>
-<tr>
-<th>Branch</th>
-<th>URL</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>main</code></td>
-<td>https://david-schaller.github.io/AsymmeTree/</td>
-</tr>
-<tr>
-<td><code>dev</code></td>
-<td>https://david-schaller.github.io/AsymmeTree/dev/</td>
-</tr>
-</tbody>
-</table>
+<p>If you want to contribute to <code>AsymmeTree</code>, please see the
+<a href="../contributing/">contributing guidelines</a>.</p>
 
 
 

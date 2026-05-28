@@ -2,78 +2,82 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://david-schaller.github.io/AsymmeTree/dev/</loc>
-         <lastmod>2026-04-17</lastmod>
+         <lastmod>2026-05-28</lastmod>
     </url>
     <url>
          <loc>https://david-schaller.github.io/AsymmeTree/dev/citation/</loc>
-         <lastmod>2026-04-17</lastmod>
+         <lastmod>2026-05-28</lastmod>
+    </url>
+    <url>
+         <loc>https://david-schaller.github.io/AsymmeTree/dev/contributing/</loc>
+         <lastmod>2026-05-28</lastmod>
     </url>
     <url>
          <loc>https://david-schaller.github.io/AsymmeTree/dev/installation/</loc>
-         <lastmod>2026-04-17</lastmod>
+         <lastmod>2026-05-28</lastmod>
     </url>
     <url>
          <loc>https://david-schaller.github.io/AsymmeTree/dev/api/analysis/</loc>
-         <lastmod>2026-04-17</lastmod>
+         <lastmod>2026-05-28</lastmod>
     </url>
     <url>
          <loc>https://david-schaller.github.io/AsymmeTree/dev/api/genome/</loc>
-         <lastmod>2026-04-17</lastmod>
+         <lastmod>2026-05-28</lastmod>
     </url>
     <url>
          <loc>https://david-schaller.github.io/AsymmeTree/dev/api/io/</loc>
-         <lastmod>2026-04-17</lastmod>
+         <lastmod>2026-05-28</lastmod>
     </url>
     <url>
          <loc>https://david-schaller.github.io/AsymmeTree/dev/api/seqevolve/</loc>
-         <lastmod>2026-04-17</lastmod>
+         <lastmod>2026-05-28</lastmod>
     </url>
     <url>
          <loc>https://david-schaller.github.io/AsymmeTree/dev/api/treeevolve/</loc>
-         <lastmod>2026-04-17</lastmod>
+         <lastmod>2026-05-28</lastmod>
     </url>
     <url>
          <loc>https://david-schaller.github.io/AsymmeTree/dev/api/utils/</loc>
-         <lastmod>2026-04-17</lastmod>
+         <lastmod>2026-05-28</lastmod>
     </url>
     <url>
          <loc>https://david-schaller.github.io/AsymmeTree/dev/api/visualization/</loc>
-         <lastmod>2026-04-17</lastmod>
+         <lastmod>2026-05-28</lastmod>
     </url>
     <url>
          <loc>https://david-schaller.github.io/AsymmeTree/dev/guide/</loc>
-         <lastmod>2026-04-17</lastmod>
+         <lastmod>2026-05-28</lastmod>
     </url>
     <url>
          <loc>https://david-schaller.github.io/AsymmeTree/dev/guide/additional_features/</loc>
-         <lastmod>2026-04-17</lastmod>
+         <lastmod>2026-05-28</lastmod>
     </url>
     <url>
          <loc>https://david-schaller.github.io/AsymmeTree/dev/guide/gene_trees/</loc>
-         <lastmod>2026-04-17</lastmod>
+         <lastmod>2026-05-28</lastmod>
     </url>
     <url>
          <loc>https://david-schaller.github.io/AsymmeTree/dev/guide/genome_simulation/</loc>
-         <lastmod>2026-04-17</lastmod>
+         <lastmod>2026-05-28</lastmod>
     </url>
     <url>
          <loc>https://david-schaller.github.io/AsymmeTree/dev/guide/phylogenetic_trees/</loc>
-         <lastmod>2026-04-17</lastmod>
+         <lastmod>2026-05-28</lastmod>
     </url>
     <url>
          <loc>https://david-schaller.github.io/AsymmeTree/dev/guide/preliminaries/</loc>
-         <lastmod>2026-04-17</lastmod>
+         <lastmod>2026-05-28</lastmod>
     </url>
     <url>
          <loc>https://david-schaller.github.io/AsymmeTree/dev/guide/sequence_simulation/</loc>
-         <lastmod>2026-04-17</lastmod>
+         <lastmod>2026-05-28</lastmod>
     </url>
     <url>
          <loc>https://david-schaller.github.io/AsymmeTree/dev/guide/species_trees/</loc>
-         <lastmod>2026-04-17</lastmod>
+         <lastmod>2026-05-28</lastmod>
     </url>
     <url>
          <loc>https://david-schaller.github.io/AsymmeTree/dev/guide/visualization/</loc>
-         <lastmod>2026-04-17</lastmod>
+         <lastmod>2026-05-28</lastmod>
     </url>
 </urlset>
