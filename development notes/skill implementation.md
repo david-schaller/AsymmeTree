@@ -1,0 +1,2 @@
+- Every time something in [implementation.md](implementation.md) is done, we have to make sure it follows as close as possible the mathematical formulation in  [Math and Algorithms.md](Math and Algorithms.md).
+- Each set of tasks in [implementation.md](implementation.md) is followed by a subsubsectio *AI implementation notes*, write important notes for code curator.

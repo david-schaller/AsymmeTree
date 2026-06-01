@@ -1,3 +1,5 @@
+This file explains the mathematical framework to simulate two-level scenarios currently implmented in asymmetree, and the extension we are implementing to include three-level scenarios with interactions.
+
 # Generalizing AsymmeTree
 
 Right now, AsymmeTree only allows to simulate two level evolution: species-gene reconciliation. In this project we will extend the framework to allow three level evolution: host-symbiont-gene reconciliation.
@@ -72,50 +74,6 @@ Gene trees are simulated along a species tree using a constant-rate birth-death 
 
 In addition to the randomly-occurring events, speciations and species  extinctions (which are determined by the species tree and therefore  fixed) are included as branching and loss events, respectively, and  affect all currently existing lineages in the respective species  lineage. In case of a speciation, each offspring species receives one  copy of each original gene lineage. On the other hand, the extinction of a species leads to loss of all of its gene lineages. If a waiting time  for a duplication, loss, or HGT event is drawn such that the next event  in the species tree occurs earlier, then this waiting time is discarded, the time is updated to the next species tree event, and the latter is  executed.
 
-## Current structure of AsymmeTree code
-
-This report is inside of the repository of Asymmetree, in a development branch. The main directory is `../`, there we can find the [main readme](../README.md) which includes links for [wiki](https://github.com/david-schaller/AsymmeTree/wiki/Manual) and [documentation](https://david-schaller.github.io/docs/asymmetree/). The following explanation is taken from the wiki.
-
-The module `asymmetree.genome.GenomeSimulation` provides functions that combine the simulation of phylogenetic trees and sequences. In particular, the class `GenomeSimulator` combines multiple steps in order to conveniently simulate whole genomes/proteomes. The (optional) output directory contains serialized trees, fasta files, and the true alignments. The gene trees and the sequences are simulated in subsequent steps using the classes' functions (i) `simulate_gene_trees(n, **kwargs)` and (ii) `simulate_sequences(subst_model, **kwargs)`.
-
-The first step (i) takes the same keyword parameters as input as the function `gene_trees()` where `n` is the number of gene families to be simulated. Thus, rates for the three event types (`dupl_rate`, `loss_rate`, `hgt_rate`), autocorrelation (`autocorr_variance`), the distribution of base rates (`base_rate_distr`) etc. can be specified.
-
-The second step (ii) simulates the sequences along the pruned part (without loss branches) of the simulated gene trees.
-
-After step (i), the `list`s of full and pruned gene trees are accessible via the attributes `true_gene_trees` and `pruned_gene_trees`, respectively. Moreover, the full gene trees are serialized into the directory 'true_gene_trees' if an output directory was specified. After step (ii), the `list`s of sequence `dict`s are accessible via the attribute `sequence_dicts`.
-
-Example usage:
-
-```python
-from asymmetree.treeevolve import species_tree_n_age
-from asymmetree.genome import GenomeSimulator
-from asymmetree.seqevolve import SubstModel, IndelModel
-
-# simulate the common species tree
-S = species_tree_n_age(10, 1.0, model='yule')
-
-# specify models for sequence evolution
-subst_model = SubstModel('a', 'JTT')
-indel_model = IndelModel(0.01, 0.01, length_distr=('zipf', 1.821))
-
-# initialy GenomeSimulator instance
-gs = GenomeSimulator(S, outdir='simulation_directory')
-
-# simulate 50 gene trees along the species tree S (and write them to file)
-gs.simulate_gene_trees(50, dupl_rate=1.0, loss_rate=0.5,
-                       base_rate=('gamma', 1.0, 1.0),
-                       prohibit_extinction='per_species')
-
-# simulate sequences along the gene trees
-gs.simulate_sequences(subst_model,
-                      indel_model=indel_model,
-                      het_model=None,
-                      length_distr=('constant', 200))
-
-# results have been written to directories 'true_gene_trees',
-# 'fasta_files' and 'alignments' in 'path/to/genome_directory'
-```
-
 # Three-level scenarios
 
 Similarly to an evolutionary scenario, we define an *holobiont scenario* as the tuple $(T_H, T_S, t', \sigma',\mu',\tau_H,\tau_S)$​ describing the evolution of symbiont species across host species and time. In this case
@@ -164,7 +122,20 @@ First, given a growing gene branch $g$, let's define the interactors, divided in
 | **(B1)** | $\{g_0\in L^0 \text{ such that } \mu(g)\not=\mu(g_0) \and \mu(g_0) = \mu'(g) \}$ | symbiont-to-host  |
 | **(B2)** | $\{g_0\in L^0 \text{ such that } \mu(g)\not=\mu(g_0) \and \mu'(g_0) = \mu'(g) \}$ | inter-symbiont    |
 
-Let $\mu^{(-1)}$ and $\mu'^{(-1)}$ be the inverse maps of $\mu$ and $\mu'$, then we can obtain the interactors as follows:
+
+
+Before providing a quick algorithm to obtain the interactors, we need some of definitions. Let $T_I$ a base tree and $T_J$ a tree that is being simulated inside $T_I$, where the non-loss leaves $L^0=\{x\in L(T_J) \text{ such that } t(x)\not=\times\}$ are the collection of growing branches. Asymmetree, as it is, constructs the map $\mu:V(T_J)\rightarrow V(T_I)\cup E(T_I)$ during the simulation of $T_J$.
+
+Now, we will also construct the inverse map $\mu^{(-1)} : V(T_I) \times \mathbb{R} \rightarrow 2^{V(T_J)}$. Note that this map include real numbers in the domain; this allow us to map not only nodes in $T_I$, but also a specific point in the parent edges of the nodes: given a node $a\in V(T_I)$ with parent $b$, a scalar $t\in \mathbb{R} $, and node $x\in V(T_J)$, then $x \in \mu^{(-1)}(a,t)$ if one of the two following conditions holds:
+
+1. $\mu(x)=a \in V(T_I) \text{ and } t=0$, or
+2. $\mu(x)=ba \in E(T_I) \text{ and } \tau_I(a) < t < \tau_I(b) $.
+
+<u>when punning loss events in $T_J$...</u>
+
+
+
+ Let $\mu^{(-1)}$ and $\mu'^{(-1)}$ be the inverse maps of $\mu$ and $\mu'$, now, we can obtain the interactors as follows:
 
 1. Given a branch $g\in L^0$, initialize the empty sets $A_0,A_1,A_2,B_0,B_1,B_2$.
 2. Set $s\leftarrow \mu(g)$ and $h\leftarrow \mu'(s)$.
@@ -202,118 +173,3 @@ We will decrease transfer probability between species residing in different hots
 Given a gene $x_0\in L^0$ together with the corresponding map $y_0=\mu(x_0)$, and a coexisting branch $y_1\in E(T_A)$, which is a possible recipient, we decrease transfer probability whenever:
 
 - **(A3)** $\mu'(y_0)\not=\mu'(y_1)$
-
-# Implementation
-
-The code should follow all AsymmeTree standards, in particular, have a look to `AsymmeTree/development notes/contributing.md`.
-
-## Initialize `hologenome` module
-
-- [x] Create a module `asymmetree.hologenome` inside of the directory `development notes/Example code/`
-- [x] It should have the same structure as `asymmetree.genome`
-- [x] It should be initialized with the code in `development notes/Example code/simulate_HS_level.py`. Until now, it simulates only the 'holobiont'.
-- [x] Create the auxiliary tree $T_A$​ (One per each host-symbiont pair of trees).
-- [x] Create an example script `development notes/Example code/example_simulations`. The result should be:
-  - [x] One pandas series with Host trees trees (in general nhx format)
-  - [x] One pandas dataframe with with symbiont trees  (in general nhx format)
-- [x] Create a new copy of the whole package inside `development notes/Example code/` and add the new code.
-
-### AI implementation notes
-
-- The prototype now lives in `development notes/Example code/hologenome` with the same package
-  pattern as `asymmetree.genome`: a thin `__init__.py` and a single simulation module.
-- `HologenomeSimulator` currently covers the holobiont layer only and keeps the prototype logic
-  close to `simulate_HS_level.py`, but removes the dependency on `revolutionhtl` by exporting
-  trees with a local NHX serializer.
-- The auxiliary tree uses collision-safe `H*`, `S*`, and `A*` labels and stores the host-side map
-  in `reconc`, which gives us a clean hand-off for the later gene-level extension.
-- `T_A` is built from the full symbiont tree rather than the pruned one so that later
-  gene-level work still has access to extinct symbiont branches.
-- The example script returns a host-tree `Series` and a symbiont-scenario `DataFrame`; the
-  dataframe also includes the serialized auxiliary tree for each simulated host-symbiont pair.
-
-
-
-## Add `holoevolve` module
-
-- [x] Create a copy of `asymmetree.treeevolve` inside of the directory `development notes/Example code/asymmetree/`. Name this new module `holoevolve`
-- [x] Add code to the `hologenome` module: simulate a single gene tree inside of the auxiliary tree $T_A$​, use the functions from `holoevolve` instead of `treeevolve`.
-- [x] Make sure this new code is affectively called at the example script `development notes/Example code/example_simulations`. The result should be again a pandas dataframe.
-
-### AI implementation notes
-
-- The holobiont stage still uses `treeevolve`: host trees come from `treeevolve.species_tree_n()`
-  and `HologenomeSimulator.simulate_symbiont_trees()` keeps using
-  `treeevolve.dated_gene_tree()` / `treeevolve.prune_losses()`.
-- `HologenomeSimulator.simulate_gene_trees()` simulates one gene tree per stored auxiliary tree and
-  keeps both the unpruned and pruned versions alongside the host-symbiont results, using
-  `holoevolve.dated_gene_tree()` / `holoevolve.prune_losses()`.
-- `example_simulations.py` now runs the auxiliary-tree gene simulation for every scenario and adds
-  `T_gene_unpruned` and `T_gene_pruned` to the returned scenario dataframe.
-- The example currently reuses each scenario's DTL, replacement, and transfer-bias settings for
-  the auxiliary-tree gene simulation so that every row remains self-contained.
-
-
-
-## Add homolog-homolog interactions
-
-Right now asymmetree assumes that all the branches of the gene tree have exactly the same set of rates, which are the user-provided. We will change this.
-
-- [x] Edit the module `holoevolve` in such a way that now each gene-branch in `self.branches` has their own set of DTLG rates. At the beginning of the simulation the rates are those provided by the user.
-- [x] Update `_get_branch_and_type` to choose branch and event considering that not all of the branches have the same rate.
-- [x] If there is a transfer event to a auxiliary-branch (i.e. a branch in the auxiliary tree), then all those gene-branches (directly or indirectly) residing on that branch should have an updated loss rates defined by rules (A0) to (A2), the new rate is $l'=\delta_l l$ for $\delta_l$​ being an user-provided value, by default it's value is two. If there are consecutive transfers to the same branch, the rate can increase multiple times
-  - [ ] Correction: the loss rate should increase after a symbiont-transfer event instead of gene transfer.
-    - [x] Comment the increase of rate after gene transfer
-    - [ ] In the `_run` function, at line 490, the rates should be updated for each branch by checking con conditions (A0) to (A2), or after detecting that a gene were inherited to a new branch of the auxiliary tree who was caused by transfer event, this have to be checked at line 469.
-
-- [x] If there is a gene loss for a branch with rate bigger than the user provided, other gene-branches following conditions (A0) to (A2) should decrease the rate as $l'=l/\delta_l$​. If there are consecutive losses the rate should be updated each time. The minimum value for loss rate is the user provided.
-
-### AI implementation notes
-
-- Active branches in `holoevolve` now carry their own DTLG rates, and descendant branches inherit the
-  current rates of the lineage they split from.
-- `_get_branch_and_type()` now samples branches proportionally to their current total rate and then
-  samples the event type from that branch-specific rate vector.
-- Homolog interactions are enabled only on auxiliary-tree branches annotated as `host` or
-  `symbiont`; ordinary `holoevolve` runs on unannotated trees keep the old behavior.
-- The previous gene-HGT rate-increase hook is now commented out because loss-rate increases should
-  be triggered by symbiont-level transfer inheritance in `_run()` instead.
-- A loss still divides surviving partners by `delta_l` without going below the user-provided base
-  loss rate.
-- The current A2 handling is symmetric: host and symbiont branches are treated equally for the
-  multiplier update. The optional `S-keeps` / `H-keeps` asymmetry is still open for a later step.
-
-## Prioritize intra-transfers
-
-- [ ] 
-
-## Separate auxiliary tree
-
-- [x] After the simulation of genes inside of the holobiont, separate the auxiliary tree into host and symbiont again (maybe is better to just recall the original trees),
-- [x] additionally separate the gene tree into two subtrees, one whose root is mapped to the symbiont side , and the other whose root is mapped to the host side of the auxiliary tree.
-- [x] Keep the auxiliary tree and corresponding gene tree
-
-### AI implementation notes
-
-- `split_auxiliary_tree()` returns copied host and symbiont components from the already annotated
-  auxiliary tree, so the original auxiliary tree remains available unchanged.
-- `split_gene_tree_by_auxiliary_level()` projects a gene tree onto host-side and symbiont-side
-  reconciliations using the auxiliary-tree `level` annotations.
-- `HologenomeSimulator.simulate_gene_trees()` keeps the full auxiliary tree and full gene tree, and
-  additionally stores host/symbiont auxiliary components plus unpruned and pruned side-specific
-  gene trees.
-- The example dataframe now includes the full `T_auxiliary` / `T_gene_*` columns as well as
-  `T_auxiliary_host`, `T_auxiliary_symbiont`, and host/symbiont gene-subtree columns.
-
-## Save trees in three different formats
-
-- [x] In the example simulations script, save the trees in three different formats, like in the script `simulate_HS_level.py`. Use revolutionhtl if necesary.
-- [x] Also save species trees as a csv table
-
-### AI implementation notes
-
-- Added a local `to_simple_newick()` serializer for compact `event|label->reconc` Newick output,
-  with an optional dated variant that emits `dist` as branch lengths.
-- `run_example_simulations(..., output_dir=...)` now writes NHX, simple, and simple-dated CSVs
-  for host trees, scenario trees, and a separate species-tree table. The function return value
-  remains the original NHX host series and scenario dataframe.
