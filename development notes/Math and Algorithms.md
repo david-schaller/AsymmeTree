@@ -82,21 +82,13 @@ Similarly to an evolutionary scenario, we define an *holobiont scenario* as the 
 - $\mu':V(T_S)\cup V(T_H)\rightarrow V(T_H)\cup E(T_H)$,
 - $t'\colon V(T_S)\cup V(T_H) \to \{\bullet, \square, \times, \star, \odot \}$.
 
-with the restriction that for $z\in V(T_H)$ we have $\mu'(z)=z$​ and $t'(z)\in\{\bullet,\times,\odot\}$.
+For technical reasons, we assume that a host species is evolving inside of itself, which is ensured by the following restriction: for $z\in V(T_H)$ we have $\mu'(z)=z$ and $t'(z)\in\{\bullet,\times,\odot\}$.
 
-If we merge an evolutionary scenario and an holobiont scenario, we get a *hologenome scenario* $(T_H, T_S,T_G,t,\sigma,\mu, t', \sigma',\mu', \tau_H, \tau_S, \tau_G)$​, note that this is a three-level scenario; genes evolving inside species, inside other species.
+If we merge an evolutionary scenario and an holobiont scenario, we get a *hologenome scenario* $(T_H, T_S,T_G,t,\sigma,\mu, t', \sigma',\mu', \tau_H, \tau_S, \tau_G)$​​, note that this is a three-level scenario; genes evolving inside species, inside other species.
 
-~~To keep a simple notation, let expand the domain of $\mu'$ to also consider vertices of $T_G$ as follows: given $x\in V(T_G)$ then $\mu'(x)=\mu'(\mu(x))$. Note that this is well defined only when $\mu(x)\in V(T_S)$​.~~
+we allow a slight abuse of notation: for and edge $uv\in E(T_S)\cup E(T_H)$, we set $\mu'(uv)= \mu'(v)$​.
 
-## Inverse maps
-
-For practical purposes, we also need to define the inverse maps. Let $T_I$ a base tree and $T_J$ a tree that is being simulated inside $T_I$. Let $\gamma : V(T_I) \rightarrow 2^{E(T_J)}$ be the inverse map of $\mu$, with
-
-$\gamma(b)=\{ uv\in E(T_J) \text{ s.t. } b \preceq \mu(v) \prec \mu(u) \preceq a \}$ for $b\in V(T_I)$.
-
-Furthermore, we can define the inverse map restricted to a time $t$ as:
-
-$\gamma_t(b) = \{ uv \in \gamma(b) \text{ s.t. } \tau_J(v) \leq t \le \tau_J(u) \}$ for $b\in V(T_I)$.
+Note that for a gene $g$, it resides in a symbiont if and only if $\mu(g)\not=\mu'(\mu(g))$, otherwise, $g$ resides directly into a host species.
 
 # Simulation of hologenomes with interactions
 
@@ -135,67 +127,77 @@ Since **we are working on unpruned trees**, if $s$ is a symbiont branch, it is f
 
 Given a species bifurcation formed by the three edges $AB,BC,BD$. If another branch is evolving inside $AB$ and going through this speciation, it will include a bifurcation formed by the edges $ab,bc,bd$. If we prune $bc$, then the other two edges $ab$ and $bd$ will be merged into a new edge $ad$. By construction, the original edges $ab$ and $bd$ where fully contained in $AB$ and $BD$ correspondingly, nevertheless, the new edge $ad$ passes through more than one species edge.
 
-## Temporary extension of maps
+## Map of growing branches and inverse
 
-Recall in a given iteration of the simulation we have an incomplete $T_G$​ with a set of growing branches $\Pi$​. Each growing branch $g\in \Pi$​ is associated with one species branch $s=uv\in E(T_A)$​.
+When simulating gene tree $T_G$ inside auxiliary tree $T_A$, in a given iteration of the simulation we have an incomplete $T_G$ with a set of growing branches $\Pi$. To track the relation between growing branches and base tree, we define the temporary **growing map** $\kappa : \Pi \rightarrow E(T_A)$. Each growing branch $g\in \Pi$ is associated with one species branch $s=uv\in E(T_A)$, so we write $\mu(g)=v$. Note that in the code $\kappa$ is implicitly stored as an attribute of the growing branches.
 
-To track this relation we write $\mu(g)=v$​, even though growing branches are not part of the final reconciliation map.
+Recall, after simulation of symbiont tree $T_S$ inside of host tree $T_H$, we end up with the reconciliation map $\mu':V(T_S)\cup V(T_H)\rightarrow V(T_H)\cup E(T_H)$. Afterwards, when creating the auxiliary tree $T_A$, the same reconciliation map is inherited as $\mu' : V(T_A)\rightarrow V(T_A)\cup E(T_A)$​.
 
-Recall the map $\mu':V(T_S)\cup V(T_H)\rightarrow V(T_H)\cup E(T_H)$ goes from symbiont and host nodes to host nodes and edges. Thus, for the growing branch $g\in\Pi$  within species $s=uv\in E(T_A)$, we have that $h=\mu'(\mu(x))$  is either the branch $ab\in E(T_A)$ where $s$ is evolving, or the descendant node $b$. Furthermore, we stress that if $s$ is already a host branch, then $\mu(x)=\mu'(\mu(x))$​.
+Note that for gene growing branch $g$, it resides in a symbiont if and only if $\kappa(g)\not=\mu'(\kappa(g))$, otherwise, $g$ resides directly into a host species.
 
-Let $\gamma'$ be the inverse map of $\mu$. Furthermore, during the gene tree simulation process at a time $t$, the inverse map $\gamma$ of $\mu$ will be extended to consider a growing branch gene $g$ inside of species branch $s=uv\in E(T_A)$, i.e. growing branches are always present in $\gamma_t(v)$ if $g$ is growing in $s$, even though growing branches are not part of the final inverse map.
+During the simulation of $T_S$ we have to construct and return an **inverse map** $\gamma' : E(T_H) \rightarrow 2^{E(T_S)}$ of $\mu'$, where $\gamma'(ab)=\{ uv\in E(T_S) \mid b \preceq_H \mu'(v) \prec_H \mu'(u) \preceq_H a \}$ for $ab\in E(T_H)$​​.
 
----
+Furthermore, we can **time-restrict the inverse map** to return only branches *touching* a time $t$ as follows:
 
-The improvement we purpose is to update the rates of the events considering interactions.
+$\gamma'_t(ab) = \{ uv \in \gamma(b) \mid \tau_S(v) \leq t \le \tau_S(u) \}$ for $ab\in E(T_H)$.
 
-First, given a growing gene branch $g$​, let's define the interactors, divided in several classes:
+ In a similar way, we can define the inverse map $\gamma : E(T_I) \rightarrow 2^\Pi$ of $\kappa$ as $\gamma(ab)=\{ g\in \Pi \mid \kappa(g)=ab \}$ for $ab\in E(T_S)$.
+
+We will use the maps $\kappa,\gamma,\text{ and } \gamma'$ during the simulation of a gene tree inside of the auxiliary tree to easily track gene-to-gene interactions.
+
+## Track gene-gene interactions
+
+Given a growing gene branch $g$, let $s=uv = \kappa(g)$ be the species where the gene is evolving, and $h=\mu'(s)$ be the host of the symbiont.
+
+Recall that we assume that the hist branch is contained inside itself, so if $g$ is a gene evolving in the host, then $s=h\preceq \rho_H$, otherwise $s\preceq \rho_S \parallel h \preceq \rho_H$.
+
+Let's define the interactors of $g$, divided in several classes:
 
 | Class    | Definition                                                   | Description       |
 | -------- | ------------------------------------------------------------ | ----------------- |
-| **(A0)** | $\{g_0\in \Pi \text{ such that } \mu(g)=\mu(g_0) \and \mu(g)\preceq \rho_H \and g\not=g_0 \}$ | intra-host        |
-| **(A1)** | $\{g_0\in \Pi \text{ such that } \mu(g)=\mu(g_0) \and \mu(g)\preceq \rho_S \and g\not=g_0 \}$ | intra-symbiont    |
-| **(A2)** | $\{g_0\in \Pi \text{ such that } \mu(g)=\mu(g_0) \and \mu(g)\not\preceq \rho_H \and \mu(g)\not\preceq \rho_S \and g\not=g_0 \}$ | intra-independent |
-| **(B0)** | $\{g_0\in \Pi \text{ such that } \mu(g)\not=\mu(g_0) \and \mu'(g_0) = \mu(g) \}$ | host-to-symbiont  |
-| **(B1)** | $\{g_0\in \Pi \text{ such that } \mu(g)\not=\mu(g_0) \and \mu(g_0) = \mu'(g) \}$ | symbiont-to-host  |
-| **(B2)** | $\{g_0\in \Pi \text{ such that } \mu(g)\not=\mu(g_0) \and \mu'(g_0) = \mu'(g) \}$ | inter-symbiont    |
+| **(A0)** | $\{g_0\in \Pi\setminus\{g\} \mid \kappa(g_0)=s \preceq \rho_H  \}$ | intra-host        |
+| **(A1)** | $\{g_0\in \Pi\setminus\{g\} \mid \kappa(g_0)=s \preceq \rho_S  \}$ | intra-symbiont    |
+| **(A2)** | $\{g_0\in \Pi\setminus\{g\} \mid \kappa(g_0)=s \and s\not\preceq \rho_H \and s\not\preceq \rho_S  \}$ | intra-independent |
+| **(B0)** | $\{g_0\in \Pi \setminus\{g\} \mid \kappa(g_0)\not=  \mu'(\kappa(g_0)) = s \preceq \rho_H \}$ | host-to-symbiont  |
+| **(B1)** | $\{g_0\in \Pi \setminus\{g\} \mid \kappa(g_0) = h \not= s \}$ | symbiont-to-host  |
+| **(B2)** | $\{g_0\in \Pi \setminus\{g\} \mid s \not= \kappa(g_0)\not= \mu'(\kappa(g_0)) = h\not=s \}$ | inter-symbiont    |
 
 The interactors can be quickly computed as follows:
 
 1. Given a growing branch $g\in \Pi$, initialize the empty sets $A_0,A_1,A_2,B_0,B_1,B_2$.
-2. $s\leftarrow \mu(g)$ is the symbiont branch where $g$ is growing. Note $s=uv\in E(T_S)$.
-3. $h\leftarrow \mu'(s)$​.
-4. If $s\preceq \rho_H$
-   1. $A_0\leftarrow\mu^{(-1)}(s)$
-   2. $B\leftarrow \mu'^{(-1)}(s) $
-   3. $B_0\leftarrow \bigcup_{x\in B} \mu^{(-1)}(x)$
+2. $s\leftarrow \kappa(g)$ is the symbiont branch where $g$ is growing. Note $s=uv\in E(T_A)$​.
+3. $h\leftarrow \mu'(s)$ is the species branch where $s$ is evolving.
+4. If $s = h$
+   1. $A_0\leftarrow\gamma(s)\setminus\{g\}$
+   2. $B\leftarrow \gamma'(s) $
+   3. $B_0\leftarrow \bigcup_{x\in B} \gamma(x)$
 5. elif $s\preceq 0_S$
-   1. $A_1\leftarrow\mu^{(-1)}(s)$
-   2. $B\leftarrow \mu'^{(-1)}(h) \setminus \{s\} $
-   3. $B_1\leftarrow \mu^{(-1)}(h)$
-   4. $B_2\leftarrow \bigcup_{x\in B} \mu^{(-1)}(x)$
+   1. $A_1\leftarrow\gamma(s)$
+   2. $B\leftarrow \gamma'(h) \setminus \{s\} $
+   3. $B_1\leftarrow \gamma(h)$
+   4. $B_2\leftarrow \bigcup_{x\in B} \gamma(x)$
 
 6. else
-   1. $A_2\leftarrow\mu^{(-1)}(s)$
-
+   1. $A_2\leftarrow\gamma(s)$
 7. Return $A_0,A_1,A_2,B_0,B_1,B_2$,
 
----
+## Update rates based on gene-gene interactions
 
+We will increase loss probability for genes residing in the same host:
 
+- **(A0)** & **(A1)** There are multiple genes in the same species
+- **(B0)**, **(B1)**,& **(B2)** there are multiple genes in the same host-symbiont system.
 
-We will increase loss probability for genes residing in the same host; given two genes $x_0,x_1\in \Pi$, we increase loss probability whenever
+We should weight differentially each of those 6 types of interactions.
 
-- **(A0)** $\mu(x_0)=\mu(x_1)$      # Both genes are in the same species
-- **(A1)** $\mu'(x_0)=\mu'(x_1)$    # Genes are in different species, same host
-- **(A2)** $\mu(x_0)= \mu'(x_1)$     # One gene in in host, the other is in a symbiont of such a host.
+Fro cases **(B0)** and **(B1)** we should introduce an asymmetry in the probability depending if the gene is in the host or the symbiont, we distinguish two cases: (S-keeps) where loss happens in host with higher probability, or (H-keeps)  where loss happens in symbiont with higher probability.
 
-We should weight differentially those interactions.
+## Update rates based in symbiont-host interactions
 
-For the case (A2) we can introduce an asymmetry by setting a category for gene trees: (S-keeps) where $x_0$ is lost with higher probability, or (H-keeps)  where $x_1$ is lost with higher probability
+We will decrease transfer probability between species residing in different hots.
 
-We will decrease transfer probability between species residing in different hots
+Given a gene growing branch $x_0\in \Pi$  at time $t$, together with the corresponding species $y_0=\kappa(x_0)$ and host $z_0=\mu'(y_0)$. The probability of transfer from $y_0$ to another branch $y_1\in E(T_A)$ decreases whenever 
 
-Given a gene $x_0\in \Pi$ together with the corresponding map $y_0=\mu(x_0)$, and a coexisting branch $y_1\in E(T_A)$, which is a possible recipient, we decrease transfer probability whenever:
+- **(C0)** $y_1 \not\in \gamma'_t(z_0)$
 
-- **(A3)** $\mu'(y_0)\not=\mu'(y_1)$
+for time-consistency purposes, the probability of transfer between $y_0$ and $y_1=ab$ is different from zero if only if $\tau_A(b) \leq t \le \tau_A(a)$.

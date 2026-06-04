@@ -13,6 +13,7 @@ We will stick to the reconciliation simulation approach, but we add the host-sym
 - Theoretical plan of development:  [Math and Algorithms.md](Math and Algorithms.md).
 - Skill for contributing in the asymmetree:   [skill contributing.md](skill contributing.md).
 - Skill for implementation:  [skill implementation.md](skill implementation.md).
+- Task already addressed:  [old tasks](old tasks).
 
 ## Implementation files
 
