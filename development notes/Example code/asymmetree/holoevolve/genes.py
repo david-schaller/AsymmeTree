@@ -81,6 +81,7 @@ class GeneTreeSimulator:
         # sort edges (u,v) of the species tree by tstamp of u
         self.sorted_edges = sorted_edges(S)
 
+        self._build_auxiliary_inverse_maps()
         self._analyze_species_tree()
 
     def simulate(
@@ -350,6 +351,29 @@ class GeneTreeSimulator:
         """Return the auxiliary-tree level of the branch, if present."""
         return getattr(branch.S_edge, "level", None)
 
+    def _build_auxiliary_inverse_maps(self) -> None:
+        """Build host-to-symbiont inverse maps for annotated auxiliary trees."""
+        self.host_edges_by_key = {}
+        self.symbiont_edges_by_key = {}
+        self.gamma_prime = {}
+
+        for _, S_edge in self.sorted_edges:
+            level = getattr(S_edge, "level", None)
+            key = self._location_key(getattr(S_edge, "label", None))
+
+            if level == "host":
+                self.host_edges_by_key[key] = S_edge
+                self.gamma_prime.setdefault(S_edge, set())
+            elif level == "symbiont":
+                self.symbiont_edges_by_key[key] = S_edge
+
+        for symbiont_edge in self.symbiont_edges_by_key.values():
+            host_edge = self._host_edge_from_reconciliation(
+                getattr(symbiont_edge, "reconc", None)
+            )
+            if host_edge is not None:
+                self.gamma_prime.setdefault(host_edge, set()).add(symbiont_edge)
+
     def _location_key(self, value: object) -> object:
         """Normalize a location value to the lower node label that represents the edge."""
         if isinstance(value, (tuple, list)):
@@ -358,58 +382,83 @@ class GeneTreeSimulator:
             return self._location_key(value[-1])
         return value
 
+    def _host_edge_from_reconciliation(self, reconciliation: object) -> TreeNode | None:
+        """Return the host edge represented by a reconciliation value."""
+        return self.host_edges_by_key.get(self._location_key(reconciliation))
+
+    def _host_edge_for_species_edge(self, S_edge: TreeNode) -> TreeNode | None:
+        """Return the host edge containing an auxiliary species edge."""
+        level = getattr(S_edge, "level", None)
+        if level == "host":
+            return S_edge
+        if level == "symbiont":
+            return self._host_edge_from_reconciliation(getattr(S_edge, "reconc", None))
+        return None
+
+    def _gamma_prime_at(self, host_edge: TreeNode, tstamp: float) -> set[TreeNode]:
+        """Return symbiont edges inside a host edge that touch the given time."""
+        symbiont_edges = self.gamma_prime.get(host_edge, set())
+
+        return {
+            edge
+            for edge in symbiont_edges
+            if edge.parent
+            and edge.tstamp <= tstamp <= edge.parent.tstamp
+        }
+
     def _branch_auxiliary_key(self, branch: _Branch) -> object:
         """Return the auxiliary-tree key of the branch."""
         return self._location_key(getattr(branch.S_edge, "label", None))
 
     def _branch_host_key(self, branch: _Branch) -> object:
         """Return the host-side key of the branch."""
-        level = self._branch_level(branch)
-        if level == "host":
-            return self._branch_auxiliary_key(branch)
-        if level == "symbiont":
-            return self._location_key(getattr(branch.S_edge, "reconc", None))
-        return None
+        host_edge = self._host_edge_for_species_edge(branch.S_edge)
+        return self._location_key(getattr(host_edge, "label", None)) if host_edge else None
 
     def _supports_hologenome_interactions(self, branch: _Branch) -> bool:
         """Check whether the branch lives in the annotated part of an auxiliary tree."""
         return self._delta_l > 1.0 and self._branch_level(branch) in ("host", "symbiont")
 
-    def _branches_interact(self, branch1: _Branch, branch2: _Branch) -> bool:
-        """Check whether a pair of active branches matches rules A0-A2."""
-        if branch1 is branch2:
-            return False
+    def _collect_interactors(self, branch: _Branch) -> dict[str, set[_Branch]]:
+        """Return active interactors of the given branch by interaction class."""
+        interactors = {key: set() for key in ("A0", "A1", "A2", "B0", "B1", "B2")}
+        S_edge = branch.S_edge
+        level = self._branch_level(branch)
+        host_edge = self._host_edge_for_species_edge(S_edge)
 
-        # A0: both genes reside in the same auxiliary-tree branch.
-        if branch1.S_edge is branch2.S_edge:
-            return True
+        if level == "host":
+            interactors["A0"] = set(self.species2genes.get(S_edge, []))
 
-        level1 = self._branch_level(branch1)
-        level2 = self._branch_level(branch2)
-        host_key1 = self._branch_host_key(branch1)
-        host_key2 = self._branch_host_key(branch2)
+            for symbiont_edge in self.gamma_prime.get(S_edge, set()):
+                interactors["B0"].update(self.species2genes.get(symbiont_edge, []))
 
-        # A1: different symbiont species in the same host.
-        if (
-            level1 == "symbiont"
-            and level2 == "symbiont"
-            and branch1.S_edge is not branch2.S_edge
-            and host_key1 is not None
-            and host_key1 == host_key2
-        ):
-            return True
+        elif level == "symbiont":
+            interactors["A1"] = set(self.species2genes.get(S_edge, []))
 
-        # A2: one gene is in the host, the other in one of its symbionts.
-        if level1 == "host" and level2 == "symbiont":
-            return self._branch_auxiliary_key(branch1) == host_key2
-        if level1 == "symbiont" and level2 == "host":
-            return self._branch_auxiliary_key(branch2) == host_key1
+            if host_edge is not None:
+                interactors["B1"] = set(self.species2genes.get(host_edge, []))
 
-        return False
+                for symbiont_edge in self.gamma_prime.get(host_edge, set()):
+                    if symbiont_edge is not S_edge:
+                        interactors["B2"].update(
+                            self.species2genes.get(symbiont_edge, [])
+                        )
+
+        else:
+            interactors["A2"] = set(self.species2genes.get(S_edge, []))
+
+        for partners in interactors.values():
+            partners.discard(branch)
+
+        return interactors
 
     def _interaction_partners(self, branch: _Branch) -> list[_Branch]:
         """Return the active branches that currently interact with the given branch."""
-        return [other for other in self.gene_branches if self._branches_interact(branch, other)]
+        partners = set()
+        for interactor_set in self._collect_interactors(branch).values():
+            partners.update(interactor_set)
+
+        return list(partners)
 
     def _increase_loss_rates_after_transfer(self, branch: _Branch) -> None:
         """Increase pairwise loss rates after a transfer created a new overlap."""
@@ -494,7 +543,8 @@ class GeneTreeSimulator:
         speciation events with one or zero children, respectively, in the species tree.
         """
         S_edge = self.spec_queue.popleft()
-        g_event= "L" if (S_edge.label == "L") else "S"
+        species_event = getattr(S_edge, "event", None)
+        g_event = species_event if species_event in ("H", "L") else "S"
 
         new_branches= {S_w: list() for S_w in S_edge.children}
 
@@ -516,7 +566,7 @@ class GeneTreeSimulator:
                 new_branches[S_w]+= [self._new_branch(spec_node, S_w, 0, template_branch=g_branch)]
 
                 #if getattr(S_w, "transferred", 0):
-                #    self._increase_loss_rates_after_transfer(new_branch) # <------------------------- spurious
+                #    self._increase_loss_rates_after_transfer(new_branch)
 
             #if is_species_loss: # <------------------- should we un-indent this?
             #    # Loss of this branch involve interaction classes (A1) and (A2)
@@ -581,11 +631,14 @@ class GeneTreeSimulator:
         ):
             return
 
-        if self._prohibit_extinction == "per_species" and len(self.species2genes[branch.S_edge]) <= 1:
+        if (
+            self._prohibit_extinction == "per_species"
+            and len(self.species2genes[branch.S_edge]) <= 1
+        ):
             return
 
         S_edge = branch.S_edge
-        partners = self._interaction_partners(branch) # <------------------------- spurious ?
+        partners = self._interaction_partners(branch)
 
         loss_node = TreeNode(
             label=branch.label,
@@ -596,7 +649,7 @@ class GeneTreeSimulator:
         )
         branch.parent.add_child(loss_node)
         self._remove_branch(branch)
-        self._decrease_loss_rates_after_loss(branch, partners) # <------------------------- spurious ?
+        self._decrease_loss_rates_after_loss(branch, partners)
 
     def _coexisting_species_edges(self, tstamp: float, exclude_edge: _Branch = None) -> list:
         """Return list of edges for the given timestamp.

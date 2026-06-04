@@ -18,40 +18,59 @@ def create_auxiliary_tree(
     host_tree: Tree,
     symbiont_tree: Tree,
     root_offset: float = 1e-6,
+    planted_root_offset: float | None = None,
 ) -> Tree:
     """Create the auxiliary tree for a host-symbiont scenario.
 
-    The auxiliary tree is constructed from copies of the host and symbiont trees. The copied host
-    labels are prefixed with ``H`` and the copied symbiont labels with ``S`` to keep the merged
-    tree collision-safe. Their planted roots are joined below a new auxiliary root ``AR`` and a new
-    planted root ``A0`` is added above it. For later three-level simulations, the attribute
-    ``reconc`` is used as the host map ``mu_A``.
+    The auxiliary tree is constructed from copies of the canonical host subtree and the planted
+    symbiont tree. The copied host labels are prefixed with ``H`` and the copied symbiont labels
+    with ``S`` to keep the merged tree collision-safe. A new auxiliary root ``AR`` joins the host
+    canonical root and the symbiont planted root, and a new planted root ``A0`` is added above it.
+    For later three-level simulations, the attribute ``reconc`` is used as the host map ``mu_A``.
 
     Args:
         host_tree: The host tree.
         symbiont_tree: The symbiont tree reconciled with the host tree.
-        root_offset: Positive offset used for the new planted root of the auxiliary tree.
+        root_offset: Positive offset between the symbiont planted root and ``AR``.
+        planted_root_offset: Positive offset between ``AR`` and ``A0``. If omitted, ``root_offset``
+            is used.
 
     Returns:
         The auxiliary tree for the given host-symbiont pair.
 
     Raises:
         TypeError: If one of the input trees is not a non-empty tree.
-        ValueError: If ``root_offset`` is not positive.
+        ValueError: If one of the offsets is not positive.
     """
     _validate_tree(host_tree, "host tree")
     _validate_tree(symbiont_tree, "symbiont tree")
 
+    if planted_root_offset is None:
+        planted_root_offset = root_offset
+
     if root_offset <= 0.0:
         raise ValueError("root_offset must be > 0")
+    if planted_root_offset <= 0.0:
+        raise ValueError("planted_root_offset must be > 0")
 
     host_copy = host_tree.copy()
     symbiont_copy = symbiont_tree.copy()
 
-    host_label_map = _annotate_host_tree(host_copy)
+    host_component_root, host_planted_source_label = _extract_host_component_root(host_copy)
+    host_label_map = _annotate_host_tree(Tree(host_component_root))
+    if host_planted_source_label is not None:
+        host_label_map.setdefault(host_planted_source_label, "AR")
+
     _annotate_symbiont_tree(symbiont_copy, host_label_map)
 
-    merged_tstamp = max(host_copy.root.tstamp, symbiont_copy.root.tstamp)
+    symbiont_root = symbiont_copy.root
+    symbiont_root.event = "H"
+    symbiont_root.reconc = ("AR", host_component_root.label)
+    symbiont_root.transferred = 0
+    for child in symbiont_root.children:
+        child.transferred = 1
+
+    merged_tstamp = symbiont_root.tstamp + root_offset
 
     merged_root = TreeNode(
         label="AR",
@@ -61,14 +80,14 @@ def create_auxiliary_tree(
         level="auxiliary",
         source_label="rho_A",
     )
-    merged_root.add_child(host_copy.root)
-    merged_root.add_child(symbiont_copy.root)
+    merged_root.add_child(host_component_root)
+    merged_root.add_child(symbiont_root)
 
     planted_root = TreeNode(
         label="A0",
         event=None,
         reconc="A0",
-        tstamp=merged_tstamp + root_offset,
+        tstamp=merged_tstamp + planted_root_offset,
         level="auxiliary",
         source_label="0_A",
     )
@@ -448,6 +467,18 @@ def _validate_tree(tree: Tree, tree_name: str) -> None:
     """Validate that the object is a non-empty tree."""
     if not isinstance(tree, Tree) or not tree.root:
         raise TypeError(f"{tree_name} must be a non-empty tree of type 'Tree'")
+
+
+def _extract_host_component_root(tree: Tree) -> tuple[TreeNode, object | None]:
+    """Return the canonical host root and the copied planted-root label, if present."""
+    if len(tree.root.children) != 1:
+        return tree.root, None
+
+    planted_source_label = getattr(tree.root, "label", None)
+    host_root = tree.root.children[0]
+    host_root.detach()
+
+    return host_root, planted_source_label
 
 
 def _copy_component_tree(auxiliary_tree: Tree, level: str) -> Tree:
