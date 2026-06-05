@@ -544,7 +544,7 @@ class GeneTreeSimulator:
         """
         S_edge = self.spec_queue.popleft()
         species_event = getattr(S_edge, "event", None)
-        g_event = species_event if species_event in ("H", "L") else "S"
+        g_event= "L" if (species_event == "L") else "S"
 
         new_branches= {S_w: list() for S_w in S_edge.children}
 
