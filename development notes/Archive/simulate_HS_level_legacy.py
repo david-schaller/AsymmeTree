@@ -1,3 +1,11 @@
+"""Legacy prototype archived from `development notes/Example code/`.
+
+Superseded by `development notes/Example code/example_simulations.py`, which uses the
+newer `asymmetree.hologenome` workflow and produces the broader set of simulation outputs.
+
+Original module docstring below.
+"""
+
 """
 This script simulates Symbiont trees inside of Host trees.
 

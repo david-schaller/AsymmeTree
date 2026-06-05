@@ -1,4 +1,4 @@
-The proposal is compatible with the current architecture of AsymmeTree, and the prototype in `development notes/Example code/simulate_HS_level.py` already shows that a first host-symbiont layer can be built by reusing the existing tree simulation code, the `reconc` attribute for reconciliation maps, and the dated-event information stored in `event` and `tstamp`. This makes the proposal more than a purely conceptual extension: the main simulation ingredients already exist.
+The proposal is compatible with the current architecture of AsymmeTree, and the prototype in `development notes/Archive/simulate_HS_level_legacy.py` already shows that a first host-symbiont layer can be built by reusing the existing tree simulation code, the `reconc` attribute for reconciliation maps, and the dated-event information stored in `event` and `tstamp`. This makes the proposal more than a purely conceptual extension: the main simulation ingredients already exist.
 
 At the same time, the prototype also shows the main challenge. A research script can assemble host and symbiont scenarios and post-process labels afterwards, but a library-quality implementation will need explicit collision-safe identifiers, helper functions for coexistence queries, and a clean API in a new `asymmetree.holobiont` module. The strongest part of the proposal is still the reuse of the current birth-death machinery, especially by modifying loss sampling and HGT recipient selection. The main technical risk is no longer basic feasibility, but precise model specification: cases (A0)-(A3) should be translated into explicit weighting rules and tested carefully, otherwise the behavior of the simulator will be difficult to validate.
 
@@ -6,7 +6,7 @@ At the same time, the prototype also shows the main challenge. A research script
 
 
 
-1. Use the prototype in `development notes/Example code/simulate_HS_level.py` as the starting point for the host-symbiont level, since it already reuses `species_tree_n`, `dated_gene_tree`, `prune_losses`, and the `reconc` metadata.
+1. Use the prototype in `development notes/Archive/simulate_HS_level_legacy.py` as the starting point for the host-symbiont level, since it already reuses `species_tree_n`, `dated_gene_tree`, `prune_losses`, and the `reconc` metadata.
 2. Move that logic into a new public module `asymmetree.holobiont`, following the same high-level structure as `asymmetree.genome`.
 3. Replace script-level relabeling with package-level helper functions for collision-safe node identifiers and reconciliation formatting.
 4. Add helper functions that detect coexisting host, symbiont, and gene lineages from the dated trees using `reconc`, `event`, and `tstamp`.

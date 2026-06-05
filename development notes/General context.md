@@ -20,6 +20,7 @@ We will stick to the reconciliation simulation approach, but we add the host-sym
 - The development directory is  [Example code/](Example code/), everything goes inside this folder. 
 - Code paths and structure:   [code paths and structure.md](code paths and structure.md) 
 - To-do list:  [implementation.md](implementation.md) 
+- Bug solving:  [bug_reports.md](bug_reports.md) 
 
 ## Ignore
 

@@ -168,7 +168,7 @@ The code should follow all AsymmeTree standards, in particular, have a look to `
 
 - [x] Create a module `asymmetree.hologenome` inside of the directory `development notes/Example code/`
 - [x] It should have the same structure as `asymmetree.genome`
-- [x] It should be initialized with the code in `development notes/Example code/simulate_HS_level.py`. Until now, it simulates only the 'holobiont'.
+- [x] It should be initialized with the code in `development notes/Archive/simulate_HS_level_legacy.py`. Until now, it simulates only the 'holobiont'.
 - [x] Create the auxiliary tree $T_A$​ (One per each host-symbiont pair of trees).
 - [x] Create an example script `development notes/Example code/example_simulations`. The result should be:
   - [x] One pandas series with Host trees trees (in general nhx format)
@@ -180,7 +180,7 @@ The code should follow all AsymmeTree standards, in particular, have a look to `
 - The prototype now lives in `development notes/Example code/hologenome` with the same package
   pattern as `asymmetree.genome`: a thin `__init__.py` and a single simulation module.
 - `HologenomeSimulator` currently covers the holobiont layer only and keeps the prototype logic
-  close to `simulate_HS_level.py`, but removes the dependency on `revolutionhtl` by exporting
+  close to `simulate_HS_level_legacy.py`, but removes the dependency on `revolutionhtl` by exporting
   trees with a local NHX serializer.
 - The auxiliary tree uses collision-safe `H*`, `S*`, and `A*` labels and stores the host-side map
   in `reconc`, which gives us a clean hand-off for the later gene-level extension.
@@ -264,7 +264,7 @@ Right now asymmetree assumes that all the branches of the gene tree have exactly
 
 ## Save trees in three different formats
 
-- [x] In the example simulations script, save the trees in three different formats, like in the script `simulate_HS_level.py`. Use revolutionhtl if necesary.
+- [x] In the example simulations script, save the trees in three different formats, like in the script `simulate_HS_level_legacy.py`. Use revolutionhtl if necesary.
 - [x] Also save species trees as a csv table
 
 ### AI implementation notes
