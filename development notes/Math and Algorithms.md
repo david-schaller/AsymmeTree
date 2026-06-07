@@ -183,14 +183,28 @@ The interactors can be quickly computed as follows:
 
 ## Update rates based on gene-gene interactions
 
-We will increase loss probability for genes residing in the same host:
+The simulation starts with a base loss rate $r_l$. Whenever an holobiont system starts existing, the loss rate is updated for each of the involved species.
 
-- **(A0)** & **(A1)** There are multiple genes in the same species
-- **(B0)**, **(B1)**,& **(B2)** there are multiple genes in the same host-symbiont system.
+Let's say we have a host branch $h$ with $|\gamma'(h)|+1= N$, i.e. we have a total of $N$ species in the system, with a total of $M=|\gamma(h)|+\sum_{s\in\gamma'(h)}|\gamma(s)|$ genes. The loss rate for a gene existing in a symbiont $s$ will be:
+$$
+r_l^*= r_l + \alpha \frac{|\gamma(s)|}{M/N} = r_l + \alpha \frac{|\gamma(s)| N}{M}
+$$
+On the other hand, the loss rate for genes in the host species will be:
+$$
+r_l^*= r_l + \beta \frac{|\gamma(s)| N}{M}
+$$
+Where, $\alpha$ and $\beta$ are user-provided normalization factors.
 
-We should weight differentially each of those 6 types of interactions.
+The new loss rates will be higher in species with more genes than the average. Furthermore, the loss will be more likely to happen in a symbiont whenever $\alpha > \beta$ and conversely, loss will be more likely to happen in the host whenever $\beta>\alpha$.
 
-Fro cases **(B0)** and **(B1)** we should introduce an asymmetry in the probability depending if the gene is in the host or the symbiont, we distinguish two cases: (S-keeps) where loss happens in host with higher probability, or (H-keeps)  where loss happens in symbiont with higher probability.
+~~We will increase loss probability for genes residing in the same host:~~
+
+- ~~**(A0)** & **(A1)** There are multiple genes in the same species~~
+- ~~**(B0)**, **(B1)**,& **(B2)** there are multiple genes in the same host-symbiont system.~~
+
+~~We should weight differentially each of those 6 types of interactions.~~
+
+~~Fro cases **(B0)** and **(B1)** we should introduce an asymmetry in the probability depending if the gene is in the host or the symbiont, we distinguish two cases: (S-keeps) where loss happens in host with higher probability, or (H-keeps)  where loss happens in symbiont with higher probability.~~
 
 ## Update rates based in symbiont-host interactions
 
