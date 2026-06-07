@@ -638,7 +638,7 @@ class GeneTreeSimulator:
             return
 
         S_edge = branch.S_edge
-        partners = self._interaction_partners(branch)
+        #partners = self._interaction_partners(branch)
 
         loss_node = TreeNode(
             label=branch.label,
@@ -649,7 +649,7 @@ class GeneTreeSimulator:
         )
         branch.parent.add_child(loss_node)
         self._remove_branch(branch)
-        self._decrease_loss_rates_after_loss(branch, partners)
+        #self._decrease_loss_rates_after_loss(branch, partners)
 
     def _coexisting_species_edges(self, tstamp: float, exclude_edge: _Branch = None) -> list:
         """Return list of edges for the given timestamp.
