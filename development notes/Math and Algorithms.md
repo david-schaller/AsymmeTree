@@ -141,7 +141,7 @@ Furthermore, we can **time-restrict the inverse map** to return only branches *t
 
 $\gamma'_t(ab) = \{ uv \in \gamma(b) \mid \tau_S(v) \leq t \le \tau_S(u) \}$ for $ab\in E(T_H)$.
 
- In a similar way, we can define the inverse map $\gamma : E(T_I) \rightarrow 2^\Pi$ of $\kappa$ as $\gamma(ab)=\{ g\in \Pi \mid \kappa(g)=ab \}$ for $ab\in E(T_S)$.
+ In a similar way, we can define the inverse map $\gamma : E(T_A) \rightarrow 2^\Pi$ of $\kappa$ as $\gamma(ab)=\{ g\in \Pi \mid \kappa(g)=ab \}$ for $ab\in E(T_A)$.
 
 We will use the maps $\kappa,\gamma,\text{ and } \gamma'$ during the simulation of a gene tree inside of the auxiliary tree to easily track gene-to-gene interactions.
 
@@ -183,7 +183,7 @@ The interactors can be quickly computed as follows:
 
 ## Update rates based on gene-gene interactions
 
-The simulation starts with a base loss rate $r_l$. Whenever an holobiont system starts existing, the loss rate is updated for each of the involved species.
+The simulation starts with a base loss rate $r_l$. Whenever an holobiont system starts existing, the loss rate is updated for each of the involved species. Below we provide an expression to update the rates, this should be updated whenever gene content changes in a holobiont system, it my be due to duplication/loss/transfer of both genes and symbionts.
 
 Let's say we have a host branch $h$ with $|\gamma'(h)|+1= N$, i.e. we have a total of $N$ species in the system, with a total of $M=|\gamma(h)|+\sum_{s\in\gamma'(h)}|\gamma(s)|$ genes. The loss rate for a gene existing in a symbiont $s$ will be:
 $$
