@@ -60,6 +60,10 @@ now unions those classes for existing rate hooks.
 - [x] Spot the places in the code where rates are updated or should be updated
 - [x] plan the changes.
 - [ ] Check updated theoretical description to update rates, in  [Math and Algorithms.md](Math and Algorithms.md) section *Update rates based on gene-gene interactions*.
+  - [ ] Consider that the rates are a parameter for the process of sampling events given a distribution.
+  - [ ] Analyze how good is the new idea for loss rate update, identify pitfalls and advantages. Should we proceed with this?
+  - [ ] Tell me which would be a good value for $\alpha$  and $\beta$.
+
 - [ ] Create a backup of current progress.
 - [ ] Plan refactor of code, we don't need to collect 'interactors'. We still need the inverse maps.
 
