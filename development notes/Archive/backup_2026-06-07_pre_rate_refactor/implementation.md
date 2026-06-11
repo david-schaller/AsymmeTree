@@ -59,33 +59,16 @@ now unions those classes for existing rate hooks.
 
 - [x] Spot the places in the code where rates are updated or should be updated
 - [x] plan the changes.
-- [x] Check updated theoretical description to update rates, in  [Math and Algorithms.md](Math and Algorithms.md) section *Update rates based on gene-gene interactions*.
-  - [x] Consider that the rates are a parameter for the process of sampling events given a distribution.
-  - [x] Analyze how good is the new idea for loss rate update, identify pitfalls and advantages. Should we proceed with this?
-  - [x] Tell me which would be a good value for `alpha` and `beta`.
+- [ ] Check updated theoretical description to update rates, in  [Math and Algorithms.md](Math and Algorithms.md) section *Update rates based on gene-gene interactions*.
+  - [ ] Consider that the rates are a parameter for the process of sampling events given a distribution.
+  - [ ] Analyze how good is the new idea for loss rate update, identify pitfalls and advantages. Should we proceed with this?
+  - [ ] Tell me which would be a good value for $\alpha$  and $\beta$.
 
-- [x] Create a backup of current progress.
-- [x] Plan refactor of code, we do not need to collect interactors. We still need the inverse maps.
+- [ ] Create a backup of current progress.
+- [ ] Plan refactor of code, we don't need to collect 'interactors'. We still need the inverse maps.
 
 ### AI implementation notes
 
-The revised loss update is better treated as a hazard update on active branches, not as a direct
-probability tweak: increasing `loss_rate` changes both the probability that the next event is a
-loss and the waiting-time distribution sampled in `_run()` because the total event intensity
-changes. The new idea is promising because it only needs the inverse maps `gamma = species2genes`
-and `gamma_prime`, so it is simpler and more stable than keeping six interactor classes in the
-rate logic.
-
-There is one theoretical correction to keep in mind before coding: the host-side formula should use
-`|gamma(h)|`, not `|gamma(s)|`, otherwise the host loss rate depends on a symbiont copy count. We
-should proceed with the new formulation, but with three safeguards: only activate it for true
-holobiont systems (`N > 1`), recompute rates from scratch after any event that changes copy counts
-or placements, and consider capping the crowding term `|gamma(.)| N / M` if it becomes too
-aggressive in overloaded systems.
-
-A conservative starting point for a host-keeps regime is `alpha = 0.25 * r_l` and
-`beta = 0.10 * r_l`; for a neutral baseline, `alpha = beta = 0.15 * r_l` is a reasonable default.
-A pre-refactor snapshot was saved in
-`development notes/Archive/backup_2026-06-07_pre_rate_refactor/`. The refactor plan is to keep the
-inverse maps, retire `_collect_interactors()` from the rate path, and replace it with host-system
-summary helpers plus a full loss-rate refresh routine.
+Rate hooks are in `_new_branch()`, `_get_branch_and_type()`, `_run()`, `_speciation()`, `_loss()`,
+and `_sample_recipient()`. The safer plan is to recompute loss-rate multipliers from current
+interactor classes after branch-changing events, and apply the C0 penalty during recipient sampling.
