@@ -188,9 +188,8 @@ summaries for one host system at a time:
 - For the host branch `h`, update each active host-resident gene with
   `r_l^* = r_l + beta * |gamma(h)| * N / M`.
 
-One theoretical correction is still needed before coding: the host-side formula should use
-`|gamma(h)|`, not `|gamma(s)|`. Otherwise the host loss rate would depend on one symbiont copy
-count rather than the host copy count.
+The theory now uses the corrected host-side formula `|gamma(h)|`, so the host loss rate depends on
+the host copy count rather than on one symbiont copy count.
 
 ### Rates are hazard parameters
 

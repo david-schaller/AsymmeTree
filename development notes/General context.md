@@ -22,6 +22,12 @@ We will stick to the reconciliation simulation approach, but we add the host-sym
 - To-do list:  [implementation.md](implementation.md) 
 - Bug solving:  [bug_reports.md](bug_reports.md) 
 
+## Workflow rules
+
+- AI notes and explanatory implementation notes belong in [implemented.md](implemented.md), not in [implementation.md](implementation.md).
+- In [implementation.md](implementation.md), AI should only change checkbox states unless the user explicitly asks for another kind of edit.
+- New tasks added to [implementation.md](implementation.md) should be ignored until the user explicitly asks to address them.
+
 ## Ignore
 
 -  [prompt.md](prompt.md) 

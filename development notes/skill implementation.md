@@ -1,2 +1,3 @@
 - Every time something in [implementation.md](implementation.md) is done, we have to make sure it follows as close as possible the mathematical formulation in  [Math and Algorithms.md](Math and Algorithms.md).
-- Each set of tasks in [implementation.md](implementation.md) is followed by a subsubsectio *AI implementation notes*, write important notes for code curator.
+- Important notes for the code curator should go in [implemented.md](implemented.md), not in [implementation.md](implementation.md).
+- In [implementation.md](implementation.md), only checkbox states should be changed unless the user explicitly asks for another kind of edit.

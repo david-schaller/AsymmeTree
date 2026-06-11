@@ -7,6 +7,8 @@ It is important to be aware of the  [general context.md](General context.md).
 AI agent can add consice in-line comments and reply to questions in this file.
 
 AI agent should generate a file `implemented.md` as a reply to the following list of tasks.
+In this file, AI should only change checkbox states unless the user explicitly asks for another kind of edit.
+All AI notes and explanations should be written in `implemented.md`.
 
 ## Review theory and code
 
@@ -18,12 +20,18 @@ AI agent should generate a file `implemented.md` as a reply to the following lis
   - [x] What are the missing steps?
   - [x] Is there something difficult to translate from theory to code?
 
-### AI implementation notes
+- [ ] Provide a deeper explanation of the following. Add it to 'implemented.md'.
 
-Reviewed in [implemented.md](implemented.md). Theory is detailed enough, but edge notation, the
-time-restricted inverse map, and interaction-rate weights need tightening before implementation.
-The code now has the main scaffolding, corrected auxiliary tree, `gamma_prime`, and six-class
-interactor collection; C0 transfer weighting and weighted loss updates are still missing.
+    > A conservative first default is alpha = 0.25 * r_l and beta = 0.10 * r_l; a neutral baseline is alpha = beta = 0.15 * r_l.
+
+    It looks good, nevertheless I need a deeper explanation of the meaning of multiplying alpha/beta with the 'relative gene content' $\frac{|\gamma(s)|}{M/N}$, and the implications for the probability of this event happening, i.e. the event-sampling process using a wheighted random choice. What probability distribution genes follow, given the time-sampling process? based on this, explain why to use alpha = 0.25 * r_l and beta = 0.10 * r_l.
+
+    > A cap such as
+    > `crowding = min(|gamma(.)| * N / M, c_max)` with `c_max` around `2` or `3` is worth keeping in
+    > reserve.
+
+    why to choose 2 and 3 from a theoretical point of view under the same arguments above?
+
 
 ## Correct auxiliary tree in code
 
@@ -33,11 +41,6 @@ Te current implementation of the auxiliary tree is incorrect
 - [x] Write the plan to upgrade the current implementation.
 - [x] Correct the auxiliary tree so it follows lines 101-110 of `Math and Algorithms.md`.
 
-### AI implementation notes
-
-Updated `create_auxiliary_tree()` so `T_A` has shape `0_A -> rho_A -> {rho_H, 0_S}`. The host
-component now starts at the canonical host root, `rho_A` and `0_A` use separate positive offsets
-above `0_S`, and the symbiont planted root is marked as the transfer event.
 
 ## Collect interactors during gene tree simulation
 
@@ -48,12 +51,6 @@ above `0_S`, and the symbiont planted root is marked as the transfer event.
 - [x] Replace the current boolean `_branches_interact()` helper with an interactor collector returning
   the six classes `A0`, `A1`, `A2`, `B0`, `B1`, and `B2`.
 
-### AI implementation notes
-
-`GeneTreeSimulator` now builds `gamma_prime` from the annotated auxiliary tree and keeps
-`species2genes` as the active `gamma` map. `_branches_interact()` was replaced by
-`_collect_interactors()`, which returns `A0`, `A1`, `A2`, `B0`, `B1`, and `B2`; the old partner API
-now unions those classes for existing rate hooks.
 
 ## Update rates based on interactions
 
@@ -67,25 +64,3 @@ now unions those classes for existing rate hooks.
 - [x] Create a backup of current progress.
 - [x] Plan refactor of code, we do not need to collect interactors. We still need the inverse maps.
 
-### AI implementation notes
-
-The revised loss update is better treated as a hazard update on active branches, not as a direct
-probability tweak: increasing `loss_rate` changes both the probability that the next event is a
-loss and the waiting-time distribution sampled in `_run()` because the total event intensity
-changes. The new idea is promising because it only needs the inverse maps `gamma = species2genes`
-and `gamma_prime`, so it is simpler and more stable than keeping six interactor classes in the
-rate logic.
-
-There is one theoretical correction to keep in mind before coding: the host-side formula should use
-`|gamma(h)|`, not `|gamma(s)|`, otherwise the host loss rate depends on a symbiont copy count. We
-should proceed with the new formulation, but with three safeguards: only activate it for true
-holobiont systems (`N > 1`), recompute rates from scratch after any event that changes copy counts
-or placements, and consider capping the crowding term `|gamma(.)| N / M` if it becomes too
-aggressive in overloaded systems.
-
-A conservative starting point for a host-keeps regime is `alpha = 0.25 * r_l` and
-`beta = 0.10 * r_l`; for a neutral baseline, `alpha = beta = 0.15 * r_l` is a reasonable default.
-A pre-refactor snapshot was saved in
-`development notes/Archive/backup_2026-06-07_pre_rate_refactor/`. The refactor plan is to keep the
-inverse maps, retire `_collect_interactors()` from the rate path, and replace it with host-system
-summary helpers plus a full loss-rate refresh routine.

@@ -147,6 +147,10 @@ We will use the maps $\kappa,\gamma,\text{ and } \gamma'$ during the simulation 
 
 ## Track gene-gene interactions
 
+> [!IMPORTANT]
+>
+> The six categories for interactions bellow are not being used in the implementation anymore. These interaction classes were useful for exploring the structure of overlaps, but they are no longer the right primitive for loss-rate updates.
+
 Given a growing gene branch $g$, let $s=uv = \kappa(g)$ be the species where the gene is evolving, and $h=\mu'(s)$ be the host of the symbiont.
 
 Recall that we assume that the hist branch is contained inside itself, so if $g$ is a gene evolving in the host, then $s=h\preceq \rho_H$, otherwise $s\preceq \rho_S \parallel h \preceq \rho_H$.
@@ -191,20 +195,44 @@ r_l^*= r_l + \alpha \frac{|\gamma(s)|}{M/N} = r_l + \alpha \frac{|\gamma(s)| N}{
 $$
 On the other hand, the loss rate for genes in the host species will be:
 $$
-r_l^*= r_l + \beta \frac{|\gamma(s)| N}{M}
+r_l^*= r_l + \beta \frac{|\gamma(h)| N}{M}
 $$
 Where, $\alpha$ and $\beta$ are user-provided normalization factors.
 
 The new loss rates will be higher in species with more genes than the average. Furthermore, the loss will be more likely to happen in a symbiont whenever $\alpha > \beta$ and conversely, loss will be more likely to happen in the host whenever $\beta>\alpha$.
 
-~~We will increase loss probability for genes residing in the same host:~~
+This update should be interpreted at the level of **event rates** or **hazards**, not as a direct post-hoc probability correction. Increasing $r_l^*$ changes both the relative probability that the next event in a branch is a loss and the total event intensity used to sample the next event time. Therefore, in the implementation the effective loss rates should be recomputed from the current state of the holobiont system whenever gene content changes.
 
-- ~~**(A0)** & **(A1)** There are multiple genes in the same species~~
-- ~~**(B0)**, **(B1)**,& **(B2)** there are multiple genes in the same host-symbiont system.~~
+### Practical safeguards
 
-~~We should weight differentially each of those 6 types of interactions.~~
+The rate update should be activated only for true holobiont systems, i.e. when $N>1$. Otherwise a single host lineage with no active symbiont would still receive an interaction-driven loss penalty. Moreover, if duplications accumulate too many genes in one species, the term $\frac{|\gamma(\cdot)|N}{M}$ may become too aggressive. In that case it is reasonable to keep in reserve a capped crowding factor such as
+$$
+\operatorname{crowding}(x)= \min\left(\frac{|\gamma(x)|N}{M}, c_{\max}\right),
+$$
+with $c_{\max}$ around $2$ or $3$.
 
-~~Fro cases **(B0)** and **(B1)** we should introduce an asymmetry in the probability depending if the gene is in the host or the symbiont, we distinguish two cases: (S-keeps) where loss happens in host with higher probability, or (H-keeps)  where loss happens in symbiont with higher probability.~~
+Independent auxiliary branches that are not part of any host-symbiont system should stay at the base loss rate $r_l$.
+
+### Practical defaults for $\alpha$ and $\beta$
+
+It is convenient to define $\alpha$ and $\beta$ as fractions of the base loss rate $r_l$, rather than as fixed absolute constants. This keeps the effect comparable across simulations run with different base loss rates.
+
+A conservative starting point for a host-keeps regime is:
+$$
+\alpha = 0.25\,r_l, \qquad \beta = 0.10\,r_l.
+$$
+
+A neutral baseline is:
+$$
+\alpha = \beta = 0.15\,r_l.
+$$
+
+A stronger exploratory regime is:
+$$
+\alpha = 0.50\,r_l, \qquad \beta = 0.20\,r_l.
+$$
+
+The first option is the safest default for initial experiments, because around average occupancy $\frac{|\gamma(\cdot)|N}{M}\approx 1$, it increases symbiont losses by about $25\%$ of $r_l$ and host losses by about $10\%$ of $r_l$ without overwhelming the existing duplication, loss, transfer, and conversion dynamics.
 
 ## Update rates based in symbiont-host interactions
 
