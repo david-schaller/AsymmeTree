@@ -1,4 +1,4 @@
-This file explains the mathematical framework to simulate two-level scenarios currently implmented in asymmetree, and the extension we are implementing to include three-level scenarios with interactions.
+This file explains the mathematical framework to simulate two-level scenarios currently implemented in asymmetree, and the extension we are implementing to include three-level scenarios with interactions.
 
 # Generalizing AsymmeTree
 
@@ -131,17 +131,27 @@ Given a species bifurcation formed by the three edges $AB,BC,BD$. If another bra
 
 When simulating gene tree $T_G$ inside auxiliary tree $T_A$, in a given iteration of the simulation we have an incomplete $T_G$ with a set of growing branches $\Pi$. To track the relation between growing branches and base tree, we define the temporary **growing map** $\kappa : \Pi \rightarrow E(T_A)$. Each growing branch $g\in \Pi$ is associated with one species branch $s=uv\in E(T_A)$, so we write $\mu(g)=v$. Note that in the code $\kappa$ is implicitly stored as an attribute of the growing branches.
 
-Recall, after simulation of symbiont tree $T_S$ inside of host tree $T_H$, we end up with the reconciliation map $\mu':V(T_S)\cup V(T_H)\rightarrow V(T_H)\cup E(T_H)$. Afterwards, when creating the auxiliary tree $T_A$, the same reconciliation map is inherited as $\mu' : V(T_A)\rightarrow V(T_A)\cup E(T_A)$​.
+Recall, after simulation of symbiont tree $T_S$ inside of host tree $T_H$, we end up with the reconciliation map $\mu':V(T_S)\cup V(T_H)\rightarrow V(T_H)\cup E(T_H)$. Afterwards, when creating the auxiliary tree $T_A$, the same reconciliation map is inherited as $\mu' : V(T_A)\rightarrow V(T_A)\cup E(T_A)$.
 
 Note that for gene growing branch $g$, it resides in a symbiont if and only if $\kappa(g)\not=\mu'(\kappa(g))$, otherwise, $g$ resides directly into a host species.
 
-During the simulation of $T_S$ we have to construct and return an **inverse map** $\gamma' : E(T_H) \rightarrow 2^{E(T_S)}$ of $\mu'$, where $\gamma'(ab)=\{ uv\in E(T_S) \mid b \preceq_H \mu'(v) \prec_H \mu'(u) \preceq_H a \}$ for $ab\in E(T_H)$​​.
+During the simulation of $T_S$ we have to construct and return an **inverse map** $\gamma' : E(T_H) \rightarrow 2^{E(T_S)}$ of $\mu'$, where $\gamma'(ab)=\{ uv\in E(T_S) \mid b \preceq_H \mu'(v) \prec_H \mu'(u) \preceq_H a \}$ for $ab\in E(T_H)$.
+
 
 Furthermore, we can **time-restrict the inverse map** to return only branches *touching* a time $t$ as follows:
 
 $\gamma'_t(ab) = \{ uv \in \gamma(b) \mid \tau_S(v) \leq t \le \tau_S(u) \}$ for $ab\in E(T_H)$.
 
  In a similar way, we can define the inverse map $\gamma : E(T_A) \rightarrow 2^\Pi$ of $\kappa$ as $\gamma(ab)=\{ g\in \Pi \mid \kappa(g)=ab \}$ for $ab\in E(T_A)$.
+
+For practical purposes, when inheriting the map $\gamma'$ for the auxiliary tree as $\gamma^*: E(T_A)\rightarrow 2^{E(T_A)} $ in such a way that
+
+- $\gamma^*(uv)=\gamma'(uv)\cup\{uv\}$ if $uv$ is a *host branch*.
+- $\gamma^*(uv)= \{\}$ otherwise.
+
+This is consistent with the assumption that *the host evolves inside itself* $\mu'(h)=h$.
+
+To keep a simple notation, we will call $\gamma'$ to $\gamma^*$, but it is trivial to distinguish them since the domain of the first is $E(T_H)$ and the domain if the second is $E(T_A)$.
 
 We will use the maps $\kappa,\gamma,\text{ and } \gamma'$ during the simulation of a gene tree inside of the auxiliary tree to easily track gene-to-gene interactions.
 
@@ -238,8 +248,13 @@ The first option is the safest default for initial experiments, because around a
 
 We will decrease transfer probability between species residing in different hots.
 
-Given a gene growing branch $x_0\in \Pi$  at time $t$, together with the corresponding species $y_0=\kappa(x_0)$ and host $z_0=\mu'(y_0)$. The probability of transfer from $y_0$ to another branch $y_1\in E(T_A)$ decreases whenever 
+Given a gene growing branch $g\in \Pi$  at time $t$, together with the corresponding species $s=\kappa(g)$ and host $h=\mu'(s)$. The probability of transfer from $s$ to another branch $s_1\in E(T_A)$ decreases whenever 
 
-- **(C0)** $y_1 \not\in \gamma'_t(z_0)$
+- **(C0)** $s_1 \not\in \gamma'_t(h)$.
 
 for time-consistency purposes, the probability of transfer between $y_0$ and $y_1=ab$ is different from zero if only if $\tau_A(b) \leq t \le \tau_A(a)$.
+
+Note that guest-host transfer is also possible:
+
+- **guest -> host** is possible because we assume that *the host evolve inside of itself*, i.e. $\mu(h)=h$ and $h\in\gamma'(h)$.
+- **host -> guest** is possible because if $\mu(s)=s=h$ then the gene is directly in the host, and it can be transferred to any symbiont $s_1\in\gamma'(h)\setminus\{h\}$.
