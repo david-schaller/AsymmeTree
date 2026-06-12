@@ -255,9 +255,11 @@ The first option is the safest default for initial experiments, because around a
 
 We will decrease transfer probability between species residing in different hosts.
 
-Given a gene growing branch $g\in \Pi$  at time $t$, together with the corresponding species $s=\kappa(g)$ and host $h=\mu'(s)$. The probability of transfer from $s$ to another branch $s_1\in E(T_A)$ decreases whenever 
+Given a gene growing branch $g\in \Pi$  at time $t$, together with the corresponding species $s=\kappa(g)$ and host $h=\mu'(s)$. The probability of transfer from $s$ to another branch $s_1\in E(T_A)$ is zero whwnever 
 
 - **(C0)** $s_1 \not\in \gamma_t^*(h)$.
+
+In other words, inter-transfers are forbidden.
 
 For time-consistency purposes, the probability of transfer from $s$ to $s_1=ab$ is different from zero only if $\tau_A(b) \leq t \leq \tau_A(a)$.
 
