@@ -140,7 +140,10 @@ During the simulation of $T_S$ we have to construct and return an **inverse map*
 
 Furthermore, we can **time-restrict the inverse map** to return only branches *touching* a time $t$ as follows:
 
-$\gamma'_t(ab) = \{ uv \in \gamma(b) \mid \tau_S(v) \leq t \le \tau_S(u) \}$ for $ab\in E(T_H)$.
+$$
+\gamma'_t(ab) = \{ uv \in \gamma'(ab) \mid \tau_S(v) \leq t \leq \tau_S(u) \}
+$$
+for $ab\in E(T_H)$.
 
  In a similar way, we can define the inverse map $\gamma : E(T_A) \rightarrow 2^\Pi$ of $\kappa$ as $\gamma(ab)=\{ g\in \Pi \mid \kappa(g)=ab \}$ for $ab\in E(T_A)$.
 
@@ -151,9 +154,13 @@ For practical purposes, when inheriting the map $\gamma'$ for the auxiliary tree
 
 This is consistent with the assumption that *the host evolves inside itself* $\mu'(h)=h$.
 
-To keep a simple notation, we will call $\gamma'$ to $\gamma^*$, but it is trivial to distinguish them since the domain of the first is $E(T_H)$ and the domain if the second is $E(T_A)$.
+In the same way, we define the time-restricted host-system map
+$$
+\gamma_t^*(uv)=\{ xy\in \gamma^*(uv) \mid \tau_A(y) \leq t \leq \tau_A(x) \}
+$$
+for $uv\in E(T_A)$.
 
-We will use the maps $\kappa,\gamma,\text{ and } \gamma'$ during the simulation of a gene tree inside of the auxiliary tree to easily track gene-to-gene interactions.
+We will use the maps $\kappa,\gamma,\gamma',\text{ and } \gamma^*$ during the simulation of a gene tree inside of the auxiliary tree to easily track gene-to-gene interactions.
 
 ## Track gene-gene interactions
 
@@ -246,15 +253,15 @@ The first option is the safest default for initial experiments, because around a
 
 ## Update rates based in symbiont-host interactions
 
-We will decrease transfer probability between species residing in different hots.
+We will decrease transfer probability between species residing in different hosts.
 
 Given a gene growing branch $g\in \Pi$  at time $t$, together with the corresponding species $s=\kappa(g)$ and host $h=\mu'(s)$. The probability of transfer from $s$ to another branch $s_1\in E(T_A)$ decreases whenever 
 
-- **(C0)** $s_1 \not\in \gamma'_t(h)$.
+- **(C0)** $s_1 \not\in \gamma_t^*(h)$.
 
-for time-consistency purposes, the probability of transfer between $y_0$ and $y_1=ab$ is different from zero if only if $\tau_A(b) \leq t \le \tau_A(a)$.
+For time-consistency purposes, the probability of transfer from $s$ to $s_1=ab$ is different from zero only if $\tau_A(b) \leq t \leq \tau_A(a)$.
 
 Note that guest-host transfer is also possible:
 
-- **guest -> host** is possible because we assume that *the host evolve inside of itself*, i.e. $\mu(h)=h$ and $h\in\gamma'(h)$.
-- **host -> guest** is possible because if $\mu(s)=s=h$ then the gene is directly in the host, and it can be transferred to any symbiont $s_1\in\gamma'(h)\setminus\{h\}$.
+- **guest -> host** is possible because we assume that *the host evolves inside itself*, i.e. $\mu'(h)=h$ and therefore $h\in\gamma_t^*(h)$ whenever the host branch touches time $t$.
+- **host -> guest** is possible because if $\mu'(s)=s=h$ then the gene is directly in the host, and it can be transferred to any symbiont branch $s_1\in\gamma_t^*(h)\setminus\{h\}$.
