@@ -43,6 +43,7 @@ class _Branch:
     S_edge: TreeNode  # v of species tree edge (u, v) into which the branch is embedded
     transferred: int  # 1 if HGT edge, 0 otherwise
     dupl_rate: float
+    base_loss_rate: float
     loss_rate: float
     hgt_rate: float
     gc_rate: float
@@ -100,6 +101,9 @@ class GeneTreeSimulator:
         gc_distance_bias: str | None = None,
         gc_distance_bias_strength: float = 1.0,
         delta_l: float = 2.0,
+        alpha: float | None = None,
+        beta: float | None = None,
+        crowding_cap: float | None = None,
         **kwargs,
     ) -> Tree:
         """Simulate a gene tree along the specified species tree.
@@ -147,10 +151,17 @@ class GeneTreeSimulator:
                 see [1], and a is a user-defined factor.
             gc_distance_bias_strength: Intensity of the distance bias (factor a) for gene
                 conversion, default is 1.0.
-            delta_l: Multiplicative factor used for homolog-homolog loss interactions in auxiliary
-                trees. A transfer into an auxiliary branch multiplies loss rates according to rules
-                A0-A2, while a later loss of an interacting branch divides surviving partners'
-                loss rates by the same factor. The default is 2.0.
+            delta_l: Legacy multiplicative factor used by the earlier pairwise interaction model in
+                auxiliary trees. It is retained for backward compatibility while the interactor
+                classes remain available for debugging, but the host-system loss refresh introduced
+                here does not use it directly. The default is 2.0.
+            alpha: Optional symbiont-side normalization factor for host-system loss refresh. If not
+                provided, it defaults to ``0.25 * loss_rate``.
+            beta: Optional host-side normalization factor for host-system loss refresh. If not
+                provided, it defaults to ``0.10 * loss_rate``.
+            crowding_cap: Optional upper bound for the relative occupancy factor
+                ``|gamma(.)| * N / M`` used in host-system loss refresh. If ``None``, no cap is
+                applied.
 
         Returns:
             The simulated gene tree.
@@ -218,6 +229,24 @@ class GeneTreeSimulator:
             raise ValueError("delta_l must be >= 1")
         self._delta_l = float(delta_l)
 
+        if alpha is None:
+            alpha = 0.25 * self.l
+        if beta is None:
+            beta = 0.10 * self.l
+
+        if not isinstance(alpha, (int, float)) or alpha < 0.0:
+            raise ValueError("alpha must be >= 0")
+        if not isinstance(beta, (int, float)) or beta < 0.0:
+            raise ValueError("beta must be >= 0")
+        if crowding_cap is not None and (
+            not isinstance(crowding_cap, (int, float)) or crowding_cap <= 0.0
+        ):
+            raise ValueError("crowding_cap must be > 0")
+
+        self._alpha = float(alpha)
+        self._beta = float(beta)
+        self._crowding_cap = float(crowding_cap) if crowding_cap is not None else None
+
         return self._run()
 
     def _analyze_species_tree(self) -> None:
@@ -250,21 +279,24 @@ class GeneTreeSimulator:
             S_edge: The species tree edge into which the new branch is embedded (represented by its
                 lower node).
             transferred: 1 if the new branch is a transferred branch in an HGT event, 0 otherwise.
-            template_branch: Optional source branch whose current rates shall be inherited.
+            template_branch: Optional source branch whose branch rates and base loss hazard
+                shall be inherited before the effective loss rate is recomputed.
 
         Returns:
             The newly created gene branch.
         """
         if template_branch is None:
             dupl_rate = self.d
-            loss_rate = self.l
+            base_loss_rate = self.l
             hgt_rate = self.h
             gc_rate = self.gc
         else:
             dupl_rate = template_branch.dupl_rate
-            loss_rate = template_branch.loss_rate
+            base_loss_rate = template_branch.base_loss_rate
             hgt_rate = template_branch.hgt_rate
             gc_rate = template_branch.gc_rate
+
+        loss_rate = base_loss_rate
 
         new_branch = _Branch(
             self.id_counter,
@@ -273,6 +305,7 @@ class GeneTreeSimulator:
             S_edge,
             transferred,
             dupl_rate,
+            base_loss_rate,
             loss_rate,
             hgt_rate,
             gc_rate,
@@ -406,6 +439,83 @@ class GeneTreeSimulator:
             and edge.tstamp <= tstamp <= edge.parent.tstamp
         }
 
+    def _gamma_star_at(self, host_edge: TreeNode | None, tstamp: float) -> set[TreeNode]:
+        """Return the host-system edges that touch the given time."""
+        if host_edge is None or not host_edge.parent:
+            return set()
+        if not (host_edge.tstamp <= tstamp <= host_edge.parent.tstamp):
+            return set()
+
+        host_system_edges = {host_edge}
+        host_system_edges.update(self._gamma_prime_at(host_edge, tstamp))
+        return host_system_edges
+
+    def _host_system_summary(self, host_edge: TreeNode) -> dict[str, object]:
+        """Summarize the active gene content in a host system."""
+        host_is_active = bool(self._gamma_star_at(host_edge, self._current_t))
+        symbiont_edges = self._gamma_prime_at(host_edge, self._current_t)
+
+        host_branches = tuple(self.species2genes.get(host_edge, ())) if host_is_active else ()
+        symbiont_branches = {
+            symbiont_edge: tuple(self.species2genes.get(symbiont_edge, ()))
+            for symbiont_edge in symbiont_edges
+        }
+
+        M = len(host_branches) + sum(len(branches) for branches in symbiont_branches.values())
+        N = 1 + len(symbiont_edges) if host_is_active else 0
+
+        return {
+            "host_branches": host_branches,
+            "symbiont_branches": symbiont_branches,
+            "M": M,
+            "N": N,
+        }
+
+    def _crowding_factor(self, copy_count: int, total_copies: int, species_count: int) -> float:
+        """Return the relative occupancy factor for one species in a host system."""
+        if total_copies <= 0 or species_count <= 1:
+            return 0.0
+
+        factor = copy_count * species_count / total_copies
+        if self._crowding_cap is not None:
+            factor = min(factor, self._crowding_cap)
+
+        return factor
+
+    def _refresh_loss_rates_for_host_system(self, host_edge: TreeNode) -> None:
+        """Refresh effective loss rates for all active genes in one host system."""
+        summary = self._host_system_summary(host_edge)
+        total_copies = summary["M"]
+        species_count = summary["N"]
+
+        if total_copies <= 0 or species_count <= 1:
+            return
+
+        host_branches = summary["host_branches"]
+        host_factor = self._crowding_factor(len(host_branches), total_copies, species_count)
+        for gene_branch in host_branches:
+            gene_branch.loss_rate = gene_branch.base_loss_rate + self._beta * host_factor
+
+        for symbiont_branches in summary["symbiont_branches"].values():
+            symbiont_factor = self._crowding_factor(
+                len(symbiont_branches),
+                total_copies,
+                species_count,
+            )
+            for gene_branch in symbiont_branches:
+                gene_branch.loss_rate = gene_branch.base_loss_rate + self._alpha * symbiont_factor
+
+    def _refresh_all_loss_rates(self) -> None:
+        """Recompute effective loss rates from the current active host-system state."""
+        for branch in self.gene_branches:
+            branch.loss_rate = branch.base_loss_rate
+
+        if self._alpha <= 0.0 and self._beta <= 0.0:
+            return
+
+        for host_edge in self.gamma_prime:
+            self._refresh_loss_rates_for_host_system(host_edge)
+
     def _branch_auxiliary_key(self, branch: _Branch) -> object:
         """Return the auxiliary-tree key of the branch."""
         return self._location_key(getattr(branch.S_edge, "label", None))
@@ -498,6 +608,8 @@ class GeneTreeSimulator:
         self.species2genes = {S_edge: [] for _, S_edge in self.sorted_edges}
 
         self.T = self._initiatialize_tree()
+        self._current_t = self.T.root.tstamp
+        self._refresh_all_loss_rates()
         t = self.T.root.tstamp
 
         while self.spec_queue:
@@ -508,6 +620,8 @@ class GeneTreeSimulator:
             # speciation
             if event_tstamp <= next_spec_tstamp:
                 self._speciation()
+                self._current_t = next_spec_tstamp
+                self._refresh_all_loss_rates()
                 t = next_spec_tstamp
 
             else:
@@ -529,6 +643,8 @@ class GeneTreeSimulator:
                 elif event_type == "GC":
                     self._gene_conversion(event_tstamp, branch)
 
+                self._current_t = event_tstamp
+                self._refresh_all_loss_rates()
                 t = event_tstamp
 
         # add the 'dist' attribute to the nodes
@@ -695,6 +811,10 @@ class GeneTreeSimulator:
         trans_edge, replaced_gene_branch = None, None
 
         valid_species = self._coexisting_species_edges(event_tstamp, exclude_edge=S_edge)
+        host_edge = self._host_edge_for_species_edge(S_edge)
+        if host_edge is not None and self._branch_level(branch) in ("host", "symbiont"):
+            host_system_edges = self._gamma_star_at(host_edge, event_tstamp)
+            valid_species = [edge for edge in valid_species if edge in host_system_edges]
 
         if not valid_species:
             return None, None
@@ -853,8 +973,9 @@ def dated_gene_tree(S: Tree, **kwargs: object) -> Tree:
             ``dupl_polytomy``, ``prohibit_extinction``, ``replace_prob``,
             ``additive_transfer_distance_bias``, ``replacing_transfer_distance_bias``,
             ``transfer_distance_bias``, ``transfer_distance_bias_strength``,
-            ``gc_distance_bias``, ``gc_distance_bias_strength``, and ``delta_l``. See
-            :meth:`GeneTreeSimulator.simulate` for the full parameter descriptions.
+            ``gc_distance_bias``, ``gc_distance_bias_strength``, ``delta_l``, ``alpha``,
+            ``beta``, and ``crowding_cap``. See :meth:`GeneTreeSimulator.simulate` for the full
+            parameter descriptions.
 
     Returns:
         The simulated gene tree.

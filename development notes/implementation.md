@@ -63,5 +63,5 @@ Te current implementation of the auxiliary tree is incorrect
 
 - [x] Create a backup of current progress.
 - [x] Plan refactor of code, we do not need to collect interactors. We still need the inverse maps.
-- [ ] Proceed with the implementation plan in the file  [implemented.md](implemented.md), section 'Refactor plan without interactor collection' (lines 261-274)
+- [x] Proceed with the implementation plan in the file  [implemented.md](implemented.md), section 'Refactor plan without interactor collection' (lines 261-274)
 

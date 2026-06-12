@@ -7,62 +7,58 @@ state.
 
 ### Theory review
 
-The theory in `Math and Algorithms.md` is detailed enough to guide the next implementation step.
-The main objects are present: the host-symbiont scenario, the auxiliary tree `T_A`, the growing
-branch map `kappa`, inverse maps `gamma` and `gamma_prime`, the host-inclusive map `gamma^*`, and
-the current system-level rules for loss-rate refresh and transfer restriction.
+The theory in `Math and Algorithms.md` is now consistent enough to map directly into code. The main
+objects are all present in both places: the host-symbiont scenario, the auxiliary tree `T_A`, the
+growing branch map `kappa`, the symbiont-only inverse map `gamma'`, the host-inclusive map
+`gamma^*`, and the system-level rules for loss-rate refresh and transfer restriction.
 
-There are a few translation points to keep in mind before translating it directly into code:
+The most important theory-to-code alignments are now in place:
 
-- The theory now distinguishes the symbiont-only inverse map `gamma'` from the host-inclusive
-  auxiliary map `gamma^*`. The next code pass should mirror that distinction explicitly instead of
-  overloading one helper for both notions.
-- The notation for edges should be normalized for the implementation. The code represents an edge
-  by its lower node in most places, while the math alternates between edge pairs and lower-node
-  shorthand.
-- The interactor classes are now secondary: they still describe overlap structure, but the theory no
-  longer uses them as the primary mechanism for loss-rate updates. The next code pass should keep
-  them, if at all, as optional diagnostics rather than as the core rate path.
-- The loss-rate rule should be translated into code-facing host-system summaries: per-host counts,
-  `M`, `N`, activation only when `N > 1`, and an optional crowding cap kept in reserve.
-- The transfer restriction for class C0 is now a hard host-system constraint in the theory, so the
-  next code pass should filter recipient branches by host-system membership before any optional
+- The code now mirrors the distinction between symbiont-only `gamma'` and host-inclusive `gamma^*`
+  via `_gamma_prime_at()` and `_gamma_star_at()`.
+- The loss-rate rule is implemented through host-system summaries with `M`, `N`, optional
+  `crowding_cap`, and activation only when `N > 1`.
+- The C0 transfer rule is implemented as a hard same-host-system filter before any optional
   distance-bias weighting is applied.
+- The interactor classes remain useful for describing overlap structure, but they are no longer the
+  primary mechanism for loss-rate updates.
 
 ### Code review
 
-The prototype is now partly complete with respect to the theory:
+The prototype now covers the main theory path:
 
 - `asymmetree.hologenome.hologenome_simulation.HologenomeSimulator` simulates symbiont trees inside
   host trees, creates one auxiliary tree per pair, simulates gene trees inside the auxiliary trees,
   and stores full/pruned as well as host/symbiont component trees.
-- `create_auxiliary_tree()` now follows the intended auxiliary-tree root shape
+- `create_auxiliary_tree()` follows the intended auxiliary-tree root shape
   `0_A -> rho_A -> {rho_H, 0_S}` and marks the symbiont planted root as a transfer event.
-- `asymmetree.holoevolve.genes.GeneTreeSimulator` already has active gene branches with
-  branch-specific DTLG rates, and `_get_branch_and_type()` samples from the branch-specific totals.
-- `species2genes` in `holoevolve.genes` is already the active inverse of `kappa` for the current
-  growing branches, although it is not named as `gamma`.
-- `GeneTreeSimulator` now builds `gamma_prime` from annotated auxiliary-tree edges and collects
-  active interactors in the six classes `A0`, `A1`, `A2`, `B0`, `B1`, and `B2`.
+- `species2genes` in `holoevolve.genes` remains the active inverse of `kappa` for the current
+  growing branches.
+- `GeneTreeSimulator` builds `gamma_prime` from annotated auxiliary-tree edges, derives a
+  host-inclusive live view through `_gamma_star_at()`, and keeps the six interactor classes as
+  secondary/debugging structure.
+- Each active gene branch now stores both `base_loss_rate` and effective `loss_rate`, and the
+  simulator refreshes effective loss hazards from current host-system summaries after initialization,
+  speciation, duplication, loss, HGT, and gene conversion.
+- `_sample_recipient()` now filters coexisting recipient branches to the donor host system before
+  applying additive or replacing transfer distance bias.
 
 The remaining missing steps are:
 
-- Add host-system summary helpers and refresh loss rates from current `gamma` / `gamma_prime`
-  counts instead of from per-class interactor weights.
-- Update transfer-recipient sampling with the C0 host-system restriction.
 - Add focused tests for auxiliary-tree shape, inverse maps, host-system rate refresh, and transfer
-  restriction. Interactor-class tests can remain as secondary structural checks.
+  restriction.
+- Decide later whether the legacy interactor-based helpers should stay as diagnostics or be removed
+  entirely from production code.
 
-The hardest translation point is that reconciliation edges are stored as node attributes and often
-encoded by lower-node labels or label tuples. The implementation should introduce small helper
-functions that normalize "edge-like" values before comparing them.
+The hardest translation point remains that reconciliation edges are stored as node attributes and
+often encoded by lower-node labels or label tuples. The normalization helpers introduced around
+`gamma_prime` are still the key tool for keeping those comparisons consistent.
 
 ### AI Implementation Notes
 
-The math is now coherent enough to implement directly. Edge normalization is already in place for
-`gamma_prime` and interactor collection; the next code pass should reuse those helpers to build
-host-system summaries, derive a host-inclusive view matching `gamma_t^*`, and enforce the C0
-recipient filter.
+The host-system rate refactor is now implemented in `holoevolve.genes`. A local `py_compile`
+syntax check passed, but I could not run a runtime simulator smoke test here because `tralda` is
+not installed in this workspace.
 
 ## Correct Auxiliary Tree In Code
 
@@ -163,19 +159,24 @@ but the planned rate refactor should no longer depend on per-class weights.
 
 ### Current rate update locations
 
-Rates are currently initialized, sampled, or changed in these places:
+Rates are now initialized, sampled, or changed in these places:
 
-- `_Branch.total_rate`, lines 54-57, computes branch-specific total event rate.
-- `simulate()`, lines 162-218, stores the base DTLG rates and validates `delta_l`.
-- `_new_branch()`, lines 247-285, initializes or inherits branch-specific rates.
-- `_get_branch_and_type()`, lines 323-347, samples events from current branch-specific rates.
-- `_run()`, lines 454-483, samples event times from the sum of current branch totals.
-- `_increase_loss_rates_after_transfer()`, lines 414-418, exists but is not currently called.
-- `_decrease_loss_rates_after_loss()`, lines 420-426, divides surviving partner loss rates.
-- `_speciation()`, lines 515-519, contains a commented-out transfer-inheritance hook.
-- `_loss()`, lines 587-599, collects partners before removal and decreases their loss rates.
-- `_sample_recipient()`, lines 623-691, chooses transfer recipients and is the right place for the
-  C0 host-system restriction.
+- `_Branch.total_rate` still computes the branch-specific total event rate, while
+  `_Branch.base_loss_rate` stores the inherited/base hazard separately from the current effective
+  `loss_rate`.
+- `simulate()` stores the base DTLG rates, validates `delta_l`, and now also validates/stores
+  `alpha`, `beta`, and the optional `crowding_cap`.
+- `_new_branch()` inherits `base_loss_rate` from the template branch, resets the effective
+  `loss_rate` to that base value, and lets the global refresh recompute any host-system increment.
+- `_host_system_summary()`, `_crowding_factor()`, `_refresh_loss_rates_for_host_system()`, and
+  `_refresh_all_loss_rates()` implement the active host-system refresh path.
+- `_run()` now refreshes loss hazards after initialization, each speciation event, and each sampled
+  duplication, loss, HGT, or gene-conversion event.
+- `_sample_recipient()` now uses `_gamma_star_at()` to enforce the C0 same-host-system restriction
+  before optional additive or replacing transfer distance bias is applied.
+- The legacy pairwise helpers `_collect_interactors()`, `_interaction_partners()`,
+  `_increase_loss_rates_after_transfer()`, and `_decrease_loss_rates_after_loss()` remain in the
+  file, but they are no longer part of the active rate-update path.
 
 ### Reading the revised theory
 
@@ -258,24 +259,27 @@ A pre-refactor snapshot was created in
 notes, task files, and the main hologenome code paths that will be affected by the next
 implementation pass.
 
-### Refactor plan without interactor collection
+### Implemented refactor without interactor collection
 
-1. Keep `species2genes` as the active inverse map `gamma` and keep `gamma_prime` /
-   `_gamma_prime_at()` as the host-to-symbiont inverse maps.
-2. Add a helper that summarizes one host system: live host copy count, live symbiont copy counts,
-   `M`, and `N`.
-3. Add `_refresh_loss_rates_for_host_system(host_edge)` and `_refresh_all_loss_rates()` that reset effective loss rates to the inherited or base value and then apply the new system-level increment.
-4. Refresh rates after every event that changes multiplicities or placements: duplication, loss,
-   HGT, gene conversion, speciation, and species or symbiont loss. HGT may require refreshing both
-   the donor and recipient host systems.
-5. Remove `_collect_interactors()`, `_interaction_partners()`,
-   `_increase_loss_rates_after_transfer()`, and `_decrease_loss_rates_after_loss()` from the rate path. They can remain temporarily only if they are still useful for debugging or for checking the
-   C0 host-transfer condition.
-6. Add a host-inclusive helper mirroring `\gamma_t^*` and use it in `_sample_recipient()` so that recipient branches are filtered to the donor host system before any optional distance-bias logic is applied.
+1. `species2genes` remains the active inverse map `gamma`, and `gamma_prime` /
+   `_gamma_prime_at()` remain the host-to-symbiont inverse maps.
+2. `_host_system_summary()` now computes live host and symbiont copy counts together with `M` and
+   `N`, using the current simulation time to decide which host-system edges are live.
+3. `_refresh_loss_rates_for_host_system(host_edge)` and `_refresh_all_loss_rates()` reset every
+   active branch to its `base_loss_rate` and then apply the host-system increment derived from the
+   current state.
+4. `_run()` now refreshes effective loss rates after initialization, every speciation, and every
+   sampled duplication, loss, HGT, or gene-conversion event.
+5. The legacy interactor helpers remain available for diagnostics, but the active rate path no
+   longer depends on them.
+6. `_gamma_star_at()` mirrors the host-inclusive live view needed for `\gamma_t^*`, and
+   `_sample_recipient()` uses it to keep HGT recipients inside the donor host system before any
+   optional distance-bias logic is applied.
 
 ### AI Implementation Notes
 
-The updated theory now points to a cleaner refactor: interaction classes were useful for exploring
-the structure of overlaps, but they are no longer the right primitive for loss-rate updates. The
-next coding pass should center the rate logic on host-system summaries derived from `gamma` and
-`gamma_prime`, and should enforce the C0 host-system restriction directly in `_sample_recipient()`.
+This implementation also adds user-facing `alpha`, `beta`, and `crowding_cap` parameters to
+`holoevolve.dated_gene_tree()` / `GeneTreeSimulator.simulate()`, with defaults
+`alpha = 0.25 * loss_rate` and `beta = 0.10 * loss_rate`. Verification so far is limited to a
+local syntax check; I could not run an end-to-end simulator smoke test here because `tralda` is not
+installed in this workspace.
