@@ -9,28 +9,25 @@ state.
 
 The theory in `Math and Algorithms.md` is detailed enough to guide the next implementation step.
 The main objects are present: the host-symbiont scenario, the auxiliary tree `T_A`, the growing
-branch map `kappa`, inverse maps `gamma` and `gamma_prime`, the six interactor classes, and the
-rate changes based on those classes.
+branch map `kappa`, inverse maps `gamma` and `gamma_prime`, the host-inclusive map `gamma^*`, and
+the current system-level rules for loss-rate refresh and transfer restriction.
 
-There are a few consistency issues to fix before translating it directly into code:
+There are a few translation points to keep in mind before translating it directly into code:
 
-- The time-restricted inverse map is written as `gamma'_t(ab) = {uv in gamma(b) ...}`. This should
-  refer to `gamma_prime(ab)` or to an explicitly defined lower-node key for the host edge.
+- The theory now distinguishes the symbiont-only inverse map `gamma'` from the host-inclusive
+  auxiliary map `gamma^*`. The next code pass should mirror that distinction explicitly instead of
+  overloading one helper for both notions.
 - The notation for edges should be normalized for the implementation. The code represents an edge
   by its lower node in most places, while the math alternates between edge pairs and lower-node
   shorthand.
-- In the interactor algorithm, the symbiont case assigns `A1 <- gamma(s)` but the table defines all
-  classes as excluding the focal branch `g`. The implementation should remove `g` from every class.
-- The condition `s <= 0_S` should be restated as "the lower node of `s` is in the symbiont
-  component" or `level == "symbiont"`. As written, it is easy to misread for rooted-tree order.
-- The rate section says the six classes should be weighted differently, but the exact combination
-  rule is not specified. The code needs an explicit rule such as multiplicative weights per partner,
-  additive increments, or a capped transform.
-- The `S-keeps` / `H-keeps` asymmetry is described qualitatively. It should be converted into
-  parameters that state which B-class multipliers apply to host-resident and symbiont-resident
-  genes.
-- The transfer-probability decrease for class C0 needs a numeric multiplier and a rule for combining
-  it with the existing distance-bias weights.
+- The interactor classes are now secondary: they still describe overlap structure, but the theory no
+  longer uses them as the primary mechanism for loss-rate updates. The next code pass should keep
+  them, if at all, as optional diagnostics rather than as the core rate path.
+- The loss-rate rule should be translated into code-facing host-system summaries: per-host counts,
+  `M`, `N`, activation only when `N > 1`, and an optional crowding cap kept in reserve.
+- The transfer restriction for class C0 is now a hard host-system constraint in the theory, so the
+  next code pass should filter recipient branches by host-system membership before any optional
+  distance-bias weighting is applied.
 
 ### Code review
 
@@ -50,9 +47,11 @@ The prototype is now partly complete with respect to the theory:
 
 The remaining missing steps are:
 
-- Update loss rates from the collected interactor classes using explicit per-class weights.
-- Update transfer-recipient sampling with the C0 host-system penalty.
-- Add focused tests for auxiliary-tree shape, inverse maps, interactor classes, and rate updates.
+- Add host-system summary helpers and refresh loss rates from current `gamma` / `gamma_prime`
+  counts instead of from per-class interactor weights.
+- Update transfer-recipient sampling with the C0 host-system restriction.
+- Add focused tests for auxiliary-tree shape, inverse maps, host-system rate refresh, and transfer
+  restriction. Interactor-class tests can remain as secondary structural checks.
 
 The hardest translation point is that reconciliation edges are stored as node attributes and often
 encoded by lower-node labels or label tuples. The implementation should introduce small helper
@@ -60,9 +59,10 @@ functions that normalize "edge-like" values before comparing them.
 
 ### AI Implementation Notes
 
-The math is usable. Edge normalization is now implemented for `gamma_prime` and interactor
-collection; the next code pass should reuse those helpers for weighted rate updates and transfer
-recipient penalties.
+The math is now coherent enough to implement directly. Edge normalization is already in place for
+`gamma_prime` and interactor collection; the next code pass should reuse those helpers to build
+host-system summaries, derive a host-inclusive view matching `gamma_t^*`, and enforce the C0
+recipient filter.
 
 ## Correct Auxiliary Tree In Code
 
@@ -121,7 +121,7 @@ Implemented `gamma_prime` details:
 - `host_edges_by_key` maps normalized host lower-node labels to host edge nodes.
 - `symbiont_edges_by_key` maps normalized symbiont lower-node labels to symbiont edge nodes.
 - `gamma_prime` maps host edge nodes to the symbiont edge nodes reconciled into them.
-- `_gamma_prime_at(host_edge, tstamp)` provides the time-restricted inverse map.
+- `_gamma_prime_at(host_edge, tstamp)` provides the current time-restricted symbiont-only inverse map.
 
 ### Collect interactors
 
@@ -156,8 +156,8 @@ loss-rate hooks continue to work.
 
 ### AI Implementation Notes
 
-The interactor collection step is complete. Differential weights and the `S-keeps` / `H-keeps`
-asymmetry are still open in the later rate-update task.
+The interactor collection step is complete. These classes can stay as debugging or structural aids,
+but the planned rate refactor should no longer depend on per-class weights.
 
 ## Update Rates Based On Interactions
 
@@ -174,8 +174,8 @@ Rates are currently initialized, sampled, or changed in these places:
 - `_decrease_loss_rates_after_loss()`, lines 420-426, divides surviving partner loss rates.
 - `_speciation()`, lines 515-519, contains a commented-out transfer-inheritance hook.
 - `_loss()`, lines 587-599, collects partners before removal and decreases their loss rates.
-- `_sample_recipient()`, lines 623-691, chooses transfer recipients and is the right place for C0
-  transfer weighting.
+- `_sample_recipient()`, lines 623-691, chooses transfer recipients and is the right place for the
+  C0 host-system restriction.
 
 ### Reading the revised theory
 
@@ -264,21 +264,18 @@ implementation pass.
    `_gamma_prime_at()` as the host-to-symbiont inverse maps.
 2. Add a helper that summarizes one host system: live host copy count, live symbiont copy counts,
    `M`, and `N`.
-3. Add `_refresh_loss_rates_for_host_system(host_edge)` and `_refresh_all_loss_rates()` that reset
-   effective loss rates to the inherited or base value and then apply the new system-level increment.
+3. Add `_refresh_loss_rates_for_host_system(host_edge)` and `_refresh_all_loss_rates()` that reset effective loss rates to the inherited or base value and then apply the new system-level increment.
 4. Refresh rates after every event that changes multiplicities or placements: duplication, loss,
    HGT, gene conversion, speciation, and species or symbiont loss. HGT may require refreshing both
    the donor and recipient host systems.
 5. Remove `_collect_interactors()`, `_interaction_partners()`,
-   `_increase_loss_rates_after_transfer()`, and `_decrease_loss_rates_after_loss()` from the rate
-   path. They can remain temporarily only if they are still useful for debugging or for checking the
+   `_increase_loss_rates_after_transfer()`, and `_decrease_loss_rates_after_loss()` from the rate path. They can remain temporarily only if they are still useful for debugging or for checking the
    C0 host-transfer condition.
-6. Keep the C0 transfer penalty in `_sample_recipient()`, but compute it from host-system
-   membership rather than from interactor classes.
+6. Add a host-inclusive helper mirroring `\gamma_t^*` and use it in `_sample_recipient()` so that recipient branches are filtered to the donor host system before any optional distance-bias logic is applied.
 
 ### AI Implementation Notes
 
 The updated theory now points to a cleaner refactor: interaction classes were useful for exploring
 the structure of overlaps, but they are no longer the right primitive for loss-rate updates. The
 next coding pass should center the rate logic on host-system summaries derived from `gamma` and
-`gamma_prime`, while keeping transfer penalties in `_sample_recipient()`.
+`gamma_prime`, and should enforce the C0 host-system restriction directly in `_sample_recipient()`.

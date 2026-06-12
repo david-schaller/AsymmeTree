@@ -147,10 +147,10 @@ for $ab\in E(T_H)$.
 
  In a similar way, we can define the inverse map $\gamma : E(T_A) \rightarrow 2^\Pi$ of $\kappa$ as $\gamma(ab)=\{ g\in \Pi \mid \kappa(g)=ab \}$ for $ab\in E(T_A)$.
 
-For practical purposes, when inheriting the map $\gamma'$ for the auxiliary tree as $\gamma^*: E(T_A)\rightarrow 2^{E(T_A)} $ in such a way that
+For practical purposes, when inheriting the map $\gamma'$ into the auxiliary tree, we define a host-system map $\gamma^*: E(T_A)\rightarrow 2^{E(T_A)}$ in such a way that
 
 - $\gamma^*(uv)=\gamma'(uv)\cup\{uv\}$ if $uv$ is a *host branch*.
-- $\gamma^*(uv)= \{\}$ otherwise.
+- $\gamma^*(uv)= \emptyset$ otherwise.
 
 This is consistent with the assumption that *the host evolves inside itself* $\mu'(h)=h$.
 
@@ -166,11 +166,11 @@ We will use the maps $\kappa,\gamma,\gamma',\text{ and } \gamma^*$ during the si
 
 > [!IMPORTANT]
 >
-> The six categories for interactions bellow are not being used in the implementation anymore. These interaction classes were useful for exploring the structure of overlaps, but they are no longer the right primitive for loss-rate updates.
+> The six categories for interactions below are not being used in the implementation anymore. These interaction classes were useful for exploring the structure of overlaps, but they are no longer the right primitive for loss-rate updates.
 
 Given a growing gene branch $g$, let $s=uv = \kappa(g)$ be the species where the gene is evolving, and $h=\mu'(s)$ be the host of the symbiont.
 
-Recall that we assume that the hist branch is contained inside itself, so if $g$ is a gene evolving in the host, then $s=h\preceq \rho_H$, otherwise $s\preceq \rho_S \parallel h \preceq \rho_H$.
+Recall that we assume that the host branch is contained inside itself, so if $g$ is a gene evolving in the host, then $s=h\preceq \rho_H$, otherwise $s\preceq \rho_S \parallel h \preceq \rho_H$.
 
 Let's define the interactors of $g$, divided in several classes:
 
@@ -186,25 +186,25 @@ Let's define the interactors of $g$, divided in several classes:
 The interactors can be quickly computed as follows:
 
 1. Given a growing branch $g\in \Pi$, initialize the empty sets $A_0,A_1,A_2,B_0,B_1,B_2$.
-2. $s\leftarrow \kappa(g)$ is the symbiont branch where $g$ is growing. Note $s=uv\in E(T_A)$​.
+2. $s\leftarrow \kappa(g)$ is the auxiliary-tree branch where $g$ is growing. Note $s=uv\in E(T_A)$​.
 3. $h\leftarrow \mu'(s)$ is the species branch where $s$ is evolving.
 4. If $s = h$
    1. $A_0\leftarrow\gamma(s)\setminus\{g\}$
    2. $B\leftarrow \gamma'(s) $
    3. $B_0\leftarrow \bigcup_{x\in B} \gamma(x)$
-5. elif $s\preceq 0_S$
-   1. $A_1\leftarrow\gamma(s)$
+5. elif $s$ is a branch in the symbiont component of $T_A$
+   1. $A_1\leftarrow\gamma(s)\setminus\{g\}$
    2. $B\leftarrow \gamma'(h) \setminus \{s\} $
    3. $B_1\leftarrow \gamma(h)$
    4. $B_2\leftarrow \bigcup_{x\in B} \gamma(x)$
 
 6. else
-   1. $A_2\leftarrow\gamma(s)$
+   1. $A_2\leftarrow\gamma(s)\setminus\{g\}$
 7. Return $A_0,A_1,A_2,B_0,B_1,B_2$,
 
 ## Update rates based on gene-gene interactions
 
-The simulation starts with a base loss rate $r_l$. Whenever an holobiont system starts existing, the loss rate is updated for each of the involved species. Below we provide an expression to update the rates, this should be updated whenever gene content changes in a holobiont system, it my be due to duplication/loss/transfer of both genes and symbionts.
+The simulation starts with a base loss rate $r_l$. Whenever gene content changes inside a holobiont system, the effective loss rates should be refreshed for each of the involved species. Below we provide an expression to update the rates; this refresh may be triggered by duplication, loss, transfer, or species-level events affecting either genes or symbionts.
 
 Let's say we have a host branch $h$ with $|\gamma'(h)|+1= N$, i.e. we have a total of $N$ species in the system, with a total of $M=|\gamma(h)|+\sum_{s\in\gamma'(h)}|\gamma(s)|$ genes. The loss rate for a gene existing in a symbiont $s$ will be:
 $$
@@ -251,17 +251,17 @@ $$
 
 The first option is the safest default for initial experiments, because around average occupancy $\frac{|\gamma(\cdot)|N}{M}\approx 1$, it increases symbiont losses by about $25\%$ of $r_l$ and host losses by about $10\%$ of $r_l$ without overwhelming the existing duplication, loss, transfer, and conversion dynamics.
 
-## Update rates based in symbiont-host interactions
+## Restrict transfers based on symbiont-host interactions
 
-We will decrease transfer probability between species residing in different hosts.
+We will restrict transfers to branches inside the same host system.
 
-Given a gene growing branch $g\in \Pi$  at time $t$, together with the corresponding species $s=\kappa(g)$ and host $h=\mu'(s)$. The probability of transfer from $s$ to another branch $s_1\in E(T_A)$ is zero whwnever 
+Given a gene growing branch $g\in \Pi$ at time $t$, together with the corresponding species $s=\kappa(g)$ and host $h=\mu'(s)$, the probability of transfer from $s$ to another branch $s_1\in E(T_A)$ is zero whenever 
 
 - **(C0)** $s_1 \not\in \gamma_t^*(h)$.
 
-In other words, inter-transfers are forbidden.
+In other words, transfers between different host systems are forbidden.
 
-For time-consistency purposes, the probability of transfer from $s$ to $s_1=ab$ is different from zero only if $\tau_A(b) \leq t \leq \tau_A(a)$.
+Since $\gamma_t^*(h)$ is time-restricted by definition, condition **(C0)** already includes the usual coexistence requirement that, for $s_1=ab$, we must have $\tau_A(b) \leq t \leq \tau_A(a)$.
 
 Note that guest-host transfer is also possible:
 
