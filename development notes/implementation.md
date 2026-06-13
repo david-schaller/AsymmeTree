@@ -64,4 +64,9 @@ Te current implementation of the auxiliary tree is incorrect
 - [x] Create a backup of current progress.
 - [x] Plan refactor of code, we do not need to collect interactors. We still need the inverse maps.
 - [x] Proceed with the implementation plan in the file  [implemented.md](implemented.md), section 'Refactor plan without interactor collection' (lines 261-274)
+- [x] Remove the redundant `_gamma_star_at()` call inside `_host_system_summary()` and use a direct host-edge activity check instead.
+- [ ] Update rate refreshing so it follows the new rationale `\Gamma \in E(T_A)` for affected auxiliary-tree branches and their host systems.
+  - [ ] Improve the theoretical description of how event times, event types, and the affected branches are drawn from the current rates together with the next fixed species-tree event.
+  - [ ] Keep the new rationale for `\Gamma`, i.e. treat it as the set of affected auxiliary-tree branches that determines which host systems should have their rates refreshed after an event.
+  - [ ] Ensure theoretical consistency across `The big picture`, `Where to update rates`, and the rate-update sections, and add a concrete implementation plan for changing the code from global refresh to `\Gamma`-restricted refresh.
 
