@@ -452,7 +452,10 @@ class GeneTreeSimulator:
 
     def _host_system_summary(self, host_edge: TreeNode) -> dict[str, object]:
         """Summarize the active gene content in a host system."""
-        host_is_active = bool(self._gamma_star_at(host_edge, self._current_t))
+        host_is_active = (
+            host_edge.parent is not None
+            and host_edge.tstamp <= self._current_t <= host_edge.parent.tstamp
+        )
         symbiont_edges = self._gamma_prime_at(host_edge, self._current_t)
 
         host_branches = tuple(self.species2genes.get(host_edge, ())) if host_is_active else ()
@@ -491,7 +494,7 @@ class GeneTreeSimulator:
         if total_copies <= 0 or species_count <= 1:
             return
 
-        host_branches = summary["host_branches"]
+        host_branches = summary["host_branches"] # i.e. gene branches directly inside the host
         host_factor = self._crowding_factor(len(host_branches), total_copies, species_count)
         for gene_branch in host_branches:
             gene_branch.loss_rate = gene_branch.base_loss_rate + self._beta * host_factor
