@@ -813,11 +813,12 @@ class GeneTreeSimulator:
         S_edge = branch.S_edge
         trans_edge, replaced_gene_branch = None, None
 
-        valid_species = self._coexisting_species_edges(event_tstamp, exclude_edge=S_edge)
         host_edge = self._host_edge_for_species_edge(S_edge)
         if host_edge is not None and self._branch_level(branch) in ("host", "symbiont"):
             host_system_edges = self._gamma_star_at(host_edge, event_tstamp)
-            valid_species = [edge for edge in valid_species if edge in host_system_edges]
+            valid_species = [edge for edge in host_system_edges if edge is not S_edge]
+        else:
+            valid_species = self._coexisting_species_edges(event_tstamp, exclude_edge=S_edge)
 
         if not valid_species:
             return None, None

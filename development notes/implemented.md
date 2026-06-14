@@ -283,5 +283,8 @@ This implementation also adds user-facing `alpha`, `beta`, and `crowding_cap` pa
 `alpha = 0.25 * loss_rate` and `beta = 0.10 * loss_rate`. A later micro-cleanup removed the
 redundant `_gamma_star_at()` call inside `_host_system_summary()`: host-edge activity is now
 checked directly from the host branch interval, while `_gamma_prime_at()` is still called once to
-get the live symbiont edges. Verification so far is limited to a local syntax check; I could not
-run an end-to-end simulator smoke test here because `tralda` is not installed in this workspace.
+get the live symbiont edges. Another small cleanup simplified `_sample_recipient()` so that, for
+host and symbiont donors, recipient candidates are derived directly from `host_system_edges`
+instead of first building a global coexisting set and then intersecting it with the same-host
+constraint. Verification so far is limited to a local syntax check; I could not run an end-to-end
+simulator smoke test here because `tralda` is not installed in this workspace.
