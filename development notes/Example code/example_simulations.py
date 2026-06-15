@@ -1,4 +1,57 @@
-"""Example simulations for the prototype hologenome module."""
+"""Run a small, reproducible collection of hologenome example simulations.
+
+This script is the main driver for the prototype examples. It first simulates
+host trees, then for each host tree it simulates one symbiont history and the
+corresponding auxiliary tree, and finally it simulates gene trees inside that
+auxiliary tree.
+
+In this file, one holobiont scenario means one host tree together with one
+simulated symbiont tree and the single auxiliary tree that merges them. That
+auxiliary tree is the shared host-symbiont setting in which gene trees are
+generated. The current script produces one gene-tree realization per parameter
+combination, but conceptually the same auxiliary tree can be reused to produce
+many gene trees.
+
+Each auxiliary tree is also exported in decomposed form: its host component and
+its symbiont component. This makes it possible to inspect the same scenario both
+as one merged three-level object and as the collection of embedded
+host-symbiont scenarios induced by the auxiliary tree.
+
+The input parameters of ``run_example_simulations()`` control a Cartesian
+product of scenarios:
+
+- ``host_n_species`` gives the host leaf counts. Each entry generates one host
+  tree. Repeated values are allowed and still create independent host trees.
+- ``symbiont_dtl_rates`` provides candidate ``(duplication, transfer, loss)``
+  triples. Each triple is used for the symbiont simulation and then reused for
+  the gene-tree simulation inside the resulting auxiliary tree.
+- ``replace_probabilities`` provides candidate probabilities for replacing HGT
+  events.
+- ``transfer_distance_biases`` provides candidate recipient-bias modes for
+  transfer events.
+- ``n_simulations`` gives the number of repeated draws for every combination of
+  symbiont rates, replacement probability, and transfer bias.
+- ``seed`` initializes both Python's ``random`` module and NumPy's random
+  generator so the full run is reproducible.
+- ``output_dir`` optionally selects where the generated tables are written.
+
+The total number of simulated holobiont scenarios is:
+
+``len(host_n_species)``
+times
+``len(symbiont_dtl_rates) * len(replace_probabilities) * len(transfer_distance_biases) * n_simulations``
+
+That is, each host tree is combined with every symbiont-rate triple, every
+replacement probability, every transfer-bias mode, and every repetition index.
+
+For each holobiont scenario, the outputs store:
+
+- the unpruned and pruned symbiont trees,
+- the merged auxiliary tree,
+- the host and symbiont components of that auxiliary tree,
+- the unpruned and pruned gene trees, and
+- the host-side and symbiont-side projections of those gene trees.
+"""
 
 from __future__ import annotations
 

@@ -1,10 +1,40 @@
-- I Have to adjust the parameters of $\alpha$ and $\beta$ in order to generate evolutionary histories with only 'host keps' and only 'symbiont keeps' simulations.
-- Change parameters for the number of simulations:
+- [ ] I Have to adjust the parameters of $\alpha$ and $\beta$ in order to generate evolutionary histories with only 'host keps' and only 'symbiont keeps' simulations.
+- [ ] Change parameters for the number of simulations:
   - how many species trees? hoy many replications per species tree? how many simbionts? 
   - define these numebrs based on Sanchita data
-- We have to add a human-readable docstring to 'example simulations' and inliene comments
-- We have to create a documentation of the generated dataset
-- Should we refactor `example_simulations.py`?
+- [x] We have to add a human-readable docstring to 'example simulations' and inliene comments
+- [ ] We have to create a documentation of the generated dataset
+- [ ] Should we refactor `example_simulations.py`?
+
+---
+
+- [ ] Add a new task to correct `example_simulations.py`
+
+  Separate rates bellow
+
+  > \- ``symbiont_dtl_rates`` provides candidate ``(duplication, transfer, loss)``
+  >
+  >   triples. Each triple is used for the symbiont simulation and then reused for
+  >
+  >   the gene-tree simulation inside the resulting auxiliary tree.
+
+- [ ] `example_simulations.py` standalone
+
+  - [ ] to provide input parameters, let's provide an input file with parameters.
+
+- [ ] Also output a file describing the output (number of trees)
+
+- [ ] If output directory is non-specified, generate a new one with date and unique number.
+
+- [ ] How is handled the map $\mu$ when the auxiliary tree is separated into host and symbiont again?
+
+  - [ ] Add to the teoretical markdown a note about
+
+    > the host-side and symbiont-side projections of those gene trees.
+
+    
+
+
 
 ---
 
