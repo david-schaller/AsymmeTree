@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 320" role="img" aria-labelledby="title desc">
+  <title id="title">Figure 1: embedded two-level scenario</title>
+  <desc id="desc">A simplified solid-line drawing of the mathematical objects T_S and T_G, positioned to follow the upper sketch panel.</desc>
+  <defs>
+    <style>
+      .bg { fill: #fffdfa; }
+      .species {
+        fill: none;
+        stroke: #26282c;
+        stroke-width: 7;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .gene {
+        fill: none;
+        stroke: #7f9fc6;
+        stroke-width: 7;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .species-node { fill: #26282c; }
+      .gene-node { fill: #7f9fc6; }
+      .label-dark {
+        fill: #26282c;
+        font-family: 'TeX Gyre Pagella', 'Palatino Linotype', 'Book Antiqua', serif;
+        font-size: 28px;
+        font-style: italic;
+      }
+      .label-blue {
+        fill: #6f90b8;
+        font-family: 'TeX Gyre Pagella', 'Palatino Linotype', 'Book Antiqua', serif;
+        font-size: 28px;
+        font-style: italic;
+      }
+    </style>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="980" height="320" />
+
+  <g id="species-tree">
+    <path class="species" d="M 885 36 L 885 286" />
+    <path class="species" d="M 885 36 C 850 30, 818 28, 778 32" />
+    <path class="species" d="M 885 58 C 844 56, 804 54, 760 58" />
+    <path class="species" d="M 885 122 C 845 122, 808 124, 770 130" />
+    <path class="species" d="M 885 148 C 842 151, 805 155, 765 166" />
+    <path class="species" d="M 885 176 C 844 184, 810 194, 780 210" />
+    <path class="species" d="M 885 286 C 852 276, 822 268, 790 262" />
+    <path class="species" d="M 885 286 C 858 296, 832 304, 806 308" />
+
+    <circle class="species-node" cx="885" cy="36" r="6.5" />
+    <circle class="species-node" cx="885" cy="58" r="6.5" />
+    <circle class="species-node" cx="885" cy="122" r="6.5" />
+    <circle class="species-node" cx="885" cy="148" r="6.5" />
+    <circle class="species-node" cx="885" cy="176" r="6.5" />
+    <circle class="species-node" cx="885" cy="286" r="6.5" />
+
+    <text class="label-dark" x="906" y="106">T_S</text>
+  </g>
+
+  <g id="gene-tree">
+    <path class="gene" d="M 710 34 C 744 44, 765 61, 770 85" />
+    <path class="gene" d="M 770 85 C 752 95, 734 103, 716 113" />
+    <path class="gene" d="M 770 85 C 788 94, 804 105, 818 122" />
+
+    <path class="gene" d="M 716 113 C 690 124, 665 138, 642 158" />
+    <path class="gene" d="M 716 113 C 706 132, 699 149, 694 171" />
+
+    <path class="gene" d="M 818 122 C 796 138, 775 152, 756 172" />
+    <path class="gene" d="M 818 122 C 834 142, 846 161, 854 185" />
+
+    <path class="gene" d="M 694 171 C 674 188, 656 207, 642 230" />
+    <path class="gene" d="M 694 171 C 714 184, 733 201, 750 222" />
+
+    <path class="gene" d="M 750 222 C 734 235, 720 249, 706 266" />
+    <path class="gene" d="M 750 222 C 770 233, 790 246, 812 262" />
+
+    <circle class="gene-node" cx="770" cy="85" r="6" />
+    <circle class="gene-node" cx="716" cy="113" r="6" />
+    <circle class="gene-node" cx="818" cy="122" r="6" />
+    <circle class="gene-node" cx="694" cy="171" r="6" />
+    <circle class="gene-node" cx="750" cy="222" r="6" />
+
+    <text class="label-blue" x="690" y="26">T_G</text>
+  </g>
+</svg>

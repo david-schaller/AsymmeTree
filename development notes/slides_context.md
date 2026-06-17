@@ -60,6 +60,10 @@ The outputs will be generated in the directory  [figures for slides](figures for
 
   AI agent should write here important notes after performing a task. They have to be concise but informative enough to allow humans to easily track progress and design decisions.
 
+
+
+
+
 ## Workflow
 
 The following to-do list describes the tasks that has to be addressed.
@@ -87,6 +91,32 @@ The following to-do list describes the tasks that has to be addressed.
     This file will be used during the svg code design of the creation of the figure.
 
   - [x] Stress that the final figures have to be formal enough for a scientific talk, but still resembling my natural hand-style.
+
+- [ ] Describe auxiliary figures
+
+  Given a section $x$ of the sketch (see [slides_sketch_content.md](slides_sketch_content.md) and [draft_figures.pdf](draft_figures.pdf)).
+
+  Add a new subsection for the description of each of the mathematical objects present in the drawing.
+
+  This should be a very detailed description on how to draw the mathematical object using simple objects like lines or bullets. Describe with precision the position of everithing.
+
+  Do for section:
+
+  Additionally, in the directory  [figures for slides](figures for slides)  create a sub-pdf cropping to the specific part where the object appears
+
+  - [x] 1
+
+  - [ ] 2
+
+  - [ ] 3
+
+  - [ ] 4
+
+  - [ ] 5
+
+  - [ ] 6
+
+  - [ ] 7
 
 - [ ] AI agent writes structured SVG
 

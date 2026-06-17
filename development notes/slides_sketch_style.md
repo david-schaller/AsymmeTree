@@ -9,6 +9,13 @@ generic polished vector diagram either. The target style is a controlled
 scientific redraw: formal enough for a research talk, but still recognizably
 close to the author's natural hand style.
 
+## Current SVG override
+
+- For the actual slide figures, prefer simple solid-line drawings over simulated hand-drawn texture.
+- Do not add wobble, jitter, blur, or sketch-like double strokes just to mimic the draft.
+- Keep figures close to the sketch composition, but render the mathematical objects cleanly.
+- Use color only to distinguish or emphasize objects, not to create painterly texture.
+
 ## Core design goal
 
 - Final figures must be clear enough for a scientific presentation.

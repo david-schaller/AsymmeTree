@@ -51,6 +51,79 @@ They should be confirmed again during render/check against the PDF.
 - Pencil/style cues: graphite carries the full outline, while blue-cyan is used
   only for the branches or regions of $T_G$ that should stand out.
 
+### Auxiliary drawing description
+
+Use a local drawing frame for Section 1 with width $W$ and height $H$, with the
+origin at the upper-left corner of the panel.
+
+#### Object 1: species tree $T_S$
+
+- Draw $T_S$ in dark graphite as the ambient tree on the right side of the
+  panel.
+- Main trunk: draw one nearly vertical branch from about
+  $(0.90W, 0.11H)$ down to $(0.90W, 0.89H)$. This is the dominant structural
+  line of the panel.
+- Upper crown: from the upper part of the trunk, draw two short left-directed
+  branches.
+  One should leave the trunk near $(0.90W, 0.11H)$ and end near
+  $(0.79W, 0.10H)$.
+  A second should leave near $(0.90W, 0.18H)$ and end near $(0.77W, 0.18H)$.
+- Middle crown: from the trunk, draw one branch leaving near $(0.90W, 0.38H)$
+  and ending near $(0.78W, 0.41H)$.
+  Draw a second middle branch leaving near $(0.90W, 0.46H)$ and ending near
+  $(0.78W, 0.52H)$.
+  Draw a third middle-lower branch leaving near $(0.90W, 0.55H)$ and ending
+  near $(0.80W, 0.66H)$.
+- Lower crown: from the bottom node of the trunk at about $(0.90W, 0.89H)$,
+  draw two left-directed branches.
+  One should end near $(0.81W, 0.82H)$ and the other near $(0.82W, 0.96H)$ if
+  the panel is allowed a slight margin below the visible bottom, or otherwise
+  compress it to end close to $(0.83W, 0.93H)$.
+- Nodes: place small filled graphite circles at each branching point on the
+  trunk, especially near heights $0.11H$, $0.18H$, $0.38H$, $0.46H$, $0.55H$,
+  and $0.89H$.
+- Visual role: $T_S$ must read as the larger ambient object receiving the
+  reconciliation placements of $T_G$ under the map
+  $\mu: V(T_G) \to V(T_S) \cup E(T_S)$.
+
+#### Object 2: gene tree $T_G$
+
+- Draw $T_G$ in blue-cyan as the smaller embedded object to the left of the
+  right-side trunk of $T_S$.
+- Root zone: place the uppermost visible blue node near $(0.78W, 0.27H)$.
+  From this node, draw one short upper-left branch ending near $(0.72W, 0.11H)$
+  and one short upper-right branch ending near $(0.84W, 0.38H)$.
+- Left-descending side: from the same upper blue node, draw a descending branch
+  toward a second blue node near $(0.72W, 0.53H)$.
+  From that second node, draw one branch toward $(0.66W, 0.72H)$ and another
+  toward a third internal blue node near $(0.78W, 0.69H)$.
+- Lower split: from the third internal blue node near $(0.78W, 0.69H)$, draw a
+  lower-left terminal branch ending near $(0.73W, 0.83H)$ and a lower-right
+  terminal branch ending near $(0.84W, 0.82H)$.
+- Right-descending side: from the upper-right blue branch near $(0.84W, 0.38H)$,
+  allow a short continuation downward so that the top of $T_G$ feels visually
+  anchored inside the middle of $T_S$ rather than floating independently.
+- Nodes: place small filled blue circles at the upper blue branching node near
+  $(0.78W, 0.27H)$, the left-middle node near $(0.72W, 0.53H)$, and the lower
+  internal node near $(0.78W, 0.69H)$.
+- Embedding relation: keep every branch of $T_G$ spatially inside the region
+  bounded on the right by the trunk of $T_S$ and on the left by the open white
+  space of the panel, so the eye reads $T_G$ as evolving inside the ambient
+  species structure.
+- Relative scale: the height of $T_G$ should occupy about the middle two-thirds
+  of the panel, while its width should stay clearly smaller than the total span
+  of $T_S$.
+- Color rule: all branches and nodes of $T_G$ should be blue-cyan, while no
+  branch of $T_S$ should use that color.
+
+#### Object interaction and reading order
+
+- First read the large graphite tree as $T_S$.
+- Then read the blue-cyan object as $T_G$.
+- Only after both trees are legible should the viewer infer the relaxed
+  evolutionary scenario $(T_S,T_G,t,\sigma,\mu)$ and the embedded placement of
+  gene branches into the ambient species scaffold.
+
 ## Section 2
 
 ### Mathematical objects shown
