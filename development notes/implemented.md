@@ -288,3 +288,40 @@ host and symbiont donors, recipient candidates are derived directly from `host_s
 instead of first building a global coexisting set and then intersecting it with the same-host
 constraint. Verification so far is limited to a local syntax check; I could not run an end-to-end
 simulator smoke test here because `tralda` is not installed in this workspace.
+
+### Gamma-restricted rate refresh
+
+The theory notes now describe event sampling as the comparison between the next stochastic
+birth-death waiting time and the next fixed event in the auxiliary tree. Loss-rate updates are
+therefore phrased as hazard updates: changing an effective loss rate changes both the weighted
+choice of the next stochastic event type and the exponential waiting-time parameter.
+
+The active implementation now treats `Gamma` as a set of affected auxiliary-tree branches. After
+initialization the simulator still performs one all-system refresh, but later events return only
+the branches whose gene content changed:
+
+- speciation returns the child auxiliary branches that became active,
+- duplication and loss return the branch where the sampled gene branch lived,
+- HGT returns donor and recipient branches, and
+- gene conversion returns the empty set because the per-species copy count is unchanged.
+
+The main loop maps these affected branches to their host systems, resets active genes in those
+systems to their base loss rates, and reapplies the host-system crowding formula only there. This
+replaces the previous global refresh after every event. Continuation branches now inherit the
+template branch's current effective loss rate, which keeps gene-conversion branches consistent
+when `Gamma` is empty.
+
+### Example simulation script updates
+
+`example_simulations.py` now has separate `symbiont_dtl_rates` and `gene_dtl_rates` inputs. Output
+metadata records the two triples separately as `symbiont_*_rate` and `gene_*_rate` columns, and
+scenario identifiers include both triples.
+
+The script can now be run as a standalone command with a human-editable config file using
+`> section` headers. Required sections are `host_n_species`, `symbiont_dtl_rates`,
+`gene_dtl_rates`, `replace_probabilities`, and `n_simulations`; optional sections are
+`transfer_distance_biases`, `seed`, and `output_dir`. A sample file was added at
+`development notes/Example code/example_simulations_input.txt`. The script defers heavy simulation
+imports until after CLI parsing, so `python3 example_simulations.py --help` works even in a partial
+environment. An end-to-end simulation was not run here because `pandas` is not installed in this
+workspace.

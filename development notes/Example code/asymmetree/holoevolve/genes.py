@@ -279,8 +279,8 @@ class GeneTreeSimulator:
             S_edge: The species tree edge into which the new branch is embedded (represented by its
                 lower node).
             transferred: 1 if the new branch is a transferred branch in an HGT event, 0 otherwise.
-            template_branch: Optional source branch whose branch rates and base loss hazard
-                shall be inherited before the effective loss rate is recomputed.
+            template_branch: Optional source branch whose branch rates and loss hazards shall be
+                inherited. A later host-system refresh may overwrite the effective loss rate.
 
         Returns:
             The newly created gene branch.
@@ -296,7 +296,7 @@ class GeneTreeSimulator:
             hgt_rate = template_branch.hgt_rate
             gc_rate = template_branch.gc_rate
 
-        loss_rate = base_loss_rate
+        loss_rate = template_branch.loss_rate if template_branch is not None else base_loss_rate
 
         new_branch = _Branch(
             self.id_counter,
@@ -474,6 +474,15 @@ class GeneTreeSimulator:
             "N": N,
         }
 
+    def _host_system_branches(self, host_edge: TreeNode) -> tuple[_Branch, ...]:
+        """Return all active gene branches in one host system."""
+        summary = self._host_system_summary(host_edge)
+        branches = list(summary["host_branches"])
+        for symbiont_branches in summary["symbiont_branches"].values():
+            branches.extend(symbiont_branches)
+
+        return tuple(branches)
+
     def _crowding_factor(self, copy_count: int, total_copies: int, species_count: int) -> float:
         """Return the relative occupancy factor for one species in a host system."""
         if total_copies <= 0 or species_count <= 1:
@@ -490,6 +499,9 @@ class GeneTreeSimulator:
         summary = self._host_system_summary(host_edge)
         total_copies = summary["M"]
         species_count = summary["N"]
+
+        for gene_branch in self._host_system_branches(host_edge):
+            gene_branch.loss_rate = gene_branch.base_loss_rate
 
         if total_copies <= 0 or species_count <= 1:
             return
@@ -517,6 +529,29 @@ class GeneTreeSimulator:
             return
 
         for host_edge in self.gamma_prime:
+            self._refresh_loss_rates_for_host_system(host_edge)
+
+    def _refresh_loss_rates_for_affected_edges(self, affected_edges: set[TreeNode]) -> None:
+        """Refresh host systems touched by a set of affected auxiliary-tree edges."""
+        if not affected_edges:
+            return
+
+        host_edges = set()
+        for edge in affected_edges:
+            host_edge = self._host_edge_for_species_edge(edge)
+            if host_edge is None:
+                for gene_branch in self.species2genes.get(edge, ()):
+                    gene_branch.loss_rate = gene_branch.base_loss_rate
+            else:
+                host_edges.add(host_edge)
+
+        if self._alpha <= 0.0 and self._beta <= 0.0:
+            for host_edge in host_edges:
+                for gene_branch in self._host_system_branches(host_edge):
+                    gene_branch.loss_rate = gene_branch.base_loss_rate
+            return
+
+        for host_edge in host_edges:
             self._refresh_loss_rates_for_host_system(host_edge)
 
     def _branch_auxiliary_key(self, branch: _Branch) -> object:
@@ -622,32 +657,33 @@ class GeneTreeSimulator:
 
             # speciation
             if event_tstamp <= next_spec_tstamp:
-                self._speciation()
                 self._current_t = next_spec_tstamp
-                self._refresh_all_loss_rates()
+                affected_edges = self._speciation()
+                self._refresh_loss_rates_for_affected_edges(affected_edges)
                 t = next_spec_tstamp
 
             else:
                 branch, event_type = self._get_branch_and_type()
+                affected_edges = set()
 
                 # duplication
                 if event_type == "D":
-                    self._duplication(event_tstamp, branch)
+                    affected_edges = self._duplication(event_tstamp, branch)
 
                 # loss
                 elif event_type == "L":
-                    self._loss(event_tstamp, branch)
+                    affected_edges = self._loss(event_tstamp, branch)
 
                 # HGT
                 elif event_type == "H":
-                    self._hgt(event_tstamp, branch)
+                    affected_edges = self._hgt(event_tstamp, branch)
 
                 # gene conversion
                 elif event_type == "GC":
-                    self._gene_conversion(event_tstamp, branch)
+                    affected_edges = self._gene_conversion(event_tstamp, branch)
 
                 self._current_t = event_tstamp
-                self._refresh_all_loss_rates()
+                self._refresh_loss_rates_for_affected_edges(affected_edges)
                 t = event_tstamp
 
         # add the 'dist' attribute to the nodes
@@ -655,7 +691,7 @@ class GeneTreeSimulator:
 
         return self.T
 
-    def _speciation(self) -> None:
+    def _speciation(self) -> set[TreeNode]:
         """Execute the next speciation event in the queue.
 
         This method also handles loss and leaf nodes of the species tree, as they are represented by
@@ -701,9 +737,10 @@ class GeneTreeSimulator:
         # Branch transfer involves...
 
         # Branch dupluication involves...
+        return set(S_edge.children)
 
 
-    def _duplication(self, event_tstamp: float, branch: _Branch) -> None:
+    def _duplication(self, event_tstamp: float, branch: _Branch) -> set[TreeNode]:
         """Execute a duplication event on the given branch at the given time stamp.
 
         This method also allows for non-binary duplication events if the parameter 'dupl_polytomy'
@@ -732,7 +769,9 @@ class GeneTreeSimulator:
         for i in range(copy_number):
             self._new_branch(dupl_node, S_edge, 0, template_branch=branch)
 
-    def _loss(self, event_tstamp: float, branch: _Branch) -> None:
+        return {S_edge}
+
+    def _loss(self, event_tstamp: float, branch: _Branch) -> set[TreeNode]:
         """Execute a loss event on the given branch at the given time stamp.
 
         This method respects the extinction prohibition settings.
@@ -748,13 +787,13 @@ class GeneTreeSimulator:
             and len(self.surv_non_loss_lineages) == 1
             and next(iter(self.surv_non_loss_lineages)) is branch
         ):
-            return
+            return set()
 
         if (
             self._prohibit_extinction == "per_species"
             and len(self.species2genes[branch.S_edge]) <= 1
         ):
-            return
+            return set()
 
         S_edge = branch.S_edge
         #partners = self._interaction_partners(branch)
@@ -769,6 +808,8 @@ class GeneTreeSimulator:
         branch.parent.add_child(loss_node)
         self._remove_branch(branch)
         #self._decrease_loss_rates_after_loss(branch, partners)
+
+        return {S_edge}
 
     def _coexisting_species_edges(self, tstamp: float, exclude_edge: _Branch = None) -> list:
         """Return list of edges for the given timestamp.
@@ -867,7 +908,7 @@ class GeneTreeSimulator:
 
         return trans_edge, replaced_gene_branch
 
-    def _hgt(self, event_tstamp: float, branch: _Branch) -> None:
+    def _hgt(self, event_tstamp: float, branch: _Branch) -> set[TreeNode]:
         """Execute a horizontal gene transfer event on the given branch at the given time stamp.
 
         Args:
@@ -877,8 +918,10 @@ class GeneTreeSimulator:
         S_edge = branch.S_edge
 
         trans_edge, replaced_gene_branch = self._sample_recipient(event_tstamp, branch)
+        affected_edges = set()
 
         if trans_edge:
+            affected_edges.update((S_edge, trans_edge))
             hgt_node = TreeNode(
                 label=branch.label,
                 event="H",
@@ -897,9 +940,11 @@ class GeneTreeSimulator:
 
         # replacing HGT leads to loss in the recipient species
         if replaced_gene_branch:
-            self._loss(event_tstamp, replaced_gene_branch)
+            affected_edges.update(self._loss(event_tstamp, replaced_gene_branch))
             # save replaced gene information in HGT node
             hgt_node.replaced_gene = replaced_gene_branch.label
+
+        return affected_edges
 
     def _sample_replaced_gene_gc(self, event_tstamp: float, branch: _Branch) -> _Branch | None:
         """Sample a gene branch to be replaced in a gene conversion event.
@@ -936,7 +981,7 @@ class GeneTreeSimulator:
 
         return random.choices(candidates, weights=weights)[0]
 
-    def _gene_conversion(self, event_tstamp: float, branch: _Branch) -> None:
+    def _gene_conversion(self, event_tstamp: float, branch: _Branch) -> set[TreeNode]:
         """Execute a gene conversion event on the given branch at the given time stamp.
 
         Args:
@@ -965,6 +1010,8 @@ class GeneTreeSimulator:
             self._loss(event_tstamp, replaced_gene_branch)
             # save replaced gene information in GC node
             gc_node.replaced_gene = replaced_gene_branch.label
+
+        return set()
 
 
 def dated_gene_tree(S: Tree, **kwargs: object) -> Tree:

@@ -113,7 +113,11 @@ Now we will generate a gene tree $T_G$ evolving along $T_A$ considering two inte
 
 So the simulation first Initializes $T_G$ as a single node $0_G$ with $\mu(0_G)=0_A$, then a 'growing branch' is created as descendant of of this node, and this growing branch is associated with the edge(s) descending from $0_A$. Furthermore, we initialize the remaining time $t=\tau_G(0_G)=\tau_A(0_A)$.  (Stress that the simulation is top-down, so time will decrease).
 
-At each iteration of the simulation,The simulation proceeds by randomly obtaining a new time $t'< t$ at which an evolutionary event $\epsilon$ is chosen based on user provided rates. This event affecting a set of growing branches; If $\epsilon$ is an speciation corresponding to a node $v\in V(T_A)$ with parent $u$, then the set of affected grfowing branches contains every gene growing branches $g$ associated to the species branch $uv\in E(T_A)$. Otherwise, it contains only one gene growing branch $g$ associated to a node $v\in V(T_A)$ with parent $u$.
+At each iteration of the simulation, let $t$ be the current time and let $t_S$ be the time of the next fixed event in the auxiliary tree $T_A$. The currently growing gene branches have branch-specific rates for duplication, loss, transfer, and gene conversion. Their sum defines the total stochastic event rate $\lambda(t)$. The simulator draws a waiting time $\Delta \sim \operatorname{Exp}(\lambda(t))$ and proposes a stochastic event time $t'=t-\Delta$.
+
+If $t'\leq t_S$, the proposed stochastic event is discarded and the next fixed auxiliary-tree event is executed at time $t_S$. Otherwise, an active gene branch and an event type are sampled by weighted random choice from the current branch-specific rates, and the stochastic event is executed at time $t'$. This means that effective loss-rate updates change both the probability that the next stochastic event is a loss and the distribution of the next stochastic waiting time.
+
+Each executed event determines a set $\Gamma\subseteq E(T_A)$ of affected auxiliary-tree branches. If $\epsilon$ is a speciation corresponding to a node $v\in V(T_A)$ with parent $u$, then the affected growing branches are all gene branches associated to $uv\in E(T_A)$. For stochastic events, the affected set is determined by the auxiliary-tree branches whose gene content changes.
 
 Furthermore, the evolutionary event $\epsilon$ implies the creation of a new gene node $x$ for each affected growing branch $g$, thus $g$ becomes into an edge, and is not a growing branch anymore. Additionally, if $\epsilon$ is not a loss event, then new growing branches will be created below $x$.
 
@@ -202,7 +206,7 @@ The interactors can be quickly computed as follows:
 
 ## Update rates based on gene-gene interactions
 
-The simulation starts with a base loss rate $r_l$. Whenever gene content changes inside a holobiont system, the effective loss rates should be refreshed for each of the involved species. Below we provide an expression to update the rates; this refresh may be triggered by duplication, loss, transfer, or species-level events affecting either genes or symbionts.
+The simulation starts with a base loss rate $r_l$. Whenever gene content changes inside a holobiont system, the effective loss rates should be refreshed for each involved host system. The affected auxiliary-tree branches are collected in a set $\Gamma\subseteq E(T_A)$; the host systems containing branches in $\Gamma$ are the only systems that need to be refreshed. Below we provide an expression to update the rates; this refresh may be triggered by duplication, loss, transfer, or species-level events affecting either genes or symbionts.
 
 Let's say we have a host branch $h$ with $|\gamma'(h)|+1= N$, i.e. we have a total of $N$ species in the system, with a total of $M=|\gamma(h)|+\sum_{s\in\gamma'(h)}|\gamma(s)|$ genes. The loss rate for a gene existing in a symbiont $s$ will be:
 $$
@@ -216,25 +220,29 @@ Where, $\alpha$ and $\beta$ are user-provided normalization factors.
 
 The new loss rates will be higher in species with more genes than the average. Furthermore, the loss will be more likely to happen in a symbiont whenever $\alpha > \beta$ and conversely, loss will be more likely to happen in the host whenever $\beta>\alpha$.
 
-This update should be interpreted at the level of **event rates** or **hazards**, not as a direct post-hoc probability correction. Increasing $r_l^*$ changes both the relative probability that the next event in a branch is a loss and the total event intensity used to sample the next event time. Therefore, in the implementation the effective loss rates should be recomputed from the current state of the holobiont system whenever gene content changes.
+This update should be interpreted at the level of **event rates** or **hazards**, not as a direct post-hoc probability correction. Increasing $r_l^*$ changes both the relative probability that the next event in a branch is a loss and the total event intensity used to sample the next event time. Therefore, in the implementation the effective loss rates should be recomputed from the current state of the affected holobiont systems whenever gene content changes.
 
 ### Where to update rates
 
-As explained above, at each iteration of the simulation, the code randomly obtains a new time $t'< t$ at which an evolutionary event $\epsilon$ happens, this affects a set of species branches $\Gamma \in E(T_A)$, depending on $\epsilon$. After simulation of such evolutionary event, we have to update only the rates of the host systems in $\Gamma$, as specified bellow.
+As explained above, each executed event affects a set of auxiliary-tree branches $\Gamma\subseteq E(T_A)$. After the event is simulated and the active gene-branch map $\kappa$ has been updated, the code refreshes only the host systems containing branches in $\Gamma$. In implementation terms, each affected branch $s\in\Gamma$ is mapped to its host edge $h=\mu'(s)$ when $s$ is a symbiont branch, or to itself when $s$ is a host branch. Branches outside the annotated host-symbiont part of $T_A$ stay at the base loss rate.
 
 - $\epsilon$ is a **speciation event**.
-  For this event, a species branch $s$ is provided, this branch goes inactive, and the children get activated: $\Gamma= \ch_{T_A}(s) $.
+  For this event, an auxiliary-tree branch $s$ is provided, this branch goes inactive, and the child branches get activated: $\Gamma= \ch_{T_A}(s) $.
   
 - $\epsilon$ is a **duplication/loss** event.
-  In this case, a growing gene branch $g$ is choosen randomly in any species, this gene branch gets duplicated/lost in the same species, here  $\Gamma= \{ \mu'(\kappa(g))  \}$.
+  In this case, a growing gene branch $g$ is chosen randomly in an auxiliary-tree branch. This gene branch gets duplicated or lost in the same branch, so $\Gamma= \{ \kappa(g)  \}$.
   
 - $\epsilon$ is a **transfer** event.
 
-  Here, a new gene branch $g$ is created in the recipient species, thus, $\Gamma= \{ \mu'(\kappa(g))  \}$
+  Here, the donor branch is split and a new gene branch is created in the recipient branch. If the donor branch is $s_d$ and the recipient branch is $s_r$, then $\Gamma= \{ s_d, s_r \}$.
 
 - $\epsilon$ is a **conversion** event.
 
-  This happens in a species $s$, neverthelss, this event does not change number of genes in the corresponding species; $\Gamma=\emptyset$.
+  This happens in a species $s$, nevertheless, this event does not change number of genes in the corresponding species; $\Gamma=\emptyset$. The newly created continuation branches inherit the current branch rates, so no host-system count refresh is needed.
+
+### Implementation plan for restricted refresh
+
+The code should keep the initial all-system refresh after the first growing branches are created. Afterwards, each event method should return the affected set $\Gamma\subseteq E(T_A)$. The main simulation loop should set the current time to the event time, map every branch in $\Gamma$ to its host system, reset the active genes in those systems to their base loss rates, and then apply the current host-system crowding formula. This replaces the previous global refresh after every event while preserving identical formulas inside each refreshed host system.
 
 ### Practical safeguards
 

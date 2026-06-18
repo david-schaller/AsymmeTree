@@ -23,14 +23,15 @@ product of scenarios:
 - ``host_n_species`` gives the host leaf counts. Each entry generates one host
   tree. Repeated values are allowed and still create independent host trees.
 - ``symbiont_dtl_rates`` provides candidate ``(duplication, transfer, loss)``
-  triples. Each triple is used for the symbiont simulation and then reused for
-  the gene-tree simulation inside the resulting auxiliary tree.
+  triples for the symbiont-tree simulations.
+- ``gene_dtl_rates`` provides candidate ``(duplication, transfer, loss)``
+  triples for the gene-tree simulations inside the resulting auxiliary tree.
 - ``replace_probabilities`` provides candidate probabilities for replacing HGT
   events.
 - ``transfer_distance_biases`` provides candidate recipient-bias modes for
   transfer events.
 - ``n_simulations`` gives the number of repeated draws for every combination of
-  symbiont rates, replacement probability, and transfer bias.
+  symbiont rates, gene rates, replacement probability, and transfer bias.
 - ``seed`` initializes both Python's ``random`` module and NumPy's random
   generator so the full run is reproducible.
 - ``output_dir`` optionally selects where the generated tables are written.
@@ -39,10 +40,13 @@ The total number of simulated holobiont scenarios is:
 
 ``len(host_n_species)``
 times
-``len(symbiont_dtl_rates) * len(replace_probabilities) * len(transfer_distance_biases) * n_simulations``
+``len(symbiont_dtl_rates) * len(gene_dtl_rates) * len(replace_probabilities)``
+times
+``len(transfer_distance_biases) * n_simulations``
 
 That is, each host tree is combined with every symbiont-rate triple, every
-replacement probability, every transfer-bias mode, and every repetition index.
+gene-rate triple, every replacement probability, every transfer-bias mode, and
+every repetition index.
 
 For each holobiont scenario, the outputs store:
 
@@ -51,39 +55,46 @@ For each holobiont scenario, the outputs store:
 - the host and symbiont components of that auxiliary tree,
 - the unpruned and pruned gene trees, and
 - the host-side and symbiont-side projections of those gene trees.
+
+When run as a script, pass a config file with ``> section`` headers. The
+required sections are ``host_n_species``, ``symbiont_dtl_rates``,
+``gene_dtl_rates``, ``replace_probabilities``, and ``n_simulations``. Optional
+sections are ``transfer_distance_biases``, ``seed``, and ``output_dir``.
 """
 
 from __future__ import annotations
 
+import argparse
 from collections.abc import Callable
+from collections.abc import Sequence
+from datetime import date
 from itertools import product
 from pathlib import Path
 import random as py_random
 
-from pandas import DataFrame
-from pandas import Series
 import numpy.random as np_random
-
-from asymmetree.hologenome import HologenomeSimulator
-from asymmetree.hologenome import to_nhx
-from asymmetree.hologenome import to_simple_newick
-from asymmetree.treeevolve import species_tree_n
 
 
 SimulationRates = tuple[float, float, float]
+DEFAULT_TRANSFER_DISTANCE_BIASES = (None, "exponential")
+DEFAULT_SEED = 13042026
+REQUIRED_CONFIG_KEYS = {
+    "host_n_species",
+    "symbiont_dtl_rates",
+    "gene_dtl_rates",
+    "replace_probabilities",
+    "n_simulations",
+}
 
 
 def run_example_simulations(
-    host_n_species: tuple[int, ...] = (5, 10, 30),
-    symbiont_dtl_rates: tuple[SimulationRates, ...] = (
-        (0.133, 0.266, 0.266),
-        (0.3, 0.6, 0.6),
-        (0.6, 1.2, 1.2),
-    ),
-    replace_probabilities: tuple[float, ...] = (0.0, 0.5, 1.0),
-    transfer_distance_biases: tuple[str | None, ...] = (None, "exponential"),
-    n_simulations: int = 5,
-    seed: int = 13042026,
+    host_n_species: tuple[int, ...],
+    symbiont_dtl_rates: tuple[SimulationRates, ...],
+    gene_dtl_rates: tuple[SimulationRates, ...],
+    replace_probabilities: tuple[float, ...],
+    n_simulations: int,
+    transfer_distance_biases: tuple[str | None, ...] = DEFAULT_TRANSFER_DISTANCE_BIASES,
+    seed: int = DEFAULT_SEED,
     output_dir: str | Path | None = None,
 ) -> tuple[Series, DataFrame]:
     """Run the holobiont example simulations.
@@ -91,6 +102,7 @@ def run_example_simulations(
     Args:
         host_n_species: Numbers of host leaves for the host-tree simulations.
         symbiont_dtl_rates: Duplication, transfer, and loss rates for the symbiont simulations.
+        gene_dtl_rates: Duplication, transfer, and loss rates for the gene-tree simulations.
         replace_probabilities: Probabilities for replacing-transfer events.
         transfer_distance_biases: Transfer-recipient bias modes.
         n_simulations: Number of repetitions for each parameter combination.
@@ -101,6 +113,7 @@ def run_example_simulations(
         A pandas series containing the serialized host trees and a pandas dataframe containing the
             serialized symbiont, auxiliary, and gene trees for each scenario.
     """
+    _load_simulation_dependencies()
     py_random.seed(seed)
     np_random.seed(seed)
 
@@ -138,25 +151,32 @@ def run_example_simulations(
 
         simulator = HologenomeSimulator(host_tree)
 
-        for rates, replace_probability, transfer_distance_bias, simulation_index in product(
+        for (
+            symbiont_rates,
+            gene_rates,
+            replace_probability,
+            transfer_distance_bias,
+            simulation_index,
+        ) in product(
             symbiont_dtl_rates,
+            gene_dtl_rates,
             replace_probabilities,
             transfer_distance_biases,
             range(n_simulations),
         ):
             true_trees, pruned_trees, auxiliary_trees = simulator.simulate_symbiont_trees(
                 1,
-                dupl_rate=rates[0],
-                hgt_rate=rates[1],
-                loss_rate=rates[2],
+                dupl_rate=symbiont_rates[0],
+                hgt_rate=symbiont_rates[1],
+                loss_rate=symbiont_rates[2],
                 prohibit_extinction="per_family",
                 replace_prob=replace_probability,
                 transfer_distance_bias=transfer_distance_bias,
             )
             true_gene_trees, pruned_gene_trees = simulator.simulate_gene_trees(
-                dupl_rate=rates[0],
-                hgt_rate=rates[1],
-                loss_rate=rates[2],
+                dupl_rate=gene_rates[0],
+                hgt_rate=gene_rates[1],
+                loss_rate=gene_rates[2],
                 prohibit_extinction="per_family",
                 replace_prob=replace_probability,
                 transfer_distance_bias=transfer_distance_bias,
@@ -164,7 +184,8 @@ def run_example_simulations(
 
             scenario_id = _scenario_id(
                 host_tree_id,
-                rates,
+                symbiont_rates,
+                gene_rates,
                 replace_probability,
                 transfer_distance_bias,
                 simulation_index,
@@ -173,9 +194,12 @@ def run_example_simulations(
             metadata = {
                 "scenario_id": scenario_id,
                 "host_tree_id": host_tree_id,
-                "dupl_rate": rates[0],
-                "hgt_rate": rates[1],
-                "loss_rate": rates[2],
+                "symbiont_dupl_rate": symbiont_rates[0],
+                "symbiont_hgt_rate": symbiont_rates[1],
+                "symbiont_loss_rate": symbiont_rates[2],
+                "gene_dupl_rate": gene_rates[0],
+                "gene_hgt_rate": gene_rates[1],
+                "gene_loss_rate": gene_rates[2],
                 "replace_prob": replace_probability,
                 "transfer_distance_bias": transfer_distance_bias,
                 "simulation_index": simulation_index,
@@ -275,6 +299,31 @@ def run_example_simulations(
     return host_trees, symbiont_trees
 
 
+def _load_simulation_dependencies() -> None:
+    """Load simulation dependencies after CLI argument parsing."""
+    global DataFrame
+    global HologenomeSimulator
+    global Series
+    global species_tree_n
+    global to_nhx
+    global to_simple_newick
+
+    from pandas import DataFrame as pandas_dataframe
+    from pandas import Series as pandas_series
+
+    from asymmetree.hologenome import HologenomeSimulator as hologenome_simulator
+    from asymmetree.hologenome import to_nhx as serialize_nhx
+    from asymmetree.hologenome import to_simple_newick as serialize_simple_newick
+    from asymmetree.treeevolve import species_tree_n as simulate_species_tree_n
+
+    DataFrame = pandas_dataframe
+    HologenomeSimulator = hologenome_simulator
+    Series = pandas_series
+    species_tree_n = simulate_species_tree_n
+    to_nhx = serialize_nhx
+    to_simple_newick = serialize_simple_newick
+
+
 def _serialize_scenario_row(
     metadata: dict[str, object],
     trees: dict[str, object],
@@ -328,7 +377,8 @@ def _to_simple_dated_newick(tree: object) -> str:
 
 def _scenario_id(
     host_tree_id: str,
-    rates: SimulationRates,
+    symbiont_rates: SimulationRates,
+    gene_rates: SimulationRates,
     replace_probability: float,
     transfer_distance_bias: str | None,
     simulation_index: int,
@@ -337,9 +387,12 @@ def _scenario_id(
     return "_".join(
         (
             host_tree_id,
-            f"d{_scaled_rate(rates[0])}",
-            f"t{_scaled_rate(rates[1])}",
-            f"l{_scaled_rate(rates[2])}",
+            f"sd{_scaled_rate(symbiont_rates[0])}",
+            f"st{_scaled_rate(symbiont_rates[1])}",
+            f"sl{_scaled_rate(symbiont_rates[2])}",
+            f"gd{_scaled_rate(gene_rates[0])}",
+            f"gt{_scaled_rate(gene_rates[1])}",
+            f"gl{_scaled_rate(gene_rates[2])}",
             f"r{_scaled_rate(replace_probability)}",
             f"b{transfer_distance_bias or 'none'}",
             f"i{simulation_index}",
@@ -350,6 +403,146 @@ def _scenario_id(
 def _scaled_rate(value: float) -> int:
     """Scale a rate for inclusion in the scenario identifier."""
     return int(round(100 * value))
+
+
+def read_simulation_config(config_path: str | Path) -> dict[str, object]:
+    """Read a human-editable simulation config file.
+
+    Sections start with ``> section_name`` and continue until the next section. Comma-separated
+    values are accepted within each section, and blank lines or comment lines starting with ``#``
+    are ignored.
+    """
+    sections = _read_config_sections(Path(config_path))
+    missing_keys = sorted(REQUIRED_CONFIG_KEYS.difference(sections))
+    if missing_keys:
+        raise ValueError(f"missing required config sections: {', '.join(missing_keys)}")
+
+    config: dict[str, object] = {
+        "host_n_species": _parse_int_list(sections["host_n_species"]),
+        "symbiont_dtl_rates": _parse_rate_triples(sections["symbiont_dtl_rates"]),
+        "gene_dtl_rates": _parse_rate_triples(sections["gene_dtl_rates"]),
+        "replace_probabilities": _parse_float_list(sections["replace_probabilities"]),
+        "n_simulations": _parse_single_int(sections["n_simulations"], "n_simulations"),
+        "transfer_distance_biases": DEFAULT_TRANSFER_DISTANCE_BIASES,
+        "seed": DEFAULT_SEED,
+        "output_dir": _default_output_dir(),
+    }
+
+    if "transfer_distance_biases" in sections:
+        config["transfer_distance_biases"] = _parse_optional_string_list(
+            sections["transfer_distance_biases"]
+        )
+    if "seed" in sections:
+        config["seed"] = _parse_single_int(sections["seed"], "seed")
+    if "output_dir" in sections:
+        config["output_dir"] = _parse_single_string(sections["output_dir"], "output_dir")
+
+    return config
+
+
+def _read_config_sections(config_path: Path) -> dict[str, list[str]]:
+    """Collect config values keyed by their ``> section`` headers."""
+    sections: dict[str, list[str]] = {}
+    current_section: str | None = None
+
+    with config_path.open(encoding="utf-8") as handle:
+        for line_number, raw_line in enumerate(handle, start=1):
+            line = raw_line.strip()
+            if not line or line.startswith("#"):
+                continue
+            if line.startswith(">"):
+                current_section = line[1:].strip()
+                if not current_section:
+                    raise ValueError(f"empty section name at line {line_number}")
+                sections.setdefault(current_section, [])
+                continue
+            if current_section is None:
+                raise ValueError(f"value before first section header at line {line_number}")
+            sections[current_section].append(line)
+
+    return sections
+
+
+def _parse_items(lines: list[str]) -> list[str]:
+    """Split comma-separated config lines into stripped items."""
+    items = []
+    for line in lines:
+        items.extend(item.strip() for item in line.split(",") if item.strip())
+
+    return items
+
+
+def _parse_int_list(lines: list[str]) -> tuple[int, ...]:
+    """Parse a section as a tuple of integers."""
+    values = tuple(int(item) for item in _parse_items(lines))
+    if not values:
+        raise ValueError("expected at least one integer value")
+
+    return values
+
+
+def _parse_float_list(lines: list[str]) -> tuple[float, ...]:
+    """Parse a section as a tuple of floats."""
+    values = tuple(float(item) for item in _parse_items(lines))
+    if not values:
+        raise ValueError("expected at least one float value")
+
+    return values
+
+
+def _parse_rate_triples(lines: list[str]) -> tuple[SimulationRates, ...]:
+    """Parse a DTL-rate section as one triple per non-empty line."""
+    triples = []
+    for line in lines:
+        values = tuple(float(item.strip()) for item in line.split(",") if item.strip())
+        if len(values) != 3:
+            raise ValueError(f"expected a DTL triple, got {line!r}")
+        triples.append(values)
+    if not triples:
+        raise ValueError("expected at least one DTL-rate triple")
+
+    return tuple(triples)
+
+
+def _parse_optional_string_list(lines: list[str]) -> tuple[str | None, ...]:
+    """Parse transfer-bias modes, accepting ``None``/``null`` for unbiased transfer."""
+    values = []
+    for item in _parse_items(lines):
+        values.append(None if item.lower() in ("none", "null") else item)
+    if not values:
+        raise ValueError("expected at least one transfer-distance bias mode")
+
+    return tuple(values)
+
+
+def _parse_single_int(lines: list[str], section_name: str) -> int:
+    """Parse a section containing exactly one integer value."""
+    values = _parse_int_list(lines)
+    if len(values) != 1:
+        raise ValueError(f"{section_name} expects exactly one integer")
+
+    return values[0]
+
+
+def _parse_single_string(lines: list[str], section_name: str) -> str:
+    """Parse a section containing exactly one string value."""
+    values = _parse_items(lines)
+    if len(values) != 1:
+        raise ValueError(f"{section_name} expects exactly one value")
+
+    return values[0]
+
+
+def _default_output_dir() -> Path:
+    """Return a dated output directory path that does not currently exist."""
+    stem = f"simulations_{date.today().isoformat()}"
+    index = 1
+    candidate = Path(f"{stem}_{index}")
+    while candidate.exists():
+        index += 1
+        candidate = Path(f"{stem}_{index}")
+
+    return candidate
 
 
 def _write_outputs(
@@ -366,20 +559,41 @@ def _write_outputs(
 ) -> None:
     """Write the example outputs to CSV files in all supported tree formats."""
     output_dir.mkdir(parents=True, exist_ok=True)
-    host_trees.to_csv(output_dir / "host_trees.tsv", header=True, sep= '\t')
-    host_trees_simple.to_csv(output_dir / "host_trees_simple.tsv", header=True, sep= '\t')
+    host_trees.to_csv(output_dir / "host_trees.tsv", header=True, sep="\t")
+    host_trees_simple.to_csv(output_dir / "host_trees_simple.tsv", header=True, sep="\t")
     host_trees_simple_dated.to_csv(
         output_dir / "host_trees_simple_dated.tsv",
-        header=True, sep= '\t')
-    symbiont_trees.to_csv(output_dir / "symbiont_scenarios.tsv", sep= '\t')
-    symbiont_trees_simple.to_csv(output_dir / "symbiont_scenarios_simple.tsv", sep= '\t')
-    symbiont_trees_simple_dated.to_csv(output_dir / "symbiont_scenarios_simple_dated.tsv", sep= '\t')
-    species_trees.to_csv(output_dir / "species_trees.tsv", sep= '\t')
-    species_trees_simple.to_csv(output_dir / "species_trees_simple.tsv", sep= '\t')
-    species_trees_simple_dated.to_csv(output_dir / "species_trees_simple_dated.tsv", sep= '\t')
+        header=True,
+        sep="\t",
+    )
+    symbiont_trees.to_csv(output_dir / "symbiont_scenarios.tsv", sep="\t")
+    symbiont_trees_simple.to_csv(output_dir / "symbiont_scenarios_simple.tsv", sep="\t")
+    symbiont_trees_simple_dated.to_csv(
+        output_dir / "symbiont_scenarios_simple_dated.tsv",
+        sep="\t",
+    )
+    species_trees.to_csv(output_dir / "species_trees.tsv", sep="\t")
+    species_trees_simple.to_csv(output_dir / "species_trees_simple.tsv", sep="\t")
+    species_trees_simple_dated.to_csv(output_dir / "species_trees_simple_dated.tsv", sep="\t")
 
 
+def main(argv: Sequence[str] | None = None) -> int:
+    """Run simulations from a config file."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "config_file",
+        type=Path,
+        help="Path to a simulation config file using '> section' headers.",
+    )
+    args = parser.parse_args(argv)
 
-host_series, symbiont_dataframe = run_example_simulations(output_dir= 'simulations/')
-print(host_series.head())
-print(symbiont_dataframe.head())
+    config = read_simulation_config(args.config_file)
+    host_series, symbiont_dataframe = run_example_simulations(**config)
+    print(host_series.head())
+    print(symbiont_dataframe.head())
+
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,18 @@
+> host_n_species
+5, 10, 30
+
+> symbiont_dtl_rates
+0.133, 0.266, 0.266
+0.3, 0.6, 0.6
+0.6, 1.2, 1.2
+
+> gene_dtl_rates
+0.133, 0.266, 0.266
+0.3, 0.6, 0.6
+0.6, 1.2, 1.2
+
+> replace_probabilities
+0.0, 0.5, 1.0
+
+> n_simulations
+5

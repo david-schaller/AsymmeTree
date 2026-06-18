@@ -22,7 +22,7 @@
 
   - [ ] to provide input parameters, let's provide an input file with parameters.
 
-- [ ] Also output a file describing the output (number of trees)
+- [ ] ~~Also output a file describing the output (number of trees)~~
 
 - [ ] If output directory is non-specified, generate a new one with date and unique number.
 

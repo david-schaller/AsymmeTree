@@ -66,8 +66,55 @@ Te current implementation of the auxiliary tree is incorrect
 - [x] Proceed with the implementation plan in the file  [implemented.md](implemented.md), section 'Refactor plan without interactor collection' (lines 261-274)
 - [x] Remove the redundant `_gamma_star_at()` call inside `_host_system_summary()` and use a direct host-edge activity check instead.
 - [x] Remove the redundant coexistence-plus-host-system double filtering in `_sample_recipient()` and derive `valid_species` directly from `host_system_edges` for host-system donors.
-- [ ] Update rate refreshing so it follows the new rationale `\Gamma \in E(T_A)` for affected auxiliary-tree branches and their host systems.
-  - [ ] Improve the theoretical description of how event times, event types, and the affected branches are drawn from the current rates together with the next fixed species-tree event.
-  - [ ] Keep the new rationale for `\Gamma`, i.e. treat it as the set of affected auxiliary-tree branches that determines which host systems should have their rates refreshed after an event.
-  - [ ] Ensure theoretical consistency across `The big picture`, `Where to update rates`, and the rate-update sections, and add a concrete implementation plan for changing the code from global refresh to `\Gamma`-restricted refresh.
+- [x] Update rate refreshing so it follows the new rationale `\Gamma \in E(T_A)` for affected auxiliary-tree branches and their host systems.
+  - [x] Improve the theoretical description of how event times, event types, and the affected branches are drawn from the current rates together with the next fixed species-tree event.
+  - [x] Keep the new rationale for `\Gamma`, i.e. treat it as the set of affected auxiliary-tree branches that determines which host systems should have their rates refreshed after an event.
+  - [x] Ensure theoretical consistency across `The big picture`, `Where to update rates`, and the rate-update sections, and add a concrete implementation plan for changing the code from global refresh to `\Gamma`-restricted refresh.
 
+## Improve `example_simulations.py` script
+
+- [x] Separate rates
+
+  In the docstring we have the parameter
+
+  > \- ``symbiont_dtl_rates`` provides candidate ``(duplication, transfer, loss)``
+  >
+  > triples. Each triple is used for the symbiont simulation and then reused for
+  >
+  > the gene-tree simulation inside the resulting auxiliary tree.
+
+  There should be two separated parameters; one for symbiont dtl rates, and one for gene dtl rates.
+
+  Fix this in the code and the docs.
+
+- [x] The script `example_simulations.py` should run standalone
+
+  Since the input parameters are complex, let's use an input file to specify the simulations to perform.
+
+  The input file should be easy to read/write by humans. I recommend something like this:
+
+  > \> host_n_species
+  >
+  > 5, 10, 30
+  >
+  > \> symbiont_dtl_rates
+  >
+  > 0.133, 0.266, 0.266
+  >
+  > 0.3, 0.6, 0.6
+  >
+  > 0.6, 1.2, 1.2
+  >
+  > \> replace_probabilities
+  >
+  > 0.0, 0.5, 1.0
+  >
+  > \> n_simulations
+  >
+  > 5
+
+  The only parameters with default values are:
+
+  - transfer_distance_biases
+  - seed
+  - output_dir (the default value for this is the date of the simulation and an unique integer to avoid colition)
