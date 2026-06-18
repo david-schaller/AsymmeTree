@@ -126,3 +126,14 @@ Te current implementation of the auxiliary tree is incorrect
 - [x] Allow values for `alpha` and `beta` to be passed through `example_simulations.py`.
 
   These should be configurable from the standalone input file and forwarded to the gene-tree simulation inside the auxiliary tree.
+
+- [x] Export host trees as tables and keep host simplified labels plain.
+
+  Host-tree TSV exports should have an explicit `tree_ID` column instead of an unnamed series index.
+  Simplified host-tree formats should use original node labels only, without event labels or
+  reconciliation maps.
+
+- [x] Remove the `species_trees*.tsv` output files.
+
+  The example simulation script should not build or write the long-format `species_trees.tsv`,
+  `species_trees_simple.tsv`, or `species_trees_simple_dated.tsv` outputs.

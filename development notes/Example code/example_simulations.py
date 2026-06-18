@@ -12,10 +12,10 @@ generated. The current script produces one gene-tree realization per parameter
 combination, but conceptually the same auxiliary tree can be reused to produce
 many gene trees.
 
-Each auxiliary tree is also exported in decomposed form: its host component and
-its symbiont component. This makes it possible to inspect the same scenario both
-as one merged three-level object and as the collection of embedded
-host-symbiont scenarios induced by the auxiliary tree.
+Each scenario row also contains the host and symbiont components of the
+auxiliary tree. This makes it possible to inspect the same scenario both as one
+merged three-level object and as the collection of embedded host-symbiont
+scenarios induced by the auxiliary tree.
 
 The input parameters of ``run_example_simulations()`` control a Cartesian
 product of scenarios:
@@ -105,7 +105,7 @@ def run_example_simulations(
     transfer_distance_biases: tuple[str | None, ...] = DEFAULT_TRANSFER_DISTANCE_BIASES,
     seed: int = DEFAULT_SEED,
     output_dir: str | Path | None = None,
-) -> tuple[Series, DataFrame]:
+) -> tuple[DataFrame, DataFrame]:
     """Run the holobiont example simulations.
 
     Args:
@@ -121,8 +121,8 @@ def run_example_simulations(
         output_dir: Optional directory for writing the resulting tables as CSV files.
 
     Returns:
-        A pandas series containing the serialized host trees and a pandas dataframe containing the
-            serialized symbiont, auxiliary, and gene trees for each scenario.
+        A pandas dataframe containing the serialized host trees and a pandas dataframe containing
+            the serialized symbiont, auxiliary, and gene trees for each scenario.
     """
     _load_simulation_dependencies()
     py_random.seed(seed)
@@ -135,9 +135,6 @@ def run_example_simulations(
     symbiont_rows: list[dict[str, object]] = []
     symbiont_rows_simple: list[dict[str, object]] = []
     symbiont_rows_simple_dated: list[dict[str, object]] = []
-    species_rows: list[dict[str, object]] = []
-    species_rows_simple: list[dict[str, object]] = []
-    species_rows_simple_dated: list[dict[str, object]] = []
     total_iterations = _simulation_count(
         host_n_species,
         symbiont_dtl_rates,
@@ -156,19 +153,10 @@ def run_example_simulations(
 
             host_tree = species_tree_n(n_host, innovation=True)
             host_records[host_tree_id] = to_nhx(host_tree)
-            host_records_simple[host_tree_id] = to_simple_newick(host_tree)
-            host_records_simple_dated[host_tree_id] = to_simple_newick(
+            host_records_simple[host_tree_id] = _to_label_only_newick(host_tree)
+            host_records_simple_dated[host_tree_id] = _to_label_only_newick(
                 host_tree,
                 include_distances=True,
-            )
-            _append_species_rows(
-                species_rows,
-                species_rows_simple,
-                species_rows_simple_dated,
-                tree_id=host_tree_id,
-                tree_role="host",
-                tree=host_tree,
-                host_tree_id=host_tree_id,
             )
 
             simulator = HologenomeSimulator(host_tree)
@@ -261,59 +249,16 @@ def run_example_simulations(
                         _to_simple_dated_newick,
                     )
                 )
-                _append_species_rows(
-                    species_rows,
-                    species_rows_simple,
-                    species_rows_simple_dated,
-                    tree_id=f"{scenario_id}.symbiont_unpruned",
-                    tree_role="symbiont_unpruned",
-                    tree=true_trees[0],
-                    host_tree_id=host_tree_id,
-                    scenario_id=scenario_id,
-                )
-                _append_species_rows(
-                    species_rows,
-                    species_rows_simple,
-                    species_rows_simple_dated,
-                    tree_id=f"{scenario_id}.symbiont_pruned",
-                    tree_role="symbiont_pruned",
-                    tree=pruned_trees[0],
-                    host_tree_id=host_tree_id,
-                    scenario_id=scenario_id,
-                )
-                _append_species_rows(
-                    species_rows,
-                    species_rows_simple,
-                    species_rows_simple_dated,
-                    tree_id=f"{scenario_id}.auxiliary_host",
-                    tree_role="auxiliary_host",
-                    tree=simulator.host_component_trees[0],
-                    host_tree_id=host_tree_id,
-                    scenario_id=scenario_id,
-                )
-                _append_species_rows(
-                    species_rows,
-                    species_rows_simple,
-                    species_rows_simple_dated,
-                    tree_id=f"{scenario_id}.auxiliary_symbiont",
-                    tree_role="auxiliary_symbiont",
-                    tree=simulator.symbiont_component_trees[0],
-                    host_tree_id=host_tree_id,
-                    scenario_id=scenario_id,
-                )
                 progress.update(1)
 
-    host_trees = Series(host_records, name="T_host")
-    host_trees_simple = Series(host_records_simple, name="T_host")
-    host_trees_simple_dated = Series(host_records_simple_dated, name="T_host")
+    host_trees = _host_tree_table(host_records)
+    host_trees_simple = _host_tree_table(host_records_simple)
+    host_trees_simple_dated = _host_tree_table(host_records_simple_dated)
     symbiont_trees = DataFrame(symbiont_rows).set_index("scenario_id")
     symbiont_trees_simple = DataFrame(symbiont_rows_simple).set_index("scenario_id")
     symbiont_trees_simple_dated = DataFrame(symbiont_rows_simple_dated).set_index(
         "scenario_id"
     )
-    species_trees = DataFrame(species_rows).set_index("tree_id")
-    species_trees_simple = DataFrame(species_rows_simple).set_index("tree_id")
-    species_trees_simple_dated = DataFrame(species_rows_simple_dated).set_index("tree_id")
 
     if output_dir is not None:
         _write_outputs(
@@ -324,9 +269,6 @@ def run_example_simulations(
             symbiont_trees,
             symbiont_trees_simple,
             symbiont_trees_simple_dated,
-            species_trees,
-            species_trees_simple,
-            species_trees_simple_dated,
         )
 
     return host_trees, symbiont_trees
@@ -359,14 +301,12 @@ def _load_simulation_dependencies() -> None:
     """Load simulation dependencies after CLI argument parsing."""
     global DataFrame
     global HologenomeSimulator
-    global Series
     global species_tree_n
     global tqdm
     global to_nhx
     global to_simple_newick
 
     from pandas import DataFrame as pandas_dataframe
-    from pandas import Series as pandas_series
     from tqdm import tqdm as tqdm_progress
 
     from asymmetree.hologenome import HologenomeSimulator as hologenome_simulator
@@ -376,7 +316,6 @@ def _load_simulation_dependencies() -> None:
 
     DataFrame = pandas_dataframe
     HologenomeSimulator = hologenome_simulator
-    Series = pandas_series
     species_tree_n = simulate_species_tree_n
     tqdm = tqdm_progress
     to_nhx = serialize_nhx
@@ -397,41 +336,39 @@ def _serialize_scenario_row(
     return row
 
 
-def _append_species_rows(
-    rows: list[dict[str, object]],
-    simple_rows: list[dict[str, object]],
-    simple_dated_rows: list[dict[str, object]],
-    *,
-    tree_id: str,
-    tree_role: str,
-    tree: object,
-    host_tree_id: str,
-    scenario_id: str | None = None,
-) -> None:
-    """Append one species-tree row in the three supported output formats."""
-    metadata = {
-        "tree_id": tree_id,
-        "tree_role": tree_role,
-        "host_tree_id": host_tree_id,
-        "scenario_id": scenario_id,
-    }
-
-    rows.append(_species_tree_row(metadata, to_nhx(tree)))
-    simple_rows.append(_species_tree_row(metadata, to_simple_newick(tree)))
-    simple_dated_rows.append(_species_tree_row(metadata, _to_simple_dated_newick(tree)))
-
-
-def _species_tree_row(metadata: dict[str, object], tree: str) -> dict[str, object]:
-    """Create one row of a species-tree table."""
-    row = dict(metadata)
-    row["tree"] = tree
-
-    return row
+def _host_tree_table(records: dict[str, str]) -> DataFrame:
+    """Create a host-tree table with an explicit tree ID column."""
+    return DataFrame(
+        {
+            "tree_ID": list(records.keys()),
+            "T_host": list(records.values()),
+        }
+    )
 
 
 def _to_simple_dated_newick(tree: object) -> str:
     """Serialize a tree in the simplified dated format."""
     return to_simple_newick(tree, include_distances=True)
+
+
+def _to_label_only_newick(tree: object, include_distances: bool = False) -> str:
+    """Serialize a tree using node labels only."""
+
+    def _serialize(node: object) -> str:
+        children = getattr(node, "children", ())
+        label = str(getattr(node, "label", ""))
+
+        if children:
+            token = "({}){}".format(",".join(_serialize(child) for child in children), label)
+        else:
+            token = label
+
+        if include_distances and hasattr(node, "dist"):
+            token += f":{node.dist}"
+
+        return token
+
+    return _serialize(tree.root) + ";"
 
 
 def _scenario_id(
@@ -632,23 +569,26 @@ def _default_output_dir() -> Path:
 
 def _write_outputs(
     output_dir: Path,
-    host_trees: Series,
-    host_trees_simple: Series,
-    host_trees_simple_dated: Series,
+    host_trees: DataFrame,
+    host_trees_simple: DataFrame,
+    host_trees_simple_dated: DataFrame,
     symbiont_trees: DataFrame,
     symbiont_trees_simple: DataFrame,
     symbiont_trees_simple_dated: DataFrame,
-    species_trees: DataFrame,
-    species_trees_simple: DataFrame,
-    species_trees_simple_dated: DataFrame,
 ) -> None:
     """Write the example outputs to CSV files in all supported tree formats."""
     output_dir.mkdir(parents=True, exist_ok=True)
-    host_trees.to_csv(output_dir / "host_trees.tsv", header=True, sep="\t")
-    host_trees_simple.to_csv(output_dir / "host_trees_simple.tsv", header=True, sep="\t")
+    host_trees.to_csv(output_dir / "host_trees.tsv", header=True, index=False, sep="\t")
+    host_trees_simple.to_csv(
+        output_dir / "host_trees_simple.tsv",
+        header=True,
+        index=False,
+        sep="\t",
+    )
     host_trees_simple_dated.to_csv(
         output_dir / "host_trees_simple_dated.tsv",
         header=True,
+        index=False,
         sep="\t",
     )
     symbiont_trees.to_csv(output_dir / "symbiont_scenarios.tsv", sep="\t")
@@ -657,9 +597,6 @@ def _write_outputs(
         output_dir / "symbiont_scenarios_simple_dated.tsv",
         sep="\t",
     )
-    species_trees.to_csv(output_dir / "species_trees.tsv", sep="\t")
-    species_trees_simple.to_csv(output_dir / "species_trees_simple.tsv", sep="\t")
-    species_trees_simple_dated.to_csv(output_dir / "species_trees_simple_dated.tsv", sep="\t")
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -673,8 +610,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     config = read_simulation_config(args.config_file)
-    host_series, symbiont_dataframe = run_example_simulations(**config)
-    print(host_series.head())
+    host_dataframe, symbiont_dataframe = run_example_simulations(**config)
+    print(host_dataframe.head())
     print(symbiont_dataframe.head())
 
     return 0

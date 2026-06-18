@@ -349,3 +349,19 @@ annotations, normalization of gene-node `reconc` values to lower auxiliary-node 
 of nodes by host/symbiont level, suppression of connector nodes, synthetic roots, empty projected
 components, and the fact that retained `reconc` values stay in the prefixed auxiliary-tree label
 system.
+
+### Task: Host-tree export and simplified host labels
+
+Addressed. `example_simulations.py` now builds host-tree outputs as dataframes with an explicit
+`tree_ID` column and writes the three `host_trees*.tsv` files without an unnamed index column.
+Host-only simplified serializers now emit label-only Newick, so a host tree is written like
+`((8,9)7,6)5;` instead of using `EVENT|node->reconc` labels. The generic simplified serializer is
+still used for symbiont, auxiliary, and gene trees where event and reconciliation labels are needed.
+
+### Task: Remove species-tree TSV outputs
+
+Addressed. `example_simulations.py` no longer accumulates long-format species-tree rows and no
+longer writes `species_trees.tsv`, `species_trees_simple.tsv`, or
+`species_trees_simple_dated.tsv`. Host trees are still exported in the three `host_trees*.tsv`
+files, and host/symbiont/auxiliary/gene trees remain available in the wide
+`symbiont_scenarios*.tsv` files.
