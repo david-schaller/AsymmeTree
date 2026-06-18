@@ -340,3 +340,12 @@ Addressed. `example_simulations.py` now pre-computes the full Cartesian-product 
 passes it as the `total` argument to `tqdm`. The progress bar is advanced once per completed
 holobiont scenario. The `tqdm` runtime dependency was added to `pyproject.toml`; `uv.lock` was not
 refreshed because `uv` is not installed in this workspace.
+
+### Task: Projection maps in the theory notes
+
+Addressed. `Math and Algorithms.md` now includes a section describing how the code obtains
+host-side and symbiont-side projections. The description covers auxiliary-tree `level`
+annotations, normalization of gene-node `reconc` values to lower auxiliary-node labels, retention
+of nodes by host/symbiont level, suppression of connector nodes, synthetic roots, empty projected
+components, and the fact that retained `reconc` values stay in the prefixed auxiliary-tree label
+system.

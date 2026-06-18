@@ -164,6 +164,30 @@ for $uv\in E(T_A)$.
 
 We will use the maps $\kappa,\gamma,\gamma',\text{ and } \gamma^*$ during the simulation of a gene tree inside of the auxiliary tree to easily track gene-to-gene interactions.
 
+## Host-side and symbiont-side projections in the code
+
+The implementation stores the host and symbiont components inside the auxiliary tree by adding a `level` annotation to every auxiliary-tree node. Host nodes have `level="host"`, symbiont nodes have `level="symbiont"`, and the artificial connector nodes have `level="auxiliary"`. To avoid label collisions, host labels are prefixed with `H` and symbiont labels with `S`.
+
+The auxiliary-tree projection is a component extraction. For a requested level $\ell\in\{\text{host},\text{symbiont}\}$, the code finds the first node whose `level` is $\ell$ and whose parent is not also at level $\ell$. The subtree rooted at this node is copied and detached. Thus, the projected host tree $T_A^{H}$ and symbiont tree $T_A^{S}$ are not recomputed from scratch; they are copied component subtrees of $T_A$ with the annotations and prefixed labels inherited from the auxiliary tree.
+
+For gene trees, the projection uses the reconciliation map stored in the `reconc` attribute of every gene-tree node. In the code, a reconciliation value can be either a node label or an edge represented by a tuple of labels. The projection first normalizes this value by taking the last element of the tuple, i.e. the lower endpoint of the reconciled auxiliary-tree edge. We can write this key as
+$$
+k(x)=
+\begin{cases}
+v, & \text{if } \mu(x)=(u,v)\in E(T_A),\\
+\mu(x), & \text{if } \mu(x)\in V(T_A).
+\end{cases}
+$$
+Then the code looks up the auxiliary level of $k(x)$. A gene-tree node $x$ belongs to the host-side projection if $k(x)$ is a host node of $T_A$, and it belongs to the symbiont-side projection if $k(x)$ is a symbiont node of $T_A$.
+
+The projected gene trees are therefore component restrictions of the simulated gene tree:
+$$
+V(T_G^\ell)=\{x\in V(T_G)\mid \operatorname{level}_A(k(x))=\ell\}
+$$
+for $\ell\in\{\text{host},\text{symbiont}\}$, with the practical tree cleanup described below. Nodes outside the requested level are treated as connectors. If such a connector has no retained descendants, it is removed. If it has one retained descendant, it is suppressed and the retained descendant is attached upward. If it has several retained descendants, the code creates a synthetic root for that projected gene tree, with label `host_gene_root` or `symbiont_gene_root`, so the result remains a valid rooted tree.
+
+All non-structural node attributes of retained gene-tree nodes are copied, including `event`, `reconc`, `tstamp`, `transferred`, and `level` when present. In particular, the code does not currently relabel the reconciliation map into an unprefixed component-local coordinate system; the `reconc` values remain the prefixed auxiliary labels or edge labels inherited from the full auxiliary-tree simulation. If a projected side has no retained gene-tree nodes, a serializable placeholder node is created with label `host_gene_empty` or `symbiont_gene_empty`.
+
 ## Track gene-gene interactions
 
 > [!IMPORTANT]

@@ -31,6 +31,8 @@ All AI notes and explanations should be written in `implemented.md`.
     > reserve.
 
     why to choose 2 and 3 from a theoretical point of view under the same arguments above?
+    
+- [x] Describe in the theoretical markdown how projection of maps are handled in the code. Since you write in the documentation 'the host-side and symbiont-side projections of those gene trees'.
 
 
 ## Correct auxiliary tree in code
