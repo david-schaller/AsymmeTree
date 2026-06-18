@@ -11,6 +11,12 @@
 0.3, 0.6, 0.6
 0.6, 1.2, 1.2
 
+> alpha_values
+0 0.25 0.5
+
+> beta_values
+0
+
 > replace_probabilities
 0.0, 0.5, 1.0
 

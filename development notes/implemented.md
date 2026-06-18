@@ -325,3 +325,11 @@ The script can now be run as a standalone command with a human-editable config f
 imports until after CLI parsing, so `python3 example_simulations.py --help` works even in a partial
 environment. An end-to-end simulation was not run here because `pandas` is not installed in this
 workspace.
+
+### Alpha and beta in example simulations
+
+`example_simulations.py` now accepts `alpha_values` and `beta_values` as optional simulation-grid
+parameters. Config files can provide floats or `default`/`None`; the default value keeps the
+underlying `holoevolve` simulator behavior, where `alpha` and `beta` are derived from the gene
+loss rate. Provided values are forwarded only to `simulate_gene_trees()`, because they control
+host-system loss-rate refresh inside the auxiliary tree rather than symbiont-tree simulation.

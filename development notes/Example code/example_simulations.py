@@ -26,12 +26,15 @@ product of scenarios:
   triples for the symbiont-tree simulations.
 - ``gene_dtl_rates`` provides candidate ``(duplication, transfer, loss)``
   triples for the gene-tree simulations inside the resulting auxiliary tree.
+- ``alpha_values`` and ``beta_values`` provide candidate host-system loss-rate
+  normalization factors for the gene-tree simulations.
 - ``replace_probabilities`` provides candidate probabilities for replacing HGT
   events.
 - ``transfer_distance_biases`` provides candidate recipient-bias modes for
   transfer events.
 - ``n_simulations`` gives the number of repeated draws for every combination of
-  symbiont rates, gene rates, replacement probability, and transfer bias.
+  symbiont rates, gene rates, alpha, beta, replacement probability, and
+  transfer bias.
 - ``seed`` initializes both Python's ``random`` module and NumPy's random
   generator so the full run is reproducible.
 - ``output_dir`` optionally selects where the generated tables are written.
@@ -40,13 +43,13 @@ The total number of simulated holobiont scenarios is:
 
 ``len(host_n_species)``
 times
-``len(symbiont_dtl_rates) * len(gene_dtl_rates) * len(replace_probabilities)``
+``len(symbiont_dtl_rates) * len(gene_dtl_rates) * len(alpha_values)``
 times
-``len(transfer_distance_biases) * n_simulations``
+``len(beta_values) * len(replace_probabilities) * len(transfer_distance_biases) * n_simulations``
 
 That is, each host tree is combined with every symbiont-rate triple, every
-gene-rate triple, every replacement probability, every transfer-bias mode, and
-every repetition index.
+gene-rate triple, every alpha value, every beta value, every replacement
+probability, every transfer-bias mode, and every repetition index.
 
 For each holobiont scenario, the outputs store:
 
@@ -59,7 +62,8 @@ For each holobiont scenario, the outputs store:
 When run as a script, pass a config file with ``> section`` headers. The
 required sections are ``host_n_species``, ``symbiont_dtl_rates``,
 ``gene_dtl_rates``, ``replace_probabilities``, and ``n_simulations``. Optional
-sections are ``transfer_distance_biases``, ``seed``, and ``output_dir``.
+sections are ``alpha_values``, ``beta_values``, ``transfer_distance_biases``,
+``seed``, and ``output_dir``.
 """
 
 from __future__ import annotations
@@ -76,7 +80,10 @@ import numpy.random as np_random
 
 
 SimulationRates = tuple[float, float, float]
+OptionalRate = float | None
 DEFAULT_TRANSFER_DISTANCE_BIASES = (None, "exponential")
+DEFAULT_ALPHA_VALUES = (None,)
+DEFAULT_BETA_VALUES = (None,)
 DEFAULT_SEED = 13042026
 REQUIRED_CONFIG_KEYS = {
     "host_n_species",
@@ -93,6 +100,8 @@ def run_example_simulations(
     gene_dtl_rates: tuple[SimulationRates, ...],
     replace_probabilities: tuple[float, ...],
     n_simulations: int,
+    alpha_values: tuple[OptionalRate, ...] = DEFAULT_ALPHA_VALUES,
+    beta_values: tuple[OptionalRate, ...] = DEFAULT_BETA_VALUES,
     transfer_distance_biases: tuple[str | None, ...] = DEFAULT_TRANSFER_DISTANCE_BIASES,
     seed: int = DEFAULT_SEED,
     output_dir: str | Path | None = None,
@@ -103,6 +112,8 @@ def run_example_simulations(
         host_n_species: Numbers of host leaves for the host-tree simulations.
         symbiont_dtl_rates: Duplication, transfer, and loss rates for the symbiont simulations.
         gene_dtl_rates: Duplication, transfer, and loss rates for the gene-tree simulations.
+        alpha_values: Symbiont-side normalization factors for host-system loss refresh.
+        beta_values: Host-side normalization factors for host-system loss refresh.
         replace_probabilities: Probabilities for replacing-transfer events.
         transfer_distance_biases: Transfer-recipient bias modes.
         n_simulations: Number of repetitions for each parameter combination.
@@ -154,12 +165,16 @@ def run_example_simulations(
         for (
             symbiont_rates,
             gene_rates,
+            alpha,
+            beta,
             replace_probability,
             transfer_distance_bias,
             simulation_index,
         ) in product(
             symbiont_dtl_rates,
             gene_dtl_rates,
+            alpha_values,
+            beta_values,
             replace_probabilities,
             transfer_distance_biases,
             range(n_simulations),
@@ -180,12 +195,16 @@ def run_example_simulations(
                 prohibit_extinction="per_family",
                 replace_prob=replace_probability,
                 transfer_distance_bias=transfer_distance_bias,
+                alpha=alpha,
+                beta=beta,
             )
 
             scenario_id = _scenario_id(
                 host_tree_id,
                 symbiont_rates,
                 gene_rates,
+                alpha,
+                beta,
                 replace_probability,
                 transfer_distance_bias,
                 simulation_index,
@@ -200,6 +219,8 @@ def run_example_simulations(
                 "gene_dupl_rate": gene_rates[0],
                 "gene_hgt_rate": gene_rates[1],
                 "gene_loss_rate": gene_rates[2],
+                "alpha": alpha,
+                "beta": beta,
                 "replace_prob": replace_probability,
                 "transfer_distance_bias": transfer_distance_bias,
                 "simulation_index": simulation_index,
@@ -379,6 +400,8 @@ def _scenario_id(
     host_tree_id: str,
     symbiont_rates: SimulationRates,
     gene_rates: SimulationRates,
+    alpha: OptionalRate,
+    beta: OptionalRate,
     replace_probability: float,
     transfer_distance_bias: str | None,
     simulation_index: int,
@@ -393,6 +416,8 @@ def _scenario_id(
             f"gd{_scaled_rate(gene_rates[0])}",
             f"gt{_scaled_rate(gene_rates[1])}",
             f"gl{_scaled_rate(gene_rates[2])}",
+            f"a{_scaled_optional_rate(alpha)}",
+            f"be{_scaled_optional_rate(beta)}",
             f"r{_scaled_rate(replace_probability)}",
             f"b{transfer_distance_bias or 'none'}",
             f"i{simulation_index}",
@@ -403,6 +428,11 @@ def _scenario_id(
 def _scaled_rate(value: float) -> int:
     """Scale a rate for inclusion in the scenario identifier."""
     return int(round(100 * value))
+
+
+def _scaled_optional_rate(value: OptionalRate) -> str:
+    """Scale an optional rate for inclusion in the scenario identifier."""
+    return "default" if value is None else str(_scaled_rate(value))
 
 
 def read_simulation_config(config_path: str | Path) -> dict[str, object]:
@@ -423,11 +453,17 @@ def read_simulation_config(config_path: str | Path) -> dict[str, object]:
         "gene_dtl_rates": _parse_rate_triples(sections["gene_dtl_rates"]),
         "replace_probabilities": _parse_float_list(sections["replace_probabilities"]),
         "n_simulations": _parse_single_int(sections["n_simulations"], "n_simulations"),
+        "alpha_values": DEFAULT_ALPHA_VALUES,
+        "beta_values": DEFAULT_BETA_VALUES,
         "transfer_distance_biases": DEFAULT_TRANSFER_DISTANCE_BIASES,
         "seed": DEFAULT_SEED,
         "output_dir": _default_output_dir(),
     }
 
+    if "alpha_values" in sections:
+        config["alpha_values"] = _parse_optional_float_list(sections["alpha_values"])
+    if "beta_values" in sections:
+        config["beta_values"] = _parse_optional_float_list(sections["beta_values"])
     if "transfer_distance_biases" in sections:
         config["transfer_distance_biases"] = _parse_optional_string_list(
             sections["transfer_distance_biases"]
@@ -488,6 +524,17 @@ def _parse_float_list(lines: list[str]) -> tuple[float, ...]:
         raise ValueError("expected at least one float value")
 
     return values
+
+
+def _parse_optional_float_list(lines: list[str]) -> tuple[OptionalRate, ...]:
+    """Parse floats, accepting ``default``/``None`` for simulator defaults."""
+    values = []
+    for item in _parse_items(lines):
+        values.append(None if item.lower() in ("default", "none", "null") else float(item))
+    if not values:
+        raise ValueError("expected at least one float value or default")
+
+    return tuple(values)
 
 
 def _parse_rate_triples(lines: list[str]) -> tuple[SimulationRates, ...]:

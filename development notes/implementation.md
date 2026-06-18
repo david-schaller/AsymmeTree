@@ -115,6 +115,12 @@ Te current implementation of the auxiliary tree is incorrect
 
   The only parameters with default values are:
 
+  - alpha_values
+  - beta_values
   - transfer_distance_biases
   - seed
   - output_dir (the default value for this is the date of the simulation and an unique integer to avoid colition)
+
+- [x] Allow values for `alpha` and `beta` to be passed through `example_simulations.py`.
+
+  These should be configurable from the standalone input file and forwarded to the gene-tree simulation inside the auxiliary tree.
