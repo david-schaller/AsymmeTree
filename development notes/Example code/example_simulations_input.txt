@@ -1,5 +1,5 @@
 > host_n_species
-5, 10, 30
+5, 10, 50
 
 > symbiont_dtl_rates
 0.133, 0.266, 0.266
