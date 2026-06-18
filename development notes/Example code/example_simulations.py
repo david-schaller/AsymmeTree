@@ -138,69 +138,42 @@ def run_example_simulations(
     species_rows: list[dict[str, object]] = []
     species_rows_simple: list[dict[str, object]] = []
     species_rows_simple_dated: list[dict[str, object]] = []
+    total_iterations = _simulation_count(
+        host_n_species,
+        symbiont_dtl_rates,
+        gene_dtl_rates,
+        alpha_values,
+        beta_values,
+        replace_probabilities,
+        transfer_distance_biases,
+        n_simulations,
+    )
 
-    for n_host in host_n_species:
-        host_counts[n_host] = host_counts.get(n_host, 0) + 1
-        host_tree_id = f"N{n_host}.{host_counts[n_host]}"
+    with tqdm(total=total_iterations, desc="Simulating scenarios", unit="scenario") as progress:
+        for n_host in host_n_species:
+            host_counts[n_host] = host_counts.get(n_host, 0) + 1
+            host_tree_id = f"N{n_host}.{host_counts[n_host]}"
 
-        host_tree = species_tree_n(n_host, innovation=True)
-        host_records[host_tree_id] = to_nhx(host_tree)
-        host_records_simple[host_tree_id] = to_simple_newick(host_tree)
-        host_records_simple_dated[host_tree_id] = to_simple_newick(
-            host_tree,
-            include_distances=True,
-        )
-        _append_species_rows(
-            species_rows,
-            species_rows_simple,
-            species_rows_simple_dated,
-            tree_id=host_tree_id,
-            tree_role="host",
-            tree=host_tree,
-            host_tree_id=host_tree_id,
-        )
-
-        simulator = HologenomeSimulator(host_tree)
-
-        for (
-            symbiont_rates,
-            gene_rates,
-            alpha,
-            beta,
-            replace_probability,
-            transfer_distance_bias,
-            simulation_index,
-        ) in product(
-            symbiont_dtl_rates,
-            gene_dtl_rates,
-            alpha_values,
-            beta_values,
-            replace_probabilities,
-            transfer_distance_biases,
-            range(n_simulations),
-        ):
-            true_trees, pruned_trees, auxiliary_trees = simulator.simulate_symbiont_trees(
-                1,
-                dupl_rate=symbiont_rates[0],
-                hgt_rate=symbiont_rates[1],
-                loss_rate=symbiont_rates[2],
-                prohibit_extinction="per_family",
-                replace_prob=replace_probability,
-                transfer_distance_bias=transfer_distance_bias,
+            host_tree = species_tree_n(n_host, innovation=True)
+            host_records[host_tree_id] = to_nhx(host_tree)
+            host_records_simple[host_tree_id] = to_simple_newick(host_tree)
+            host_records_simple_dated[host_tree_id] = to_simple_newick(
+                host_tree,
+                include_distances=True,
             )
-            true_gene_trees, pruned_gene_trees = simulator.simulate_gene_trees(
-                dupl_rate=gene_rates[0],
-                hgt_rate=gene_rates[1],
-                loss_rate=gene_rates[2],
-                prohibit_extinction="per_family",
-                replace_prob=replace_probability,
-                transfer_distance_bias=transfer_distance_bias,
-                alpha=alpha,
-                beta=beta,
+            _append_species_rows(
+                species_rows,
+                species_rows_simple,
+                species_rows_simple_dated,
+                tree_id=host_tree_id,
+                tree_role="host",
+                tree=host_tree,
+                host_tree_id=host_tree_id,
             )
 
-            scenario_id = _scenario_id(
-                host_tree_id,
+            simulator = HologenomeSimulator(host_tree)
+
+            for (
                 symbiont_rates,
                 gene_rates,
                 alpha,
@@ -208,88 +181,127 @@ def run_example_simulations(
                 replace_probability,
                 transfer_distance_bias,
                 simulation_index,
-            )
-
-            metadata = {
-                "scenario_id": scenario_id,
-                "host_tree_id": host_tree_id,
-                "symbiont_dupl_rate": symbiont_rates[0],
-                "symbiont_hgt_rate": symbiont_rates[1],
-                "symbiont_loss_rate": symbiont_rates[2],
-                "gene_dupl_rate": gene_rates[0],
-                "gene_hgt_rate": gene_rates[1],
-                "gene_loss_rate": gene_rates[2],
-                "alpha": alpha,
-                "beta": beta,
-                "replace_prob": replace_probability,
-                "transfer_distance_bias": transfer_distance_bias,
-                "simulation_index": simulation_index,
-            }
-            scenario_trees = {
-                "T_symbiont_unpruned": true_trees[0],
-                "T_symbiont_pruned": pruned_trees[0],
-                "T_auxiliary": auxiliary_trees[0],
-                "T_gene_unpruned": true_gene_trees[0],
-                "T_gene_pruned": pruned_gene_trees[0],
-                "T_auxiliary_host": simulator.host_component_trees[0],
-                "T_auxiliary_symbiont": simulator.symbiont_component_trees[0],
-                "T_gene_host_unpruned": simulator.true_host_gene_trees[0],
-                "T_gene_symbiont_unpruned": simulator.true_symbiont_gene_trees[0],
-                "T_gene_host_pruned": simulator.pruned_host_gene_trees[0],
-                "T_gene_symbiont_pruned": simulator.pruned_symbiont_gene_trees[0],
-            }
-
-            symbiont_rows.append(_serialize_scenario_row(metadata, scenario_trees, to_nhx))
-            symbiont_rows_simple.append(
-                _serialize_scenario_row(metadata, scenario_trees, to_simple_newick)
-            )
-            symbiont_rows_simple_dated.append(
-                _serialize_scenario_row(
-                    metadata,
-                    scenario_trees,
-                    _to_simple_dated_newick,
+            ) in product(
+                symbiont_dtl_rates,
+                gene_dtl_rates,
+                alpha_values,
+                beta_values,
+                replace_probabilities,
+                transfer_distance_biases,
+                range(n_simulations),
+            ):
+                true_trees, pruned_trees, auxiliary_trees = simulator.simulate_symbiont_trees(
+                    1,
+                    dupl_rate=symbiont_rates[0],
+                    hgt_rate=symbiont_rates[1],
+                    loss_rate=symbiont_rates[2],
+                    prohibit_extinction="per_family",
+                    replace_prob=replace_probability,
+                    transfer_distance_bias=transfer_distance_bias,
                 )
-            )
-            _append_species_rows(
-                species_rows,
-                species_rows_simple,
-                species_rows_simple_dated,
-                tree_id=f"{scenario_id}.symbiont_unpruned",
-                tree_role="symbiont_unpruned",
-                tree=true_trees[0],
-                host_tree_id=host_tree_id,
-                scenario_id=scenario_id,
-            )
-            _append_species_rows(
-                species_rows,
-                species_rows_simple,
-                species_rows_simple_dated,
-                tree_id=f"{scenario_id}.symbiont_pruned",
-                tree_role="symbiont_pruned",
-                tree=pruned_trees[0],
-                host_tree_id=host_tree_id,
-                scenario_id=scenario_id,
-            )
-            _append_species_rows(
-                species_rows,
-                species_rows_simple,
-                species_rows_simple_dated,
-                tree_id=f"{scenario_id}.auxiliary_host",
-                tree_role="auxiliary_host",
-                tree=simulator.host_component_trees[0],
-                host_tree_id=host_tree_id,
-                scenario_id=scenario_id,
-            )
-            _append_species_rows(
-                species_rows,
-                species_rows_simple,
-                species_rows_simple_dated,
-                tree_id=f"{scenario_id}.auxiliary_symbiont",
-                tree_role="auxiliary_symbiont",
-                tree=simulator.symbiont_component_trees[0],
-                host_tree_id=host_tree_id,
-                scenario_id=scenario_id,
-            )
+                true_gene_trees, pruned_gene_trees = simulator.simulate_gene_trees(
+                    dupl_rate=gene_rates[0],
+                    hgt_rate=gene_rates[1],
+                    loss_rate=gene_rates[2],
+                    prohibit_extinction="per_family",
+                    replace_prob=replace_probability,
+                    transfer_distance_bias=transfer_distance_bias,
+                    alpha=alpha,
+                    beta=beta,
+                )
+
+                scenario_id = _scenario_id(
+                    host_tree_id,
+                    symbiont_rates,
+                    gene_rates,
+                    alpha,
+                    beta,
+                    replace_probability,
+                    transfer_distance_bias,
+                    simulation_index,
+                )
+
+                metadata = {
+                    "scenario_id": scenario_id,
+                    "host_tree_id": host_tree_id,
+                    "symbiont_dupl_rate": symbiont_rates[0],
+                    "symbiont_hgt_rate": symbiont_rates[1],
+                    "symbiont_loss_rate": symbiont_rates[2],
+                    "gene_dupl_rate": gene_rates[0],
+                    "gene_hgt_rate": gene_rates[1],
+                    "gene_loss_rate": gene_rates[2],
+                    "alpha": alpha,
+                    "beta": beta,
+                    "replace_prob": replace_probability,
+                    "transfer_distance_bias": transfer_distance_bias,
+                    "simulation_index": simulation_index,
+                }
+                scenario_trees = {
+                    "T_symbiont_unpruned": true_trees[0],
+                    "T_symbiont_pruned": pruned_trees[0],
+                    "T_auxiliary": auxiliary_trees[0],
+                    "T_gene_unpruned": true_gene_trees[0],
+                    "T_gene_pruned": pruned_gene_trees[0],
+                    "T_auxiliary_host": simulator.host_component_trees[0],
+                    "T_auxiliary_symbiont": simulator.symbiont_component_trees[0],
+                    "T_gene_host_unpruned": simulator.true_host_gene_trees[0],
+                    "T_gene_symbiont_unpruned": simulator.true_symbiont_gene_trees[0],
+                    "T_gene_host_pruned": simulator.pruned_host_gene_trees[0],
+                    "T_gene_symbiont_pruned": simulator.pruned_symbiont_gene_trees[0],
+                }
+
+                symbiont_rows.append(_serialize_scenario_row(metadata, scenario_trees, to_nhx))
+                symbiont_rows_simple.append(
+                    _serialize_scenario_row(metadata, scenario_trees, to_simple_newick)
+                )
+                symbiont_rows_simple_dated.append(
+                    _serialize_scenario_row(
+                        metadata,
+                        scenario_trees,
+                        _to_simple_dated_newick,
+                    )
+                )
+                _append_species_rows(
+                    species_rows,
+                    species_rows_simple,
+                    species_rows_simple_dated,
+                    tree_id=f"{scenario_id}.symbiont_unpruned",
+                    tree_role="symbiont_unpruned",
+                    tree=true_trees[0],
+                    host_tree_id=host_tree_id,
+                    scenario_id=scenario_id,
+                )
+                _append_species_rows(
+                    species_rows,
+                    species_rows_simple,
+                    species_rows_simple_dated,
+                    tree_id=f"{scenario_id}.symbiont_pruned",
+                    tree_role="symbiont_pruned",
+                    tree=pruned_trees[0],
+                    host_tree_id=host_tree_id,
+                    scenario_id=scenario_id,
+                )
+                _append_species_rows(
+                    species_rows,
+                    species_rows_simple,
+                    species_rows_simple_dated,
+                    tree_id=f"{scenario_id}.auxiliary_host",
+                    tree_role="auxiliary_host",
+                    tree=simulator.host_component_trees[0],
+                    host_tree_id=host_tree_id,
+                    scenario_id=scenario_id,
+                )
+                _append_species_rows(
+                    species_rows,
+                    species_rows_simple,
+                    species_rows_simple_dated,
+                    tree_id=f"{scenario_id}.auxiliary_symbiont",
+                    tree_role="auxiliary_symbiont",
+                    tree=simulator.symbiont_component_trees[0],
+                    host_tree_id=host_tree_id,
+                    scenario_id=scenario_id,
+                )
+                progress.update(1)
 
     host_trees = Series(host_records, name="T_host")
     host_trees_simple = Series(host_records_simple, name="T_host")
@@ -320,17 +332,42 @@ def run_example_simulations(
     return host_trees, symbiont_trees
 
 
+def _simulation_count(
+    host_n_species: Sequence[int],
+    symbiont_dtl_rates: Sequence[SimulationRates],
+    gene_dtl_rates: Sequence[SimulationRates],
+    alpha_values: Sequence[OptionalRate],
+    beta_values: Sequence[OptionalRate],
+    replace_probabilities: Sequence[float],
+    transfer_distance_biases: Sequence[str | None],
+    n_simulations: int,
+) -> int:
+    """Return the number of scenario iterations in the Cartesian product."""
+    return (
+        len(host_n_species)
+        * len(symbiont_dtl_rates)
+        * len(gene_dtl_rates)
+        * len(alpha_values)
+        * len(beta_values)
+        * len(replace_probabilities)
+        * len(transfer_distance_biases)
+        * n_simulations
+    )
+
+
 def _load_simulation_dependencies() -> None:
     """Load simulation dependencies after CLI argument parsing."""
     global DataFrame
     global HologenomeSimulator
     global Series
     global species_tree_n
+    global tqdm
     global to_nhx
     global to_simple_newick
 
     from pandas import DataFrame as pandas_dataframe
     from pandas import Series as pandas_series
+    from tqdm import tqdm as tqdm_progress
 
     from asymmetree.hologenome import HologenomeSimulator as hologenome_simulator
     from asymmetree.hologenome import to_nhx as serialize_nhx
@@ -341,6 +378,7 @@ def _load_simulation_dependencies() -> None:
     HologenomeSimulator = hologenome_simulator
     Series = pandas_series
     species_tree_n = simulate_species_tree_n
+    tqdm = tqdm_progress
     to_nhx = serialize_nhx
     to_simple_newick = serialize_simple_newick
 

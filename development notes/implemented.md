@@ -333,3 +333,10 @@ parameters. Config files can provide floats or `default`/`None`; the default val
 underlying `holoevolve` simulator behavior, where `alpha` and `beta` are derived from the gene
 loss rate. Provided values are forwarded only to `simulate_gene_trees()`, because they control
 host-system loss-rate refresh inside the auxiliary tree rather than symbiont-tree simulation.
+
+### Task: TQDM progress bar for example simulations
+
+Addressed. `example_simulations.py` now pre-computes the full Cartesian-product scenario count and
+passes it as the `total` argument to `tqdm`. The progress bar is advanced once per completed
+holobiont scenario. The `tqdm` runtime dependency was added to `pyproject.toml`; `uv.lock` was not
+refreshed because `uv` is not installed in this workspace.

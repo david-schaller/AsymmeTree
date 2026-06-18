@@ -1,4 +1,4 @@
-- [ ] I Have to adjust the parameters of $\alpha$ and $\beta$ in order to generate evolutionary histories with only 'host keps' and only 'symbiont keeps' simulations.
+- [x] I Have to adjust the parameters of $\alpha$ and $\beta$ in order to generate evolutionary histories with only 'host keps' and only 'symbiont keeps' simulations.
 - [ ] Change parameters for the number of simulations:
   - how many species trees? hoy many replications per species tree? how many simbionts? 
   - define these numebrs based on Sanchita data
@@ -8,7 +8,7 @@
 
 ---
 
-- [ ] Add a new task to correct `example_simulations.py`
+- [x] Add a new task to correct `example_simulations.py`
 
   Separate rates bellow
 
@@ -18,13 +18,13 @@
   >
   >   the gene-tree simulation inside the resulting auxiliary tree.
 
-- [ ] `example_simulations.py` standalone
+- [x] `example_simulations.py` standalone
 
-  - [ ] to provide input parameters, let's provide an input file with parameters.
+  - [x] to provide input parameters, let's provide an input file with parameters.
 
 - [ ] ~~Also output a file describing the output (number of trees)~~
 
-- [ ] If output directory is non-specified, generate a new one with date and unique number.
+- [x] If output directory is non-specified, generate a new one with date and unique number.
 
 - [ ] How is handled the map $\mu$ when the auxiliary tree is separated into host and symbiont again?
 
@@ -34,7 +34,7 @@
 
     
 
-
+Describe in the theoretical markdown how projection of maps are handled in the code. Since you write in the documentation 'the host-side and symbiont-side projections of those gene trees.'
 
 ---
 
