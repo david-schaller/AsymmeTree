@@ -1,5 +1,9 @@
+
+
+---
+
 - [x] I Have to adjust the parameters of $\alpha$ and $\beta$ in order to generate evolutionary histories with only 'host keps' and only 'symbiont keeps' simulations.
-- [ ] Change parameters for the number of simulations:
+- [ ] ~~Change parameters for the number of simulations:~~
   - how many species trees? hoy many replications per species tree? how many simbionts? 
   - define these numebrs based on Sanchita data
 - [x] We have to add a human-readable docstring to 'example simulations' and inliene comments
@@ -26,9 +30,9 @@
 
 - [x] If output directory is non-specified, generate a new one with date and unique number.
 
-- [ ] How is handled the map $\mu$ when the auxiliary tree is separated into host and symbiont again?
+- [x] How is handled the map $\mu$ when the auxiliary tree is separated into host and symbiont again?
 
-  - [ ] Add to the teoretical markdown a note about
+  - [x] Add to the teoretical markdown a note about
 
     > the host-side and symbiont-side projections of those gene trees.
 
