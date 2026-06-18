@@ -1,20 +1,24 @@
 > host_n_species
-5
+5, 10, 50
 
 > symbiont_dtl_rates
 0.133, 0.266, 0.266
+0.3, 0.6, 0.6
+0.6, 1.2, 1.2
 
 > gene_dtl_rates
 0.133, 0.266, 0.266
+0.3, 0.6, 0.6
+0.6, 1.2, 1.2
 
 > alpha_values
-0
+0, 0.25, 0.5
 
 > beta_values
 0
 
 > replace_probabilities
-0.0
+0.0, 0.5, 1.0
 
 > n_simulations
 5
