@@ -51,8 +51,17 @@ te.rate_heterogeneity(T, S, inplace=True)
 
 species_colors, gene_colors = assign_colors(S, T)
 
-visualize(S, color_dict=species_colors, path=OUTPUT_DIR / "testfile_speciestree.pdf")
-visualize(T, color_dict=gene_colors, path=OUTPUT_DIR / "testfile_genetree.pdf")
+# the distance_axis is enabled for both species and gene trees; it requires the matplotlib backend
+# with horizontal layout and edge lengths based on attributes.
+visualize(
+    S,
+    color_dict=species_colors,
+    path=OUTPUT_DIR / "testfile_speciestree.pdf",
+    distance_axis=True,
+)
+visualize(T, color_dict=gene_colors, path=OUTPUT_DIR / "testfile_genetree.pdf", distance_axis=True)
+
+# alternative visualization using a circular layout, which does not support the distance axis.
 visualize(
     T,
     color_dict=gene_colors,

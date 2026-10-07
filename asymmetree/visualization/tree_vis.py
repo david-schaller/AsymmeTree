@@ -114,6 +114,7 @@ def visualize(
     tree_style: TreeStyle | None = None,
     color_dict: dict | None = None,
     species_info: bool = False,
+    distance_axis: bool = False,
     scale_symbols: float = 1.0,
     fontsize: str | float | int = "medium",
     save_as: str | os.PathLike | None = None,
@@ -154,6 +155,9 @@ def visualize(
             leaves are colored white.
         species_info: If True, append the reconciliation information (the 'reconc' attribute) to
             the label of each (non-loss) leaf for which it is available.
+        distance_axis: If True, show an x-axis with the accumulated edge lengths from the root.
+            Only supported for the matplotlib backend with ``layout_mode="horizontal"`` and
+            ``edge_length_mode="attr"``. Depth rescaling is disabled in this case.
         scale_symbols: Adjust the size of the event type symbols.
         fontsize: Adjust the size of the text.
         save_as: Deprecated alias for ``path``. Use ``path`` instead.
@@ -169,6 +173,15 @@ def visualize(
             raise ValueError("Cannot specify both 'path' and 'save_as'. Use 'path' only.")
         path = save_as
 
+    if distance_axis:
+        if backend != "matplotlib" or layout_mode != "horizontal" or edge_length_mode != "attr":
+            raise ValueError(
+                "distance_axis requires backend='matplotlib', layout_mode='horizontal' and "
+                "edge_length_mode='attr'."
+            )
+        if renderer_kwargs.setdefault("rescale_depth", False):
+            raise ValueError("distance_axis cannot be combined with rescale_depth=True.")
+
     if species_info:
         tree = _with_species_info_labels(tree)
 
@@ -181,11 +194,12 @@ def visualize(
     base_node_style = NodeStyle(symbol_size=9.0 * scale_symbols, label_fontsize=fontsize)
     tree_style.default = tree_style.default.overlay(base_node_style)
 
-    return plot_tree(
+    # with a distance axis, saving and showing must happen after the axis has been added
+    result = plot_tree(
         tree,
         backend=backend,
-        path=path,
-        show=show,
+        path=None if distance_axis else path,
+        show=False if distance_axis else show,
         edge_length_mode=edge_length_mode,
         edge_length_attr=edge_length_attr,
         layout_mode=layout_mode,
@@ -193,6 +207,31 @@ def visualize(
         tree_style=tree_style,
         **renderer_kwargs,
     )
+
+    if distance_axis:
+        fig, ax = result
+        _add_distance_axis(ax, fontsize)
+        if path is not None:
+            fig.savefig(path, bbox_inches="tight")
+        if show:
+            fig.show()
+
+    return result
+
+
+def _add_distance_axis(ax: Axes, fontsize: str | float | int) -> None:
+    """Re-enable the bottom x-axis that tralda hides on matplotlib axes.
+
+    Args:
+        ax: The axes of a horizontally rendered tree with unscaled depth.
+        fontsize: Size of the tick labels.
+    """
+    from matplotlib.ticker import AutoLocator, ScalarFormatter
+
+    ax.spines["bottom"].set_visible(True)
+    ax.xaxis.set_major_locator(AutoLocator())
+    ax.xaxis.set_major_formatter(ScalarFormatter())
+    ax.tick_params(axis="x", bottom=True, labelbottom=True, labelsize=fontsize)
 
 
 def _with_species_info_labels(tree: Tree) -> Tree:
