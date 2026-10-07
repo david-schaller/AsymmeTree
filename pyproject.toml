@@ -15,11 +15,10 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
-    "matplotlib>=3.10.8",
     "networkx>=3.4.2",
     "numpy>=2.2.6",
     "scipy>=1.15.3",
-    "tralda>=2.0.0,<2.1.0",
+    "tralda>=2.1.0,<2.2.0",
 ]
 dynamic = ["version"]
 keywords = [
@@ -36,6 +35,11 @@ keywords = [
     "gene duplication",
     "gene loss",
 ]
+
+[project.optional-dependencies]
+matplotlib = ["tralda[matplotlib]"]
+plotly = ["tralda[plotly]"]
+viz = ["asymmetree[matplotlib,plotly]"]
 
 [project.urls]
 Repository = "https://github.com/david-schaller/AsymmeTree.git"

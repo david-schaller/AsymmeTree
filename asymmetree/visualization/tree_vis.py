@@ -2,12 +2,22 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+import os
+from functools import partial
+from typing import Any, Literal, TYPE_CHECKING
 
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
 from tralda.datastructures import Tree
+from tralda.datastructures import TreeNode
+from tralda.visualization import LayoutMode
+from tralda.visualization import NodeStyle
+from tralda.visualization import plot_tree
+from tralda.visualization import TreeStyle
+
+if TYPE_CHECKING:
+    from matplotlib.axes import Axes
+    from matplotlib.figure import Figure
+    from plotly.graph_objects import Figure as PlotlyFigure
 
 
 def assign_species_colors(tree: Tree) -> dict:
@@ -73,10 +83,17 @@ def _assign_cmap(colors: set) -> dict:
     """
     color_dict = {}
 
+    try:
+        from matplotlib import colormaps
+    except ImportError as exc:
+        raise ImportError(
+            "Color assignment requires matplotlib. Install it with: pip install asymmetree[matplotlib]"
+        ) from exc
+
     if len(colors) <= 10:
-        cmap = plt.get_cmap("tab10")(np.arange(len(colors), dtype=int))
+        cmap = colormaps["tab10"](np.arange(len(colors), dtype=int))
     else:
-        cmap = plt.get_cmap("jet")(np.linspace(0, 1.0, len(colors)))
+        cmap = colormaps["jet"](np.linspace(0, 1.0, len(colors)))
 
     for label, color in zip(colors, cmap):
         color_dict[label] = color
@@ -86,374 +103,174 @@ def _assign_cmap(colors: set) -> dict:
 
 def visualize(
     tree: Tree,
+    *,
+    backend: Literal["matplotlib", "plotly"] = "matplotlib",
+    path: str | os.PathLike | None = None,
+    show: bool = False,
+    edge_length_mode: Literal["attr", "uniform", "even", "rank"] = "attr",
+    edge_length_attr: str = "dist",
+    layout_mode: Literal["horizontal", "vertical", "circular"] = "horizontal",
+    node_rank_mode: Literal["mean", "first", "last", "node"] = "mean",
+    tree_style: TreeStyle | None = None,
     color_dict: dict | None = None,
-    save_as: str | bool = False,
+    species_info: bool = False,
     scale_symbols: float = 1.0,
     fontsize: str | float | int = "medium",
-) -> None:
-    """Visualize a tree.
+    save_as: str | os.PathLike | None = None,
+    **renderer_kwargs: Any,
+) -> tuple[Figure, Axes] | PlotlyFigure:
+    """Render a tree.
+
+    This function calls the ``plot_tree`` function in tralda for rendering the tree according to the
+    specified backend and options.
+    If no ``tree_style`` is provided, the default AsymmeTree style is used:
+    - Leaf colors are determined by the ``color_dict`` if provided.
+    - Node symbols are determined by the event type:
+        - Leaf nodes are represented by a circle with a dot inside.
+        - Speciation events are represented by a circle.
+        - Duplication events are represented by a square.
+        - Loss events are represented by a cap.
+        - Transfer events are represented by a triangle.
+        - Gene conversion events are represented by a star.
 
     Args:
-        tree: A tree whose nodes have the 'dist' attribute.
-        color_dict: A dictionary containing as values the assigned color for each label of the
-            (non-loss) leaves. The default is None, in which case all leaves are colored white.
-        save_as: Save the image to a file. The default is False, in which case the image is not
-            saved.
+        tree: The tree to render.
+        backend: ``"matplotlib"`` (default) or ``"plotly"``.
+        path: If given, save the resulting figure to this path. For the matplotlib backend the
+            format is inferred from the file extension by
+            :meth:`~matplotlib.figure.Figure.savefig` (e.g. ``.png``, ``.pdf``, ``.svg``). For the
+            plotly backend, a ``.html`` extension writes a self-contained interactive file via
+            :meth:`~plotly.graph_objects.Figure.write_html`; any other extension writes a static
+            image via :meth:`~plotly.graph_objects.Figure.write_image`.
+        show: If ``True``, display the figure (``fig.show()``) after rendering.
+        edge_length_mode: How edge lengths are determined. See tralda documentation for details.
+        edge_length_attr: Node attribute read as edge length in ``"attr"`` mode.
+        layout_mode: Tree orientation. See tralda documentation for details.
+        node_rank_mode: How the rank of internal nodes is derived from their children. See tralda
+            documentation for details.
+        tree_style: Styling configuration. When ``None`` the AsymmeTree default style is used.
+        color_dict: For the default style function, a dictionary containing as values the assigned
+            color for each label of the (non-loss) leaves. The default is None, in which case all
+            leaves are colored white.
+        species_info: If True, append the reconciliation information (the 'reconc' attribute) to
+            the label of each (non-loss) leaf for which it is available.
         scale_symbols: Adjust the size of the event type symbols.
         fontsize: Adjust the size of the text.
+        save_as: Deprecated alias for ``path``. Use ``path`` instead.
+        **renderer_kwargs: Additional keyword arguments forwarded to the renderer constructor
+            (e.g. ``figsize`` / ``ax`` for matplotlib, ``width`` / ``height`` / ``hover_attrs`` for
+            plotly).
+
+    Returns:
+        ``(fig, ax)`` for the matplotlib backend, or a plotly ``Figure`` for the plotly backend.
     """
-    vis = Visualizer(tree, color_dict=color_dict, scale_symbols=scale_symbols, fontsize=fontsize)
-    vis.draw(save_as=save_as)
+    if save_as is not None:
+        if path is not None:
+            raise ValueError("Cannot specify both 'path' and 'save_as'. Use 'path' only.")
+        path = save_as
+
+    if species_info:
+        tree = _with_species_info_labels(tree)
+
+    if tree_style is None:
+        tree_style = TreeStyle(style_fn=partial(_default_style_fn, color_map=color_dict))
+    elif color_dict is not None:
+        raise ValueError("Cannot specify color_dict when providing a custom tree_style.")
+
+    # the default symbol size in tralda is 9, so we scale it by the scale_symbols factor
+    base_node_style = NodeStyle(symbol_size=9.0 * scale_symbols, label_fontsize=fontsize)
+    tree_style.default = tree_style.default.overlay(base_node_style)
+
+    return plot_tree(
+        tree,
+        backend=backend,
+        path=path,
+        show=show,
+        edge_length_mode=edge_length_mode,
+        edge_length_attr=edge_length_attr,
+        layout_mode=layout_mode,
+        node_rank_mode=node_rank_mode,
+        tree_style=tree_style,
+        **renderer_kwargs,
+    )
 
 
-class Visualizer:
-    """Species and gene tree visualization."""
+def _with_species_info_labels(tree: Tree) -> Tree:
+    """Return a copy of the tree with reconciliation info appended to extant leaf labels.
 
-    def __init__(
-        self,
-        tree: Tree,
-        color_dict: dict | None = None,
-        scale_symbols: float = 1.0,
-        fontsize: str | float | int = "medium",
-        species_info: bool = False,
-    ) -> None:
-        """Construct a visualizer for a tree.
+    The original label is kept on the copied nodes as the 'color_key' attribute, so that color
+    lookups (keyed by the original label) in the default style function still work.
 
-        Args:
-            tree: A tree whose nodes have the 'dist' attribute.
-            color_dict: A dictionary containing as values the assigned color for each label of the
-                (non-loss) leaves. The default is None, in which case all leaves are colored white.
-            scale_symbols: Adjust the size of the event type symbols.
-            fontsize: Adjust the size of the text.
-            species_info: If True, write the reconciliation information behind the leaf label if
-                available.
-        """
-        self.tree = tree
+    Args:
+        tree: The tree to copy and relabel.
 
-        if color_dict:
-            self.colors = color_dict
-        else:
-            self.colors = {v.label: "white" for v in tree.preorder()}
+    Returns:
+        A copy of the tree with the modified leaf labels.
+    """
+    new_tree, orig_to_new = tree.copy(mapping=True)
 
-        self.species_info = species_info
+    for orig, new in orig_to_new.items():
+        if orig.is_leaf() and getattr(orig, "event", None) != "L" and hasattr(orig, "reconc"):
+            new.color_key = orig.label
+            new.label = f"{orig.label} <{orig.reconc}>"
 
-        self.symbolsize = 0.03 * scale_symbols
-        self.fontsize = fontsize
-        self.symbollw = 0.04
-        self.leafs_per_vertical_unit = 15
-        self.symbol_zorder = 3
+    return new_tree
 
-        self.distance_dict = {}
-        self.leaf_counter = sum(1 for _ in tree.leaves())
-        self.node_positions = {}
 
-    def draw(self, distance_mode: str = "evolutionary", save_as: str | Path | None = None) -> None:
-        """Draw the tree and optionally save it to file.
+def _default_style_fn(
+    node: TreeNode,
+    _mode: LayoutMode,
+    color_map: dict | None = None,
+) -> NodeStyle:
+    """The default style function for tree nodes.
 
-        Args:
-            distance_mode: Information that is used for the length of the species edges. Currently
-                only 'evolutionary' is supported, in which case the 'dist' attribute is used.
-            save_as: Save the image to a file. The default is None, in which case the image is not
-                saved.
-        """
-        self.fig, self.ax = plt.subplots()
-        self.ax.set_aspect("equal")
-        self.ax.invert_yaxis()
+    This function determines the visual style of a tree node based on its attributes and the
+    provided color map. Speciation events are represented by circles, duplications by squares,
+    horizontal gene transfers by triangles, gene conversions by stars, and losses by caps.
 
-        self.initial_traversal(distance_mode)
-        # self.assign_colors()
-        self.assign_positions()
-        self.draw_edges()
-        self.draw_nodes()
+    Args:
+        node: The tree node to style.
+        _mode: The layout mode (not used in this function).
+        color_map: A dictionary mapping node labels to colors.
 
-        self.ax.axvline(x=0, linewidth=1, color="grey", linestyle="--")
-        self.ax.set_yticks([])
-        self.ax.spines["top"].set_visible(False)
-        self.ax.spines["left"].set_visible(False)
-        self.ax.spines["right"].set_visible(False)
-        self.ax.tick_params(axis="x", labelsize=self.fontsize)
+    Returns:
+        A NodeStyle object with the appropriate styling for the node.
+    """
+    color_map = color_map or {}
+    ns = NodeStyle()
 
-        xmin, xmax = self.ax.get_xlim()
-        ymin, ymax = self.ax.get_ylim()
-        self.fig.set_size_inches(5 * abs(xmax - xmin), 5 * abs(ymax - ymin) + 0.4)
-        plt.tight_layout()
-        if save_as:
-            plt.savefig(save_as, dpi=300)
-        else:
-            plt.show()
+    event = getattr(node, "event", None)
 
-    def initial_traversal(self, distance_mode: str) -> None:
-        """Traversal to compute the distance of each node from the root and the maximum distance.
+    if node.is_leaf() and event != "L":  # extant leaf
+        ns.symbol = "circle-dot"
+        ns.symbol_color = color_map.get(getattr(node, "color_key", node.label), "white")
+    elif not node.parent:  # root
+        ns.symbol = "circle-inner-ring"
+        ns.symbol_color = "white"
+        ns.edge_color = "black"
+    elif event == "S":  # internal speciation
+        ns.symbol = "circle"
+        ns.symbol_color = "black"
+        ns.symbol_edge_color = "none"
+    elif event == "D":  # duplication
+        ns.symbol = "square"
+        ns.symbol_color = "white"
+        ns.symbol_edge_color = "black"
+    elif event == "H":  # horizontal gene transfer
+        ns.symbol = "triangle-up"
+        ns.symbol_color = "white"
+        ns.symbol_edge_color = "black"
+    elif event == "GC":  # gene conversion
+        ns.symbol = "star"
+        ns.symbol_color = "black"
+        ns.symbol_edge_color = "none"
+    elif event == "L":  # loss
+        ns.symbol = "cap"
 
-        Args:
-            distance_mode: Information that is used for the length of the species edges. Currently
-                only 'evolutionary' is supported, in which case the 'dist' attribute is used.
+    # Highlight transferred edges (gene tree only)
+    transferred = getattr(node, "transferred", 0)
+    if transferred:
+        ns.edge_color = "crimson"
+        ns.edge_ls = "--"
 
-        Raises:
-            ValueError: If the given distance mode is not supported.
-        """
-        xmax = 0.0
-
-        for v in self.tree.preorder():
-            if distance_mode == "evolutionary":
-                if not v.parent:
-                    self.distance_dict[v] = 0.0
-                else:
-                    self.distance_dict[v] = self.distance_dict[v.parent] + v.dist
-                    if self.distance_dict[v] > xmax:
-                        xmax = self.distance_dict[v]
-            elif distance_mode == "divergence time":
-                raise ValueError("divergence time not yet implemented")
-            else:
-                raise ValueError(f"distance mode '{distance_mode}' not supported")
-
-        self.ax.set_xlim(-0.1, xmax + 0.5)
-
-    def assign_positions(self):
-        """Assign x and y coordinates to each node."""
-        ymax = (self.leaf_counter - 1) / self.leafs_per_vertical_unit
-        self.ax.set_ylim(ymax + 0.1, -self.symbolsize * 0.6)
-
-        yposition = 0
-        for v in self.tree.postorder():
-            if not v.children:
-                self.node_positions[v] = (self.distance_dict[v], yposition)
-                yposition += 1 / self.leafs_per_vertical_unit
-            else:
-                ymean = (
-                    self.node_positions[v.children[0]][1] + self.node_positions[v.children[-1]][1]
-                ) / 2
-                self.node_positions[v] = (self.distance_dict[v], ymean)
-
-    def draw_edges(self):
-        """Draw edges between nodes."""
-        for v in self.tree.preorder():
-            if v.parent:
-                if hasattr(v, "transferred") and v.transferred:
-                    color = "red"
-                else:
-                    color = "black"
-                self.ax.plot(
-                    [self.node_positions[v.parent][0], self.node_positions[v][0]],
-                    [self.node_positions[v][1], self.node_positions[v][1]],
-                    color=color,
-                    linestyle="-",
-                    linewidth=1,
-                )
-            if v.children:
-                self.ax.plot(
-                    [self.node_positions[v][0], self.node_positions[v][0]],
-                    [self.node_positions[v.children[0]][1], self.node_positions[v.children[-1]][1]],
-                    color="black",
-                    linestyle="-",
-                    linewidth=1,
-                )
-
-    def draw_nodes(self):
-        """Draw nodes according to their event type."""
-        for v in self.tree.preorder():
-            if not v.parent and not v.event:
-                self.draw_root(*self.node_positions[v])
-            elif v.children:
-                if v.event == "D":
-                    self.draw_dupl(*self.node_positions[v])
-                elif v.event == "S":
-                    self.draw_spec(*self.node_positions[v])
-                elif v.event == "H":
-                    self.draw_hgt(*self.node_positions[v])
-                elif v.event == "GC":
-                    self.draw_gc(*self.node_positions[v])
-            else:
-                if v.event == "L":
-                    self.draw_loss(*self.node_positions[v])
-                else:
-                    x, y = self.node_positions[v]
-                    self.draw_leaf(x, y, color=self.colors[v.label])
-                    if not self.species_info:
-                        text = str(v.label)
-                    elif hasattr(v, "reconc"):
-                        text = "{} <{}>".format(v.label, v.reconc)
-                    self.write_label(x + self.symbolsize + 0.02, y, text)
-
-    def draw_leaf(self, x: float, y: float, color: str = "white", leftalign: bool = False) -> None:
-        """Draw a leaf node.
-
-        Args:
-            x: The x-coordinate of the leaf node.
-            y: The y-coordinate of the leaf node.
-            color: The color to fill the leaf node.
-            leftalign: If True, align the symbol to the left of the given coordinates. The default
-                is False, in which case the symbol is centered on the given coordinates.
-        """
-        if leftalign:
-            x += self.symbolsize / 2
-        fill = mpatches.Circle(
-            (x, y), self.symbolsize / 2, color=color, fill=True, zorder=self.symbol_zorder
-        )
-        self.ax.add_patch(fill)
-        outer = mpatches.Circle(
-            (x, y),
-            self.symbolsize / 2,
-            color="black",
-            fill=False,
-            lw=self.symbolsize / self.symbollw,
-            zorder=self.symbol_zorder,
-        )
-        self.ax.add_patch(outer)
-        little = mpatches.Circle(
-            (x, y), self.symbolsize / 8, color="black", fill=True, zorder=self.symbol_zorder
-        )
-        self.ax.add_patch(little)
-
-    def draw_loss(self, x, y):
-        self.ax.plot(
-            [x, x],
-            [y - self.symbolsize / 2, y + self.symbolsize / 2],
-            color="black",
-            linestyle="-",
-            linewidth=1,
-        )
-
-    def draw_root(self, x: float, y: float, rightalign: bool = False) -> None:
-        """Draw a root node.
-
-        Args:
-            x: The x-coordinate of the root node.
-            y: The y-coordinate of the root node.
-            rightalign: If True, align the symbol to the right of the given coordinates. The default
-                is False, in which case the symbol is centered on the given coordinates.
-        """
-        if rightalign:
-            x -= self.symbolsize / 2
-        fill = mpatches.Circle(
-            (x, y), self.symbolsize / 2, color="white", fill=True, zorder=self.symbol_zorder
-        )
-        self.ax.add_patch(fill)
-        outer = mpatches.Circle(
-            (x, y),
-            self.symbolsize / 2,
-            color="black",
-            fill=False,
-            lw=self.symbolsize / self.symbollw,
-            zorder=self.symbol_zorder,
-        )
-        self.ax.add_patch(outer)
-        little = mpatches.Circle(
-            (x, y),
-            self.symbolsize / 5,
-            color="black",
-            fill=False,
-            lw=self.symbolsize / self.symbollw,
-            zorder=self.symbol_zorder,
-        )
-        self.ax.add_patch(little)
-
-    def draw_spec(self, x: float, y: float) -> None:
-        """Draw a speciation node.
-
-        Args:
-            x: The x-coordinate of the speciation node.
-            y: The y-coordinate of the speciation node.
-        """
-        fill = mpatches.Circle(
-            (x, y), self.symbolsize / 2, color="black", fill=True, zorder=self.symbol_zorder
-        )
-        self.ax.add_patch(fill)
-
-    def draw_dupl(self, x: float, y: float) -> None:
-        """Draw a duplication node.
-
-        Args:
-            x: The x-coordinate of the duplication node.
-            y: The y-coordinate of the duplication node.
-        """
-        square = mpatches.Rectangle(
-            (x - self.symbolsize / 2, y - self.symbolsize / 2),
-            width=self.symbolsize,
-            height=self.symbolsize,
-            color="white",
-            fill=True,
-            zorder=self.symbol_zorder,
-        )
-        self.ax.add_patch(square)
-        border = mpatches.Rectangle(
-            (x - self.symbolsize / 2, y - self.symbolsize / 2),
-            width=self.symbolsize,
-            height=self.symbolsize,
-            color="black",
-            fill=False,
-            lw=self.symbolsize / self.symbollw,
-            zorder=self.symbol_zorder,
-        )
-        self.ax.add_patch(border)
-
-    def draw_hgt(self, x: float, y: float) -> None:
-        """Draw a horizontal gene transfer (HGT) node.
-
-        Args:
-            x: The x-coordinate of the HGT node.
-            y: The y-coordinate of the HGT node.
-        """
-        coord = np.asarray(
-            [
-                [x - self.symbolsize / 2, y],
-                [x + self.symbolsize / 2, y - self.symbolsize / 2],
-                [x + self.symbolsize / 2, y + self.symbolsize / 2],
-            ]
-        )
-
-        inner = mpatches.Polygon(
-            coord, closed=True, color="white", fill=True, zorder=self.symbol_zorder
-        )
-        self.ax.add_patch(inner)
-        outer = mpatches.Polygon(
-            coord,
-            closed=True,
-            color="black",
-            fill=False,
-            lw=self.symbolsize / self.symbollw,
-            zorder=self.symbol_zorder,
-        )
-        self.ax.add_patch(outer)
-
-    def draw_gc(self, x: float, y: float) -> None:
-        """Draw a gene conversion (GC) node.
-
-        Args:
-            x: The x-coordinate of the GC node.
-            y: The y-coordinate of the GC node.
-        """
-        coord = []
-        R = self.symbolsize / 2
-        for i in range(5):
-            coord.append(
-                [
-                    x + 0.5 * R * np.cos(np.radians(0 + i * 72)),
-                    y - 0.5 * R * np.sin(np.radians(0 + i * 72)),
-                ]
-            )
-            coord.append(
-                [x + R * np.cos(np.radians(36 + i * 72)), y - R * np.sin(np.radians(36 + i * 72))]
-            )
-
-        inner = mpatches.Polygon(
-            coord, closed=True, color="black", fill=True, zorder=self.symbol_zorder
-        )
-        self.ax.add_patch(inner)
-
-    def write_label(self, x: float, y: float, text: str) -> None:
-        """Write a label at the specified coordinates.
-
-        Args:
-            x: The x-coordinate of the label.
-            y: The y-coordinate of the label.
-            text: The text of the label.
-        """
-        self.ax.text(
-            x,
-            y,
-            text,
-            fontsize=self.fontsize,
-            horizontalalignment="left",
-            verticalalignment="center",
-        )
+    return ns
