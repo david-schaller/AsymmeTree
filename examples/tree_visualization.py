@@ -1,5 +1,10 @@
+from pathlib import Path
+
 import asymmetree.treeevolve as te
-from asymmetree.visualization.tree_vis import visualize, assign_colors
+from asymmetree.visualization import visualize, assign_colors
+
+
+OUTPUT_DIR = Path(__file__).parent
 
 
 # --------------------------------------------------------------------------
@@ -46,5 +51,12 @@ te.rate_heterogeneity(T, S, inplace=True)
 
 species_colors, gene_colors = assign_colors(S, T)
 
-visualize(S, color_dict=species_colors, save_as="testfile_speciestree.pdf")
-visualize(T, color_dict=gene_colors, save_as="testfile_genetree.pdf")
+visualize(S, color_dict=species_colors, path=OUTPUT_DIR / "testfile_speciestree.pdf")
+visualize(T, color_dict=gene_colors, path=OUTPUT_DIR / "testfile_genetree.pdf")
+visualize(
+    T,
+    color_dict=gene_colors,
+    path=OUTPUT_DIR / "testfile_genetree_circular.pdf",
+    layout_mode="circular",
+    edge_length_mode="even",
+)
