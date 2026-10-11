@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://david-schaller.github.io/AsymmeTree/guide/visualization/">
+        <link rel="canonical" href="https://david-schaller.github.io/AsymmeTree/dev/guide/visualization/">
       
       
         <link rel="prev" href="../additional_features/">
@@ -86,6 +86,20 @@
       
     </div>
     <div data-md-component="announce">
+      
+        <aside class="md-banner">
+          <div class="md-banner__inner md-grid md-typeset">
+            
+            
+  
+    This is the development documentation built from the <code>main</code> branch and may contain
+    unreleased changes.
+    <a href="https://david-schaller.github.io/AsymmeTree/">Switch to the documentation of the latest release.</a>
+  
+
+          </div>
+          
+        </aside>
       
     </div>
     
@@ -802,6 +816,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Visualization
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -818,6 +850,124 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#basic-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#colors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Colors
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#default-style" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Default style
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#layout-and-edge-lengths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layout and edge lengths
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#distance-axis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Distance axis
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#species-information" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Species information
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#renderer-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Renderer options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#custom-styles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Custom styles
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#plotly-backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Plotly backend
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -1162,6 +1312,113 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#basic-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#colors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Colors
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#default-style" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Default style
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#layout-and-edge-lengths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layout and edge lengths
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#distance-axis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Distance axis
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#species-information" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Species information
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#renderer-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Renderer options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#custom-styles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Custom styles
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#plotly-backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Plotly backend
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1181,54 +1438,292 @@
 
 
 <h1 id="tree-visualization">Tree visualization<a class="headerlink" href="#tree-visualization" title="Permanent link">&para;</a></h1>
-<p>The function <code>visualize(tree, color_dict=None, save_as=False)</code> in the module
-<code>asymmetree.visualization.tree_vis</code> uses matplotlib to draw a simulated species or gene tree.
-The <code>color_dict</code> parameter can be used to specify the colors of the (non-loss) leaves, and <code>save_as</code>
-is used to specify a filename to save the figure as a PDF. If <code>save_as</code> is set to <code>False</code>, the
-figure will be displayed instead of being saved.</p>
-<p>The function <code>assign_colors(species_tree, gene_tree)</code> of the module takes two trees as input and
-assigns to each non-loss species leaf a unique color and to each non-loss gene the assigned color
-of the species to which this gene belongs.</p>
-<p>Example usage:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asymmetree.treeevolve</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">te</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">asymmetree.visualization.tree_vis</span><span class="w"> </span><span class="kn">import</span> <span class="n">visualize</span><span class="p">,</span> <span class="n">assign_colors</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">S</span> <span class="o">=</span> <span class="n">te</span><span class="o">.</span><span class="n">species_tree_n_age</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="c1"># dated gene tree (with losses)</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">dated_gene_tree</span> <span class="o">=</span> <span class="n">te</span><span class="o">.</span><span class="n">dated_gene_tree</span><span class="p">(</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">S</span><span class="p">,</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">dupl_rate</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">loss_rate</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="n">hgt_rate</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="p">)</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="n">full_gene_tree</span> <span class="o">=</span> <span class="n">te</span><span class="o">.</span><span class="n">rate_heterogeneity</span><span class="p">(</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    <span class="n">dated_gene_tree</span><span class="p">,</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    <span class="n">S</span><span class="p">,</span>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    <span class="n">base_rate</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>    <span class="n">autocorr_variance</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>    <span class="n">rate_increase</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;gamma&#39;</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">2.2</span><span class="p">),</span>
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>    <span class="n">inplace</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="p">)</span>
-<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>
-<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="c1"># pruned gene tree</span>
-<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="n">pruned_gene_tree</span> <span class="o">=</span> <span class="n">te</span><span class="o">.</span><span class="n">prune_losses</span><span class="p">(</span><span class="n">full_gene_tree</span><span class="p">)</span>
-<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>
-<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="c1"># assign colors and visualize</span>
-<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="n">species_colors</span><span class="p">,</span> <span class="n">gene_colors</span> <span class="o">=</span> <span class="n">assign_colors</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">dated_gene_tree</span><span class="p">)</span>
-<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="n">visualize</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">color_dict</span><span class="o">=</span><span class="n">species_colors</span><span class="p">,</span> <span class="n">save_as</span><span class="o">=</span><span class="s1">&#39;S.pdf&#39;</span><span class="p">)</span>
-<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="n">visualize</span><span class="p">(</span><span class="n">dated_gene_tree</span><span class="p">,</span> <span class="n">color_dict</span><span class="o">=</span><span class="n">gene_colors</span><span class="p">,</span> <span class="n">save_as</span><span class="o">=</span><span class="s1">&#39;T1.pdf&#39;</span><span class="p">)</span>
-<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a><span class="n">visualize</span><span class="p">(</span><span class="n">full_gene_tree</span><span class="p">,</span> <span class="n">color_dict</span><span class="o">=</span><span class="n">gene_colors</span><span class="p">,</span> <span class="n">save_as</span><span class="o">=</span><span class="s1">&#39;T2.pdf&#39;</span><span class="p">)</span>
-<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a><span class="n">visualize</span><span class="p">(</span><span class="n">pruned_gene_tree</span><span class="p">,</span> <span class="n">color_dict</span><span class="o">=</span><span class="n">gene_colors</span><span class="p">,</span> <span class="n">save_as</span><span class="o">=</span><span class="s1">&#39;T3.pdf&#39;</span><span class="p">)</span>
+<p>The function <code>visualize</code> in the module <code>asymmetree.visualization.tree_vis</code> (also available from
+<code>asymmetree.visualization</code>) draws a simulated species or gene tree. It is a thin wrapper around the
+<code>plot_tree</code> function of <a href="https://github.com/david-schaller/tralda">tralda</a>, which does the layout
+and the rendering, and adds the AsymmeTree default style for the different event types.</p>
+<p>Rendering requires matplotlib or plotly, which are optional dependencies:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip install asymmetree[matplotlib]   # matplotlib backend (default)
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>pip install asymmetree[plotly]       # plotly backend
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>pip install asymmetree[viz]          # both
+</code></pre></div>
+<h2 id="basic-usage">Basic usage<a class="headerlink" href="#basic-usage" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asymmetree.treeevolve</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">te</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">asymmetree.visualization</span><span class="w"> </span><span class="kn">import</span> <span class="n">visualize</span><span class="p">,</span> <span class="n">assign_colors</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="n">S</span> <span class="o">=</span> <span class="n">te</span><span class="o">.</span><span class="n">species_tree_n_age</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="c1"># dated gene tree (with losses)</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="n">dated_gene_tree</span> <span class="o">=</span> <span class="n">te</span><span class="o">.</span><span class="n">dated_gene_tree</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">dupl_rate</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">loss_rate</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">hgt_rate</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="c1"># gene tree with rate heterogeneity (with losses)</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="n">full_gene_tree</span> <span class="o">=</span> <span class="n">te</span><span class="o">.</span><span class="n">rate_heterogeneity</span><span class="p">(</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>    <span class="n">dated_gene_tree</span><span class="p">,</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>    <span class="n">S</span><span class="p">,</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>    <span class="n">base_rate</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>    <span class="n">autocorr_variance</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>    <span class="n">rate_increase</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;gamma&quot;</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">2.2</span><span class="p">),</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>    <span class="n">inplace</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="p">)</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="c1"># gene tree with losses pruned</span>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="n">pruned_gene_tree</span> <span class="o">=</span> <span class="n">te</span><span class="o">.</span><span class="n">prune_losses</span><span class="p">(</span><span class="n">full_gene_tree</span><span class="p">)</span>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="c1"># assign colors and visualize</span>
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span class="n">species_colors</span><span class="p">,</span> <span class="n">gene_colors</span> <span class="o">=</span> <span class="n">assign_colors</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">dated_gene_tree</span><span class="p">)</span>
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="n">visualize</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">color_dict</span><span class="o">=</span><span class="n">species_colors</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s2">&quot;S.png&quot;</span><span class="p">,</span> <span class="n">distance_axis</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span class="n">visualize</span><span class="p">(</span><span class="n">dated_gene_tree</span><span class="p">,</span> <span class="n">color_dict</span><span class="o">=</span><span class="n">gene_colors</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s2">&quot;T1.png&quot;</span><span class="p">,</span> <span class="n">distance_axis</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a><span class="n">visualize</span><span class="p">(</span><span class="n">full_gene_tree</span><span class="p">,</span> <span class="n">color_dict</span><span class="o">=</span><span class="n">gene_colors</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s2">&quot;T2.png&quot;</span><span class="p">,</span> <span class="n">distance_axis</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a><span class="n">visualize</span><span class="p">(</span><span class="n">pruned_gene_tree</span><span class="p">,</span> <span class="n">color_dict</span><span class="o">=</span><span class="n">gene_colors</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s2">&quot;T3.png&quot;</span><span class="p">,</span> <span class="n">distance_axis</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </code></pre></div>
 <p><strong>Species tree:</strong></p>
-<p><img alt="tree1" src="../images/example-tree1.png" /></p>
+<p><img alt="species tree" src="../images/species_tree.png" /></p>
 <p><strong>Dated gene tree (with losses):</strong></p>
-<p><img alt="tree2" src="../images/example-tree2.png" /></p>
+<p><img alt="dated gene tree" src="../images/gene_tree_dated.png" /></p>
 <p><strong>Full gene tree (with losses and rate heterogeneity):</strong></p>
-<p><img alt="tree3" src="../images/example-tree3.png" /></p>
+<p><img alt="full gene tree" src="../images/gene_tree_full.png" /></p>
 <p><strong>Pruned gene tree (with losses pruned):</strong></p>
-<p><img alt="tree4" src="../images/example-tree4.png" /></p>
+<p><img alt="pruned gene tree" src="../images/gene_tree_pruned.png" /></p>
+<p>The <code>path</code> argument saves the figure to a file, and the format is derived from the extension (e.g.,
+<code>.png</code>, <code>.pdf</code>, or <code>.svg</code> for matplotlib). Use <code>show=True</code> to display the figure (in addition). The
+function returns <code>(fig, ax)</code> for the matplotlib backend and a plotly <code>Figure</code> for the plotly
+backend, so that the figure can be modified afterwards.</p>
+<h2 id="colors">Colors<a class="headerlink" href="#colors" title="Permanent link">&para;</a></h2>
+<p>The function <code>assign_colors(species_tree, gene_tree)</code> assigns a unique color to each non-loss
+species leaf and to each non-loss gene the color of the species to which it belongs. The functions
+<code>assign_species_colors(tree)</code> and <code>assign_gene_colors(tree, species_colors=None)</code> perform the two
+steps separately. The returned dictionaries map leaf labels to colors and are passed to <code>visualize</code>
+with the argument <code>color_dict</code>. Leaves that do not appear in <code>color_dict</code> are drawn in white.</p>
+<h2 id="default-style">Default style<a class="headerlink" href="#default-style" title="Permanent link">&para;</a></h2>
+<p>If no <code>tree_style</code> is given, the AsymmeTree default style is used. The symbol of a node depends on
+its <code>event</code> attribute:</p>
+<table>
+<thead>
+<tr>
+<th>Node</th>
+<th>Symbol</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Extant leaf</td>
+<td>circle with a dot, filled with the color from <code>color_dict</code></td>
+</tr>
+<tr>
+<td>Root</td>
+<td>white circle with an inner ring</td>
+</tr>
+<tr>
+<td>Speciation (<code>"S"</code>)</td>
+<td>black filled circle</td>
+</tr>
+<tr>
+<td>Duplication (<code>"D"</code>)</td>
+<td>white square</td>
+</tr>
+<tr>
+<td>Horizontal gene transfer (<code>"H"</code>)</td>
+<td>white triangle</td>
+</tr>
+<tr>
+<td>Gene conversion (<code>"GC"</code>)</td>
+<td>black star</td>
+</tr>
+<tr>
+<td>Loss (<code>"L"</code>)</td>
+<td>cap</td>
+</tr>
+</tbody>
+</table>
+<p>Edges that were created by a horizontal gene transfer (nodes with a truthy <code>transferred</code> attribute)
+are drawn as dashed crimson lines. The size of all symbols can be adjusted with <code>scale_symbols</code> and
+the size of the text with <code>fontsize</code>.</p>
+<h2 id="layout-and-edge-lengths">Layout and edge lengths<a class="headerlink" href="#layout-and-edge-lengths" title="Permanent link">&para;</a></h2>
+<p>The most important options that are passed through to tralda are the following.</p>
+<p><strong><code>layout_mode</code></strong> controls the orientation of the tree:</p>
+<ul>
+<li><code>"horizontal"</code> (default): root on the left, leaves on the right.</li>
+<li><code>"vertical"</code>: root at the top, leaves at the bottom.</li>
+<li><code>"circular"</code>: root in the center, leaves on the outside.</li>
+</ul>
+<p><strong><code>edge_length_mode</code></strong> controls how the positions along the depth axis are determined:</p>
+<ul>
+<li><code>"attr"</code> (default): the length of an edge is read from a node attribute, which is <code>"dist"</code> by
+  default and can be changed with <code>edge_length_attr</code>. Leaves that end before the maximum depth
+  (e.g., losses) are connected to their labels by dashed gray lines.</li>
+<li><code>"uniform"</code>: every edge has length 1.</li>
+<li><code>"even"</code>: all leaves end at the same depth (cladogram), and the internal nodes are distributed
+  evenly along each path from the root.</li>
+<li><code>"rank"</code>: internal nodes are placed at their topological depth, i.e., the number of edges from the
+  root, and the leaves are aligned.</li>
+</ul>
+<p><strong><code>node_rank_mode</code></strong> controls how internal nodes are placed along the perpendicular axis relative to
+their children: <code>"mean"</code> (default; between the first and the last child), <code>"first"</code>, <code>"last"</code>, or
+<code>"node"</code> (every node gets its own position, which avoids overlapping labels when the labels of
+internal nodes are shown).</p>
+<p><strong>Circular layout with even edge lengths:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">visualize</span><span class="p">(</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="n">pruned_gene_tree</span><span class="p">,</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">color_dict</span><span class="o">=</span><span class="n">gene_colors</span><span class="p">,</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">path</span><span class="o">=</span><span class="s2">&quot;T3_circular.png&quot;</span><span class="p">,</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="n">layout_mode</span><span class="o">=</span><span class="s2">&quot;circular&quot;</span><span class="p">,</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="n">edge_length_mode</span><span class="o">=</span><span class="s2">&quot;even&quot;</span><span class="p">,</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="p">)</span>
+</code></pre></div>
+<p><img alt="circular layout" src="../images/gene_tree_circular_even.png" /></p>
+<p><strong>Vertical layout with edge lengths according to the topological depth:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">visualize</span><span class="p">(</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="n">pruned_gene_tree</span><span class="p">,</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">color_dict</span><span class="o">=</span><span class="n">gene_colors</span><span class="p">,</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">path</span><span class="o">=</span><span class="s2">&quot;T3_vertical.png&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="n">layout_mode</span><span class="o">=</span><span class="s2">&quot;vertical&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="n">edge_length_mode</span><span class="o">=</span><span class="s2">&quot;rank&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="p">)</span>
+</code></pre></div>
+<p><img alt="vertical layout" src="../images/gene_tree_vertical_rank.png" /></p>
+<p><strong>Horizontal layout with uniform edge lengths:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">visualize</span><span class="p">(</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="n">pruned_gene_tree</span><span class="p">,</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="n">color_dict</span><span class="o">=</span><span class="n">gene_colors</span><span class="p">,</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="n">path</span><span class="o">=</span><span class="s2">&quot;T3_uniform.png&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="n">edge_length_mode</span><span class="o">=</span><span class="s2">&quot;uniform&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="p">)</span>
+</code></pre></div>
+<p><img alt="uniform edge lengths" src="../images/gene_tree_uniform.png" /></p>
+<h2 id="distance-axis">Distance axis<a class="headerlink" href="#distance-axis" title="Permanent link">&para;</a></h2>
+<p>With <code>distance_axis=True</code>, an x-axis is shown that gives the distance from the root, i.e., the sum
+of the edge lengths. This requires the matplotlib backend, <code>layout_mode="horizontal"</code>, and
+<code>edge_length_mode="attr"</code>, otherwise a <code>ValueError</code> is raised. Without the distance axis, the depth
+of the tree is rescaled to the interval <span class="arithmatex">\([0, 1]\)</span> by tralda.</p>
+<h2 id="species-information">Species information<a class="headerlink" href="#species-information" title="Permanent link">&para;</a></h2>
+<p>For gene trees, <code>species_info=True</code> appends the species to which a gene belongs (the <code>reconc</code>
+attribute) to the labels of the non-loss leaves. The given tree is not modified.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">visualize</span><span class="p">(</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="n">pruned_gene_tree</span><span class="p">,</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">color_dict</span><span class="o">=</span><span class="n">gene_colors</span><span class="p">,</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="n">path</span><span class="o">=</span><span class="s2">&quot;T3_species_info.png&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="n">species_info</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    <span class="n">distance_axis</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="p">)</span>
+</code></pre></div>
+<p><img alt="species information" src="../images/gene_tree_species_info.png" /></p>
+<h2 id="renderer-options">Renderer options<a class="headerlink" href="#renderer-options" title="Permanent link">&para;</a></h2>
+<p>All other keyword arguments of <code>visualize</code> are passed to the tralda renderer of the chosen backend.
+Frequently used options are:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Backend</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>figsize</code></td>
+<td>matplotlib</td>
+<td>Figure size in inches (otherwise derived from the number of leaves)</td>
+</tr>
+<tr>
+<td><code>ax</code></td>
+<td>matplotlib</td>
+<td>Existing axes to draw on</td>
+</tr>
+<tr>
+<td><code>width</code>, <code>height</code></td>
+<td>plotly</td>
+<td>Figure size in pixels</td>
+</tr>
+<tr>
+<td><code>hover_attrs</code></td>
+<td>plotly</td>
+<td>Node attributes shown in the hover tooltips</td>
+</tr>
+<tr>
+<td><code>show_labels</code></td>
+<td>both</td>
+<td>Draw the leaf labels (default <code>True</code>)</td>
+</tr>
+<tr>
+<td><code>show_internal_labels</code></td>
+<td>both</td>
+<td>Also draw the labels of internal nodes (default <code>False</code>)</td>
+</tr>
+<tr>
+<td><code>show_ghost_segments</code></td>
+<td>both</td>
+<td>Dashed lines from short leaves to their labels (default <code>True</code>)</td>
+</tr>
+<tr>
+<td><code>rescale_depth</code></td>
+<td>both</td>
+<td>Rescale the depth to the interval <span class="arithmatex">\([0, 1]\)</span> (default <code>True</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>For the complete list, see the documentation of tralda.</p>
+<h2 id="custom-styles">Custom styles<a class="headerlink" href="#custom-styles" title="Permanent link">&para;</a></h2>
+<p>The appearance of nodes and edges is described by a <code>TreeStyle</code> from tralda, which can be passed to
+<code>visualize</code> with the argument <code>tree_style</code>. The style of an individual node is a <code>NodeStyle</code> with
+the fields <code>symbol</code>, <code>symbol_size</code>, <code>symbol_color</code>, <code>symbol_edge_color</code>, <code>symbol_lw</code>, <code>edge_color</code>,
+<code>edge_lw</code>, <code>edge_ls</code>, <code>label_color</code>, <code>label_fontsize</code>, <code>label_fontweight</code>, and <code>label_fontstyle</code>.
+Fields that are <code>None</code> are inherited from the layer below. The style of a node is determined in the
+following order, where later layers win:</p>
+<ol>
+<li><code>TreeStyle.default</code>: the style of all nodes</li>
+<li><code>TreeStyle.style_fn</code>: a function <code>(node, layout_mode) -&gt; NodeStyle | None</code></li>
+<li><code>TreeStyle.node_overrides</code>: a dictionary <code>{node: NodeStyle}</code></li>
+</ol>
+<p>The class method <code>TreeStyle.from_maps</code> builds a style function from dictionaries that map node
+attribute values to symbols, fill colors, or edge colors. The following example uses other symbols
+for the events and thicker edges:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tralda.visualization</span><span class="w"> </span><span class="kn">import</span> <span class="n">NodeStyle</span><span class="p">,</span> <span class="n">TreeStyle</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">custom_style</span> <span class="o">=</span> <span class="n">TreeStyle</span><span class="o">.</span><span class="n">from_maps</span><span class="p">(</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="n">symbol_attr</span><span class="o">=</span><span class="s2">&quot;event&quot;</span><span class="p">,</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="n">symbol_map</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;D&quot;</span><span class="p">:</span> <span class="s2">&quot;diamond&quot;</span><span class="p">,</span> <span class="s2">&quot;H&quot;</span><span class="p">:</span> <span class="s2">&quot;triangle-right&quot;</span><span class="p">,</span> <span class="s2">&quot;GC&quot;</span><span class="p">:</span> <span class="s2">&quot;hexagon&quot;</span><span class="p">,</span> <span class="s2">&quot;L&quot;</span><span class="p">:</span> <span class="s2">&quot;x-mark&quot;</span><span class="p">},</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>    <span class="n">node_color_attr</span><span class="o">=</span><span class="s2">&quot;label&quot;</span><span class="p">,</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    <span class="n">node_color_map</span><span class="o">=</span><span class="n">gene_colors</span><span class="p">,</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>    <span class="n">root_symbol</span><span class="o">=</span><span class="s2">&quot;circle-inner-ring&quot;</span><span class="p">,</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>    <span class="n">leaf_symbol</span><span class="o">=</span><span class="s2">&quot;circle&quot;</span><span class="p">,</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>    <span class="n">internal_symbol</span><span class="o">=</span><span class="s2">&quot;circle&quot;</span><span class="p">,</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>    <span class="n">default</span><span class="o">=</span><span class="n">NodeStyle</span><span class="p">(</span><span class="n">edge_lw</span><span class="o">=</span><span class="mf">2.0</span><span class="p">),</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="p">)</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="n">visualize</span><span class="p">(</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>    <span class="n">pruned_gene_tree</span><span class="p">,</span>
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>    <span class="n">tree_style</span><span class="o">=</span><span class="n">custom_style</span><span class="p">,</span>
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a>    <span class="n">path</span><span class="o">=</span><span class="s2">&quot;T3_custom.png&quot;</span><span class="p">,</span>
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a>    <span class="n">distance_axis</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a>    <span class="n">scale_symbols</span><span class="o">=</span><span class="mf">1.3</span><span class="p">,</span>
+<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a>    <span class="n">fontsize</span><span class="o">=</span><span class="s2">&quot;large&quot;</span><span class="p">,</span>
+<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a><span class="p">)</span>
+</code></pre></div>
+<p><img alt="custom style" src="../images/gene_tree_custom_style.png" /></p>
+<p>Available symbols are <code>"none"</code>, <code>"dot"</code>, <code>"cap"</code>, <code>"circle"</code>, <code>"square"</code>, <code>"triangle-up"</code>,
+<code>"triangle-down"</code>, <code>"triangle-left"</code>, <code>"triangle-right"</code>, <code>"star"</code>, <code>"diamond"</code>, <code>"pentagon"</code>,
+<code>"hexagon"</code>, <code>"cross"</code>, <code>"x-mark"</code>, <code>"circle-dot"</code>, and <code>"circle-inner-ring"</code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>A custom <code>tree_style</code> replaces the AsymmeTree default style, including the highlighting of
+transferred edges. Therefore, <code>color_dict</code> cannot be combined with <code>tree_style</code> (a <code>ValueError</code>
+is raised) and the leaf colors have to be defined by the style as in the example above. The
+arguments <code>scale_symbols</code> and <code>fontsize</code> also work with a custom style.</p>
+</div>
+<h2 id="plotly-backend">Plotly backend<a class="headerlink" href="#plotly-backend" title="Permanent link">&para;</a></h2>
+<p>With <code>backend="plotly"</code>, an interactive figure is created. A <code>.html</code> extension of <code>path</code> writes a
+self-contained HTML file; other extensions write a static image (which requires the <code>kaleido</code>
+package, included in the <code>plotly</code> extra).</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">fig</span> <span class="o">=</span> <span class="n">visualize</span><span class="p">(</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="n">pruned_gene_tree</span><span class="p">,</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="n">color_dict</span><span class="o">=</span><span class="n">gene_colors</span><span class="p">,</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    <span class="n">backend</span><span class="o">=</span><span class="s2">&quot;plotly&quot;</span><span class="p">,</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="n">path</span><span class="o">=</span><span class="s2">&quot;T3.html&quot;</span><span class="p">,</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>    <span class="n">hover_attrs</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;event&quot;</span><span class="p">,</span> <span class="s2">&quot;reconc&quot;</span><span class="p">],</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="p">)</span>
+</code></pre></div>
+<p>The distance axis is not available for the plotly backend.</p>
+<p>The scripts <code>examples/tree_visualization.py</code> and <code>examples/tree_visualization_gallery.py</code> contain
+further code examples. The latter generates the figures shown on this page.</p>
 
 
 
@@ -1288,6 +1783,10 @@ of the species to which this gene belongs.</p>
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>
