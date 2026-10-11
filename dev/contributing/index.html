@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -29,7 +29,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -84,6 +84,20 @@
       
     </div>
     <div data-md-component="announce">
+      
+        <aside class="md-banner">
+          <div class="md-banner__inner md-grid md-typeset">
+            
+            
+  
+    This is the development documentation built from the <code>main</code> branch and may contain
+    unreleased changes.
+    <a href="https://david-schaller.github.io/AsymmeTree/">Switch to the documentation of the latest release.</a>
+  
+
+          </div>
+          
+        </aside>
       
     </div>
     
@@ -1666,7 +1680,7 @@ relevant screenshots or error messages.</p>
 <h2 id="pull-request-workflow">Pull Request workflow<a class="headerlink" href="#pull-request-workflow" title="Permanent link">&para;</a></h2>
 <p>Please keep pull requests focused and reasonably scoped — one feature or bug fix per PR is
 preferred.
-Target the <code>develop</code> branch for all pull requests unless explicitly directed otherwise.</p>
+Target the <code>main</code> branch for all pull requests.</p>
 <h3 id="external-contributors-fork-based-workflow">External contributors (fork-based workflow)<a class="headerlink" href="#external-contributors-fork-based-workflow" title="Permanent link">&para;</a></h3>
 <p>If you do not have write access to the repository, please use the standard fork-based workflow:</p>
 <ol>
@@ -1676,32 +1690,32 @@ Target the <code>develop</code> branch for all pull requests unless explicitly d
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nb">cd</span><span class="w"> </span>AsymmeTree
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>git<span class="w"> </span>remote<span class="w"> </span>add<span class="w"> </span>upstream<span class="w"> </span>https://github.com/david-schaller/AsymmeTree.git
 </code></pre></div></li>
-<li>Create a feature branch off <code>develop</code>:
+<li>Create a feature branch off <code>main</code>:
    <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>git<span class="w"> </span>fetch<span class="w"> </span>upstream
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>my-feature<span class="w"> </span>upstream/develop
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>my-feature<span class="w"> </span>upstream/main
 </code></pre></div></li>
 <li>Make your changes, commit them, and push to your fork:
    <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>my-feature
 </code></pre></div></li>
 <li>Before opening a PR, sync your branch with upstream to avoid merge conflicts:
    <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>git<span class="w"> </span>fetch<span class="w"> </span>upstream
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>git<span class="w"> </span>rebase<span class="w"> </span>upstream/develop
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>git<span class="w"> </span>rebase<span class="w"> </span>upstream/main
 </code></pre></div></li>
 <li>Open a pull request from <code>&lt;YOUR_USERNAME&gt;/AsymmeTree:my-feature</code> against
-   <code>david-schaller/AsymmeTree:develop</code> on GitHub.</li>
+   <code>david-schaller/AsymmeTree:main</code> on GitHub.</li>
 </ol>
 <h3 id="collaborators-with-repository-access">Collaborators with repository access<a class="headerlink" href="#collaborators-with-repository-access" title="Permanent link">&para;</a></h3>
 <p>If you have write access to the repository, you can work directly on a branch in the main
 repository without forking:</p>
 <ol>
-<li>Create a feature branch off <code>develop</code>:
+<li>Create a feature branch off <code>main</code>:
    <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>git<span class="w"> </span>fetch<span class="w"> </span>origin
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>my-feature<span class="w"> </span>origin/develop
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>my-feature<span class="w"> </span>origin/main
 </code></pre></div></li>
 <li>Make your changes, commit them, and push:
    <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>my-feature
 </code></pre></div></li>
-<li>Open a pull request against the <code>develop</code> branch on GitHub.</li>
+<li>Open a pull request against the <code>main</code> branch on GitHub.</li>
 </ol>
 <h3 id="all-contributors">All contributors<a class="headerlink" href="#all-contributors" title="Permanent link">&para;</a></h3>
 <p>Regardless of workflow, when opening a pull request please:</p>
@@ -1876,26 +1890,29 @@ command in the root directory of your local <code>AsymmeTree</code> repository:<
 </code></pre></div>
 <p>This will start a local development server, and you can access the documentation by navigating to
 the URL displayed in the terminal.</p>
-<p>The documentation will automatically be deployed to GitHub Pages when pushing or merging to the
-<code>main</code> or <code>develop</code> branch:</p>
+<p>The documentation is automatically deployed to GitHub Pages:</p>
 <table>
 <thead>
 <tr>
-<th>Branch</th>
+<th>Trigger</th>
+<th>Version</th>
 <th>URL</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>main</code></td>
+<td>Publishing a release</td>
+<td>Latest release (stable)</td>
 <td>https://david-schaller.github.io/AsymmeTree/</td>
 </tr>
 <tr>
-<td><code>develop</code></td>
+<td>Push or merge to <code>main</code></td>
+<td>Development (may contain unreleased changes)</td>
 <td>https://david-schaller.github.io/AsymmeTree/dev/</td>
 </tr>
 </tbody>
 </table>
+<p>Pull requests are checked with <code>mkdocs build --strict</code> but not deployed.</p>
 <h3 id="updating-the-documentation">Updating the documentation<a class="headerlink" href="#updating-the-documentation" title="Permanent link">&para;</a></h3>
 <p>When contributing to <code>AsymmeTree</code>, please make sure to update the documentation accordingly.</p>
 <p>The documentation files in the <code>docs</code> folder are written in Markdown and are organized as follows:</p>
@@ -1974,7 +1991,11 @@ provide new guides or tutorials.</p>
       <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "search.highlight", "search.suggest", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>
