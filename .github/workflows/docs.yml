@@ -1,10 +1,15 @@
 name: Deploy docs
 
 on:
+  # Stable docs: deployed to the site root when a release is published
+  release:
+    types: [published]
+  # Dev docs: deployed to /dev/ on every push to main
   push:
     branches:
       - main
-      - develop
+  # Build check only (no deployment)
+  pull_request:
 
 permissions:
   contents: write
@@ -12,29 +17,37 @@ permissions:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
+concurrency:
+  group: docs-deploy-${{ github.event_name == 'pull_request' && github.ref || 'gh-pages' }}
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
-      - name: Determine site URL
+      - name: Determine target
         id: target
         run: |
-          if [[ "${{ github.ref_name }}" == "main" ]]; then
+          if [[ "${{ github.event_name }}" == "release" ]]; then
             echo "site_url=https://david-schaller.github.io/AsymmeTree/" >> "$GITHUB_OUTPUT"
+            echo "dev_build=false" >> "$GITHUB_OUTPUT"
           else
             echo "site_url=https://david-schaller.github.io/AsymmeTree/dev/" >> "$GITHUB_OUTPUT"
+            echo "dev_build=true" >> "$GITHUB_OUTPUT"
           fi
       - run: uv sync --group docs
-      - run: uv run mkdocs build
+      - run: uv run mkdocs build --strict
         env:
           MKDOCS_SITE_URL: ${{ steps.target.outputs.site_url }}
+          MKDOCS_DEV_BUILD: ${{ steps.target.outputs.dev_build }}
       - name: Push to gh-pages branch
+        if: github.event_name != 'pull_request'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          mkdir pages-branch && cd pages-branch
+          mkdir pages-branchevent_name }}" == "release
           git init -b gh-pages .
           git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
           git fetch --depth=1 origin gh-pages 2>/dev/null && git reset --hard FETCH_HEAD || true
@@ -48,5 +61,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add .
-          git diff --cached --quiet || git commit -m "Deploy AsymmeTree docs (${{ github.ref_name }})"
+          git diff --cached --quiet || git commit -m "Deploy AsymmeTree docs (${{ github.event_name }}: ${{ github.ref_name }})"
           git push --force origin HEAD:gh-pages

@@ -6,6 +6,7 @@ repo_name: david-schaller/AsymmeTree
 
 theme:
   name: material
+  custom_dir: overrides
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
@@ -56,6 +57,9 @@ markdown_extensions:
       generic: true
   - toc:
       permalink: true
+
+extra:
+  dev_build: !ENV [MKDOCS_DEV_BUILD, false]
 
 extra_javascript:
   - javascripts/mathjax.js

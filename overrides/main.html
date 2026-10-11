@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block announce %}
+  {% if config.extra.dev_build %}
+    This is the development documentation built from the <code>main</code> branch and may contain
+    unreleased changes.
+    <a href="https://david-schaller.github.io/AsymmeTree/">Switch to the documentation of the latest release.</a>
+  {% endif %}
+{% endblock %}
