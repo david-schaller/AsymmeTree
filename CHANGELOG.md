@@ -2,6 +2,62 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.4.0] - 2026-10-11
+
+### 🚨 Breaking changes
+
+- The tree visualization now uses the plotting functionality of
+  [tralda](https://github.com/david-schaller/tralda) instead of an own matplotlib implementation.
+  - The deprecated class `Visualizer` was removed; use `visualize()` instead.
+  - The argument `save_as` of `visualize()` is deprecated in favor of `path`. The figure is no
+    longer displayed by default; use `show=True` to display it.
+  - `visualize()` now returns the figure (`(fig, ax)` for matplotlib, a plotly `Figure` for plotly).
+- matplotlib is no longer a required dependency. Install it with
+  `pip install asymmetree[matplotlib]` (or `asymmetree[viz]` for matplotlib and plotly).
+
+### 🌟 Features
+
+- `visualize()` now supports the plotly backend (`backend="plotly"`) for interactive figures.
+- `visualize()` now supports vertical and circular layouts (`layout_mode`) and the edge length modes
+  `"attr"`, `"uniform"`, `"even"`, and `"rank"` (`edge_length_mode`).
+- Custom styles for nodes and edges can be passed to `visualize()` as a tralda `TreeStyle`.
+- `visualize()` supports the arguments `species_info` (append the species to the leaf labels) and
+  `distance_axis` (show the distance from the root; matplotlib backend with horizontal layout and
+  `"attr"` edge lengths only).
+- `visualize()`, `assign_colors()`, `assign_species_colors()`, and `assign_gene_colors()` can now be
+  imported from `asymmetree.visualization`.
+
+### ♻️ Refactorings
+
+- Color assignment for the visualization no longer imports `matplotlib.pyplot`, and matplotlib is
+  only imported when needed.
+- Removed the `develop` branch; all development and pull requests now target `main`.
+
+### 📚 Documentation
+
+- Rewrote the visualization guide: it now describes the AsymmeTree default style, layouts, edge
+  length modes, the distance axis, renderer options, custom styles, and the plotly backend, with
+  example figures.
+- Updated the example script `examples/tree_visualization.py` such that it generates the figures of
+  the visualization guide with a fixed random seed.
+- The contributing guide now refers to `main` instead of `develop` for branching and pull requests.
+- Added a banner to the development documentation stating that it is built from `main` and may
+  contain unreleased changes.
+
+### 📦 Build
+
+- Updated tralda to version 2.1.0.
+- Added the optional dependencies `matplotlib`, `plotly`, and `viz`.
+- Bumped indirect dependency `urllib3` to 2.8.0.
+
+### 🔖 Release
+
+- The stable documentation is now deployed only when a release is published, so it always matches
+  the latest version on PyPI.
+- The development documentation (`/dev/`) is now deployed on every push to `main`.
+- Pull requests now run a strict documentation build (without deployment) to catch broken
+  documentation early.
+
 ## [2.3.2] - 2026-09-12
 
 ### 📦 Build
