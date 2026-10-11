@@ -47,7 +47,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          mkdir pages-branchevent_name }}" == "release
+          mkdir pages-branch
+          cd pages-branch
           git init -b gh-pages .
           git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
           git fetch --depth=1 origin gh-pages 2>/dev/null && git reset --hard FETCH_HEAD || true
