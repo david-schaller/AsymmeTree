@@ -33,7 +33,7 @@ relevant screenshots or error messages.
 
 Please keep pull requests focused and reasonably scoped — one feature or bug fix per PR is
 preferred.
-Target the `develop` branch for all pull requests unless explicitly directed otherwise.
+Target the `main` branch for all pull requests.
 
 ### External contributors (fork-based workflow)
 
@@ -46,10 +46,10 @@ If you do not have write access to the repository, please use the standard fork-
    cd AsymmeTree
    git remote add upstream https://github.com/david-schaller/AsymmeTree.git
    ```
-3. Create a feature branch off `develop`:
+3. Create a feature branch off `main`:
    ```bash
    git fetch upstream
-   git checkout -b my-feature upstream/develop
+   git checkout -b my-feature upstream/main
    ```
 4. Make your changes, commit them, and push to your fork:
    ```bash
@@ -58,26 +58,26 @@ If you do not have write access to the repository, please use the standard fork-
 5. Before opening a PR, sync your branch with upstream to avoid merge conflicts:
    ```bash
    git fetch upstream
-   git rebase upstream/develop
+   git rebase upstream/main
    ```
 6. Open a pull request from `<YOUR_USERNAME>/AsymmeTree:my-feature` against
-   `david-schaller/AsymmeTree:develop` on GitHub.
+   `david-schaller/AsymmeTree:main` on GitHub.
 
 ### Collaborators with repository access
 
 If you have write access to the repository, you can work directly on a branch in the main
 repository without forking:
 
-1. Create a feature branch off `develop`:
+1. Create a feature branch off `main`:
    ```bash
    git fetch origin
-   git checkout -b my-feature origin/develop
+   git checkout -b my-feature origin/main
    ```
 2. Make your changes, commit them, and push:
    ```bash
    git push origin my-feature
    ```
-3. Open a pull request against the `develop` branch on GitHub.
+3. Open a pull request against the `main` branch on GitHub.
 
 ### All contributors
 
@@ -274,13 +274,14 @@ uv run mkdocs serve
 This will start a local development server, and you can access the documentation by navigating to
 the URL displayed in the terminal.
 
-The documentation will automatically be deployed to GitHub Pages when pushing or merging to the
-`main` or `develop` branch:
+The documentation is automatically deployed to GitHub Pages:
 
-| Branch | URL |
-| --- | --- |
-| `main` | https://david-schaller.github.io/AsymmeTree/ |
-| `develop` | https://david-schaller.github.io/AsymmeTree/dev/ |
+| Trigger | Version | URL |
+| --- | --- | --- |
+| Publishing a release | Latest release (stable) | https://david-schaller.github.io/AsymmeTree/ |
+| Push or merge to `main` | Development (may contain unreleased changes) | https://david-schaller.github.io/AsymmeTree/dev/ |
+
+Pull requests are checked with `mkdocs build --strict` but not deployed.
 
 ### Updating the documentation
 
