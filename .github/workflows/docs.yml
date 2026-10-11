@@ -52,7 +52,7 @@ jobs:
           git init -b gh-pages .
           git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
           git fetch --depth=1 origin gh-pages 2>/dev/null && git reset --hard FETCH_HEAD || true
-          if [[ "${{ github.ref_name }}" == "main" ]]; then
+          if [[ "${{ github.event_name }}" == "release" ]]; then
             rsync -a --delete --exclude=.git --exclude=dev ../site/ .
           else
             rm -rf dev
